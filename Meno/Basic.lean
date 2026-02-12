@@ -160,20 +160,63 @@ theorem gravity_uniform (D F G : Type u) :
 
 end Gravity
 
-/-! ## Structured Complexity
+/-! ## Domain-Generic Additive Complexity
 
-The type-level hierarchy above measures bare types. For structured objects
-(simplicial complexes, graphs), complexity depends on structure, not cardinality.
-StructuredComplexity captures the same algebraic law — merge/overlap gravity —
-for any object type with merge and overlap operations. -/
+The algebraic core shared by all additive complexity measures:
+a unit, equivalence, product, and the laws that make C a monoid
+homomorphism into (M, +). The type-level hierarchy specializes this
+to D = Type u (adding sigma bounds and pullback infrastructure).
+Groupoid complexity instantiates it on GroupoidObj. -/
 
-/-- Complexity on structured objects with merge and overlap.
-    The merge_overlap law is Mayer-Vietoris: total complexity is preserved. -/
-class StructuredComplexity (Obj : Type*) (M : Type*) [AddCommMonoid M] where
-  K : Obj → M
-  merge : Obj → Obj → Obj
-  overlap : Obj → Obj → Obj
-  merge_overlap : ∀ (A B : Obj), K (merge A B) + K (overlap A B) = K A + K B
+/-- Additive complexity on a domain D, valued in M.
+    Captures the algebraic fragment common to the type-level hierarchy
+    (AdditiveComplexity, which adds sigma bounds) and groupoid complexity. -/
+class AdditiveComplexityOn (D : Type*) (M : Type*) [AddCommMonoid M] where
+  C : D → M
+  unit : D
+  equiv : D → D → Prop
+  prod : D → D → D
+  unit_zero : C unit = 0
+  congr : {a b : D} → equiv a b → C a = C b
+  prod_add : (a b : D) → C (prod a b) = C a + C b
+
+/-- Any type-level `AdditiveComplexity` instance yields an `AdditiveComplexityOn` instance.
+    This extraction witnesses that the domain-generic axioms were always implicit
+    in the type-level hierarchy. -/
+noncomputable instance instAdditiveComplexityOnType
+    (M : Type*) [AddCommMonoid M] [PartialOrder M] [SupSet M]
+    [inst : AdditiveComplexity M] : AdditiveComplexityOn (Type u) M where
+  C := inst.C
+  unit := PUnit
+  equiv A B := Nonempty (A ≃ B)
+  prod A B := A × B
+  unit_zero := inst.unique_zero PUnit
+  congr h := inst.congr h.some
+  prod_add := inst.prod_eq
+
+section AdditiveComplexityOn
+variable {D M : Type*} [AddCommMonoid M] [inst : AdditiveComplexityOn D M]
+
+theorem AdditiveComplexityOn.prod_unit_right (a : D) :
+    inst.C (inst.prod a inst.unit) = inst.C a := by
+  rw [inst.prod_add, inst.unit_zero, add_zero]
+
+theorem AdditiveComplexityOn.prod_unit_left (a : D) :
+    inst.C (inst.prod inst.unit a) = inst.C a := by
+  rw [inst.prod_add, inst.unit_zero, zero_add]
+
+theorem AdditiveComplexityOn.prod_comm_C (a b : D) :
+    inst.C (inst.prod a b) = inst.C (inst.prod b a) := by
+  rw [inst.prod_add, inst.prod_add, add_comm]
+
+/-- **Algebraic gravity**: merging two structures sharing a component d saves C(d).
+    This is the domain-generic shadow of the type-level gravity theorem. -/
+theorem AdditiveComplexityOn.algebraic_gravity (d f g : D) :
+    inst.C (inst.prod d (inst.prod f g)) + inst.C d =
+    inst.C (inst.prod d f) + inst.C (inst.prod d g) := by
+  simp only [inst.prod_add]; abel
+
+end AdditiveComplexityOn
 
 /-! ## Contractibility -/
 

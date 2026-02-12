@@ -1422,25 +1422,19 @@ theorem edgeCount_inclusion_exclusion (C₁ C₂ : Complex V) :
   rw [edgeFinset_union, edgeFinset_inter]
   exact Finset.card_union_add_card_inter _ _
 
-/-- First Betti number (×2, using ordered edge pairs to avoid division).
-    For connected graphs with symmetric edges, this is 2·(|E| − |V| + 1). -/
+/-- Euler defect: |E_ordered| − 2|V| + 2 = 2(1 − χ).
+    Equals 2·b₁ for connected graphs with symmetric edges. -/
 noncomputable def bettiOneZ (C : Complex V) : ℤ :=
   (C.edgeFinset.card : ℤ) - 2 * (Fintype.card V : ℤ) + 2
 
-/-- **Mayer-Vietoris for b₁**: the structural economy of merging complexes. -/
+/-- **Euler inclusion-exclusion**: bettiOneZ is additive under union/intersection.
+    On connected complexes this reduces to Mayer-Vietoris for b₁. -/
 theorem bettiOneZ_mayer_vietoris (C₁ C₂ : Complex V) :
     bettiOneZ (C₁.union C₂) + bettiOneZ (C₁.inter C₂) =
     bettiOneZ C₁ + bettiOneZ C₂ := by
   unfold bettiOneZ
   have h := edgeCount_inclusion_exclusion C₁ C₂
   linarith [h]
-
-/-- b₁ with union/intersection instantiates structured gravity. -/
-noncomputable instance [Fintype V] : SGD.StructuredComplexity (Complex V) ℤ where
-  K := bettiOneZ
-  merge := Complex.union
-  overlap := Complex.inter
-  merge_overlap := bettiOneZ_mayer_vietoris
 
 end MayerVietoris
 
@@ -1584,6 +1578,89 @@ theorem prod_edgeFinset_card [Fintype V₁] [Fintype V₂] [DecidableEq V₁] [D
   rw [h_eq, card_union_of_disjoint h_disj, h_card₁, h_card₂]
 
 end Products
+
+/-! ## Walk Algebra: Reverse, Append Laws, Homotopy Compatibility -/
+
+section WalkAlgebra
+
+variable {V : Type u}
+
+/-- Reverse a walk in a symmetric graph. -/
+def Walk.reverse {G : Graph V} (hsym : G.Symmetric) : Walk G u v → Walk G v u
+  | .nil _ => .nil _
+  | .cons h p => p.reverse hsym |>.append (.cons (hsym _ _ h) (.nil _))
+
+/-- Appending nil is identity. -/
+@[simp] theorem Walk.append_nil {G : Graph V} : (p : Walk G u v) → p.append (.nil v) = p
+  | .nil _ => rfl
+  | .cons h p => by simp [Walk.append, Walk.append_nil p]
+
+/-- Append is associative. -/
+theorem Walk.append_assoc {G : Graph V} :
+    (p : Walk G u v) → (q : Walk G v w) → (r : Walk G w x) →
+    (p.append q).append r = p.append (q.append r)
+  | .nil _, _, _ => rfl
+  | .cons h p, q, r => by simp [Walk.append, Walk.append_assoc p q r]
+
+/-- Nil is left identity for append (definitional). -/
+@[simp] theorem Walk.nil_append {G : Graph V} (q : Walk G u v) :
+    (Walk.nil u).append q = q := rfl
+
+/-- Reverse preserves homotopy. -/
+theorem Homotopic₂.reverse {C : Complex V} (hsym : C.toGraph.Symmetric)
+    {p q : Walk C.toGraph u v} (h : Homotopic₂ C p q) :
+    Homotopic₂ C (p.reverse hsym) (q.reverse hsym) := by
+  induction h with
+  | refl _ => exact .refl _
+  | symm _ ih => exact .symm ih
+  | trans _ _ ih1 ih2 => exact .trans ih1 ih2
+  | backtrack hab hba tail =>
+    simp only [Walk.reverse]
+    rw [Walk.append_assoc]
+    conv_rhs => rw [← Walk.append_nil (Walk.reverse hsym tail)]
+    exact Homotopic₂.congr_append C (Homotopic₂.refl _)
+      (Homotopic₂.backtrack (hsym _ _ hba) (hsym _ _ hab) _)
+  | face hf tail =>
+    simp only [Walk.reverse]
+    rw [Walk.append_assoc]
+    exact Homotopic₂.congr_append C (Homotopic₂.refl _)
+      (Homotopic₂.face_rev hf (hsym _ _ (C.face_closed _ _ _ hf).2.1)
+        (hsym _ _ (C.face_closed _ _ _ hf).1)
+        (hsym _ _ (C.face_closed _ _ _ hf).2.2) _)
+  | face_rev hf hcb hba hca tail =>
+    simp only [Walk.reverse]
+    rw [Walk.append_assoc]
+    exact Homotopic₂.congr_append C (Homotopic₂.refl _) (Homotopic₂.face hf _)
+  | congr_cons h _ ih =>
+    simp only [Walk.reverse]
+    exact Homotopic₂.congr_append C ih (Homotopic₂.refl _)
+
+/-- reverse(p) ++ p is homotopic to nil. -/
+theorem reverse_append_homotopic {C : Complex V} (hsym : C.toGraph.Symmetric)
+    (p : Walk C.toGraph u v) :
+    Homotopic₂ C (p.reverse hsym |>.append p) (.nil v) := by
+  induction p with
+  | nil _ => exact .refl _
+  | cons h tail ih =>
+    unfold Walk.reverse
+    rw [Walk.append_assoc]
+    exact (Homotopic₂.congr_append_right C _ (.backtrack (hsym _ _ h) h tail)).trans ih
+
+/-- p ++ reverse(p) is homotopic to nil. -/
+theorem append_reverse_homotopic {C : Complex V} (hsym : C.toGraph.Symmetric)
+    (p : Walk C.toGraph u v) :
+    Homotopic₂ C (p.append (p.reverse hsym)) (.nil u) := by
+  induction p with
+  | nil _ => exact .refl _
+  | cons h tail ih =>
+    simp only [Walk.reverse]
+    show Homotopic₂ C (.cons h (tail.append ((tail.reverse hsym).append (.cons (hsym _ _ h) (.nil _))))) _
+    rw [← Walk.append_assoc]
+    exact (Homotopic₂.congr_cons h
+      (Homotopic₂.congr_append C ih (Homotopic₂.refl _))).trans
+      (Homotopic₂.backtrack h (hsym _ _ h) _)
+
+end WalkAlgebra
 
 /-! ## Dynamics: The Homotopy Ratchet -/
 

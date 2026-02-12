@@ -80,6 +80,16 @@ The constitutive laws of the Meno universe. Any concrete model (simplicial or ot
 | Gravity: K(Pullback f g) + K(D) = K(A) + K(B) for any f, g with uniform fibers | **Theorem** (from level 3) |
 | Log-cardinality instance: C(A) = log\|A\| satisfies all three levels (`Instances.lean`) | **Instance** (AdditiveComplexity ℝ≥0∞) |
 
+**Domain-generic additive complexity (`AdditiveComplexityOn D M`):**
+
+The algebraic core factored out of `AdditiveComplexity`: a unit, equivalence, product, and the laws making C a monoid homomorphism into (M, +). The type-level hierarchy implies this class (`instAdditiveComplexityOnType`), and groupoid complexity instantiates it independently on `GroupoidObj`. Theorems derived from this class alone apply to both models:
+
+| Result | Statement |
+| :--- | :--- |
+| `algebraic_gravity` | C(d·(f·g)) + C(d) = C(d·f) + C(d·g) — domain-generic gravity |
+| `prod_unit_right/left` | C(a·1) = C(a), C(1·a) = C(a) |
+| `prod_comm_C` | C(a·b) = C(b·a) |
+
 **Dynamics — the arrow of time (`TransitionComplexity` class):**
 
 | Law | Statement |
@@ -91,19 +101,9 @@ The constitutive laws of the Meno universe. Any concrete model (simplicial or ot
 
 The Landauer cost model (`transitionCost f = if Injective f then 2 else 1`) provides a concrete instance. Any right-inverse of a non-injective map is injective (since f ∘ r = id implies r is injective), so the ratchet follows: cost(r) = 2 > 1 = cost(f).
 
-**Structured complexity (`StructuredComplexity` class):**
+### Simplicial.lean — the shadow model
 
-The type-level hierarchy measures bare types (complexity depends only on cardinality via `congr`). For structured objects like simplicial complexes, complexity depends on topology. `StructuredComplexity` captures the same algebraic law — merge/overlap gravity — for any object type:
-
-| Law | Statement |
-| :--- | :--- |
-| `merge_overlap` | K(merge A B) + K(overlap A B) = K(A) + K(B) |
-
-The simplicial model instantiates this with K = b₁, merge = union, overlap = intersection. The merge_overlap law is Mayer-Vietoris.
-
-### Simplicial.lean — the concrete model
-
-`Simplicial.lean` imports `Basic.lean`. Paths as explicit data (walks in a simplicial complex). Zero axioms.
+Lean's Axiom K makes types topologically blind, so the abstract K can only see cardinality. `Simplicial.lean` works around this by modeling paths as explicit data (walks in a simplicial complex), recovering homotopy computationally. It imports and instantiates `Basic.lean`. Zero axioms.
 
 **Topology and matter:**
 
@@ -148,13 +148,42 @@ The simplicial model instantiates this with K = b₁, merge = union, overlap = i
 | `prod_edgeFinset_card` | \|E(C₁ × C₂)\| = \|E₁\|·\|V₂\| + \|V₁\|·\|E₂\| (irreflexivity decomposes edges) |
 | `Complex.inter` | Intersection of two complexes |
 | `Complex.union` | Union of two complexes |
-| `bettiOneZ_cycleGraph` | bettiOneZ(C_n) = 2 = 2·b₁, bridging edge-counting to Hodge-theoretic b₁ |
-| `bettiOneZ_mayer_vietoris` | b₁(C₁ ∪ C₂) + b₁(C₁ ∩ C₂) = b₁(C₁) + b₁(C₂) (from edge inclusion-exclusion) |
-| `StructuredComplexity` instance | b₁ with union/intersection satisfies the structured gravity law |
+| `bettiOneZ_cycleGraph` | bettiOneZ(C_n) = 2: the Euler defect matches 2·b₁ on connected cycles |
+| `bettiOneZ_mayer_vietoris` | bettiOneZ(A ∪ B) + bettiOneZ(A ∩ B) = bettiOneZ(A) + bettiOneZ(B) (Euler inclusion-exclusion) |
 | `geodesic_computation_is_lossy` | Quotient map to homotopy classes is non-injective |
 | `simplicial_ratchet` | Any section of the quotient costs strictly more than the forward map (TransitionComplexity applied) |
 
-### Theta.lean - the bridge to analytic number theory
+### Groupoid.lean — the bridge
+
+The fundamental groupoid of a symmetric 2-complex: objects = vertices, morphisms = homotopy classes of walks. This is the categorical packaging of the walk/homotopy machinery from Simplicial.lean, built as a Mathlib `CategoryTheory.Groupoid` instance.
+
+Complexity is defined on groupoid objects via the partition function over automorphisms: C(x) = log Σ exp(-K(g)), where K is the energy function on End(x). This gives an `AdditiveComplexityOn GroupoidObj ℝ` instance — the same domain-generic class that the type-level hierarchy implies via `instAdditiveComplexityOnType`. The algebraic gravity theorem from Basic.lean applies to groupoid objects through this instance.
+
+| Basic.lean class field | Groupoid proof | Statement |
+| :--- | :--- | :--- |
+| `unit_zero` | `GroupoidObj.trivial_complexity` | Trivial Aut → C = 0 |
+| `congr` | `GroupoidObj.congr_complexity` | Aut equivalence preserving energy → equal C |
+| `prod_add` | `GroupoidObj.prod_complexity` | Factoring Z → additive C |
+
+| Result | Statement |
+| :--- | :--- |
+| `simplicialGroupoid` | Groupoid instance on any symmetric 2-complex |
+| `groupoidPartitionFn_pos` | Z > 0 (sum of exponentials) |
+| `cycleGroupoid_partitionFn_eq` | Winding classification recovers Z(C_n) |
+
+### Hodge.lean — general Hodge theory
+
+Energy and partition functions for arbitrary finite graphs. Generalizes the cycle-specific Hodge theory to graphs with b₁ independent cycles via Gram matrices on ℤ^{b₁}.
+
+| Result | Statement |
+| :--- | :--- |
+| `EC1.energy_nonneg` | Energy of edge cochains ≥ 0 |
+| `EC1.energy_eq_zero_iff` | Energy = 0 iff cochain = 0 |
+| `graphPartitionFn_rank1_eq` | Rank-1 (b₁=1) recovers Z(C_n) |
+| `graphPartitionFn_eq_siegelTheta` | Z(Q) = Θ(Q/π) (Siegel theta identification) |
+| `torus_partitionFn_factors` | Z(T²) = Z(C_m) · Z(C_n) for torus = C_m × C_n |
+
+### Theta.lean — analytic number theory
 
 | Result | Statement |
 | :--- | :--- |
@@ -177,9 +206,11 @@ Instead, Meno models paths as **walks** (sequences of adjacent vertices) and hom
 
 ```
 Meno/
-├── Basic.lean        Abstract framework: complexity hierarchy, pullback, refactoring bound, ratchet
-├── Instances.lean    Log-cardinality instance: C(A) = log|A| satisfies AdditiveComplexity
-├── Simplicial.lean   Concrete model (imports Basic): walks, cycles, geodesics, Hodge theory, products, dynamics
+├── Basic.lean        The theory: complexity hierarchy, pullback gravity, refactoring bound, ratchet
+├── Instances.lean    Log-cardinality instance (satisfies the hierarchy; topologically blind)
+├── Simplicial.lean   Shadow model: walks, cycles, geodesics, Hodge theory, partition function
+├── Groupoid.lean     Fundamental groupoid, groupoid complexity, hierarchy axioms
+├── Hodge.lean        General Hodge theory: energy, graph partition functions, Siegel theta
 └── Theta.lean        Jacobi theta identification and T-duality via Mathlib modular forms
 ```
 
