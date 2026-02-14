@@ -138,4 +138,56 @@ theorem GroupoidObj.dual_dual_equiv
   have hpi0 : Real.pi ^ 2 ≠ 0 := ne_of_gt (sq_pos_of_pos Real.pi_pos)
   field_simp
 
+/-! ## Complexity-Rank Bound
+
+T-duality converts the vacuum bound Z ≥ 1 into a nontrivial lower bound on
+the partition function: Z(α) ≥ √(π/α). Taking logs gives a complexity floor
+that grows with topological rank. -/
+
+theorem quadraticPartFn_ge_one (α : ℝ) (hα : 0 < α) : quadraticPartFn α ≥ 1 := by
+  show 1 ≤ quadraticPartFn α
+  calc (1 : ℝ) = Real.exp (-α * ((0 : ℤ) : ℝ) ^ 2) := by norm_num
+    _ ≤ quadraticPartFn α :=
+        (summable_quadraticPartFn α hα).le_tsum 0 (fun k _ => le_of_lt (Real.exp_pos _))
+
+theorem quadraticPartFn_duality_real (α : ℝ) (hα : 0 < α) :
+    quadraticPartFn (Real.pi ^ 2 / α) =
+    (α / Real.pi) ^ ((1 : ℝ) / 2) * quadraticPartFn α := by
+  have h := quadraticPartFn_duality α hα
+  have hnn : (0 : ℝ) ≤ α / Real.pi := le_of_lt (div_pos hα Real.pi_pos)
+  apply Complex.ofReal_inj.mp
+  rw [Complex.ofReal_mul, Complex.ofReal_cpow hnn]
+  convert h using 2
+  push_cast; ring
+
+theorem quadraticPartFn_lower_bound (α : ℝ) (hα : 0 < α) :
+    quadraticPartFn α ≥ (Real.pi / α) ^ ((1 : ℝ) / 2) := by
+  have hαπ : 0 < α / Real.pi := div_pos hα Real.pi_pos
+  have hge := quadraticPartFn_ge_one (Real.pi ^ 2 / α)
+    (div_pos (sq_pos_of_pos Real.pi_pos) hα)
+  rw [quadraticPartFn_duality_real α hα] at hge
+  have hprod : (Real.pi / α) ^ ((1:ℝ)/2) * (α / Real.pi) ^ ((1:ℝ)/2) = 1 := by
+    rw [← Real.mul_rpow (le_of_lt (div_pos Real.pi_pos hα)) (le_of_lt hαπ)]
+    have : Real.pi / α * (α / Real.pi) = 1 := by field_simp
+    rw [this, Real.one_rpow]
+  nlinarith [Real.rpow_pos_of_pos (div_pos Real.pi_pos hα) ((1:ℝ)/2),
+             mul_comm ((α / Real.pi) ^ ((1:ℝ)/2)) (quadraticPartFn α)]
+
+theorem complexity_rank_bound (α : ℝ) (hα : 0 < α) :
+    Real.log (quadraticPartFn α) ≥ (1 / 2) * Real.log (Real.pi / α) := by
+  have hπα : 0 < Real.pi / α := div_pos Real.pi_pos hα
+  calc Real.log (quadraticPartFn α)
+      ≥ Real.log ((Real.pi / α) ^ ((1 : ℝ) / 2)) :=
+        Real.log_le_log (Real.rpow_pos_of_pos hπα _) (quadraticPartFn_lower_bound α hα)
+    _ = (1 / 2) * Real.log (Real.pi / α) :=
+        Real.log_rpow hπα _
+
+theorem GroupoidObj.complexity_ge (E : GroupoidObj) (wind : End E.base ≃ ℤ)
+    (α : ℝ) (hα : 0 < α) (hK : ∀ g, E.energy g = α * (wind g : ℝ) ^ 2) :
+    E.complexity ≥ (1 / 2) * Real.log (Real.pi / α) := by
+  simp only [GroupoidObj.complexity, groupoidComplexity]
+  rw [show groupoidPartitionFn E.base E.energy E.summable = quadraticPartFn α from
+    partFn_eq_quadraticPartFn E wind α hK]
+  exact complexity_rank_bound α hα
+
 end Simplicial

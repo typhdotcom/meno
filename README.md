@@ -205,6 +205,9 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `GroupoidObj.dual` | Fourier dual construction: coupling α → π²/α |
 | `GroupoidObj.dual_partFn` | Partition function of dual = modular prefactor × original |
 | `GroupoidObj.dual_dual_equiv` | Involutivity: dual(dual(E)) ≃ E |
+| `quadraticPartFn_lower_bound` | Z(α) ≥ √(π/α) (vacuum bound on dual → complexity floor) |
+| `complexity_rank_bound` | log Z(α) ≥ (1/2) · log(π/α) (topological rank bounded by complexity) |
+| `GroupoidObj.complexity_ge` | C(E) ≥ (1/2) · log(π/α) for quadratic energy α·k² |
 
 ---
 
