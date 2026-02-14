@@ -213,6 +213,9 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `rank_complexity_bound` | C(E₁ × E₂) ≥ (1/2)·log(πn₁) + (1/2)·log(πn₂): each independent mode adds cost |
 | `complexity_decomposition` | C(α) = (1/2)·log(π/α) + log Z(π²/α): topology + dual residual |
 | `complexity_gap_pos` | The dual residual log Z(π²/α) > 0: the bound is never tight |
+| `GroupoidObj.self_dual` | At α = π, object ≃ its own Fourier dual (self-dual fixed point) |
+| `quadraticPartFn_self_dual_iff` | Z(π²/α) = Z(α) iff α = π: uniqueness of the self-dual coupling |
+| `dual_partFn_lt_iff` | Z(π²/α) < Z(α) iff α < π: sub-critical regime (dual is simpler) |
 
 ---
 

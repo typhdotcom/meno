@@ -243,4 +243,55 @@ theorem complexity_gap_pos (α : ℝ) (hα : 0 < α) :
     Real.log (quadraticPartFn (Real.pi ^ 2 / α)) > 0 :=
   Real.log_pos (quadraticPartFn_gt_one _ (div_pos (sq_pos_of_pos Real.pi_pos) hα))
 
+/-! ## Self-Dual Fixed Point
+
+At coupling α = π, the dual coupling π²/α = π. The object is its own
+Fourier dual — the description and its dual description coincide. -/
+
+theorem GroupoidObj.self_dual (E : GroupoidObj) (wind : End E.base ≃ ℤ)
+    (hK : ∀ g, E.energy g = Real.pi * (wind g : ℝ) ^ 2) :
+    GroupoidObj.Equiv (E.dual wind Real.pi Real.pi_pos hK) E := by
+  refine ⟨Equiv.refl _, fun g => ?_⟩
+  simp only [Equiv.refl_apply, GroupoidObj.dual, hK]
+  have : Real.pi ≠ 0 := ne_of_gt Real.pi_pos
+  field_simp
+
+/-- The self-dual coupling is unique: Z(π²/α) = Z(α) if and only if α = π. -/
+theorem quadraticPartFn_self_dual_iff (α : ℝ) (hα : 0 < α) :
+    quadraticPartFn (Real.pi ^ 2 / α) = quadraticPartFn α ↔ α = Real.pi := by
+  constructor
+  · intro h
+    have hdual := quadraticPartFn_duality_real α hα
+    rw [h] at hdual
+    have hαπ : 0 < α / Real.pi := div_pos hα Real.pi_pos
+    have hZpos : 0 < quadraticPartFn α :=
+      lt_trans zero_lt_one (quadraticPartFn_gt_one α hα)
+    have hlog := congr_arg Real.log hdual
+    rw [Real.log_mul (ne_of_gt (Real.rpow_pos_of_pos hαπ _)) (ne_of_gt hZpos),
+        Real.log_rpow hαπ] at hlog
+    have : Real.log (α / Real.pi) = 0 := by linarith
+    rcases Real.log_eq_zero.mp this with h3 | h3 | h3
+    · linarith
+    · linarith [(div_eq_iff (ne_of_gt Real.pi_pos)).mp h3]
+    · linarith
+  · intro h; subst h
+    show quadraticPartFn (Real.pi ^ 2 / Real.pi) = quadraticPartFn Real.pi
+    congr 1; have : Real.pi ≠ 0 := ne_of_gt Real.pi_pos; field_simp
+
+/-- Sub-critical regime: the dual has smaller partition function iff α < π. -/
+theorem dual_partFn_lt_iff (α : ℝ) (hα : 0 < α) :
+    quadraticPartFn (Real.pi ^ 2 / α) < quadraticPartFn α ↔ α < Real.pi := by
+  have hdual := quadraticPartFn_duality_real α hα
+  have hZpos : 0 < quadraticPartFn α :=
+    lt_trans zero_lt_one (quadraticPartFn_gt_one α hα)
+  have hαπ : 0 < α / Real.pi := div_pos hα Real.pi_pos
+  rw [hdual, mul_lt_iff_lt_one_left hZpos]
+  constructor
+  · intro h
+    by_contra hle; push_neg at hle
+    have : 1 ≤ α / Real.pi := by rwa [le_div_iff₀ Real.pi_pos, one_mul]
+    linarith [Real.one_le_rpow this (by norm_num : (0:ℝ) ≤ 1/2)]
+  · intro h
+    exact Real.rpow_lt_one (le_of_lt hαπ) (by rwa [div_lt_one Real.pi_pos]) (by norm_num)
+
 end Simplicial
