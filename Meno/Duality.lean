@@ -144,11 +144,14 @@ T-duality converts the vacuum bound Z ≥ 1 into a nontrivial lower bound on
 the partition function: Z(α) ≥ √(π/α). Taking logs gives a complexity floor
 that grows with topological rank. -/
 
-theorem quadraticPartFn_ge_one (α : ℝ) (hα : 0 < α) : quadraticPartFn α ≥ 1 := by
-  show 1 ≤ quadraticPartFn α
-  calc (1 : ℝ) = Real.exp (-α * ((0 : ℤ) : ℝ) ^ 2) := by norm_num
-    _ ≤ quadraticPartFn α :=
-        (summable_quadraticPartFn α hα).le_tsum 0 (fun k _ => le_of_lt (Real.exp_pos _))
+theorem quadraticPartFn_gt_one (α : ℝ) (hα : 0 < α) : quadraticPartFn α > 1 := by
+  have hsm := summable_quadraticPartFn α hα
+  have hle : ({0, 1} : Finset ℤ).sum (fun k => Real.exp (-α * (k : ℝ) ^ 2)) ≤
+      quadraticPartFn α := by
+    show _ ≤ ∑' k, _
+    exact hsm.sum_le_tsum {0, 1} (fun k _ => le_of_lt (Real.exp_pos _))
+  simp at hle
+  linarith [Real.exp_pos (-α)]
 
 theorem quadraticPartFn_duality_real (α : ℝ) (hα : 0 < α) :
     quadraticPartFn (Real.pi ^ 2 / α) =
@@ -163,8 +166,8 @@ theorem quadraticPartFn_duality_real (α : ℝ) (hα : 0 < α) :
 theorem quadraticPartFn_lower_bound (α : ℝ) (hα : 0 < α) :
     quadraticPartFn α ≥ (Real.pi / α) ^ ((1 : ℝ) / 2) := by
   have hαπ : 0 < α / Real.pi := div_pos hα Real.pi_pos
-  have hge := quadraticPartFn_ge_one (Real.pi ^ 2 / α)
-    (div_pos (sq_pos_of_pos Real.pi_pos) hα)
+  have hge := le_of_lt (quadraticPartFn_gt_one (Real.pi ^ 2 / α)
+    (div_pos (sq_pos_of_pos Real.pi_pos) hα))
   rw [quadraticPartFn_duality_real α hα] at hge
   have hprod : (Real.pi / α) ^ ((1:ℝ)/2) * (α / Real.pi) ^ ((1:ℝ)/2) = 1 := by
     rw [← Real.mul_rpow (le_of_lt (div_pos Real.pi_pos hα)) (le_of_lt hαπ)]
@@ -189,5 +192,27 @@ theorem GroupoidObj.complexity_ge (E : GroupoidObj) (wind : End E.base ≃ ℤ)
   rw [show groupoidPartitionFn E.base E.energy E.summable = quadraticPartFn α from
     partFn_eq_quadraticPartFn E wind α hK]
   exact complexity_rank_bound α hα
+
+theorem cycle_complexity_ge (E : GroupoidObj) (wind : End E.base ≃ ℤ)
+    (n : ℕ) (hn : 0 < n) (hK : ∀ g, E.energy g = (wind g : ℝ) ^ 2 / n) :
+    E.complexity ≥ (1 / 2) * Real.log (Real.pi * n) := by
+  have hn0 : (0 : ℝ) < n := by exact_mod_cast hn
+  have hα : (0 : ℝ) < 1 / n := div_pos one_pos hn0
+  have hK' : ∀ g, E.energy g = (1 / ↑n) * (wind g : ℝ) ^ 2 := fun g => by rw [hK]; ring
+  have h := GroupoidObj.complexity_ge E wind (1 / ↑n) hα hK'
+  convert h using 2
+  have : (0 : ℝ) < n := hn0
+  field_simp
+
+theorem rank_complexity_bound (E₁ E₂ : GroupoidObj)
+    (wind₁ : End E₁.base ≃ ℤ) (wind₂ : End E₂.base ≃ ℤ)
+    (n₁ n₂ : ℕ) (hn₁ : 0 < n₁) (hn₂ : 0 < n₂)
+    (hK₁ : ∀ g, E₁.energy g = (wind₁ g : ℝ) ^ 2 / n₁)
+    (hK₂ : ∀ g, E₂.energy g = (wind₂ g : ℝ) ^ 2 / n₂) :
+    (E₁.prod E₂).complexity ≥
+    (1 / 2) * Real.log (Real.pi * n₁) + (1 / 2) * Real.log (Real.pi * n₂) := by
+  rw [GroupoidObj.prod_complexity]
+  exact add_le_add (cycle_complexity_ge E₁ wind₁ n₁ hn₁ hK₁)
+                   (cycle_complexity_ge E₂ wind₂ n₂ hn₂ hK₂)
 
 end Simplicial
