@@ -211,6 +211,8 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `GroupoidObj.complexity_ge` | C(E) ≥ (1/2) · log(π/α) for quadratic energy α·k² |
 | `cycle_complexity_ge` | C(E) ≥ (1/2) · log(πn) for cycle coupling k²/n |
 | `rank_complexity_bound` | C(E₁ × E₂) ≥ (1/2)·log(πn₁) + (1/2)·log(πn₂): each independent mode adds cost |
+| `complexity_decomposition` | C(α) = (1/2)·log(π/α) + log Z(π²/α): topology + dual residual |
+| `complexity_gap_pos` | The dual residual log Z(π²/α) > 0: the bound is never tight |
 
 ---
 

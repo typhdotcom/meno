@@ -215,4 +215,32 @@ theorem rank_complexity_bound (E₁ E₂ : GroupoidObj)
   exact add_le_add (cycle_complexity_ge E₁ wind₁ n₁ hn₁ hK₁)
                    (cycle_complexity_ge E₂ wind₂ n₂ hn₂ hK₂)
 
+/-! ## Complexity Decomposition
+
+The duality identity decomposes complexity into a topological part
+(1/2)·log(π/α), determined by the coupling alone, plus a strictly positive
+dual residual log(Z(π²/α)) that vanishes exponentially as α → 0. -/
+
+theorem complexity_decomposition (α : ℝ) (hα : 0 < α) :
+    Real.log (quadraticPartFn α) =
+    (1 / 2) * Real.log (Real.pi / α) +
+    Real.log (quadraticPartFn (Real.pi ^ 2 / α)) := by
+  have hαπ : 0 < α / Real.pi := div_pos hα Real.pi_pos
+  have hπα : 0 < Real.pi / α := div_pos Real.pi_pos hα
+  have hZ : 0 < quadraticPartFn α := lt_trans one_pos (quadraticPartFn_gt_one α hα)
+  have hpf : 0 < (α / Real.pi) ^ ((1:ℝ)/2) := Real.rpow_pos_of_pos hαπ _
+  have hlog : Real.log (quadraticPartFn (Real.pi ^ 2 / α)) =
+      (1/2) * Real.log (α / Real.pi) + Real.log (quadraticPartFn α) := by
+    rw [quadraticPartFn_duality_real α hα,
+        Real.log_mul (ne_of_gt hpf) (ne_of_gt hZ), Real.log_rpow hαπ]
+  have hsum : Real.log (Real.pi / α) + Real.log (α / Real.pi) = 0 := by
+    rw [← Real.log_mul (ne_of_gt hπα) (ne_of_gt hαπ)]
+    have : Real.pi / α * (α / Real.pi) = 1 := by field_simp
+    rw [this, Real.log_one]
+  linarith
+
+theorem complexity_gap_pos (α : ℝ) (hα : 0 < α) :
+    Real.log (quadraticPartFn (Real.pi ^ 2 / α)) > 0 :=
+  Real.log_pos (quadraticPartFn_gt_one _ (div_pos (sq_pos_of_pos Real.pi_pos) hα))
+
 end Simplicial
