@@ -50,6 +50,8 @@ Summing Boltzmann weights exp(−k²/n) over all integer winding numbers k gives
 
 The vacuum sector (k = 0) contributes weight 1. Every other sector is exponentially suppressed. Particles are rare excitations on top of an overwhelmingly dominant vacuum.
 
+The T-duality identity is the analytic shadow of a structural symmetry. For any groupoid object with quadratic energy α·k² on ℤ-endomorphisms, there is a Fourier dual with coupling π²/α — same groupoid, same topology, just the coupling flipped. Applying the duality twice returns to the original object. The analytic identity between partition functions follows from this structural involution.
+
 ### The ratchet (time)
 
 A map that collapses distinct inputs into one output destroys information. Recovering which input produced a given output costs strictly more than the forward map. This asymmetry - the ratchet - is what we experience as time.
@@ -192,6 +194,18 @@ Energy and partition functions for arbitrary finite graphs. Generalizes the cycl
 | `cycleTau_prefactor` | Modular prefactor: −iτ = 1/(πn) (positive real) |
 | `partitionFn_T_duality` | ϑ₃(iπn) = (1/(πn))^(1/2) · Z(Cₙ) (explicit T-duality) |
 
+### Duality.lean — Fourier duality on GroupoidObj
+
+Lifts the analytic T-duality identity from Theta.lean to a structural operation on groupoid objects. A groupoid object with quadratic energy α·k² on ℤ-endomorphisms has a Fourier dual with coupling π²/α — same groupoid, same winding equivalence, dual energy. The construction is involutive: dual of dual recovers the original.
+
+| Result | Statement |
+| :--- | :--- |
+| `quadraticPartFn_duality` | Z(π²/α) = (α/π)^(1/2) · Z(α) (generalized T-duality for arbitrary α > 0) |
+| `quadraticPartFn_eq_partitionFn` | Z at α = 1/n recovers the concrete Z(Cₙ) |
+| `GroupoidObj.dual` | Fourier dual construction: coupling α → π²/α |
+| `GroupoidObj.dual_partFn` | Partition function of dual = modular prefactor × original |
+| `GroupoidObj.dual_dual_equiv` | Involutivity: dual(dual(E)) ≃ E |
+
 ---
 
 ## Why not HoTT?
@@ -211,7 +225,8 @@ Meno/
 ├── Simplicial.lean   Shadow model: walks, cycles, geodesics, Hodge theory, partition function
 ├── Groupoid.lean     Fundamental groupoid, groupoid complexity, hierarchy axioms
 ├── Hodge.lean        General Hodge theory: energy, graph partition functions, Siegel theta
-└── Theta.lean        Jacobi theta identification and T-duality via Mathlib modular forms
+├── Theta.lean        Jacobi theta identification and T-duality via Mathlib modular forms
+└── Duality.lean      Fourier duality on GroupoidObj: dual construction, involutivity
 ```
 
 ---
