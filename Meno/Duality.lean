@@ -294,4 +294,64 @@ theorem dual_partFn_lt_iff (α : ℝ) (hα : 0 < α) :
   · intro h
     exact Real.rpow_lt_one (le_of_lt hαπ) (by rwa [div_lt_one Real.pi_pos]) (by norm_num)
 
+/-! ## Duality Flow
+
+The duality flow D(α) = log Z(α) - log Z(π²/α) measures asymmetry between
+an object and its Fourier dual. The complexity decomposition gives
+D(α) = (1/2)·log(π/α) in closed form. -/
+
+noncomputable def dualityFlow (α : ℝ) : ℝ :=
+  Real.log (quadraticPartFn α) - Real.log (quadraticPartFn (Real.pi ^ 2 / α))
+
+theorem duality_flow_eq (α : ℝ) (hα : 0 < α) :
+    dualityFlow α = (1 / 2) * Real.log (Real.pi / α) := by
+  unfold dualityFlow
+  linarith [complexity_decomposition α hα]
+
+theorem duality_flow_antisymmetric (α : ℝ) (hα : 0 < α) :
+    dualityFlow (Real.pi ^ 2 / α) =
+    -dualityFlow α := by
+  rw [duality_flow_eq α hα,
+      duality_flow_eq _ (div_pos (sq_pos_of_pos Real.pi_pos) hα)]
+  rw [show Real.pi / (Real.pi ^ 2 / α) = α / Real.pi from by field_simp]
+  rw [Real.log_div (ne_of_gt hα) (ne_of_gt Real.pi_pos),
+      Real.log_div (ne_of_gt Real.pi_pos) (ne_of_gt hα)]
+  ring
+
+theorem duality_flow_pos_iff (α : ℝ) (hα : 0 < α) :
+    0 < dualityFlow α ↔ α < Real.pi := by
+  rw [duality_flow_eq α hα]
+  constructor
+  · intro h
+    have hlog : 0 < Real.log (Real.pi / α) := by nlinarith
+    rwa [Real.log_pos_iff (le_of_lt (div_pos Real.pi_pos hα)),
+         one_lt_div hα] at hlog
+  · intro h
+    have := Real.log_pos ((one_lt_div hα).mpr h)
+    nlinarith
+
+theorem duality_flow_zero_iff (α : ℝ) (hα : 0 < α) :
+    dualityFlow α = 0 ↔ α = Real.pi := by
+  rw [duality_flow_eq α hα]
+  constructor
+  · intro h
+    have hlog : Real.log (Real.pi / α) = 0 := by nlinarith
+    rcases Real.log_eq_zero.mp hlog with h1 | h1 | h1
+    · linarith [div_pos Real.pi_pos hα]
+    · linarith [(div_eq_one_iff_eq (ne_of_gt hα)).mp h1]
+    · linarith [div_pos Real.pi_pos hα]
+  · intro h; subst h
+    simp [Real.log_one]
+
+/-! ## Mass Duality
+
+Geodesic mass (combinatorial, ℕ) and harmonic mass (analytic, ℝ) are reciprocal:
+their product is 1. T-duality exchanges these two measures. -/
+
+theorem mass_duality (n : ℕ) (hn : n ≥ 3) :
+    (↑(geodesicLength (CycleGraph n hn) (cycleWalk n hn)) : ℝ) * harmonicEnergy n hn = 1 := by
+  rw [cycleGraph_geodesic_eq_n, cycleGraph_harmonicEnergy]
+  have : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  field_simp
+
 end Simplicial

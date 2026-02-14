@@ -216,6 +216,12 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `GroupoidObj.self_dual` | At α = π, object ≃ its own Fourier dual (self-dual fixed point) |
 | `quadraticPartFn_self_dual_iff` | Z(π²/α) = Z(α) iff α = π: uniqueness of the self-dual coupling |
 | `dual_partFn_lt_iff` | Z(π²/α) < Z(α) iff α < π: sub-critical regime (dual is simpler) |
+| `dualityFlow` | D(α) = log Z(α) - log Z(π²/α): asymmetry between object and dual |
+| `duality_flow_eq` | D(α) = (1/2)·log(π/α): closed form from complexity decomposition |
+| `duality_flow_antisymmetric` | D(π²/α) = -D(α): the flow is antisymmetric under duality |
+| `duality_flow_pos_iff` | D(α) > 0 iff α < π: sub-critical objects outweigh their duals |
+| `duality_flow_zero_iff` | D(α) = 0 iff α = π: the self-dual point is the unique zero |
+| `mass_duality` | n · (1/n) = 1: geodesic mass × harmonic mass = 1 |
 
 ---
 
