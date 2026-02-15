@@ -14,7 +14,7 @@ Meno is a universe that minimizes the complexity of its own description. Gravity
 > Structures that resist compression persist (matter).
 > Irreversible computation accumulates (time).
 
-This is formalized at two levels of abstraction that tell the same story with different tools.
+This is formalized at two levels of abstraction that tell the same story with different tools. Dependency flows one way: the abstract framework (Basic.lean) defines what any valid physical model must satisfy, and the concrete model (Simplicial.lean, Groupoid.lean) instantiates it. The concrete level exists to demonstrate the abstract is non-vacuous — never the reverse.
 
 ---
 
