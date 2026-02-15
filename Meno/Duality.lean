@@ -1,5 +1,6 @@
 import Meno.Groupoid
 import Meno.Theta
+import Mathlib.Analysis.Real.Pi.Bounds
 
 /-! # Fourier Duality on GroupoidObj
 
@@ -342,6 +343,304 @@ theorem duality_flow_zero_iff (α : ℝ) (hα : 0 < α) :
     · linarith [div_pos Real.pi_pos hα]
   · intro h; subst h
     simp [Real.log_one]
+
+/-! ## Variational Principle
+
+The self-dual point α = π minimizes the total complexity of any dual pair:
+Z(π)² ≤ Z(α) · Z(π²/α). Equivalently, among all objects and their Fourier
+duals, the self-dual pair has the smallest combined descriptive cost. -/
+
+theorem quadraticPartFn_strictAnti :
+    StrictAntiOn quadraticPartFn (Set.Ioi 0) := by
+  intro α (hα : 0 < α) β (hβ : 0 < β) (hlt : α < β)
+  show quadraticPartFn β < quadraticPartFn α
+  simp only [quadraticPartFn]
+  exact Summable.tsum_lt_tsum (i := (1 : ℤ))
+    (fun k => Real.exp_le_exp_of_le (by nlinarith [sq_nonneg (k : ℝ)]))
+    (Real.exp_lt_exp.mpr (by push_cast; nlinarith))
+    (summable_quadraticPartFn β hβ)
+    (summable_quadraticPartFn α hα)
+
+theorem dual_pair_product (α : ℝ) (hα : 0 < α) :
+    quadraticPartFn α * quadraticPartFn (Real.pi ^ 2 / α) =
+    (α / Real.pi) ^ ((1 : ℝ) / 2) * quadraticPartFn α ^ 2 := by
+  rw [quadraticPartFn_duality_real α hα]; ring
+
+/-- Derivative of each summand: d/dβ exp(-β·k²) = -k²·exp(-β·k²). -/
+private lemma hasDerivAt_exp_neg_mul_sq (k : ℤ) (β : ℝ) :
+    HasDerivAt (fun γ => Real.exp (-γ * (k : ℝ) ^ 2))
+      (-(k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) β := by
+  have : HasDerivAt (fun γ => -γ * (k : ℝ) ^ 2) (-(1 : ℝ) * (k : ℝ) ^ 2) β :=
+    (hasDerivAt_id β).neg.mul_const _
+  convert this.exp using 1; ring
+
+private lemma summable_sq_mul_exp (β : ℝ) (hβ : 0 < β) :
+    Summable (fun k : ℤ => (k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) := by
+  have hβ2 : 0 < β / 2 := by linarith
+  have hdom : Summable (fun k : ℤ => (2 / β) * Real.exp (-(β / 2) * (k : ℝ) ^ 2)) :=
+    (summable_quadraticPartFn (β / 2) hβ2).const_smul (2 / β)
+  exact Summable.of_nonneg_of_le
+    (fun k => mul_nonneg (sq_nonneg _) (le_of_lt (Real.exp_pos _)))
+    (fun k => by
+      have h1 : β / 2 * (k : ℝ) ^ 2 ≤ Real.exp (β / 2 * (k : ℝ) ^ 2) :=
+        le_trans (by linarith [mul_nonneg (le_of_lt hβ2) (sq_nonneg (k : ℝ))])
+          (Real.add_one_le_exp _)
+      calc (k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)
+          = (2 / β) * (β / 2 * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
+            congr 1; field_simp
+        _ ≤ (2 / β) * Real.exp (β / 2 * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
+            exact mul_le_mul_of_nonneg_right
+              (mul_le_mul_of_nonneg_left h1 (by positivity)) (le_of_lt (Real.exp_pos _))
+        _ = (2 / β) * Real.exp (-(β / 2) * (k : ℝ) ^ 2) := by
+            rw [mul_assoc, ← Real.exp_add]; congr 1; ring_nf)
+    hdom
+
+private lemma hasDerivAt_quadraticPartFn (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt quadraticPartFn
+      (∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) β := by
+  unfold quadraticPartFn
+  exact hasDerivAt_tsum_of_isPreconnected
+    (g := fun (k : ℤ) (γ : ℝ) => Real.exp (-γ * (k : ℝ) ^ 2))
+    (g' := fun (k : ℤ) (γ : ℝ) => -(k : ℝ) ^ 2 * Real.exp (-γ * (k : ℝ) ^ 2))
+    (u := fun k : ℤ => (k : ℝ) ^ 2 * Real.exp (-(β / 2) * (k : ℝ) ^ 2))
+    (t := Set.Ioi (β / 2))
+    (y₀ := β)
+    (summable_sq_mul_exp (β / 2) (by linarith))
+    isOpen_Ioi
+    isPreconnected_Ioi
+    (fun k y _ => hasDerivAt_exp_neg_mul_sq k y)
+    (fun k y (hy : β / 2 < y) => by
+      show |-(k : ℝ) ^ 2 * Real.exp (-y * (k : ℝ) ^ 2)| ≤
+        (k : ℝ) ^ 2 * Real.exp (-(β / 2) * (k : ℝ) ^ 2)
+      rw [show -(k : ℝ) ^ 2 * Real.exp (-y * (k : ℝ) ^ 2) =
+          -((k : ℝ) ^ 2 * Real.exp (-y * (k : ℝ) ^ 2)) from by ring,
+          abs_neg, abs_of_nonneg (mul_nonneg (sq_nonneg _) (le_of_lt (Real.exp_pos _)))]
+      exact mul_le_mul_of_nonneg_left
+        (Real.exp_le_exp_of_le (by nlinarith [sq_nonneg (k : ℝ)]))
+        (sq_nonneg _))
+    (Set.mem_Ioi.mpr (by linarith))
+    (summable_quadraticPartFn β hβ)
+    (Set.mem_Ioi.mpr (by linarith))
+
+private lemma summable_N_summand (β : ℝ) (hβ : 0 < β) :
+    Summable (fun k : ℤ => (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2)) := by
+  have h1 := summable_quadraticPartFn β hβ
+  have h2 := (summable_sq_mul_exp β hβ).mul_left (4 * β)
+  exact (h1.sub h2).congr fun k => by ring
+
+/-- N(π) = 0: differentiating Z(π²/α) = √(α/π)·Z(α) at α = π gives ⟨k²⟩_π = 1/(4π). -/
+private lemma N_self_dual :
+    ∑' k : ℤ, (1 - 4 * Real.pi * (k : ℝ) ^ 2) *
+      Real.exp (-Real.pi * (k : ℝ) ^ 2) = 0 := by
+  set Z'π := ∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2)
+  have hπ_pos := Real.pi_pos
+  have hπ_ne := ne_of_gt hπ_pos
+  have hZ := hasDerivAt_quadraticPartFn Real.pi hπ_pos
+  have h_inv : HasDerivAt (fun α : ℝ => Real.pi ^ 2 / α) (-1) Real.pi := by
+    have h := (hasDerivAt_const Real.pi (Real.pi ^ 2)).div
+      (hasDerivAt_id Real.pi) hπ_ne
+    simp only [id] at h; convert h using 1; field_simp; ring
+  have hZ_at : HasDerivAt quadraticPartFn Z'π (Real.pi ^ 2 / Real.pi) := by
+    rwa [show Real.pi ^ 2 / Real.pi = Real.pi from by field_simp]
+  have hLHS := hZ_at.comp Real.pi h_inv
+  have h_div : HasDerivAt (fun α : ℝ => α / Real.pi) (1 / Real.pi) Real.pi := by
+    simpa using (hasDerivAt_id Real.pi).div_const Real.pi
+  have h_rpow : HasDerivAt (fun α => (α / Real.pi) ^ ((1:ℝ)/2))
+      (1 / Real.pi * ((1:ℝ)/2) * (Real.pi / Real.pi) ^ ((1:ℝ)/2 - 1)) Real.pi :=
+    h_div.rpow_const (Or.inl (ne_of_gt (div_pos hπ_pos hπ_pos)))
+  have hRHS := h_rpow.mul hZ
+  have hfun : (fun α => (α / Real.pi) ^ ((1:ℝ)/2) * quadraticPartFn α) =ᶠ[nhds Real.pi]
+      (quadraticPartFn ∘ fun α => Real.pi ^ 2 / α) := by
+    filter_upwards [eventually_gt_nhds hπ_pos] with α hα
+    exact (quadraticPartFn_duality_real α hα).symm
+  have heq := (hLHS.congr_of_eventuallyEq hfun).unique hRHS
+  simp only [div_self hπ_ne, Real.one_rpow, one_mul, mul_one] at heq
+  rw [show ∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2) = Z'π from rfl] at heq
+  field_simp at heq
+  suffices hN : ∑' k : ℤ, (1 - 4 * Real.pi * (k : ℝ) ^ 2) *
+      Real.exp (-Real.pi * (k : ℝ) ^ 2) = quadraticPartFn Real.pi + 4 * Real.pi * Z'π by
+    linarith
+  have h1 := summable_quadraticPartFn Real.pi hπ_pos
+  have h2 : Summable (fun k : ℤ =>
+      4 * Real.pi * (-(k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2))) :=
+    ((summable_sq_mul_exp Real.pi hπ_pos).neg.mul_left (4 * Real.pi)).congr fun k => by ring
+  trans (∑' k : ℤ, Real.exp (-Real.pi * (k : ℝ) ^ 2) +
+      ∑' k : ℤ, 4 * Real.pi * (-(k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2)))
+  · rw [← h1.tsum_add h2]; congr 1; ext k; ring
+  · unfold quadraticPartFn; congr 1
+    rw [show Z'π = ∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2) from rfl]
+    rw [← tsum_mul_left]
+
+/-- For A ≥ 4 and t ≥ 0: (A + 4t)·e⁻ᵗ ≤ A. Uses only e^t ≥ 1 + t and A ≥ 4. -/
+private lemma aux_exp_ineq (A t : ℝ) (hA : 4 ≤ A) (ht : 0 ≤ t) :
+    (A + 4 * t) * Real.exp (-t) ≤ A := by
+  rw [Real.exp_neg, mul_inv_le_iff₀ (Real.exp_pos t)]
+  calc A + 4 * t ≤ A + A * t := by nlinarith
+    _ = A * (1 + t) := by ring
+    _ ≤ A * Real.exp t :=
+        mul_le_mul_of_nonneg_left (by linarith [Real.add_one_le_exp t]) (by linarith)
+
+/-- Each summand of N is nondecreasing in β for β ≥ π (4π > 5 argument). -/
+private lemma N_summand_mono (k : ℤ) (β : ℝ) (hβ : Real.pi ≤ β) :
+    (1 - 4 * Real.pi * (k : ℝ) ^ 2) * Real.exp (-Real.pi * (k : ℝ) ^ 2) ≤
+    (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
+  rcases eq_or_ne k 0 with rfl | hk
+  · simp
+  · have hk2 : (1 : ℝ) ≤ (k : ℝ) ^ 2 := by
+      rcases le_or_gt k (-1) with h | h
+      · have : (k : ℝ) ≤ -1 := by exact_mod_cast h
+        nlinarith [sq_nonneg ((k : ℝ) + 1)]
+      · have : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast (by omega : 1 ≤ k)
+        nlinarith [sq_nonneg ((k : ℝ) - 1)]
+    have hA : 4 ≤ 4 * Real.pi * (k : ℝ) ^ 2 - 1 := by nlinarith [Real.pi_gt_three]
+    have ht : 0 ≤ (β - Real.pi) * (k : ℝ) ^ 2 := mul_nonneg (by linarith) (sq_nonneg _)
+    have haux := aux_exp_ineq (4 * Real.pi * (k : ℝ) ^ 2 - 1)
+      ((β - Real.pi) * (k : ℝ) ^ 2) hA ht
+    -- Factor exp(-βk²) = exp(-πk²) · exp(-(β-π)k²)
+    have hfac : Real.exp (-β * (k : ℝ) ^ 2) =
+        Real.exp (-Real.pi * (k : ℝ) ^ 2) * Real.exp (-(β - Real.pi) * (k : ℝ) ^ 2) := by
+      rw [← Real.exp_add]; congr 1; ring
+    rw [hfac]
+    -- Reduce to: (1-4πk²) ≤ (1-4βk²)·exp(-(β-π)k²), then multiply by exp(-πk²) > 0
+    suffices hsuff : 1 - 4 * Real.pi * (k : ℝ) ^ 2 ≤
+        (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-(β - Real.pi) * (k : ℝ) ^ 2) by
+      calc (1 - 4 * Real.pi * (k : ℝ) ^ 2) * Real.exp (-Real.pi * (k : ℝ) ^ 2)
+          ≤ ((1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-(β - Real.pi) * (k : ℝ) ^ 2)) *
+            Real.exp (-Real.pi * (k : ℝ) ^ 2) :=
+              mul_le_mul_of_nonneg_right hsuff (le_of_lt (Real.exp_pos _))
+        _ = (1 - 4 * β * (k : ℝ) ^ 2) *
+            (Real.exp (-Real.pi * (k : ℝ) ^ 2) *
+             Real.exp (-(β - Real.pi) * (k : ℝ) ^ 2)) := by ring
+    -- -(4πk²-1) ≤ -(4πk²-1+4(β-π)k²)·exp, follows from haux by negation
+    have hrw1 : 1 - 4 * β * (k : ℝ) ^ 2 =
+        -(4 * Real.pi * (k : ℝ) ^ 2 - 1 + 4 * ((β - Real.pi) * (k : ℝ) ^ 2)) := by ring
+    have hrw2 : -(β - Real.pi) * (k : ℝ) ^ 2 = -((β - Real.pi) * (k : ℝ) ^ 2) := by ring
+    rw [hrw1, hrw2, neg_mul]
+    linarith
+
+/-- N(β) ≥ 0 for β ≥ π: term-by-term from N(π) = 0. -/
+private lemma N_nonneg (β : ℝ) (hβ : Real.pi ≤ β) :
+    0 ≤ ∑' k : ℤ, (1 - 4 * β * (k : ℝ) ^ 2) *
+      Real.exp (-β * (k : ℝ) ^ 2) := by
+  rw [show (0 : ℝ) = ∑' k : ℤ, (1 - 4 * Real.pi * (k : ℝ) ^ 2) *
+    Real.exp (-Real.pi * (k : ℝ) ^ 2) from N_self_dual.symm]
+  exact (summable_N_summand Real.pi Real.pi_pos).tsum_le_tsum
+    (fun k => N_summand_mono k β hβ)
+    (summable_N_summand β (lt_of_lt_of_le Real.pi_pos hβ))
+
+/-- β ↦ (β/π)^{1/2}·Z(β)² is monotone on [π,∞).
+Reduces to N(β) ≥ 0 via `monotoneOn_of_deriv_nonneg` + `hasDerivAt_tsum`. -/
+private lemma quadraticPartFn_rpow_sq_monotone :
+    MonotoneOn (fun β => (β / Real.pi) ^ ((1:ℝ)/2) * quadraticPartFn β ^ 2)
+    (Set.Ici Real.pi) := by
+  have hf_at : ∀ β : ℝ, 0 < β →
+      HasDerivAt (fun α => (α / Real.pi) ^ ((1:ℝ)/2) * quadraticPartFn α ^ 2)
+        (1 / Real.pi * ((1:ℝ)/2) * (β / Real.pi) ^ ((1:ℝ)/2 - 1) *
+         quadraticPartFn β ^ 2 +
+         (β / Real.pi) ^ ((1:ℝ)/2) *
+         (↑2 * quadraticPartFn β ^ (2 - 1) *
+          (∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2))))
+        β := fun β hβ =>
+    (((hasDerivAt_id β).div_const Real.pi).rpow_const
+      (Or.inl (ne_of_gt (div_pos hβ Real.pi_pos)))).mul
+      ((hasDerivAt_quadraticPartFn β hβ).pow 2)
+  apply monotoneOn_of_deriv_nonneg (convex_Ici _)
+  · exact fun β hβ => (hf_at β (lt_of_lt_of_le Real.pi_pos hβ)).differentiableAt.continuousAt.continuousWithinAt
+  · rw [interior_Ici]; exact fun β hβ => (hf_at β (lt_trans Real.pi_pos hβ)).differentiableAt.differentiableWithinAt
+  · rw [interior_Ici]; intro β hβ
+    have hβ_pos : 0 < β := lt_trans Real.pi_pos hβ
+    have hβπ : 0 < β / Real.pi := div_pos hβ_pos Real.pi_pos
+    rw [(hf_at β hβ_pos).deriv]
+    simp only [show (2:ℕ) - 1 = 1 from rfl, pow_one]
+    set c := (β / Real.pi) ^ ((1:ℝ)/2) with hc_def
+    set ci := (β / Real.pi) ^ ((1:ℝ)/2 - 1) with hci_def
+    set Zβ := quadraticPartFn β
+    set Z'β := ∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)
+    have hc_pos : 0 < c := Real.rpow_pos_of_pos hβπ _
+    have hc_ci : c * ci = 1 := by
+      simp only [hc_def, hci_def]
+      rw [← Real.rpow_add hβπ, show (1:ℝ)/2 + ((1:ℝ)/2 - 1) = 0 from by ring,
+         Real.rpow_zero]
+    have hc_sq : c * c = β / Real.pi := by
+      simp only [hc_def]
+      rw [← Real.rpow_add hβπ, show (1:ℝ)/2 + (1:ℝ)/2 = 1 from by norm_num,
+         Real.rpow_one]
+    have hZ_pos : 0 < Zβ := lt_trans one_pos (quadraticPartFn_gt_one β hβ_pos)
+    have hπ_ne := ne_of_gt Real.pi_pos
+    have hNβ : 0 ≤ Zβ + 4 * β * Z'β := by
+      have hN := N_nonneg β (le_of_lt hβ)
+      rw [show Zβ + 4 * β * Z'β =
+          ∑' k : ℤ, (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) from by
+        show quadraticPartFn β + 4 * β *
+            (∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) =
+            ∑' k : ℤ, (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2)
+        unfold quadraticPartFn; rw [← tsum_mul_left]
+        rw [← (summable_quadraticPartFn β hβ_pos).tsum_add
+            (((summable_sq_mul_exp β hβ_pos).neg.mul_left (4 * β)).congr fun k => by ring)]
+        congr 1; ext k; ring]
+      exact hN
+    suffices h : 0 ≤ 2 * Real.pi * c *
+        (1 / Real.pi * (1 / 2) * ci * Zβ ^ 2 + c * (2 * Zβ * Z'β)) by
+      exact nonneg_of_mul_nonneg_right h
+        (mul_pos (mul_pos two_pos Real.pi_pos) hc_pos)
+    have hring : 2 * Real.pi * c *
+        (1 / Real.pi * (1 / 2) * ci * Zβ ^ 2 + c * (2 * Zβ * Z'β)) =
+        c * ci * Zβ ^ 2 + 4 * Real.pi * (c * c) * Zβ * Z'β := by
+      field_simp; ring
+    rw [hring, hc_ci, hc_sq]
+    have hfinal : 1 * Zβ ^ 2 + 4 * Real.pi * (β / Real.pi) * Zβ * Z'β =
+        Zβ * (Zβ + 4 * β * Z'β) := by field_simp
+    rw [hfinal]
+    exact mul_nonneg (le_of_lt hZ_pos) hNβ
+
+set_option maxHeartbeats 800000 in
+private lemma quadraticPartFn_self_dual_minimum (α : ℝ) (hα : 0 < α) :
+    quadraticPartFn Real.pi ^ 2 ≤
+    (α / Real.pi) ^ ((1 : ℝ) / 2) * quadraticPartFn α ^ 2 := by
+  suffices h : ∀ β : ℝ, β ≥ Real.pi → quadraticPartFn Real.pi ^ 2 ≤
+      (β / Real.pi) ^ ((1 : ℝ) / 2) * quadraticPartFn β ^ 2 by
+    by_cases hle : α ≥ Real.pi
+    · exact h α hle
+    · push_neg at hle
+      have hβ := h (Real.pi ^ 2 / α) (by rw [ge_iff_le, le_div_iff₀ hα]; nlinarith [Real.pi_pos])
+      rw [quadraticPartFn_duality_real α hα] at hβ
+      convert hβ using 1
+      have hπ : Real.pi > 0 := Real.pi_pos
+      have hαπ : 0 < α / Real.pi := div_pos hα hπ
+      have hsimp : Real.pi ^ 2 / α / Real.pi = Real.pi / α := by field_simp
+      rw [hsimp, mul_pow]
+      have hsq : ((α / Real.pi) ^ ((1:ℝ)/2)) ^ 2 = α / Real.pi := by
+        rw [← Real.rpow_natCast, ← Real.rpow_mul (le_of_lt hαπ)]; norm_num
+      rw [hsq]
+      suffices hkey : (Real.pi / α) ^ ((1:ℝ)/2) * (α / Real.pi) = (α / Real.pi) ^ ((1:ℝ)/2) by
+        nlinarith [sq_nonneg (quadraticPartFn α)]
+      have step1 : (Real.pi / α) ^ ((1:ℝ)/2) = ((α / Real.pi) ^ ((1:ℝ)/2))⁻¹ := by
+        rw [show (Real.pi / α : ℝ) = (α / Real.pi)⁻¹ from (inv_div α Real.pi).symm]
+        exact Real.inv_rpow (le_of_lt hαπ) _
+      set x := (α / Real.pi) ^ ((1:ℝ)/2) with hx_def
+      have hx : 0 < x := Real.rpow_pos_of_pos hαπ _
+      rw [step1, ← hsq, show x⁻¹ * x ^ 2 = x from by
+        rw [sq, ← mul_assoc, inv_mul_cancel₀ (ne_of_gt hx), one_mul]]
+  intro β hβ
+  have hπ_mem : Real.pi ∈ Set.Ici Real.pi := Set.left_mem_Ici
+  have hβ_mem : β ∈ Set.Ici Real.pi := hβ
+  have hmono := quadraticPartFn_rpow_sq_monotone hπ_mem hβ_mem hβ
+  simp only [div_self (ne_of_gt Real.pi_pos), Real.one_rpow, one_mul] at hmono
+  exact hmono
+
+theorem dual_pair_variational (α : ℝ) (hα : 0 < α) :
+    quadraticPartFn Real.pi ^ 2 ≤
+    quadraticPartFn α * quadraticPartFn (Real.pi ^ 2 / α) := by
+  rw [dual_pair_product α hα]
+  exact quadraticPartFn_self_dual_minimum α hα
+
+theorem GroupoidObj.dual_pair_variational
+    (E : GroupoidObj) (wind : End E.base ≃ ℤ) (α : ℝ) (hα : 0 < α)
+    (hK : ∀ g, E.energy g = α * (wind g : ℝ) ^ 2) :
+    quadraticPartFn Real.pi ^ 2 ≤ E.partFn * (E.dual wind α hα hK).partFn := by
+  rw [partFn_eq_quadraticPartFn E wind α hK,
+      partFn_eq_quadraticPartFn (E.dual wind α hα hK) wind _ (fun _ => rfl)]
+  exact Simplicial.dual_pair_variational α hα
 
 /-! ## Mass Duality
 

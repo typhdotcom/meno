@@ -196,7 +196,7 @@ Energy and partition functions for arbitrary finite graphs. Generalizes the cycl
 
 ### Duality.lean — Fourier duality on GroupoidObj
 
-Lifts the analytic T-duality identity from Theta.lean to a structural operation on groupoid objects. A groupoid object with quadratic energy α·k² on ℤ-endomorphisms has a Fourier dual with coupling π²/α — same groupoid, same winding equivalence, dual energy. The construction is involutive: dual of dual recovers the original.
+Lifts the analytic T-duality identity from Theta.lean to a structural operation on groupoid objects. A groupoid object with quadratic energy α·k² on ℤ-endomorphisms has a Fourier dual with coupling π²/α — same groupoid, same winding equivalence, dual energy. The construction is involutive: dual of dual recovers the original. The self-dual coupling α = π is not just a fixed point but a minimum: among all dual pairs, the self-dual pair has the smallest combined partition function. Complexity minimization selects self-duality.
 
 | Result | Statement |
 | :--- | :--- |
@@ -221,6 +221,8 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `duality_flow_antisymmetric` | D(π²/α) = -D(α): the flow is antisymmetric under duality |
 | `duality_flow_pos_iff` | D(α) > 0 iff α < π: sub-critical objects outweigh their duals |
 | `duality_flow_zero_iff` | D(α) = 0 iff α = π: the self-dual point is the unique zero |
+| `dual_pair_variational` | Z(π)² ≤ Z(α)·Z(π²/α): the self-dual pair minimizes joint descriptive cost |
+| `GroupoidObj.dual_pair_variational` | Lifted to groupoid objects: self-dual pair is optimal among all dual pairs |
 | `mass_duality` | n · (1/n) = 1: geodesic mass × harmonic mass = 1 |
 
 ---
