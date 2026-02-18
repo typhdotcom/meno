@@ -78,13 +78,13 @@ The constitutive laws of the Meno universe. Any concrete model (simplicial or ot
 
 | Result | Status |
 | :--- | :--- |
-| Refactoring bound: K(A ×_D B) ≤ K(D) + sup fibers | **Theorem** (from level 2) |
+| Refactoring bound: K(A ×_D B) ≤ K(D) + sup_d (K(Fiber f d) + K(Fiber g d)); coarse corollary K(D)+sup K(Fiber f)+sup K(Fiber g) | **Theorem** (from level 2) |
 | Gravity: K(Pullback f g) + K(D) = K(A) + K(B) for any f, g with uniform fibers | **Theorem** (from level 3) |
 | Log-cardinality instance: C(A) = log\|A\| satisfies all three levels (`Instances.lean`) | **Instance** (AdditiveComplexity ℝ≥0∞) |
 
 **Domain-generic additive complexity (`AdditiveComplexityOn D M`):**
 
-The algebraic core factored out of `AdditiveComplexity`: a unit, equivalence, product, and the laws making C a monoid homomorphism into (M, +). The type-level hierarchy implies this class (`instAdditiveComplexityOnType`), and groupoid complexity instantiates it independently on `GroupoidObj`. Theorems derived from this class alone apply to both models:
+The algebraic core factored out of `AdditiveComplexity`: a unit, an equivalence notion (used by `congr`), a product, and the laws making C a monoid homomorphism into (M, +). The type-level hierarchy implies this class (`instAdditiveComplexityOnType`), and groupoid complexity instantiates it independently on `GroupoidObj`.
 
 | Result | Statement |
 | :--- | :--- |
@@ -102,6 +102,7 @@ The algebraic core factored out of `AdditiveComplexity`: a unit, equivalence, pr
 | `injective_reversible` | Injective maps are losslessly reversible: equal cost in both directions |
 
 The Landauer cost model (`transitionCost f = if Injective f then 2 else 1`) provides a concrete instance. Any right-inverse of a non-injective map is injective (since f ∘ r = id implies r is injective), so the ratchet follows: cost(r) = 2 > 1 = cost(f).
+In `Simplicial.lean`, the primary quantitative ratchet is Hodge-theoretic: the harmonic term is the reversible floor and the residual term is the irreversible reconstruction premium.
 
 ### Simplicial.lean — the shadow model
 
@@ -117,6 +118,8 @@ Lean's Axiom K makes types topologically blind, so the abstract K can only see c
 | `binding_releases_mass` | When a cycle contracts in the union, binding energy = full cycle complexity |
 | `simplicial_gravity` | Corollary: non-contractible + contracts in union → binding > 0 |
 | `matter_noncontractible` | Positive mass implies non-contractibility |
+| `cycleLoop_windingCount_zero_contractible` | Any cycle-graph loop with windingCount 0 contracts to nil |
+| `cycleLoopWinding_complete` | Loop classes on `C_n` are complete for winding: same sector implies homotopic |
 
 **Hodge theory and the harmonic form:**
 
@@ -129,6 +132,9 @@ Lean's Axiom K makes types topologically blind, so the abstract K can only see c
 | `energy_ge_winding_sq` | Energy ≥ w²/n for winding w (from Hodge + non-negativity) |
 | `cycleGraph_harmonicEnergy` | Minimum energy over winding-1 cochains = 1/n |
 | `cycleGraph_harmonicEnergy_k` | Instanton spectrum: min energy in sector k = k²/n |
+| `cycleLoopClassHodgeEnergy_eq_winding_sq` | Loop-class Hodge energy is exactly winding-square over n |
+| `winding_section_energy_sum_ge` | Any section over finitely many winding classes pays at least summed harmonic floor |
+| `winding_section_energy_Icc_unbounded` | Asymptotic ratchet: section energy on `[-N,N]` is unbounded (diverges with window size) |
 | `hodge_minimizer_eq` | Instanton uniqueness: min-energy cochain = k·h (unique ground state) |
 | `cycleEC1_harmonic_eq_smul` | **b₁(C_n) = 1**: every harmonic edge-supported form is proportional to h |
 
@@ -152,7 +158,12 @@ Lean's Axiom K makes types topologically blind, so the abstract K can only see c
 | `Complex.union` | Union of two complexes |
 | `bettiOneZ_cycleGraph` | bettiOneZ(C_n) = 2: the Euler defect matches 2·b₁ on connected cycles |
 | `bettiOneZ_mayer_vietoris` | bettiOneZ(A ∪ B) + bettiOneZ(A ∩ B) = bettiOneZ(A) + bettiOneZ(B) (Euler inclusion-exclusion) |
-| `geodesic_computation_is_lossy` | Quotient map to homotopy classes is non-injective |
+| `geodesic_computation_is_lossy` | Baseline non-injectivity statement (strictly weaker than the Hodge/section quantitative ratchet) |
+| `homotopyClass₂_unbounded_fiber` | Quantitative lossiness: arbitrarily long loops collapse to the trivial homotopy class when a bidirectional edge exists |
+| `homotopyClass₂_unbounded_fiber_at` | Uniform per-class version: any fixed homotopy class has arbitrarily long representatives |
+| `homotopyClass₂_unbounded_fiber_uniform` | Class-uniform formulation over all classes at a basepoint |
+| `cycleLoopWinding_fiber_unbounded_length` | On `C_n`, each winding sector k has arbitrarily long loop representatives |
+| `geodesicLength_unbounded_gap` | Arbitrarily long loops can have geodesic length 0 (unbounded raw-length overestimate) |
 | `simplicial_ratchet` | Any section of the quotient costs strictly more than the forward map (TransitionComplexity applied) |
 
 ### Groupoid.lean — the bridge
@@ -161,17 +172,36 @@ The fundamental groupoid of a symmetric 2-complex: objects = vertices, morphisms
 
 Complexity is defined on groupoid objects via the partition function over automorphisms: C(x) = log Σ exp(-K(g)), where K is the energy function on End(x). This gives an `AdditiveComplexityOn GroupoidObj ℝ` instance — the same domain-generic class that the type-level hierarchy implies via `instAdditiveComplexityOnType`. The algebraic gravity theorem from Basic.lean applies to groupoid objects through this instance.
 
+`GroupoidObj.Equiv` now requires a multiplicative equivalence `End(x) ≃* End(y)` (composition-preserving), plus energy preservation.
+
 | Basic.lean class field | Groupoid proof | Statement |
 | :--- | :--- | :--- |
 | `unit_zero` | `GroupoidObj.trivial_complexity` | Trivial Aut → C = 0 |
 | `congr` | `GroupoidObj.congr_complexity` | Aut equivalence preserving energy → equal C |
 | `prod_add` | `GroupoidObj.prod_complexity` | Factoring Z → additive C |
+| `sigma_le` (finite-index analogue; not a `SigmaComplexity` instance) | `GroupoidObj.sigmaComplexity_le_logCard_max` | `log (∑ partFn) ≤ log |D| + max fiber complexity` |
 
 | Result | Statement |
 | :--- | :--- |
 | `simplicialGroupoid` | Groupoid instance on any symmetric 2-complex |
+| `cycleLoopWindingClass` | Canonical winding-sector map on cycle loop classes: HomotopyClass₂(C_n,v,v) → ℤ |
+| `cycleLoopWinding_surjective_at` | Every integer sector is realized by an explicit loop at any vertex (`cycleTurnLoopIntAt`) |
+| `cycleLoopWinding_surjective` | Every integer sector is realized by an explicit basepoint loop (`cycleTurnLoopInt`) |
+| `cycleLoopClassEquivInt` | Unconditional classification: HomotopyClass₂(C_n,v,v) ≃ ℤ |
+| `cycleLoopClassEquivInt_base` | Basepoint specialization of `cycleLoopClassEquivInt` |
 | `groupoidPartitionFn_pos` | Z > 0 (sum of exponentials) |
+| `GroupoidObj.sigmaPartFn` | Finite-family sigma partition function `∑ d, partFn(P d)` |
+| `GroupoidObj.sigmaComplexity` | Finite-family sigma complexity `log (∑ d, partFn(P d))` (finite-index analogue) |
+| `GroupoidObj.sigmaComplexity_le_logCard_max` | Finite sigma bound: `≤ log |D| + max_d complexity(P d)` |
+| `GroupoidObj.sigmaComplexity_sigma_le_logCard_max` | Dependent sigma-style bound: `C(Σ d, P d) ≤ log|D| + max_d C(P d)` (finite-index) |
+| `GroupoidObj.sigmaComplexity_pullback_le_logCard_maxFiber` | Pullback-index finite sigma bound via `Pullback ≃ Σ d, FiberProd f g d` |
+| `GroupoidObj.sigmaComplexity_prod_family_le_logCard_max_pair` | Fiberwise product-family bound: `≤ log |D| + max_d (C(P d)+C(Q d))` |
+| `GroupoidObj.sigmaComplexity_prod_family_le_logCard_max_split` | Coarse decoupled bound: `≤ log |D| + max_d C(P d) + max_d C(Q d)` |
 | `cycleGroupoid_partitionFn_eq` | Winding classification recovers Z(C_n) |
+| `cycleCanonicalEnergy` | Canonical energy on `End(x)` defined from Hodge sector infimum on loop classes |
+| `summable_cycleCanonicalEnergy` | Summability of canonical cycle weights, derived via the canonical `End(x) ≃ ℤ` equivalence |
+| `cycleGroupoid_partitionFn_eq_canonical_energy` | Canonical partition identity with no extra hypotheses (`hK`, `hsum`) |
+| `cycleGroupoid_partitionFn_eq_base_canonical_energy` | Basepoint specialization with no extra hypotheses |
 
 ### Hodge.lean — general Hodge theory
 
@@ -210,6 +240,9 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `complexity_rank_bound` | log Z(α) ≥ (1/2) · log(π/α) for coupling α > 0 |
 | `GroupoidObj.complexity_ge` | C(E) ≥ (1/2) · log(π/α) for quadratic energy α·k² |
 | `cycle_complexity_ge` | C(E) ≥ (1/2) · log(πn) for cycle coupling k²/n |
+| `cycleCanonicalObj` | Canonical cycle `GroupoidObj` (basepoint + derived canonical energy + derived summability) |
+| `cycleCanonicalObj_partFn_eq_partitionFn` | Canonical cycle object has partFn = partitionFn with no external `hK`/`hsum` |
+| `cycleCanonicalObj_complexity_ge` | Canonical cycle object satisfies C ≥ (1/2)·log(πn) with no external `hK` |
 | `rank_complexity_bound` | C(E₁ × E₂) ≥ (1/2)·log(πn₁) + (1/2)·log(πn₂): each independent mode adds cost |
 | `complexity_decomposition` | C(α) = (1/2)·log(π/α) + log Z(π²/α): topology + dual residual |
 | `complexity_gap_pos` | The dual residual log Z(π²/α) > 0: the bound is never tight |

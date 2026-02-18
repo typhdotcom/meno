@@ -88,28 +88,50 @@ lemma fiberProd_le (d : D) :
     inst.C (FiberProd f g d) ≤ inst.C (Fiber f d) + inst.C (Fiber g d) :=
   inst.prod_le _ _
 
-/-- **The Refactoring Bound**: pullback ≤ base + sup fibers.
-    C(A ×_D B) ≤ C(D) + sup_d C(Fiber f d) + sup_d C(Fiber g d) -/
+/-- **Sharp refactoring bound**: pullback ≤ base + supremum of paired fiber costs.
+    C(A ×_D B) ≤ C(D) + sup_d (C(Fiber f d) + C(Fiber g d)). -/
+theorem refactoring_bound_fiberwise
+    (hfg : BddAbove (Set.range fun d => inst.C (Fiber f d) + inst.C (Fiber g d)))
+    (hne : Nonempty D) :
+    inst.C (Pullback f g) ≤
+      inst.C D + (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) := by
+  rw [pullback_complexity_eq]
+  have key : ⨆ d, inst.C (FiberProd f g d) ≤ ⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d)) := by
+    apply csSup_le (Set.range_nonempty _)
+    rintro _ ⟨d, rfl⟩
+    exact (fiberProd_le f g d).trans (le_csSup hfg (Set.mem_range_self d))
+  calc inst.C (Σ d, FiberProd f g d)
+      ≤ inst.C D + ⨆ d, inst.C (FiberProd f g d) := inst.sigma_le D _
+    _ ≤ inst.C D + (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) :=
+        add_le_add_right key _
+
+/-- Coarse refactoring bound obtained by decoupling the two fiber suprema. -/
 theorem refactoring_bound
     (hf : BddAbove (Set.range fun d => inst.C (Fiber f d)))
     (hg : BddAbove (Set.range fun d => inst.C (Fiber g d)))
     (hne : Nonempty D) :
     inst.C (Pullback f g) ≤
       inst.C D + (⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)) := by
-  rw [pullback_complexity_eq]
-  have key : ⨆ d, inst.C (FiberProd f g d) ≤
-             (⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)) := by
+  have hfg : BddAbove (Set.range fun d => inst.C (Fiber f d) + inst.C (Fiber g d)) := by
+    refine ⟨(⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)), ?_⟩
+    rintro _ ⟨d, rfl⟩
+    exact add_le_add (le_csSup hf (Set.mem_range_self d))
+      (le_csSup hg (Set.mem_range_self d))
+  have hsharp := refactoring_bound_fiberwise (f := f) (g := g) hfg hne
+  have hsplit : (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) ≤
+      (⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)) := by
     apply csSup_le (Set.range_nonempty _)
     rintro _ ⟨d, rfl⟩
-    calc inst.C (FiberProd f g d)
-        ≤ inst.C (Fiber f d) + inst.C (Fiber g d) := fiberProd_le f g d
-      _ ≤ (⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)) :=
-          add_le_add (le_csSup hf (Set.mem_range_self d))
-                     (le_csSup hg (Set.mem_range_self d))
-  calc inst.C (Σ d, FiberProd f g d)
-      ≤ inst.C D + ⨆ d, inst.C (FiberProd f g d) := inst.sigma_le D _
+    exact add_le_add (le_csSup hf (Set.mem_range_self d))
+      (le_csSup hg (Set.mem_range_self d))
+  have hsplit' :
+      inst.C D + (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) ≤
+      inst.C D + ((⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d))) := by
+    simpa [add_assoc, add_comm, add_left_comm] using add_le_add_right hsplit (inst.C D)
+  calc inst.C (Pullback f g)
+      ≤ inst.C D + (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) := hsharp
     _ ≤ inst.C D + ((⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d))) :=
-        add_le_add_right key _
+        hsplit'
     _ = inst.C D + (⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)) := by
         rw [add_assoc]
 

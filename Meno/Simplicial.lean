@@ -46,6 +46,15 @@ def Walk.append : Walk G u v → Walk G v w → Walk G u w
   | .nil _, q => q
   | .cons h p, q => .cons h (p.append q)
 
+/-- Length is additive under concatenation. -/
+@[simp] theorem Walk.length_append {G : Graph V} :
+    (p : Walk G u v) → (q : Walk G v w) →
+    (p.append q).length = p.length + q.length
+  | .nil _, q => by simp [Walk.append, Walk.length]
+  | .cons h p, q => by
+      simp [Walk.append, Walk.length, Walk.length_append p q]
+      omega
+
 /-- A cycle: a non-trivial loop. -/
 structure Cycle (G : Graph V) (v : V) where
   walk : Walk G v v
@@ -402,7 +411,112 @@ theorem windingCount_abs_le_length {n : ℕ} {hn : n ≥ 3}
       _ ≤ 1 + tail.length := by omega
       _ = tail.length + 1 := by omega
 
+/-! ## Winding Arithmetic on `ZMod n` -/
+
+/-- One edge step in `CycleGraph` adds `edgeDir` in `ZMod n`. -/
+lemma edgeDir_zmod_step {n : ℕ} {hn : n ≥ 3} {i j : Fin n}
+    (h : (CycleGraph n hn).edge i j) :
+    (j : ZMod n) = (i : ZMod n) + (edgeDir n hn i j h : ℤ) := by
+  rcases h with hf | hb
+  · subst hf
+    simp [edgeDir, cycleNext]
+  · have hforw : (i : ZMod n) = (j : ZMod n) + (1 : ℤ) := by
+      rw [hb]
+      simp [cycleNext]
+    have hnot : ¬j = cycleNext n hn i := cycleNext_not_both n hn j i hb
+    have hed : edgeDir n hn i j (Or.inr hb) = -1 := by
+      simp [edgeDir, hnot]
+    calc
+      (j : ZMod n) = (i : ZMod n) + (-1 : ℤ) := by
+        calc
+          (j : ZMod n) = (j : ZMod n) + (1 : ℤ) + (-1 : ℤ) := by ring
+          _ = (i : ZMod n) + (-1 : ℤ) := by simp [hforw, add_assoc]
+      _ = (i : ZMod n) + (edgeDir n hn i j (Or.inr hb) : ℤ) := by rw [hed]
+
+/-- Endpoint formula: a walk's endpoint equals start plus total winding in `ZMod n`. -/
+theorem Walk.endpoint_zmod_eq_start_add_winding {n : ℕ} {hn : n ≥ 3}
+    {s t : Fin n} (p : Walk (CycleGraph n hn).toGraph s t) :
+    (t : ZMod n) = (s : ZMod n) + (p.windingCount : ℤ) := by
+  induction p with
+  | nil _ => simp [Walk.windingCount]
+  | @cons v w x h tail ih =>
+    calc
+      (x : ZMod n) = (w : ZMod n) + (tail.windingCount : ℤ) := ih
+      _ = ((v : ZMod n) + (edgeDir n hn v w h : ℤ)) + (tail.windingCount : ℤ) := by
+            rw [edgeDir_zmod_step (n := n) (hn := hn) h]
+      _ = (v : ZMod n) + ((edgeDir n hn v w h : ℤ) + (tail.windingCount : ℤ)) := by
+            abel
+      _ = (v : ZMod n) + ((Walk.cons h tail).windingCount : ℤ) := by
+            simp [Walk.windingCount]
+
+/-- For a loop on `C_n`, winding count is divisible by `n`. -/
+theorem Walk.windingCount_dvd_card {n : ℕ} {hn : n ≥ 3} {s : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s s) :
+    (n : ℤ) ∣ p.windingCount := by
+  have hz : ((p.windingCount : ℤ) : ZMod n) = 0 := by
+    have h := Walk.endpoint_zmod_eq_start_add_winding (n := n) (hn := hn) p
+    have h' := congrArg (fun z : ZMod n => z - (s : ZMod n)) h
+    simpa [sub_eq_add_neg, add_assoc, add_comm, add_left_comm] using h'.symm
+  exact (ZMod.intCast_zmod_eq_zero_iff_dvd p.windingCount n).1 hz
+
+/-- Integer winding sector for loops on `C_n` (full turns, not edge count). -/
+def Walk.loopWinding {n : ℕ} {hn : n ≥ 3} {s : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s s) : ℤ :=
+  p.windingCount / (n : ℤ)
+
+/-- Loop edge winding decomposes as `loopWinding * n`. -/
+theorem Walk.windingCount_eq_loopWinding_mul_card {n : ℕ} {hn : n ≥ 3} {s : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s s) :
+    p.windingCount = p.loopWinding * n := by
+  unfold Walk.loopWinding
+  simpa [mul_comm] using
+    (Int.ediv_mul_cancel (Walk.windingCount_dvd_card (n := n) (hn := hn) p)).symm
+
+/-- Loop winding sector is homotopy invariant on `C_n`. -/
+theorem loopWinding_homotopy_invariant {n : ℕ} {hn : n ≥ 3} {s : Fin n}
+    {p q : Walk (CycleGraph n hn).toGraph s s}
+    (h : Homotopic₂ (CycleGraph n hn) p q) :
+    p.loopWinding = q.loopWinding := by
+  unfold Walk.loopWinding
+  rw [windingCount_homotopy_invariant h]
+
+/-- Winding count is additive under walk concatenation. -/
+@[simp] theorem Walk.windingCount_append {n : ℕ} {hn : n ≥ 3}
+    {s t r : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s t)
+    (q : Walk (CycleGraph n hn).toGraph t r) :
+    (p.append q).windingCount = p.windingCount + q.windingCount := by
+  induction p with
+  | nil _ => simp [Walk.append, Walk.windingCount]
+  | cons h tail ih =>
+    simp [Walk.append, Walk.windingCount, ih, add_assoc]
+
 /-! ## Canonical Cycle Walk -/
+
+/-- Repeat a loop by concatenation. -/
+def Walk.repeatLoop {G : Graph V} {v : V} (p : Walk G v v) : ℕ → Walk G v v
+  | 0 => Walk.nil v
+  | k + 1 => p.append (Walk.repeatLoop p k)
+
+/-- Length of a repeated loop. -/
+theorem Walk.repeatLoop_length {G : Graph V} {v : V} (p : Walk G v v) :
+    ∀ k : ℕ, (Walk.repeatLoop p k).length = k * p.length
+  | 0 => by simp [Walk.repeatLoop, Walk.length]
+  | k + 1 => by
+      simp [Walk.repeatLoop, Walk.repeatLoop_length p k, Nat.succ_mul]
+      omega
+
+/-- Winding count of a repeated cycle-graph loop. -/
+theorem Walk.repeatLoop_windingCount {n : ℕ} {hn : n ≥ 3} {s : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s s) :
+    ∀ k : ℕ, (Walk.repeatLoop p k).windingCount = (k : ℤ) * p.windingCount
+  | 0 => by simp [Walk.repeatLoop, Walk.windingCount]
+  | k + 1 => by
+      simp [Walk.repeatLoop, Walk.windingCount_append, repeatLoop_windingCount p k]
+      ring
+
+/-- Base vertex used for canonical cycle loops. -/
+abbrev cycleBase (n : ℕ) (hn : n ≥ 3) : Fin n := ⟨0, by omega⟩
 
 /-- Forward walk from vertex i through k steps, as a sigma type. -/
 def cycleForwardWalkAux (n : ℕ) (hn : n ≥ 3) :
@@ -442,28 +556,285 @@ lemma cycleForwardWalkAux_windingCount (n : ℕ) (hn : n ≥ 3) (k : ℕ) (i : F
 def Walk.castEnd {G : Graph V} {a b c : V} (h : b = c) (p : Walk G a b) : Walk G a c :=
   h ▸ p
 
+def Walk.castStart {G : Graph V} {a b c : V} (h : a = b) (p : Walk G a c) : Walk G b c :=
+  h ▸ p
+
 @[simp] lemma Walk.castEnd_length {G : Graph V} {a b c : V} (h : b = c) (p : Walk G a b) :
     (p.castEnd h).length = p.length := by subst h; rfl
+
+@[simp] lemma Walk.castStart_length {G : Graph V} {a b c : V} (h : a = b) (p : Walk G a c) :
+    (p.castStart h).length = p.length := by subst h; rfl
 
 @[simp] lemma Walk.castEnd_windingCount {n : ℕ} {hn : n ≥ 3} {s t r : Fin n}
     (h : t = r) (p : Walk (CycleGraph n hn).toGraph s t) :
     (p.castEnd h).windingCount = p.windingCount := by subst h; rfl
 
-/-- The canonical cycle walk: 0 → 1 → 2 → ... → (n-1) → 0. -/
-def cycleWalk (n : ℕ) (hn : n ≥ 3) :
-    Walk (CycleGraph n hn).toGraph (⟨0, by omega⟩ : Fin n) ⟨0, by omega⟩ :=
-  (cycleForwardWalkAux n hn n ⟨0, by omega⟩).2.castEnd
+@[simp] lemma Walk.castStart_windingCount {n : ℕ} {hn : n ≥ 3} {s t r : Fin n}
+    (h : s = t) (p : Walk (CycleGraph n hn).toGraph s r) :
+    (p.castStart h).windingCount = p.windingCount := by subst h; rfl
+
+/-- No immediate cancellation pair `a→b→a` appears in the walk. -/
+inductive Walk.NoBacktrack {G : Graph V} : Walk G u v → Prop
+  | nil (a : V) : Walk.NoBacktrack (Walk.nil (G := G) a)
+  | cons_nil {a b : V} (h : G.edge a b) :
+      Walk.NoBacktrack (Walk.cons h (Walk.nil b))
+  | cons_cons {a b c d : V}
+      (h₁ : G.edge a b) (h₂ : G.edge b c) (tail : Walk G c d)
+      (hneq : c ≠ a)
+      (hrest : Walk.NoBacktrack (Walk.cons h₂ tail)) :
+      Walk.NoBacktrack (Walk.cons h₁ (Walk.cons h₂ tail))
+
+theorem Walk.NoBacktrack.tail {G : Graph V} {a b c : V}
+    {h : G.edge a b} {p : Walk G b c}
+    (hnb : Walk.NoBacktrack (Walk.cons h p)) :
+    Walk.NoBacktrack p := by
+  cases p with
+  | nil _ =>
+      exact Walk.NoBacktrack.nil _
+  | @cons b c d h₂ tail =>
+      cases hnb with
+      | cons_cons _ _ _ _ hrest => exact hrest
+
+lemma edgeDir_ne_zero {n : ℕ} {hn : n ≥ 3} {i j : Fin n}
+    (h : (CycleGraph n hn).edge i j) :
+    edgeDir n hn i j h ≠ 0 := by
+  unfold edgeDir
+  split <;> omega
+
+lemma edgeDir_eq_of_not_backtrack {n : ℕ} {hn : n ≥ 3}
+    {a b c : Fin n}
+    (h₁ : (CycleGraph n hn).edge a b)
+    (h₂ : (CycleGraph n hn).edge b c)
+    (hneq : c ≠ a) :
+    edgeDir n hn b c h₂ = edgeDir n hn a b h₁ := by
+  rcases h₁ with hf₁ | hb₁
+  · rcases h₂ with hf₂ | hb₂
+    · simp [edgeDir, hf₁, hf₂]
+    · exfalso
+      have ha : a = cyclePrev n hn b :=
+        (eq_cycleNext_iff_cyclePrev n hn b a).1 hf₁
+      have hc : c = cyclePrev n hn b :=
+        (eq_cycleNext_iff_cyclePrev n hn b c).1 hb₂
+      exact hneq (hc.trans ha.symm)
+  · rcases h₂ with hf₂ | hb₂
+    · exfalso
+      exact hneq (hf₂.trans hb₁.symm)
+    · have hnot₁ : ¬b = cycleNext n hn a := cycleNext_not_both n hn b a hb₁
+      have hnot₂ : ¬c = cycleNext n hn b := cycleNext_not_both n hn c b hb₂
+      simp [edgeDir, hnot₁, hnot₂]
+
+/-- Greedy normalization by canceling immediate backtracks at the head. -/
+def Walk.normalizeCycle {n : ℕ} {hn : n ≥ 3}
+    {s t : Fin n} :
+    Walk (CycleGraph n hn).toGraph s t →
+      Walk (CycleGraph n hn).toGraph s t
+  | .nil _ => .nil _
+  | .cons (v := v) (w := w) (x := x) h p =>
+      match p.normalizeCycle with
+      | .nil _ => .cons h (.nil _)
+      | .cons (v := w) (w := z) (x := x) h₂ tail =>
+          if hz : z = v then
+            tail.castStart hz
+          else
+            .cons h (.cons h₂ tail)
+
+theorem Walk.normalizeCycle_homotopic {n : ℕ} {hn : n ≥ 3}
+    {s t : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s t) :
+    Homotopic₂ (CycleGraph n hn) p p.normalizeCycle := by
+  induction p with
+  | nil _ =>
+      exact Homotopic₂.refl _
+  | @cons v w x h tail ih =>
+      simp [Walk.normalizeCycle]
+      cases hnorm : tail.normalizeCycle with
+      | nil =>
+          simpa [hnorm] using (Homotopic₂.congr_cons h ih)
+      | @cons w z x h₂ tail₂ =>
+          by_cases hz : z = v
+          · have ih' :
+              Homotopic₂ (CycleGraph n hn) tail (Walk.cons h₂ tail₂) := by
+                simpa [hnorm] using ih
+            have hcons :
+                Homotopic₂ (CycleGraph n hn)
+                  (Walk.cons h tail)
+                  (Walk.cons h (Walk.cons h₂ tail₂)) :=
+              Homotopic₂.congr_cons h ih'
+            subst hz
+            exact hcons.trans (by simpa using (Homotopic₂.backtrack h h₂ tail₂))
+          · have ih' :
+              Homotopic₂ (CycleGraph n hn) tail (Walk.cons h₂ tail₂) := by
+                simpa [hnorm] using ih
+            simpa [hz] using (Homotopic₂.congr_cons h ih')
+
+theorem Walk.normalizeCycle_windingCount {n : ℕ} {hn : n ≥ 3}
+    {s t : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s t) :
+    p.normalizeCycle.windingCount = p.windingCount := by
+  exact (windingCount_homotopy_invariant (Walk.normalizeCycle_homotopic p)).symm
+
+theorem Walk.normalizeCycle_noBacktrack {n : ℕ} {hn : n ≥ 3}
+    {s t : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s t) :
+    Walk.NoBacktrack p.normalizeCycle := by
+  induction p with
+  | nil a =>
+      simpa [Walk.normalizeCycle] using Walk.NoBacktrack.nil (a := a)
+  | @cons v w x h tail ih =>
+      simp [Walk.normalizeCycle]
+      cases hnorm : tail.normalizeCycle with
+      | nil =>
+          simpa [hnorm] using Walk.NoBacktrack.cons_nil h
+      | @cons w z x h₂ tail₂ =>
+          by_cases hz : z = v
+          · have ih' : Walk.NoBacktrack (Walk.cons h₂ tail₂) := by
+              simpa [hnorm] using ih
+            subst hz
+            simpa using (Walk.NoBacktrack.tail ih')
+          · have ih' : Walk.NoBacktrack (Walk.cons h₂ tail₂) := by
+              simpa [hnorm] using ih
+            simpa [hz] using Walk.NoBacktrack.cons_cons h h₂ tail₂ (by simpa using hz) ih'
+
+private def noBacktrack_dir_mul
+    {n : ℕ} {hn : n ≥ 3}
+    {a b d : Fin n}
+    {h : (CycleGraph n hn).edge a b}
+    {tail : Walk (CycleGraph n hn).toGraph b d}
+    (hnb : Walk.NoBacktrack (Walk.cons h tail)) :
+    (Walk.cons h tail).windingCount =
+      edgeDir n hn a b h * (Walk.cons h tail).length :=
+  match hnb with
+  | .cons_nil h => by
+      simp [Walk.windingCount, Walk.length]
+  | .cons_cons h₁ h₂ tail hneq hrest => by
+      have ih :
+          (Walk.cons h₂ tail).windingCount =
+            edgeDir n hn _ _ h₂ * (Walk.cons h₂ tail).length :=
+        noBacktrack_dir_mul (h := h₂) (tail := tail) hrest
+      have hdir : edgeDir n hn _ _ h₂ = edgeDir n hn _ _ h₁ :=
+        edgeDir_eq_of_not_backtrack h₁ h₂ hneq
+      calc
+        (Walk.cons h₁ (Walk.cons h₂ tail)).windingCount
+            = edgeDir n hn _ _ h₁ + (Walk.cons h₂ tail).windingCount := by
+                simp [Walk.windingCount]
+        _ = edgeDir n hn _ _ h₁ + edgeDir n hn _ _ h₂ * (Walk.cons h₂ tail).length := by
+              rw [ih]
+        _ = edgeDir n hn _ _ h₁ + edgeDir n hn _ _ h₁ * (Walk.cons h₂ tail).length := by
+              rw [hdir]
+        _ = edgeDir n hn _ _ h₁ * ((Walk.cons h₂ tail).length + 1) := by ring
+        _ = edgeDir n hn _ _ h₁ * (Walk.cons h₁ (Walk.cons h₂ tail)).length := by
+              simp [Walk.length]
+
+theorem Walk.windingCount_eq_edgeDir_mul_length_of_noBacktrack_cons
+    {n : ℕ} {hn : n ≥ 3}
+    {a b d : Fin n}
+    {h : (CycleGraph n hn).edge a b}
+    {tail : Walk (CycleGraph n hn).toGraph b d}
+    (hnb : Walk.NoBacktrack (Walk.cons h tail)) :
+    (Walk.cons h tail).windingCount =
+      edgeDir n hn a b h * (Walk.cons h tail).length :=
+  noBacktrack_dir_mul hnb
+
+theorem Walk.eq_nil_of_noBacktrack_windingCount_zero
+    {n : ℕ} {hn : n ≥ 3} {s : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s s)
+    (hnb : Walk.NoBacktrack p)
+    (h0 : p.windingCount = 0) :
+    p = Walk.nil s := by
+  cases p with
+  | nil _ => rfl
+  | cons h tail =>
+      exfalso
+      have hw :
+          (Walk.cons h tail).windingCount =
+            edgeDir n hn _ _ h * (Walk.cons h tail).length :=
+        Walk.windingCount_eq_edgeDir_mul_length_of_noBacktrack_cons hnb
+      have hm : edgeDir n hn _ _ h * (Walk.cons h tail).length = 0 := by
+        rw [← hw]
+        simpa using h0
+      rcases Int.mul_eq_zero.mp hm with hdir0 | hlen0
+      · exact (edgeDir_ne_zero h) hdir0
+      · have hlenNat : (Walk.cons h tail).length = 0 := Int.ofNat_eq_zero.mp hlen0
+        simp [Walk.length] at hlenNat
+
+theorem cycleLoop_windingCount_zero_contractible
+    (n : ℕ) (hn : n ≥ 3) (s : Fin n)
+    (p : Walk (CycleGraph n hn).toGraph s s)
+    (h0 : p.windingCount = 0) :
+    Homotopic₂ (CycleGraph n hn) p (Walk.nil s) := by
+  let q := p.normalizeCycle
+  have hpq : Homotopic₂ (CycleGraph n hn) p q := Walk.normalizeCycle_homotopic p
+  have hq0 : q.windingCount = 0 := by
+    simpa [q, Walk.normalizeCycle_windingCount p] using h0
+  have hqnb : Walk.NoBacktrack q := by
+    simpa [q] using Walk.normalizeCycle_noBacktrack p
+  have hqnil : q = Walk.nil s :=
+    Walk.eq_nil_of_noBacktrack_windingCount_zero q hqnb hq0
+  simpa [q, hqnil] using hpq
+
+/-- The canonical one-turn loop based at `s`:
+    `s → cycleNext s → ... → s` after exactly `n` forward steps. -/
+def cycleWalkAt (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
+    Walk (CycleGraph n hn).toGraph s s :=
+  (cycleForwardWalkAux n hn n s).2.castEnd
     ((cycleForwardWalkAux_fst n hn n _).trans (cycleNext_iterate_n n hn _))
 
+/-- The canonical cycle walk at the distinguished basepoint. -/
+def cycleWalk (n : ℕ) (hn : n ≥ 3) :
+    Walk (CycleGraph n hn).toGraph (cycleBase n hn) (cycleBase n hn) :=
+  cycleWalkAt n hn (cycleBase n hn)
+
 theorem cycleWalk_length (n : ℕ) (hn : n ≥ 3) : (cycleWalk n hn).length = n := by
-  simp [cycleWalk, cycleForwardWalkAux_length]
+  simp [cycleWalk, cycleWalkAt, cycleForwardWalkAux_length]
 
 theorem cycleWalk_windingCount (n : ℕ) (hn : n ≥ 3) :
     (cycleWalk n hn).windingCount = (n : ℤ) := by
-  simp [cycleWalk, cycleForwardWalkAux_windingCount]
+  simp [cycleWalk, cycleWalkAt, cycleForwardWalkAux_windingCount]
+
+theorem cycleWalkAt_length (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
+    (cycleWalkAt n hn s).length = n := by
+  simp [cycleWalkAt, cycleForwardWalkAux_length]
+
+theorem cycleWalkAt_windingCount (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
+    (cycleWalkAt n hn s).windingCount = (n : ℤ) := by
+  simp [cycleWalkAt, cycleForwardWalkAux_windingCount]
+
+/-- The canonical `k`-turn loop at vertex `s`. -/
+def cycleTurnLoopNatAt (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℕ) :
+    Walk (CycleGraph n hn).toGraph s s :=
+  Walk.repeatLoop (cycleWalkAt n hn s) k
+
+/-- The canonical `k`-turn loop at the distinguished basepoint. -/
+def cycleTurnLoopNat (n : ℕ) (hn : n ≥ 3) (k : ℕ) :
+    Walk (CycleGraph n hn).toGraph (cycleBase n hn) (cycleBase n hn) :=
+  cycleTurnLoopNatAt n hn (cycleBase n hn) k
+
+theorem cycleTurnLoopNatAt_windingCount (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℕ) :
+    (cycleTurnLoopNatAt n hn s k).windingCount = (k * n : ℤ) := by
+  simp [cycleTurnLoopNatAt, Walk.repeatLoop_windingCount, cycleWalkAt_windingCount, mul_comm]
+
+theorem cycleTurnLoopNat_windingCount (n : ℕ) (hn : n ≥ 3) (k : ℕ) :
+    (cycleTurnLoopNat n hn k).windingCount = (k * n : ℤ) := by
+  simpa [cycleTurnLoopNat] using
+    cycleTurnLoopNatAt_windingCount n hn (cycleBase n hn) k
+
+theorem cycleTurnLoopNatAt_loopWinding (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℕ) :
+    (cycleTurnLoopNatAt n hn s k).loopWinding = (k : ℤ) := by
+  unfold Walk.loopWinding
+  rw [cycleTurnLoopNatAt_windingCount]
+  have hn0 : (n : ℤ) ≠ 0 := by
+    exact_mod_cast (show n ≠ 0 by omega)
+  have hdiv : ((n : ℤ) * (k : ℤ)) / (n : ℤ) = (k : ℤ) :=
+    Int.mul_ediv_cancel_left (k : ℤ) hn0
+  simpa [mul_comm, mul_assoc, mul_left_comm] using hdiv
+
+theorem cycleTurnLoopNat_loopWinding (n : ℕ) (hn : n ≥ 3) (k : ℕ) :
+    (cycleTurnLoopNat n hn k).loopWinding = (k : ℤ) := by
+  simpa [cycleTurnLoopNat] using
+    cycleTurnLoopNatAt_loopWinding n hn (cycleBase n hn) k
 
 /-- The canonical cycle. -/
-def cycleCycle (n : ℕ) (hn : n ≥ 3) : Cycle (CycleGraph n hn).toGraph (⟨0, by omega⟩ : Fin n) where
+def cycleCycle (n : ℕ) (hn : n ≥ 3) : Cycle (CycleGraph n hn).toGraph (cycleBase n hn) where
   walk := cycleWalk n hn
   nontrivial := by rw [cycleWalk_length]; omega
 
@@ -1105,6 +1476,148 @@ theorem energy_ge_winding_sq (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
   linarith [hodge_decomposition n hn σ,
     energy_nonneg (C1.sub σ (C1.smul (winding n hn σ) (cycleHarmonicForm n hn)))]
 
+/-- **Hodge ratchet decomposition**:
+    total energy = reversible harmonic cost + irreversible residual cost. -/
+theorem hodge_ratchet_decomposition (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
+    energy σ = (winding n hn σ) ^ 2 / n +
+      energy (C1.sub σ (C1.smul (winding n hn σ) (cycleHarmonicForm n hn))) :=
+  hodge_decomposition n hn σ
+
+/-- **Hodge ratchet inequality**:
+    every representative pays at least harmonic (topological) energy. -/
+theorem hodge_ratchet_inequality (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
+    energy σ ≥ (winding n hn σ) ^ 2 / n :=
+  energy_ge_winding_sq n hn σ
+
+/-- The irreversible premium (residual energy) is always nonnegative. -/
+theorem hodge_ratchet_premium_nonneg (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
+    0 ≤ energy σ - (winding n hn σ) ^ 2 / n := by
+  linarith [energy_ge_winding_sq n hn σ]
+
+/-- Any section through winding classes pays at least harmonic energy in each class. -/
+theorem winding_section_energy_ge (n : ℕ) (hn : n ≥ 3)
+    (sec : ℤ → C1 (Fin n))
+    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ)) :
+    ∀ k : ℤ, energy (sec k) ≥ (k : ℝ) ^ 2 / n := by
+  intro k
+  have h := energy_ge_winding_sq n hn (sec k)
+  simpa [hsec k] using h
+
+/-- Finite-range quantitative ratchet: summed section energy dominates summed harmonic floor. -/
+theorem winding_section_energy_sum_ge (n : ℕ) (hn : n ≥ 3)
+    (sec : ℤ → C1 (Fin n))
+    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ))
+    (S : Finset ℤ) :
+    (Finset.sum S (fun k => energy (sec k))) ≥
+      (Finset.sum S (fun k => (k : ℝ) ^ 2 / n)) := by
+  refine Finset.sum_le_sum ?_
+  intro k hk
+  exact winding_section_energy_ge n hn sec hsec k
+
+/-- Section premium in winding class `k`: excess over harmonic floor. -/
+noncomputable def windingSectionPremium (n : ℕ)
+    (sec : ℤ → C1 (Fin n)) (k : ℤ) : ℝ :=
+  energy (sec k) - (k : ℝ) ^ 2 / n
+
+/-- Finite premium over a set of winding sectors. -/
+noncomputable def windingSectionPremiumSum (n : ℕ)
+    (sec : ℤ → C1 (Fin n)) (S : Finset ℤ) : ℝ :=
+  Finset.sum S (fun k => windingSectionPremium n sec k)
+
+/-- Premium decomposition: total premium = total energy - total harmonic floor. -/
+theorem windingSectionPremiumSum_eq (n : ℕ)
+    (sec : ℤ → C1 (Fin n)) (S : Finset ℤ) :
+    windingSectionPremiumSum n sec S =
+      (Finset.sum S (fun k => energy (sec k))) -
+      (Finset.sum S (fun k => (k : ℝ) ^ 2 / n)) := by
+  simp [windingSectionPremiumSum, windingSectionPremium, Finset.sum_sub_distrib]
+
+/-- Premium is pointwise nonnegative for winding-correct sections. -/
+theorem windingSectionPremium_nonneg (n : ℕ) (hn : n ≥ 3)
+    (sec : ℤ → C1 (Fin n))
+    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ))
+    (k : ℤ) :
+    0 ≤ windingSectionPremium n sec k := by
+  have h := winding_section_energy_ge n hn sec hsec k
+  simpa [windingSectionPremium] using sub_nonneg.mpr h
+
+/-- Finite premium is nonnegative for winding-correct sections. -/
+theorem windingSectionPremiumSum_nonneg (n : ℕ) (hn : n ≥ 3)
+    (sec : ℤ → C1 (Fin n))
+    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ))
+    (S : Finset ℤ) :
+    0 ≤ windingSectionPremiumSum n sec S := by
+  unfold windingSectionPremiumSum
+  exact Finset.sum_nonneg (fun k hk => windingSectionPremium_nonneg n hn sec hsec k)
+
+/-- Extensivity law: premium is additive over disjoint sector families. -/
+theorem windingSectionPremiumSum_union_disjoint (n : ℕ)
+    (sec : ℤ → C1 (Fin n))
+    (S T : Finset ℤ) (hdisj : Disjoint S T) :
+    windingSectionPremiumSum n sec (S ∪ T) =
+      windingSectionPremiumSum n sec S + windingSectionPremiumSum n sec T := by
+  simp [windingSectionPremiumSum, Finset.sum_union, hdisj]
+
+/-- Uniform growth witness on symmetric winding ranges:
+    the section-energy sum over `[-N, N]` is at least the endpoint harmonic energy. -/
+theorem winding_section_energy_Icc_ge_endpoint (n : ℕ) (hn : n ≥ 3)
+    (sec : ℤ → C1 (Fin n))
+    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ))
+    (N : ℕ) :
+    (Finset.sum (Finset.Icc (-(N : ℤ)) (N : ℤ)) (fun k => energy (sec k))) ≥
+      ((N : ℝ) ^ 2 / n) := by
+  have hsum := winding_section_energy_sum_ge n hn sec hsec
+    (Finset.Icc (-(N : ℤ)) (N : ℤ))
+  have hmem : (N : ℤ) ∈ Finset.Icc (-(N : ℤ)) (N : ℤ) := by
+    refine Finset.mem_Icc.mpr ?_
+    constructor
+    · omega
+    · exact le_rfl
+  have hsingle :
+      ((N : ℝ) ^ 2 / n) ≤
+        (Finset.sum (Finset.Icc (-(N : ℤ)) (N : ℤ)) (fun k => (k : ℝ) ^ 2 / n)) := by
+    have hn0 : (0 : ℝ) ≤ n := by positivity
+    exact Finset.single_le_sum
+      (fun k hk => by
+        exact div_nonneg (sq_nonneg (k : ℝ)) hn0)
+      hmem
+  exact le_trans hsingle hsum
+
+/-- Canonical divergence: section energy over symmetric windows `[-N,N]` is unbounded. -/
+theorem winding_section_energy_Icc_unbounded (n : ℕ) (hn : n ≥ 3)
+    (sec : ℤ → C1 (Fin n))
+    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ)) :
+    ∀ m : ℕ, ∃ N : ℕ,
+      (Finset.sum (Finset.Icc (-(N : ℤ)) (N : ℤ)) (fun k => energy (sec k))) ≥ (m : ℝ) := by
+  intro m
+  let N : ℕ := m * n + 1
+  refine ⟨N, ?_⟩
+  have hbase := winding_section_energy_Icc_ge_endpoint n hn sec hsec N
+  have hn0 : (0 : ℝ) < n := by exact_mod_cast (show 0 < n by omega)
+  have hNsq : ((m : ℝ) * n) ≤ (N : ℝ) ^ 2 := by
+    have hmn_leN : (m * n : ℕ) ≤ N := by
+      dsimp [N]
+      omega
+    have h1 : (m * n : ℝ) ≤ (N : ℝ) := by exact_mod_cast hmn_leN
+    have hNnonneg : (0 : ℝ) ≤ (N : ℝ) := by positivity
+    have hNone : (1 : ℝ) ≤ (N : ℝ) := by
+      have : (1 : ℕ) ≤ N := by
+        dsimp [N]
+        omega
+      exact_mod_cast this
+    have hNleSq : (N : ℝ) ≤ (N : ℝ) ^ 2 := by
+      have hmul := mul_le_mul_of_nonneg_left hNone hNnonneg
+      simpa [pow_two, one_mul] using hmul
+    exact le_trans h1 hNleSq
+  have hdiv : ((m : ℝ) * n) / n ≤ (N : ℝ) ^ 2 / n :=
+    div_le_div_of_nonneg_right hNsq (le_of_lt hn0)
+  have hm_eq : ((m : ℝ) * n) / n = (m : ℝ) := by
+    have hn0' : (n : ℝ) ≠ 0 := ne_of_gt hn0
+    field_simp [hn0']
+  have hm_le_endpoint : (m : ℝ) ≤ (N : ℝ) ^ 2 / n := by
+    simpa [hm_eq] using hdiv
+  exact le_trans hm_le_endpoint hbase
+
 /-- **Uniqueness of the instanton**: if a cochain achieves minimum energy in its
     winding class, it IS the scaled harmonic form. Each topological sector has
     exactly one ground state. -/
@@ -1660,6 +2173,117 @@ theorem append_reverse_homotopic {C : Complex V} (hsym : C.toGraph.Symmetric)
       (Homotopic₂.congr_append C ih (Homotopic₂.refl _))).trans
       (Homotopic₂.backtrack h (hsym _ _ h) _)
 
+/-- Reversing a cycle-graph walk negates winding count. -/
+theorem Walk.windingCount_reverse {n : ℕ} {hn : n ≥ 3}
+    {s t : Fin n}
+    (p : Walk (CycleGraph n hn).toGraph s t) :
+    (p.reverse (cycleGraph_symmetric n hn)).windingCount = -p.windingCount := by
+  induction p with
+  | nil _ => simp [Walk.reverse, Walk.windingCount]
+  | @cons v w x h tail ih =>
+    have hrev : (CycleGraph n hn).edge w v := cycleGraph_symmetric n hn _ _ h
+    have hcancel := edgeDir_cancel n hn v w h hrev
+    have hrevdir : edgeDir n hn w v hrev = - edgeDir n hn v w h := by omega
+    simp [Walk.reverse, Walk.windingCount_append, Walk.windingCount, ih, hrevdir]
+
+/-- Integer-turn loop at vertex `s`:
+    nonnegative turns use forward repetition, negative turns use reverse. -/
+def cycleTurnLoopIntAt (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℤ) :
+    Walk (CycleGraph n hn).toGraph s s :=
+  if _hk : 0 ≤ k then
+    cycleTurnLoopNatAt n hn s k.toNat
+  else
+    (cycleTurnLoopNatAt n hn s k.natAbs).reverse (cycleGraph_symmetric n hn)
+
+/-- Integer-turn loop at the distinguished basepoint. -/
+def cycleTurnLoopInt (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
+    Walk (CycleGraph n hn).toGraph (cycleBase n hn) (cycleBase n hn) :=
+  cycleTurnLoopIntAt n hn (cycleBase n hn) k
+
+theorem cycleTurnLoopIntAt_loopWinding (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℤ) :
+    (cycleTurnLoopIntAt n hn s k).loopWinding = k := by
+  by_cases hk : 0 ≤ k
+  · simp [cycleTurnLoopIntAt, hk, cycleTurnLoopNatAt_loopWinding, Int.toNat_of_nonneg hk]
+  · have hnatAbs : k = -((k.natAbs : ℤ)) := by
+      rcases Int.natAbs_eq k with hkpos | hkneg
+      · exfalso
+        have hk0 : 0 ≤ k := by
+          calc
+            (0 : ℤ) ≤ (k.natAbs : ℤ) := by exact_mod_cast Nat.zero_le k.natAbs
+            _ = k := hkpos.symm
+        exact hk hk0
+      · simpa using hkneg
+    have hwc :
+        (cycleTurnLoopIntAt n hn s k).windingCount = -((k.natAbs : ℤ) * n) := by
+      simp [cycleTurnLoopIntAt, hk, Walk.windingCount_reverse, cycleTurnLoopNatAt_windingCount]
+    have hwc_mul :
+        (cycleTurnLoopIntAt n hn s k).loopWinding * n = -((k.natAbs : ℤ) * n) := by
+      calc
+        (cycleTurnLoopIntAt n hn s k).loopWinding * n =
+            (cycleTurnLoopIntAt n hn s k).windingCount := by
+              symm
+              exact Walk.windingCount_eq_loopWinding_mul_card (cycleTurnLoopIntAt n hn s k)
+        _ = -((k.natAbs : ℤ) * n) := hwc
+    have hwc_mul' :
+        (cycleTurnLoopIntAt n hn s k).loopWinding * n = (-(k.natAbs : ℤ)) * n := by
+      rw [Int.neg_mul_eq_neg_mul] at hwc_mul
+      exact hwc_mul
+    have hn0 : (n : ℤ) ≠ 0 := by
+      exact_mod_cast (show n ≠ 0 by omega)
+    have hloop : (cycleTurnLoopIntAt n hn s k).loopWinding = -((k.natAbs : ℤ)) :=
+      (Int.mul_eq_mul_right_iff hn0).1 hwc_mul'
+    exact hloop.trans hnatAbs.symm
+
+theorem cycleTurnLoopInt_loopWinding (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
+    (cycleTurnLoopInt n hn k).loopWinding = k := by
+  simpa [cycleTurnLoopInt] using
+    cycleTurnLoopIntAt_loopWinding n hn (cycleBase n hn) k
+
+/-- Surjectivity of integer winding sectors at any cycle vertex. -/
+theorem cycleLoopWinding_surjective_at (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
+    ∀ k : ℤ, ∃ p : Walk (CycleGraph n hn).toGraph s s,
+      p.loopWinding = k := by
+  intro k
+  exact ⟨cycleTurnLoopIntAt n hn s k, cycleTurnLoopIntAt_loopWinding n hn s k⟩
+
+/-- Surjectivity of integer winding sectors at the cycle basepoint. -/
+theorem cycleLoopWinding_surjective (n : ℕ) (hn : n ≥ 3) :
+    ∀ k : ℤ, ∃ p : Walk (CycleGraph n hn).toGraph (cycleBase n hn) (cycleBase n hn),
+      p.loopWinding = k := by
+  simpa using cycleLoopWinding_surjective_at n hn (cycleBase n hn)
+
+theorem cycleLoopWinding_complete (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
+    ∀ p q : Walk (CycleGraph n hn).toGraph s s,
+      p.loopWinding = q.loopWinding → Homotopic₂ (CycleGraph n hn) p q := by
+  intro p q hsector
+  have hpw : p.windingCount = p.loopWinding * n :=
+    Walk.windingCount_eq_loopWinding_mul_card p
+  have hqw : q.windingCount = q.loopWinding * n :=
+    Walk.windingCount_eq_loopWinding_mul_card q
+  have hwEq : p.windingCount = q.windingCount := by
+    rw [hpw, hqw, hsector]
+  let qrev := q.reverse (cycleGraph_symmetric n hn)
+  let r : Walk (CycleGraph n hn).toGraph s s := p.append qrev
+  have hr0 : r.windingCount = 0 := by
+    unfold r qrev
+    simp [Walk.windingCount_append, Walk.windingCount_reverse, hwEq]
+  have hrnil : Homotopic₂ (CycleGraph n hn) r (Walk.nil s) :=
+    cycleLoop_windingCount_zero_contractible n hn s r hr0
+  have hA :
+      Homotopic₂ (CycleGraph n hn) (r.append q) p := by
+    unfold r qrev
+    have hrevq : Homotopic₂ (CycleGraph n hn)
+        ((q.reverse (cycleGraph_symmetric n hn)).append q)
+        (Walk.nil s) :=
+      reverse_append_homotopic (cycleGraph_symmetric n hn) q
+    have h := Homotopic₂.congr_append_right (CycleGraph n hn) p hrevq
+    simpa [Walk.append_assoc, Walk.append_nil] using h
+  have hB :
+      Homotopic₂ (CycleGraph n hn) (r.append q) q := by
+    have h := Homotopic₂.congr_append (CycleGraph n hn) hrnil (Homotopic₂.refl q)
+    simpa [Walk.nil_append] using h
+  exact (Homotopic₂.symm hA).trans hB
+
 end WalkAlgebra
 
 /-! ## Dynamics: The Homotopy Ratchet -/
@@ -1677,6 +2301,56 @@ def Walk.toHomotopyClass₂ (C : Complex V) (p : Walk C.toGraph u v) :
     HomotopyClass₂ C u v :=
   Quot.mk _ p
 
+/-- Canonical winding-sector map on cycle loop classes. -/
+noncomputable def cycleLoopWindingClass (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
+    HomotopyClass₂ (CycleGraph n hn) s s → ℤ :=
+  Quot.lift (fun p : Walk (CycleGraph n hn).toGraph s s => p.loopWinding)
+    (fun _ _ h => loopWinding_homotopy_invariant (n := n) (hn := hn) h)
+
+@[simp] theorem cycleLoopWindingClass_mk (n : ℕ) (hn : n ≥ 3) (s : Fin n)
+    (p : Walk (CycleGraph n hn).toGraph s s) :
+    cycleLoopWindingClass n hn s (Quot.mk _ p) = p.loopWinding := rfl
+
+/-- Hodge-derived energy of a cycle loop class:
+    the infimum cochain energy in its winding sector. -/
+noncomputable def cycleLoopClassHodgeEnergy (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
+    HomotopyClass₂ (CycleGraph n hn) s s → ℝ :=
+  fun h => harmonicEnergy_k n hn (cycleLoopWindingClass n hn s h)
+
+/-- On `C_n`, Hodge-derived loop-class energy is exactly quadratic in winding. -/
+theorem cycleLoopClassHodgeEnergy_eq_winding_sq (n : ℕ) (hn : n ≥ 3) (s : Fin n)
+    (h : HomotopyClass₂ (CycleGraph n hn) s s) :
+    cycleLoopClassHodgeEnergy n hn s h =
+      (cycleLoopWindingClass n hn s h : ℝ) ^ 2 / n := by
+  simp [cycleLoopClassHodgeEnergy, cycleGraph_harmonicEnergy_k]
+
+/-- Loop classes on `C_n` at `s` are classified by integer winding.
+    Surjectivity is provided canonically by `cycleTurnLoopIntAt`. -/
+noncomputable def cycleLoopClassEquivInt
+    (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
+    HomotopyClass₂ (CycleGraph n hn) s s ≃ ℤ where
+  toFun := cycleLoopWindingClass n hn s
+  invFun k := Quot.mk _ (Classical.choose (cycleLoopWinding_surjective_at n hn s k))
+  left_inv := by
+    intro x
+    refine Quot.inductionOn x ?_
+    intro p
+    apply Quot.sound
+    refine cycleLoopWinding_complete n hn s
+      (Classical.choose (cycleLoopWinding_surjective_at n hn s p.loopWinding)) p ?_
+    simpa [cycleLoopWindingClass] using
+      (Classical.choose_spec (cycleLoopWinding_surjective_at n hn s p.loopWinding))
+  right_inv := by
+    intro k
+    simpa [cycleLoopWindingClass] using
+      (Classical.choose_spec (cycleLoopWinding_surjective_at n hn s k))
+
+/-- Basepoint specialization of `cycleLoopClassEquivInt`. -/
+noncomputable def cycleLoopClassEquivInt_base
+    (n : ℕ) (hn : n ≥ 3) :
+    HomotopyClass₂ (CycleGraph n hn) (cycleBase n hn) (cycleBase n hn) ≃ ℤ :=
+  cycleLoopClassEquivInt n hn (cycleBase n hn)
+
 /-- Any bidirectional edge makes the quotient map non-injective:
     the backtrack v→w→v is homotopic to nil, but they're distinct walks. -/
 theorem homotopyClass₂_non_injective (C : Complex V)
@@ -1688,6 +2362,120 @@ theorem homotopyClass₂_non_injective (C : Complex V)
   · intro h
     have := congr_arg Walk.length h
     simp [Walk.length] at this
+
+/-- Repeating a single backtrack loop is always homotopic to nil. -/
+theorem repeatBacktrack_homotopic_nil (C : Complex V)
+    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v) :
+    ∀ k : ℕ,
+      Homotopic₂ C
+        (Walk.repeatLoop (Walk.cons h_edge (Walk.cons h_back (Walk.nil v))) k)
+        (Walk.nil v)
+  | 0 => by exact Homotopic₂.refl _
+  | k + 1 => by
+      have hstep :
+          Homotopic₂ C
+            (Walk.cons h_edge (Walk.cons h_back (Walk.nil v)))
+            (Walk.nil v) :=
+        Homotopic₂.backtrack h_edge h_back (Walk.nil v)
+      have hk := repeatBacktrack_homotopic_nil C h_edge h_back k
+      have happ :=
+        Homotopic₂.congr_append C hstep hk
+      simpa [Walk.repeatLoop, Walk.nil_append] using happ
+
+/-- Quantitative lossiness: the homotopy quotient collapses arbitrarily long loops
+    into the trivial class whenever a bidirectional edge exists. -/
+theorem homotopyClass₂_unbounded_fiber (C : Complex V)
+    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v) :
+    ∀ m : ℕ, ∃ p : Walk C.toGraph v v,
+      Walk.toHomotopyClass₂ C p = Walk.toHomotopyClass₂ C (Walk.nil v) ∧
+      p.length ≥ m := by
+  intro m
+  let p : Walk C.toGraph v v := Walk.repeatLoop (Walk.cons h_edge (Walk.cons h_back (Walk.nil v))) m
+  refine ⟨p, ?_, ?_⟩
+  · apply Quot.sound
+    simpa [p] using repeatBacktrack_homotopic_nil C h_edge h_back m
+  · have hp : p.length = m * 2 := by
+      simp [p, Walk.repeatLoop_length, Walk.length]
+    rw [hp]
+    omega
+
+/-- Uniform per-class strengthening: for any loop representative `p₀`,
+    the fiber over its homotopy class contains arbitrarily long loops. -/
+theorem homotopyClass₂_unbounded_fiber_at (C : Complex V)
+    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v)
+    (p₀ : Walk C.toGraph v v) :
+    ∀ m : ℕ, ∃ p : Walk C.toGraph v v,
+      Walk.toHomotopyClass₂ C p = Walk.toHomotopyClass₂ C p₀ ∧
+      p.length ≥ m := by
+  intro m
+  let k : ℕ := m + p₀.length
+  let loop : Walk C.toGraph v v :=
+    Walk.repeatLoop (Walk.cons h_edge (Walk.cons h_back (Walk.nil v))) k
+  let p : Walk C.toGraph v v := p₀.append loop
+  refine ⟨p, ?_, ?_⟩
+  · apply Quot.sound
+    have hloop : Homotopic₂ C loop (Walk.nil v) := by
+      simpa [loop] using repeatBacktrack_homotopic_nil C h_edge h_back k
+    have happ :
+        Homotopic₂ C (p₀.append loop) (p₀.append (Walk.nil v)) :=
+      Homotopic₂.congr_append_right C p₀ hloop
+    simpa [Walk.append_nil, p, loop] using happ
+  · have hp : p.length = p₀.length + loop.length := by
+      simp [p, Walk.length_append]
+    have hloopLen : loop.length = k * 2 := by
+      simp [loop, Walk.repeatLoop_length, Walk.length]
+    have hk : p₀.length ≤ k := Nat.le_add_left _ _
+    have hm : m ≤ k := Nat.le_add_right _ _
+    rw [hp, hloopLen]
+    omega
+
+/-- Uniform fiber theorem: every homotopy class has arbitrarily long representatives
+    whenever the complex has a bidirectional edge at the basepoint. -/
+theorem homotopyClass₂_unbounded_fiber_uniform (C : Complex V)
+    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v) :
+    ∀ c : HomotopyClass₂ C v v, ∀ m : ℕ, ∃ p : Walk C.toGraph v v,
+      Walk.toHomotopyClass₂ C p = c ∧ p.length ≥ m := by
+  intro c
+  refine Quot.inductionOn c ?_
+  intro p₀ m
+  simpa using homotopyClass₂_unbounded_fiber_at C h_edge h_back p₀ m
+
+/-- Cycle specialization: each winding sector has arbitrarily long loop representatives. -/
+theorem cycleLoopWinding_fiber_unbounded_length (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
+    ∀ k : ℤ, ∀ m : ℕ, ∃ p : Walk (CycleGraph n hn).toGraph s s,
+      p.loopWinding = k ∧ p.length ≥ m := by
+  intro k m
+  obtain ⟨p₀, hp₀⟩ := cycleLoopWinding_surjective_at n hn s k
+  have h_edge : (CycleGraph n hn).edge s (cycleNext n hn s) := Or.inl rfl
+  have h_back : (CycleGraph n hn).edge (cycleNext n hn s) s := Or.inr rfl
+  obtain ⟨p, hpClass, hpLen⟩ :=
+    homotopyClass₂_unbounded_fiber_at (C := CycleGraph n hn) h_edge h_back p₀ m
+  have hw :
+      p.loopWinding = p₀.loopWinding := by
+    have hwClass := congrArg (cycleLoopWindingClass n hn s) hpClass
+    simpa [Walk.toHomotopyClass₂, cycleLoopWindingClass_mk] using hwClass
+  refine ⟨p, ?_, hpLen⟩
+  simpa [hp₀] using hw
+
+/-- Quantitative geodesic collapse: there are arbitrarily long loops whose
+    geodesic length is zero (hence arbitrarily large overestimate by raw length). -/
+theorem geodesicLength_unbounded_gap (C : Complex V)
+    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v) :
+    ∀ m : ℕ, ∃ p : Walk C.toGraph v v,
+      geodesicLength C p = 0 ∧ p.length ≥ m := by
+  intro m
+  let p : Walk C.toGraph v v := Walk.repeatLoop (Walk.cons h_edge (Walk.cons h_back (Walk.nil v))) m
+  refine ⟨p, ?_, ?_⟩
+  · have hhom : Homotopic₂ C p (Walk.nil v) := by
+      simpa [p] using repeatBacktrack_homotopic_nil C h_edge h_back m
+    have hnil : geodesicLength C (Walk.nil v) = 0 := by
+      exact Nat.eq_zero_of_le_zero (by
+        simpa [Walk.length] using geodesicLength_le_length C (Walk.nil v))
+    simpa [hnil] using geodesicLength_eq_of_homotopic C hhom
+  · have hp : p.length = m * 2 := by
+      simp [p, Walk.repeatLoop_length, Walk.length]
+    rw [hp]
+    omega
 
 /-- The quotient map Walk → HomotopyClass is non-injective whenever
     the complex has a bidirectional edge (backtrack ≠ nil but same class). -/

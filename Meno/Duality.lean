@@ -132,8 +132,8 @@ theorem GroupoidObj.dual_dual_equiv
       ((E.dual wind α hα hK).dual wind (Real.pi ^ 2 / α)
         (div_pos (sq_pos_of_pos Real.pi_pos) hα) (fun _ => rfl))
       E := by
-  refine ⟨Equiv.refl _, fun _ => ?_⟩
-  simp only [Equiv.refl_apply, GroupoidObj.dual]
+  refine ⟨MulEquiv.refl _, fun _ => ?_⟩
+  simp only [MulEquiv.refl_apply, GroupoidObj.dual]
   rw [hK]; congr 1
   have hα0 : α ≠ 0 := ne_of_gt hα
   have hpi0 : Real.pi ^ 2 ≠ 0 := ne_of_gt (sq_pos_of_pos Real.pi_pos)
@@ -205,6 +205,32 @@ theorem cycle_complexity_ge (E : GroupoidObj) (wind : End E.base ≃ ℤ)
   have : (0 : ℝ) < n := hn0
   field_simp
 
+/-- Canonical cycle groupoid object at the basepoint:
+    energy and summability are both derived from the proved winding equivalence. -/
+noncomputable def cycleCanonicalObj (n : ℕ) (hn : n ≥ 3) : GroupoidObj where
+  G := SimplicialGroupoid (CycleGraph n hn)
+  base := cycleBaseObj n hn
+  energy := cycleCanonicalEnergy n hn (cycleBaseObj n hn)
+  summable := summable_cycleCanonicalEnergy n hn (cycleBaseObj n hn)
+
+/-- Canonical cycle object partition function recovers `partitionFn` with no extra hypotheses. -/
+theorem cycleCanonicalObj_partFn_eq_partitionFn (n : ℕ) (hn : n ≥ 3) :
+    (cycleCanonicalObj n hn).partFn = partitionFn n hn := by
+  simpa [cycleCanonicalObj, GroupoidObj.partFn] using
+    cycleGroupoid_partitionFn_eq_base_canonical_energy n hn
+
+/-- Canonical cycle object complexity lower bound with no external `hK`. -/
+theorem cycleCanonicalObj_complexity_ge (n : ℕ) (hn : n ≥ 3) :
+    (cycleCanonicalObj n hn).complexity ≥ (1 / 2) * Real.log (Real.pi * n) := by
+  have hn0 : 0 < n := by omega
+  refine cycle_complexity_ge
+    (E := cycleCanonicalObj n hn)
+    (wind := cycleLoopClassEquivInt_base n hn)
+    (n := n) (hn := hn0) ?_
+  intro g
+  simpa [cycleCanonicalObj, cycleCanonicalWinding, cycleBaseObj] using
+    (cycleCanonicalEnergy_eq_winding_sq n hn (cycleBaseObj n hn) g)
+
 theorem rank_complexity_bound (E₁ E₂ : GroupoidObj)
     (wind₁ : End E₁.base ≃ ℤ) (wind₂ : End E₂.base ≃ ℤ)
     (n₁ n₂ : ℕ) (hn₁ : 0 < n₁) (hn₂ : 0 < n₂)
@@ -252,8 +278,8 @@ Fourier dual — the description and its dual description coincide. -/
 theorem GroupoidObj.self_dual (E : GroupoidObj) (wind : End E.base ≃ ℤ)
     (hK : ∀ g, E.energy g = Real.pi * (wind g : ℝ) ^ 2) :
     GroupoidObj.Equiv (E.dual wind Real.pi Real.pi_pos hK) E := by
-  refine ⟨Equiv.refl _, fun g => ?_⟩
-  simp only [Equiv.refl_apply, GroupoidObj.dual, hK]
+  refine ⟨MulEquiv.refl _, fun g => ?_⟩
+  simp only [MulEquiv.refl_apply, GroupoidObj.dual, hK]
   have : Real.pi ≠ 0 := ne_of_gt Real.pi_pos
   field_simp
 
