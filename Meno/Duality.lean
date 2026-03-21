@@ -17,21 +17,6 @@ open UpperHalfPlane CategoryTheory
 noncomputable def quadraticPartFn (α : ℝ) : ℝ :=
   ∑' k : ℤ, Real.exp (-α * (k : ℝ) ^ 2)
 
-private lemma summable_quadraticPartFn_nat (α : ℝ) (hα : 0 < α) :
-    Summable (fun i : ℕ => Real.exp (-α * (↑i : ℝ) ^ 2)) := by
-  have hle : ∀ i : ℕ, (↑i : ℝ) ≤ (↑i : ℝ) ^ 2 := by
-    intro i; rcases i with _ | i
-    · simp
-    · nlinarith [sq_nonneg ((↑(i + 1) : ℝ) - 1),
-        show (1 : ℝ) ≤ ↑(i + 1) from by exact_mod_cast Nat.succ_pos i]
-  exact (Real.summable_exp_nat_mul_of_ge (neg_neg_of_pos hα)
-    (f := fun i => (↑i : ℝ) ^ 2) hle).congr fun i => by congr 1
-
-theorem summable_quadraticPartFn (α : ℝ) (hα : 0 < α) :
-    Summable (fun k : ℤ => Real.exp (-α * (k : ℝ) ^ 2)) :=
-  .of_nat_of_neg (summable_quadraticPartFn_nat α hα)
-    ((summable_quadraticPartFn_nat α hα).congr fun i => by push_cast; congr 1; ring)
-
 theorem quadraticPartFn_eq_partitionFn (n : ℕ) (hn : n ≥ 3) :
     quadraticPartFn (1 / ↑n) = partitionFn n hn := by
   simp only [quadraticPartFn, partitionFn]; congr 1; ext k; congr 1; ring

@@ -202,10 +202,11 @@ Complexity is defined on groupoid objects via the partition function over automo
 | `summable_cycleCanonicalEnergy` | Summability of canonical cycle weights, derived via the canonical `End(x) ≃ ℤ` equivalence |
 | `cycleGroupoid_partitionFn_eq_canonical_energy` | Canonical partition identity with no extra hypotheses (`hK`, `hsum`) |
 | `cycleGroupoid_partitionFn_eq_base_canonical_energy` | Basepoint specialization with no extra hypotheses |
+| `GroupoidObj.sigmaComplexity_ge_sup` | Lower bound: `max_d C(P d) ≤ C_sigma(D, P)` (complement to upper bound) |
 
 ### Hodge.lean — general Hodge theory
 
-Energy and partition functions for arbitrary finite graphs. Generalizes the cycle-specific Hodge theory to graphs with b₁ independent cycles via Gram matrices on ℤ^{b₁}.
+Energy and partition functions for arbitrary finite graphs. Generalizes the cycle-specific Hodge theory to graphs with b₁ independent cycles via Gram matrices on ℤ^{b₁}. For diagonal Gram matrices (independent cycles), the partition function factors into a product of one-dimensional partition functions — each cycle contributes independently. The torus factorization (b₁ = 2) is a special case.
 
 | Result | Statement |
 | :--- | :--- |
@@ -214,6 +215,8 @@ Energy and partition functions for arbitrary finite graphs. Generalizes the cycl
 | `graphPartitionFn_rank1_eq` | Rank-1 (b₁=1) recovers Z(C_n) |
 | `graphPartitionFn_eq_siegelTheta` | Z(Q) = Θ(Q/π) (Siegel theta identification) |
 | `torus_partitionFn_factors` | Z(T²) = Z(C_m) · Z(C_n) for torus = C_m × C_n |
+| `graphPartitionFn_diagonal` | Diagonal factorization: Z(diag(α)) = ∏ᵢ ∑'_k exp(−αᵢk²) for arbitrary b₁ |
+| `graphPartitionFn_diagonal_cycles` | Cycle specialization: Z(diag(1/nᵢ)) = ∏ᵢ Z(C_{nᵢ}) |
 
 ### Theta.lean — analytic number theory
 

@@ -637,6 +637,25 @@ noncomputable instance : SGD.AdditiveComplexityOn GroupoidObj ℝ where
   congr := GroupoidObj.congr_complexity
   prod_add := GroupoidObj.prod_complexity
 
+/-- Lower bound on sigma complexity: at least the maximum fiber complexity.
+    Complement to `sigmaComplexity_le_logCard_max` (upper bound).
+    Proof is `log_le_log` applied to `single_le_sum`. -/
+theorem GroupoidObj.sigmaComplexity_ge_sup (D : Type*) [Fintype D] [Nonempty D]
+    (P : D → GroupoidObj) :
+    Finset.univ.sup' Finset.univ_nonempty (fun d : D => (P d).complexity) ≤
+    GroupoidObj.sigmaComplexity D P := by
+  apply Finset.sup'_le
+  intro d _
+  unfold GroupoidObj.sigmaComplexity GroupoidObj.complexity groupoidComplexity
+  apply Real.log_le_log
+  · exact groupoidPartitionFn_pos (x := (P d).base) (K := (P d).energy)
+      (hsum := (P d).summable)
+  · unfold GroupoidObj.sigmaPartFn GroupoidObj.partFn
+    exact Finset.single_le_sum
+      (fun d' _ => le_of_lt (groupoidPartitionFn_pos (x := (P d').base) (K := (P d').energy)
+        (hsum := (P d').summable)))
+      (Finset.mem_univ d)
+
 end Bridge
 
 end Simplicial
