@@ -260,6 +260,39 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `dual_pair_variational` | Z(π)² ≤ Z(α)·Z(π²/α): the self-dual pair minimizes joint descriptive cost |
 | `GroupoidObj.dual_pair_variational` | Lifted to groupoid objects: self-dual pair is optimal among all dual pairs |
 | `mass_duality` | n · (1/n) = 1: geodesic mass × harmonic mass = 1 |
+| `quadraticObj` | Canonical quadratic groupoid family: `GroupoidObj` over `SingleObj (Multiplicative ℤ)` with energy `α·(winding)²` |
+| `quadraticObj_partFn` | `(quadraticObj α).partFn = quadraticPartFn α` — canonical family realizes the quadratic partition function |
+| `quadraticObj_dual_equiv` | `Equiv ((quadraticObj α).dual, quadraticObj (π²/α))` — T-duality is internal to the canonical family |
+
+### Zeta.lean — Riemann's 1859 derivation for the quadratic partition function
+
+This file gives Riemann's 1859 derivation of the functional equation for ζ from
+Jacobi's theta identity, applied to the quadratic partition function
+`Z(α) = ∑_{k∈ℤ} exp(−α·k²)`. Mellin-transforming `Z(α) − 1` against `α^(s−1)·dα`
+gives the Mellin identity `menoMellin s = 2·Γ(s)·ζ(2s)` for `s > 1/2`. Splitting
+the integral at the self-dual point `α = π` and folding the `(0, π]` head onto
+`[π, ∞)` via Jacobi's theta identity `Z(π²/α) = √(α/π)·Z(α)` yields the Riemann
+symmetry `π^(−s)·menoMellin s = π^(−(1/2−s))·menoMellinC(1/2−s)`. Specialization
+at `s = 3/2` gives `ζ(3) = (1/√π)·∫(Z−1)·√α dα`.
+
+| Result | Statement |
+| :--- | :--- |
+| `menoMellin` | Definition `menoMellin s = ∫ (Z(α) − 1)·α^(s−1) dα` on `Ioi 0` |
+| `meno_mellin` | Termwise Mellin identity: `menoMellin s = 2·Γ(s)·∑' 1/(k+1)^(2s)` for `s > 1/2` |
+| `menoMellin_cast_eq_riemannZeta_real` | Complex bridge: `(menoMellin s : ℂ) = 2·Γ(s)·ζ(2s)` — gateway to Mathlib's complex ζ |
+| `dual_partFn_sub_one_eq_residual` | Jacobi's theta identity on the Mellin integrand: `Z(π²/α) − 1 = √(α/π)·(Z(α)−1) + (√(α/π)−1)` |
+| `menoMellin_duality_representation` | Dual integrand form: `menoMellin s = π^(2s)·∫ (√(β/π)·(Z(β)−1) + (√(β/π)−1))·β^(-s-1) dβ` |
+| `menoMellinTail` | Tail Mellin `∫_{Ioi π}(Z(α)−1)·α^(s−1) dα`, convergent for every real `s` |
+| `menoMellin_split_at_pi` | **Riemann's 1859 split**: `menoMellin s = menoMellinTail(s) + π^(2s−1/2)·menoMellinTail(1/2−s) + π^s/(s·(2s−1))` for `s > 1/2` |
+| `menoMellinC` | Completed functional `menoMellinC t := menoMellinTail(t) + π^(2t−1/2)·menoMellinTail(1/2−t) + π^t/(t·(2t−1))`; converges for every real `t` |
+| `menoMellin_functional_equation` | **Functional equation (ℝ)**: `π^(−s)·menoMellin s = π^(−(1/2−s))·menoMellinC(1/2−s)` |
+| `meno_zeta_functional_equation_real` | **Functional equation (ℂ)**: `π^(−s)·(2·Γ(s)·ζ(2s)) = π^(−(1/2−s))·menoMellinC(1/2−s)` |
+| `aperyConst` | Apéry's constant `ζ(3) = ∑'_{k≥1} 1/k³` |
+| `menoSpectralIntegral` | The spectral integral `∫ (Z(α) − 1)·√α dα` |
+| `menoSpectralIntegral_eq_menoMellin_three_halves` | `menoSpectralIntegral = menoMellin(3/2)` |
+| `zeta_three_eq_meno_integral` | **ζ(3) headline**: `aperyConst = (1/√π)·menoSpectralIntegral` |
+| `menoSpectralIntegral_eq_sqrt_pi_mul_aperyConst` | Closed form: `menoSpectralIntegral = √π·ζ(3)` |
+| `riemannZeta_three_eq_meno_spectral_integral` | Complex headline: `ζ(3) = ((1/√π)·menoSpectralIntegral : ℂ)` against Mathlib's `riemannZeta` |
 
 ---
 
@@ -281,7 +314,8 @@ Meno/
 ├── Groupoid.lean     Fundamental groupoid, groupoid complexity, hierarchy axioms
 ├── Hodge.lean        General Hodge theory: energy, graph partition functions, Siegel theta
 ├── Theta.lean        Jacobi theta identification and T-duality via Mathlib modular forms
-└── Duality.lean      Fourier duality on GroupoidObj: dual construction, involutivity
+├── Duality.lean      Fourier duality on GroupoidObj: dual construction, involutivity, quadraticObj
+└── Zeta.lean         Riemann's 1859 derivation: FE from Jacobi's theta identity; ζ(3) at s=3/2
 ```
 
 ---

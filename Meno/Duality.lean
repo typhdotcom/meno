@@ -88,7 +88,10 @@ noncomputable def GroupoidObj.dual
       (div_pos (sq_pos_of_pos Real.pi_pos) hα)
     exact (wind.summable_iff.mpr h).congr fun g => by simp only [Function.comp_apply, neg_mul]
 
-private theorem partFn_eq_quadraticPartFn
+/-- Partition function of any `GroupoidObj` with quadratic energy `α·(wind g)²` over a
+    `ℤ`-valued winding equivalence equals the canonical `quadraticPartFn α`. This is the
+    generic bridge between the abstract groupoid invariant and the analytic series. -/
+theorem partFn_eq_quadraticPartFn
     (E : GroupoidObj) (wind : End E.base ≃ ℤ) (α : ℝ)
     (hK : ∀ g, E.energy g = α * (wind g : ℝ) ^ 2) :
     E.partFn = quadraticPartFn α := by
@@ -123,6 +126,51 @@ theorem GroupoidObj.dual_dual_equiv
   have hα0 : α ≠ 0 := ne_of_gt hα
   have hpi0 : Real.pi ^ 2 ≠ 0 := ne_of_gt (sq_pos_of_pos Real.pi_pos)
   field_simp
+
+/-! ## Canonical quadratic family
+
+For each coupling `α > 0`, `quadraticObj α hα` is the canonical `GroupoidObj` whose
+underlying groupoid is `SingleObj (Multiplicative ℤ)` — one object with endomorphism
+group ℤ — equipped with energy `α · k²` where `k` is the winding. Its partition
+function is exactly `quadraticPartFn α`, and its Fourier dual is equivalent to
+`quadraticObj (π²/α)`. This is the ℤ-modal family on which T-duality acts. -/
+
+/-- Canonical winding equivalence on the one-object groupoid `SingleObj (Multiplicative ℤ)`:
+    endomorphisms of the unique object correspond to integers. -/
+noncomputable def quadraticWind :
+    End (CategoryTheory.SingleObj.star (Multiplicative ℤ)) ≃ ℤ :=
+  (CategoryTheory.SingleObj.toEnd (Multiplicative ℤ)).symm.toEquiv.trans Multiplicative.toAdd
+
+/-- Canonical quadratic groupoid object at coupling `α`: the one-object groupoid whose
+    endomorphism group is ℤ, with energy `α · (winding)²`. -/
+noncomputable def quadraticObj (α : ℝ) (hα : 0 < α) : GroupoidObj where
+  G := CategoryTheory.SingleObj (Multiplicative ℤ)
+  base := CategoryTheory.SingleObj.star (Multiplicative ℤ)
+  energy g := α * (quadraticWind g : ℝ) ^ 2
+  summable := by
+    have h := summable_quadraticPartFn α hα
+    exact (quadraticWind.summable_iff.mpr h).congr fun g => by
+      simp only [Function.comp_apply, neg_mul]
+
+/-- Energy of `quadraticObj α` is `α · (winding)²` — definitionally. -/
+theorem quadraticObj_energy (α : ℝ) (hα : 0 < α)
+    (g : End (quadraticObj α hα).base) :
+    (quadraticObj α hα).energy g = α * (quadraticWind g : ℝ) ^ 2 :=
+  rfl
+
+/-- Partition function of `quadraticObj α` is `quadraticPartFn α`. -/
+theorem quadraticObj_partFn (α : ℝ) (hα : 0 < α) :
+    (quadraticObj α hα).partFn = quadraticPartFn α :=
+  partFn_eq_quadraticPartFn (quadraticObj α hα) quadraticWind α (quadraticObj_energy α hα)
+
+/-- Fourier dual of `quadraticObj α` (taken with its canonical winding) is equivalent
+    to `quadraticObj (π²/α)` — the duality maps the canonical family to itself with
+    coupling inverted under T-duality. -/
+theorem quadraticObj_dual_equiv (α : ℝ) (hα : 0 < α) :
+    GroupoidObj.Equiv
+      ((quadraticObj α hα).dual quadraticWind α hα (quadraticObj_energy α hα))
+      (quadraticObj (Real.pi ^ 2 / α) (div_pos (sq_pos_of_pos Real.pi_pos) hα)) :=
+  ⟨MulEquiv.refl _, fun _ => rfl⟩
 
 /-! ## Complexity-Rank Bound
 
