@@ -726,13 +726,33 @@ theorem dual_pair_variational (α : ℝ) (hα : 0 < α) :
   rw [dual_pair_product α hα]
   exact quadraticPartFn_self_dual_minimum α hα
 
+/-- The completed partition function `f(α) := (α/π)^(1/4)·Z(α)` is invariant
+under T-duality `α ↔ π²/α`.
+
+Equivalently, `H(α) := (1/4)·log(α/π) + log Z(α)` satisfies `H(π²/α) = H(α)`
+— it is the natural invariant of the Z(α)-duality flow on (0, ∞). Direct
+calculation from `quadraticPartFn_duality_real` and rpow arithmetic. -/
+theorem quadraticPartFn_completed_T_dual_invariant (α : ℝ) (hα : 0 < α) :
+    (Real.pi ^ 2 / α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn (Real.pi ^ 2 / α) =
+      (α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α := by
+  have hπ := Real.pi_pos
+  have hαπ : 0 < α / Real.pi := div_pos hα hπ
+  have hdual := quadraticPartFn_duality_real α hα
+  rw [hdual]
+  have hsimp : Real.pi ^ 2 / α / Real.pi = Real.pi / α := by field_simp
+  rw [hsimp]
+  have h_inv : Real.pi / α = (α / Real.pi)⁻¹ := (inv_div α Real.pi).symm
+  rw [h_inv, Real.inv_rpow hαπ.le, ← Real.rpow_neg hαπ.le,
+      ← mul_assoc, ← Real.rpow_add hαπ]
+  congr 2
+  ring
+
 /-- The completed partition function `f(α) := (α/π)^(1/4) · Z(α)` attains its
 global minimum at the self-dual temperature α = π.
 
-`f` is `T-duality invariant`: `f(π²/α) = f(α)` for all α > 0 (direct from
-`quadraticPartFn_duality_real` and rpow arithmetic). Equivalently, the
-"completed free energy" `H(α) := (1/4)·log(α/π) + log Z(α)` is the natural
-invariant under T-duality α ↔ π²/α and is minimized at α = π.
+By `quadraticPartFn_completed_T_dual_invariant`, `f(π²/α) = f(α)`: the self-dual
+axis is the symmetry axis of `f` on (0, ∞). This result says `f(π) ≤ f(α)` for
+all α > 0 — the invariant bottoms out at the symmetry axis.
 
 Follows from `dual_pair_variational` `Z(π)² ≤ Z(α)·Z(π²/α)` by substituting
 `Z(π²/α) = √(α/π)·Z(α)` on the right and taking a square root. -/
