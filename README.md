@@ -229,7 +229,7 @@ Energy and partition functions for arbitrary finite graphs. Generalizes the cycl
 
 ### Duality.lean — Fourier duality on GroupoidObj
 
-Lifts the analytic T-duality identity from Theta.lean to a structural operation on groupoid objects. A groupoid object with quadratic energy α·k² on ℤ-endomorphisms has a Fourier dual with coupling π²/α — same groupoid, same winding equivalence, dual energy. The construction is involutive: dual of dual recovers the original. The self-dual coupling α = π is not just a fixed point but a minimum: among all dual pairs, the self-dual pair has the smallest combined partition function. Complexity minimization selects self-duality.
+Lifts the analytic T-duality identity from Theta.lean to a structural operation on groupoid objects. A groupoid object with quadratic energy α·k² on ℤ-endomorphisms has a Fourier dual with coupling π²/α — same groupoid, same winding equivalence, dual energy. The construction is involutive: dual of dual recovers the original. Two distinguished variational facts hold at the self-dual coupling α = π: (a) among all dual pairs, the self-dual pair minimizes the product `Z(α)·Z(π²/α)` (`dual_pair_variational`); and (b) the T-duality-invariant completion `f(α) = (α/π)^{1/4}·Z(α)` attains its unique strict minimum at α = π (`completedPartFn_strictMin`). Both are proved; neither extends to a general principle that "complexity minimization forces self-duality".
 
 | Result | Statement |
 | :--- | :--- |
@@ -251,7 +251,26 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `complexity_gap_pos` | The dual residual log Z(π²/α) > 0: the bound is never tight |
 | `GroupoidObj.self_dual` | At α = π, object ≃ its own Fourier dual (self-dual fixed point) |
 | `quadraticPartFn_self_dual_iff` | Z(π²/α) = Z(α) iff α = π: uniqueness of the self-dual coupling |
-| `quadraticPartFn_moment_self_dual` | Z(π) = 4π·∑ k²·e^{−π k²}: mean "energy" ⟨k²⟩ at the self-dual temperature is 1/(4π) |
+| `quadraticPartFn_moment_self_dual` | Z(π) = 4π·∑ k²·e^{−π k²}: second-moment identity for Z at the self-dual coupling |
+| `quadraticMeanEnergy` | ⟨k²⟩_α := (∑ k²·e^{−αk²})/Z(α): Gibbs expectation of winding-squared |
+| `quadraticMeanEnergy_self_dual` | ⟨k²⟩_π = 1/(4π): exact value at the self-dual coupling |
+| `quadraticMeanEnergy_T_dual` | (π²/α²)·⟨k²⟩_{π²/α} + ⟨k²⟩_α = 1/(2α): T-duality functional equation for mean energy |
+| `quadraticMeanEnergy_T_dual_symmetric` | α·⟨k²⟩_α + (π²/α)·⟨k²⟩_{π²/α} = 1/2: symmetric form — each T-dual pair averages to 1/4 |
+| `quadraticMeanEnergy_strictAntiOn` | ⟨k²⟩_α strictly decreasing on (0, ∞): raising α suppresses the winding fluctuation |
+| `hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance` | d⟨k²⟩/dα = −Var((wind)²) on `quadraticObj α hα`: fluctuation-dissipation identity in Gibbs form |
+| `quadraticObj_gibbsVariance_pos` | Var((wind)²) > 0 on `quadraticObj α hα`: strict positivity of the Gibbs variance |
+| `quadraticMeanEnergy_lt_inv` / `_gt_inv` | Strict sandwich against 1/(4α): `⟨k²⟩_α < 1/(4α)` for α > π, `>` for α < π |
+| `quadraticMeanEnergy_self_dual_iff` | ⟨k²⟩_α = 1/(4π) iff α = π: the self-dual coupling is the unique fixed point of the Gibbs mean |
+| `quadraticMeanEnergy_mul_eq_quarter_iff` | α·⟨k²⟩_α = 1/4 iff α = π: the product α·⟨k²⟩_α pins down the self-dual coupling |
+| `log_quadraticPartFn_strictConvexOn` | log Z(α) strictly convex on (0, ∞): dual to strict anti-monotonicity of ⟨k²⟩ |
+| `GroupoidObj.gibbsMass` / `gibbsExpect` / `gibbsVariance` | Gibbs density, expectation, and variance on `End E.base`: exp(-energy)/Z, tsum against f, ⟨f²⟩−⟨f⟩² |
+| `GroupoidObj.partFn_pos` | partFn > 0 on every `GroupoidObj`: strict positivity of Z at the structural level |
+| `GroupoidObj.tsum_gibbsMass` | ∑ gibbsMass g = 1: the Gibbs density is a probability measure on `End E.base` |
+| `quadraticMeanEnergy_eq_gibbsExpect` | quadraticMeanEnergy α = gibbsExpect of (quadraticWind)² on `quadraticObj α`: mean energy **is** a Gibbs second moment |
+| `GroupoidObj.gibbsExpect_wind_sq_eq` | Structural bridge: gibbsExpect (wind)² = quadraticMeanEnergy α on any `GroupoidObj` with energy α·(wind)² |
+| `GroupoidObj.meanEnergy_T_dual` | Structural T-duality FE: (π²/α²)·gibbsExpect_{dual}(wind)² + gibbsExpect(wind)² = 1/(2α) — lifts `quadraticMeanEnergy_T_dual` to any quadratic groupoid object |
+| `quadraticObj_meanWindingSq_self_dual` | Canonical groupoid version: gibbsExpect (quadraticWind)² = 1/(4π) on `quadraticObj π`; winding is derived from the groupoid, no external data |
+| `quadraticObj_meanEnergy_self_dual` | Canonical groupoid version: gibbsExpect (energy) = 1/4 on `quadraticObj π`; winding is derived from the groupoid, no external data |
 | `dual_partFn_lt_iff` | Z(π²/α) < Z(α) iff α < π: sub-critical regime (dual is simpler) |
 | `dualityFlow` | D(α) = log Z(α) - log Z(π²/α): asymmetry between object and dual |
 | `duality_flow_eq` | D(α) = (1/2)·log(π/α): closed form from complexity decomposition |
@@ -259,8 +278,12 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `duality_flow_pos_iff` | D(α) > 0 iff α < π: sub-critical objects outweigh their duals |
 | `duality_flow_zero_iff` | D(α) = 0 iff α = π: the self-dual point is the unique zero |
 | `dual_pair_variational` | Z(π)² ≤ Z(α)·Z(π²/α): the self-dual pair minimizes joint descriptive cost |
-| `quadraticPartFn_completed_T_dual_invariant` | (π²/α/π)^(1/4)·Z(π²/α) = (α/π)^(1/4)·Z(α): the "completed" partition function is T-duality-invariant |
-| `quadraticPartFn_completed_ge_self_dual` | Z(π) ≤ (α/π)^(1/4)·Z(α): the T-duality-invariant completed partition function is minimized at the self-dual temperature |
+| `completedPartFn` | f(α) := (α/π)^(1/4) · Z(α): named T-duality-invariant completion of the quadratic partition function |
+| `completedPartFn_at_self_dual` | f(π) = Z(π): the completion collapses to Z at the self-dual point |
+| `completedPartFn_T_dual` | f(π²/α) = f(α): T-duality invariance of the completion |
+| `completedPartFn_strictMin` | Z(π) < f(α) for every α ≠ π: α = π is the **strict** global minimum of f on (0, ∞) |
+| `completedPartFn_ge_self_dual` | Z(π) ≤ f(α) for all α > 0: non-strict form |
+| `completedPartFn_eq_self_dual_iff` | f(α) = Z(π) iff α = π: **sharp uniqueness** of the self-dual minimizer |
 | `GroupoidObj.dual_pair_variational` | Lifted to groupoid objects: self-dual pair is optimal among all dual pairs |
 | `mass_duality` | n · (1/n) = 1: geodesic mass × harmonic mass = 1 |
 | `quadraticObj` | Canonical quadratic groupoid family: `GroupoidObj` over `SingleObj (Multiplicative ℤ)` with energy `α·(winding)²` |

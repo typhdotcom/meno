@@ -172,6 +172,51 @@ theorem quadraticObj_dual_equiv (α : ℝ) (hα : 0 < α) :
       (quadraticObj (Real.pi ^ 2 / α) (div_pos (sq_pos_of_pos Real.pi_pos) hα)) :=
   ⟨MulEquiv.refl _, fun _ => rfl⟩
 
+/-! ## Gibbs Measure on GroupoidObj
+
+For a groupoid object `E`, the Gibbs density on automorphisms is
+`gibbsMass E g = exp(-E.energy g) / E.partFn`.  It is nonnegative, summable,
+and sums to `1` — a probability density on `End E.base`.  The Gibbs expectation
+of an observable `f : End E.base → ℝ` is `gibbsExpect E f = ∑' g, f g * gibbsMass E g`;
+the Gibbs variance is `⟨f²⟩ − ⟨f⟩²`.  All three depend only on the groupoid-level
+data `(E.base, E.energy, E.summable)` plus the strict positivity `E.partFn > 0`. -/
+
+/-- Gibbs probability density on automorphisms: `exp(-E.energy g) / E.partFn`. -/
+noncomputable def GroupoidObj.gibbsMass (E : GroupoidObj) (g : End E.base) : ℝ :=
+  Real.exp (-E.energy g) / E.partFn
+
+/-- Gibbs expectation of `f : End E.base → ℝ` against the Gibbs density. -/
+noncomputable def GroupoidObj.gibbsExpect (E : GroupoidObj) (f : End E.base → ℝ) : ℝ :=
+  ∑' g, f g * E.gibbsMass g
+
+/-- Gibbs variance of `f` under the Gibbs density: `⟨f²⟩ − ⟨f⟩²`. -/
+noncomputable def GroupoidObj.gibbsVariance (E : GroupoidObj) (f : End E.base → ℝ) : ℝ :=
+  E.gibbsExpect (fun g => f g ^ 2) - (E.gibbsExpect f) ^ 2
+
+/-- Partition function positivity packaged at the `GroupoidObj` level. -/
+theorem GroupoidObj.partFn_pos (E : GroupoidObj) : 0 < E.partFn :=
+  groupoidPartitionFn_pos (x := E.base) (K := E.energy) (hsum := E.summable)
+
+/-- The Gibbs density is nonnegative. -/
+theorem GroupoidObj.gibbsMass_nonneg (E : GroupoidObj) (g : End E.base) :
+    0 ≤ E.gibbsMass g :=
+  div_nonneg (le_of_lt (Real.exp_pos _)) (le_of_lt E.partFn_pos)
+
+/-- The Gibbs density is summable (division of `E.summable` by a constant). -/
+theorem GroupoidObj.summable_gibbsMass (E : GroupoidObj) :
+    Summable E.gibbsMass := by
+  unfold GroupoidObj.gibbsMass
+  exact E.summable.div_const _
+
+/-- The Gibbs density integrates to `1`: it is a probability density on
+    `End E.base`. -/
+theorem GroupoidObj.tsum_gibbsMass (E : GroupoidObj) :
+    ∑' g : End E.base, E.gibbsMass g = 1 := by
+  have hZ_ne : E.partFn ≠ 0 := ne_of_gt E.partFn_pos
+  show ∑' g, Real.exp (-E.energy g) / E.partFn = 1
+  rw [tsum_div_const]
+  exact div_self hZ_ne
+
 /-! ## Complexity-Rank Bound
 
 T-duality converts the vacuum bound Z ≥ 1 into a nontrivial lower bound on
@@ -481,6 +526,67 @@ private lemma hasDerivAt_quadraticPartFn (β : ℝ) (hβ : 0 < β) :
     (summable_quadraticPartFn β hβ)
     (Set.mem_Ioi.mpr (by linarith))
 
+private lemma summable_pow4_mul_exp (β : ℝ) (hβ : 0 < β) :
+    Summable (fun k : ℤ => (k : ℝ) ^ 4 * Real.exp (-β * (k : ℝ) ^ 2)) := by
+  have hβ2 : 0 < β / 2 := by linarith
+  have hdom : Summable (fun k : ℤ =>
+      (2 / β) * ((k : ℝ)^2 * Real.exp (-(β / 2) * (k : ℝ) ^ 2))) :=
+    (summable_sq_mul_exp (β / 2) hβ2).mul_left (2 / β)
+  refine Summable.of_nonneg_of_le
+    (fun k => mul_nonneg (by positivity) (le_of_lt (Real.exp_pos _)))
+    (fun k => ?_) hdom
+  have h1 : β / 2 * (k : ℝ) ^ 2 ≤ Real.exp (β / 2 * (k : ℝ) ^ 2) :=
+    le_trans (by linarith [mul_nonneg (le_of_lt hβ2) (sq_nonneg (k : ℝ))])
+      (Real.add_one_le_exp _)
+  have h_sq : (k : ℝ)^2 * Real.exp (-β * (k : ℝ)^2) ≤
+              (2/β) * Real.exp (-(β/2) * (k : ℝ)^2) := by
+    calc (k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)
+        = (2 / β) * (β / 2 * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
+          congr 1; field_simp
+      _ ≤ (2 / β) * Real.exp (β / 2 * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
+          exact mul_le_mul_of_nonneg_right
+            (mul_le_mul_of_nonneg_left h1 (by positivity)) (le_of_lt (Real.exp_pos _))
+      _ = (2 / β) * Real.exp (-(β / 2) * (k : ℝ) ^ 2) := by
+          rw [mul_assoc, ← Real.exp_add]; congr 1; ring_nf
+  have h_expand : (k : ℝ) ^ 4 * Real.exp (-β * (k : ℝ) ^ 2) =
+         (k : ℝ)^2 * ((k : ℝ)^2 * Real.exp (-β * (k : ℝ) ^ 2)) := by ring
+  rw [h_expand]
+  calc (k : ℝ)^2 * ((k : ℝ)^2 * Real.exp (-β * (k : ℝ) ^ 2))
+      ≤ (k : ℝ)^2 * ((2/β) * Real.exp (-(β/2) * (k : ℝ)^2)) :=
+        mul_le_mul_of_nonneg_left h_sq (sq_nonneg _)
+    _ = (2/β) * ((k : ℝ)^2 * Real.exp (-(β/2) * (k : ℝ)^2)) := by ring
+
+/-- Derivative of `M₂(β) := ∑' k, k²·exp(-βk²)` equals `-M₄(β)`. -/
+private lemma hasDerivAt_M₂ (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt (fun α => ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2))
+      (∑' k : ℤ, -(k : ℝ) ^ 4 * Real.exp (-β * (k : ℝ) ^ 2)) β := by
+  exact hasDerivAt_tsum_of_isPreconnected
+    (g := fun (k : ℤ) (γ : ℝ) => (k : ℝ) ^ 2 * Real.exp (-γ * (k : ℝ) ^ 2))
+    (g' := fun (k : ℤ) (γ : ℝ) => -(k : ℝ) ^ 4 * Real.exp (-γ * (k : ℝ) ^ 2))
+    (u := fun k : ℤ => (k : ℝ) ^ 4 * Real.exp (-(β / 2) * (k : ℝ) ^ 2))
+    (t := Set.Ioi (β / 2))
+    (y₀ := β)
+    (summable_pow4_mul_exp (β / 2) (by linarith))
+    isOpen_Ioi
+    isPreconnected_Ioi
+    (fun k y _ => by
+      have h := hasDerivAt_exp_neg_mul_sq k y
+      have hh := h.const_mul ((k : ℝ)^2)
+      convert hh using 1; ring)
+    (fun k y (hy : β / 2 < y) => by
+      show |-(k : ℝ) ^ 4 * Real.exp (-y * (k : ℝ) ^ 2)| ≤
+        (k : ℝ) ^ 4 * Real.exp (-(β / 2) * (k : ℝ) ^ 2)
+      rw [show -(k : ℝ) ^ 4 * Real.exp (-y * (k : ℝ) ^ 2) =
+          -((k : ℝ) ^ 4 * Real.exp (-y * (k : ℝ) ^ 2)) from by ring,
+          abs_neg, abs_of_nonneg
+            (mul_nonneg (by positivity) (le_of_lt (Real.exp_pos _)))]
+      exact mul_le_mul_of_nonneg_left
+        (Real.exp_le_exp_of_le (by nlinarith [sq_nonneg (k : ℝ)]))
+        (by positivity))
+    (Set.mem_Ioi.mpr (by linarith))
+    (summable_sq_mul_exp β hβ)
+    (Set.mem_Ioi.mpr (by linarith))
+
 private lemma summable_N_summand (β : ℝ) (hβ : 0 < β) :
     Summable (fun k : ℤ => (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2)) := by
   have h1 := summable_quadraticPartFn β hβ
@@ -530,13 +636,10 @@ private lemma N_self_dual :
     rw [show Z'π = ∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2) from rfl]
     rw [← tsum_mul_left]
 
-/-- Mean energy at the self-dual temperature is `1/(4π)`.
-
-Thermodynamic reading: `quadraticPartFn α = ∑ exp(-α n²)` is a partition function
-with α as inverse temperature. At the self-dual point α = π, the expectation of
-the "energy" `n²` in the Gibbs measure equals `1/(4π)`. Equivalently,
-`∑ n² e^{-π n²} = Z(π) / (4π)`. Follows by differentiating the T-duality
-`Z(π²/α) = √(α/π)·Z(α)` at the fixed point α = π. -/
+/-- Second-moment identity at the self-dual coupling α = π:
+    `Z(π) = 4π · ∑ n² · exp(-π · n²)`.  Equivalently,
+    `(∑ n² e^{-π n²}) / Z(π) = 1/(4π)`.  Follows by differentiating the
+    T-duality identity `Z(π²/α) = √(α/π)·Z(α)` at the fixed point α = π. -/
 theorem quadraticPartFn_moment_self_dual :
     quadraticPartFn Real.pi =
       4 * Real.pi *
@@ -562,6 +665,391 @@ theorem quadraticPartFn_moment_self_dual :
       funext fun k => by ring]
     rw [h1.tsum_sub h2, tsum_mul_left]
   linarith [split, N_self_dual]
+
+/-! ## Gibbs second moment at the self-dual coupling
+
+The Gibbs expectation `⟨k²⟩_α := (∑ k²·e^{-αk²})/Z(α)` of winding-squared at
+coupling α.  At the self-dual coupling α = π this equals exactly `1/(4π)` —
+the T-duality relation pins the second moment at its fixed point. -/
+
+/-- Gibbs expectation of `k²` in the quadratic partition function at coupling α:
+    `⟨k²⟩_α := (∑ k² · e^{-α k²}) / Z(α)`. -/
+noncomputable def quadraticMeanEnergy (α : ℝ) : ℝ :=
+  (∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)) / quadraticPartFn α
+
+/-- At the self-dual coupling α = π, the mean of `k²` is `1/(4π)`.
+
+    Direct corollary of `quadraticPartFn_moment_self_dual`:
+    `Z(π) = 4π · M` gives `M / Z(π) = 1/(4π)`. -/
+theorem quadraticMeanEnergy_self_dual :
+    quadraticMeanEnergy Real.pi = 1 / (4 * Real.pi) := by
+  unfold quadraticMeanEnergy
+  have hπ := Real.pi_pos
+  have hZπ_ne : quadraticPartFn Real.pi ≠ 0 :=
+    ne_of_gt (lt_trans one_pos (quadraticPartFn_gt_one Real.pi hπ))
+  have h4π_ne : (4 * Real.pi) ≠ 0 := by positivity
+  rw [div_eq_div_iff hZπ_ne h4π_ne]
+  linarith [quadraticPartFn_moment_self_dual]
+
+/-- **Bridge to the Gibbs density.** `quadraticMeanEnergy α` is the Gibbs
+    expectation of the squared canonical winding on the canonical quadratic
+    `GroupoidObj` at coupling `α`.  So the analytic mean energy *is* the second
+    moment of a probability density on `End (quadraticObj α hα).base`. -/
+theorem quadraticMeanEnergy_eq_gibbsExpect (α : ℝ) (hα : 0 < α) :
+    (quadraticObj α hα).gibbsExpect (fun g => (quadraticWind g : ℝ) ^ 2) =
+      quadraticMeanEnergy α := by
+  unfold GroupoidObj.gibbsExpect GroupoidObj.gibbsMass quadraticMeanEnergy
+  rw [quadraticObj_partFn α hα]
+  have h_term : ∀ g : End (quadraticObj α hα).base,
+      (quadraticWind g : ℝ) ^ 2 *
+        (Real.exp (-(quadraticObj α hα).energy g) / quadraticPartFn α) =
+      ((quadraticWind g : ℝ) ^ 2 * Real.exp (-α * (quadraticWind g : ℝ) ^ 2)) /
+        quadraticPartFn α := by
+    intro g
+    show (quadraticWind g : ℝ) ^ 2 *
+      (Real.exp (-(α * (quadraticWind g : ℝ) ^ 2)) / quadraticPartFn α) = _
+    rw [mul_div_assoc, neg_mul]
+  rw [tsum_congr h_term, tsum_div_const]
+  congr 1
+
+private lemma hasDerivAt_log_quadraticPartFn (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt (fun α => Real.log (quadraticPartFn α))
+      (- quadraticMeanEnergy β) β := by
+  have hZ := hasDerivAt_quadraticPartFn β hβ
+  have hZpos : 0 < quadraticPartFn β :=
+    lt_trans one_pos (quadraticPartFn_gt_one β hβ)
+  have h := hZ.log (ne_of_gt hZpos)
+  convert h using 1
+  unfold quadraticMeanEnergy
+  rw [show (∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) =
+    -(∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) from by
+    rw [← tsum_neg]; congr 1; ext k; ring]
+  rw [neg_div]
+
+/-- `d⟨k²⟩/dα = ⟨k²⟩² - ⟨k⁴⟩` on `(0, ∞)`.
+
+    Differentiating `⟨k²⟩_α = M₂(α)/Z(α)` via the quotient rule, using
+    `M₂'(α) = -M₄(α)` and `Z'(α) = -M₂(α)`. The right-hand side is
+    `⟨k²⟩² - ⟨k⁴⟩ = -(⟨k⁴⟩ - ⟨k²⟩²)`, which Cauchy-Schwarz forces to
+    be strictly negative; combined with `Summable.tsum_lt_tsum` this
+    yields the strict anti-monotonicity of `quadraticMeanEnergy`. -/
+private lemma hasDerivAt_quadraticMeanEnergy (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt quadraticMeanEnergy
+      ((quadraticMeanEnergy β)^2 -
+        (∑' k : ℤ, (k : ℝ)^4 * Real.exp (-β * (k : ℝ)^2)) / quadraticPartFn β) β := by
+  have hZ_pos : 0 < quadraticPartFn β :=
+    lt_trans one_pos (quadraticPartFn_gt_one β hβ)
+  have hZ_ne : quadraticPartFn β ≠ 0 := ne_of_gt hZ_pos
+  have hM₂ := hasDerivAt_M₂ β hβ
+  have hZ := hasDerivAt_quadraticPartFn β hβ
+  have hQuot := hM₂.div hZ hZ_ne
+  have h_M4 : (∑' k : ℤ, -(k : ℝ)^4 * Real.exp (-β * (k : ℝ)^2)) =
+      -(∑' k : ℤ, (k : ℝ)^4 * Real.exp (-β * (k : ℝ)^2)) := by
+    rw [← tsum_neg]; congr 1; ext k; ring
+  have h_M2 : (∑' k : ℤ, -(k : ℝ)^2 * Real.exp (-β * (k : ℝ)^2)) =
+      -(∑' k : ℤ, (k : ℝ)^2 * Real.exp (-β * (k : ℝ)^2)) := by
+    rw [← tsum_neg]; congr 1; ext k; ring
+  rw [h_M4, h_M2] at hQuot
+  convert hQuot using 1
+  unfold quadraticMeanEnergy
+  have h_exp_sq : (∑' (k : ℤ), (k : ℝ) ^ 2 * Real.exp (-(↑k ^ 2 * β))) =
+      (∑' (k : ℤ), (k : ℝ) ^ 2 * Real.exp (-β * ↑k ^ 2)) := by
+    congr 1; ext k; congr 2; ring
+  have h_exp_4 : (∑' (k : ℤ), (k : ℝ) ^ 4 * Real.exp (-(β * ↑k ^ 2))) =
+      (∑' (k : ℤ), (k : ℝ) ^ 4 * Real.exp (-β * ↑k ^ 2)) := by
+    congr 1; ext k; congr 2; ring
+  have h_exp_2 : (∑' (k : ℤ), (k : ℝ) ^ 2 * Real.exp (-(β * ↑k ^ 2))) =
+      (∑' (k : ℤ), (k : ℝ) ^ 2 * Real.exp (-β * ↑k ^ 2)) := by
+    congr 1; ext k; congr 2; ring
+  field_simp
+  rw [h_exp_sq, h_exp_4, h_exp_2]
+  ring
+
+/-- Cauchy–Schwarz / variance positivity: `M₂² < Z · M₄` for all α > 0.
+
+    Consider the "affine variance" summand `(Z·k² - M₂)²·exp(-αk²)`.
+    Its tsum equals `Z²·M₄ - Z·M₂² = Z·(Z·M₄ - M₂²)`.
+    Each term is non-negative, and the `k=0` term is `M₂² > 0`, so the
+    tsum is strictly positive, forcing `Z·M₄ > M₂²`. This is the Gibbs
+    Cauchy–Schwarz for the observable `k²`: the squared mean is strictly
+    less than the mean of the square, because `k²` is not constant. -/
+private lemma M2_sq_lt_Z_mul_M4 (α : ℝ) (hα : 0 < α) :
+    (∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)) ^ 2 <
+      quadraticPartFn α *
+        ∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2) := by
+  set M2 := ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2) with hM2_def
+  set M4 := ∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2) with hM4_def
+  set Z := quadraticPartFn α with hZ_def
+  have hZ_pos : 0 < Z := lt_trans one_pos (quadraticPartFn_gt_one α hα)
+  have hM2_pos : 0 < M2 := by
+    refine Summable.tsum_pos (summable_sq_mul_exp α hα) ?_ 1 ?_
+    · intro k; exact mul_nonneg (sq_nonneg _) (le_of_lt (Real.exp_pos _))
+    · show (0 : ℝ) < ((1 : ℤ) : ℝ) ^ 2 * Real.exp (-α * ((1 : ℤ) : ℝ) ^ 2)
+      rw [Int.cast_one, one_pow, one_mul]
+      exact Real.exp_pos _
+  have h_expand : ∀ k : ℤ, (Z * (k : ℝ) ^ 2 - M2) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2) =
+      Z ^ 2 * ((k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)) +
+        (-(2 * Z * M2)) * ((k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)) +
+        M2 ^ 2 * Real.exp (-α * (k : ℝ) ^ 2) := by
+    intro k; ring
+  have s1 : Summable (fun k : ℤ => Z ^ 2 * ((k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2))) :=
+    (summable_pow4_mul_exp α hα).mul_left _
+  have s2 : Summable (fun k : ℤ =>
+      (-(2 * Z * M2)) * ((k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2))) :=
+    (summable_sq_mul_exp α hα).mul_left _
+  have s3 : Summable (fun k : ℤ => M2 ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)) :=
+    (summable_quadraticPartFn α hα).mul_left _
+  have h_summable : Summable (fun k : ℤ =>
+      (Z * (k : ℝ) ^ 2 - M2) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)) :=
+    ((s1.add s2).add s3).congr (fun k => (h_expand k).symm)
+  have h_tsum_eq : ∑' k : ℤ, (Z * (k : ℝ) ^ 2 - M2) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2) =
+      Z ^ 2 * M4 - Z * M2 ^ 2 := by
+    rw [tsum_congr h_expand,
+        (s1.add s2).tsum_add s3, s1.tsum_add s2,
+        tsum_mul_left, tsum_mul_left, tsum_mul_left]
+    show Z ^ 2 * M4 + -(2 * Z * M2) * M2 + M2 ^ 2 * Z = Z ^ 2 * M4 - Z * M2 ^ 2
+    ring
+  have h_tsum_pos : 0 < ∑' k : ℤ, (Z * (k : ℝ) ^ 2 - M2) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2) := by
+    refine Summable.tsum_pos h_summable ?_ 0 ?_
+    · intro k; exact mul_nonneg (sq_nonneg _) (le_of_lt (Real.exp_pos _))
+    · show (0 : ℝ) < (Z * ((0 : ℤ) : ℝ) ^ 2 - M2) ^ 2 * Real.exp (-α * ((0 : ℤ) : ℝ) ^ 2)
+      rw [Int.cast_zero, zero_pow (by decide : 2 ≠ 0), mul_zero, zero_sub,
+          neg_sq, mul_zero, Real.exp_zero, mul_one]
+      exact pow_pos hM2_pos 2
+  rw [h_tsum_eq] at h_tsum_pos
+  have hfact : Z ^ 2 * M4 - Z * M2 ^ 2 = Z * (Z * M4 - M2 ^ 2) := by ring
+  rw [hfact] at h_tsum_pos
+  have hposZM : 0 < Z * M4 - M2 ^ 2 := (mul_pos_iff_of_pos_left hZ_pos).mp h_tsum_pos
+  linarith
+
+/-- `quadraticMeanEnergy` is strictly decreasing on `(0, ∞)`.
+
+    Derivative computed as `d⟨k²⟩/dα = ⟨k²⟩² - ⟨k⁴⟩`, equivalently
+    `-gibbsVariance((wind)²)` under the project's variance convention
+    (`hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance`).  Strictly
+    negative by Cauchy–Schwarz (`M₂² < Z·M₄`, since `(wind)²` is not
+    constant under the Gibbs density). -/
+theorem quadraticMeanEnergy_strictAntiOn :
+    StrictAntiOn quadraticMeanEnergy (Set.Ioi 0) := by
+  apply strictAntiOn_of_deriv_neg (convex_Ioi _)
+  · intro α hα
+    exact (hasDerivAt_quadraticMeanEnergy α hα).continuousAt.continuousWithinAt
+  · intro α hα
+    rw [interior_Ioi] at hα
+    have hd := hasDerivAt_quadraticMeanEnergy α hα
+    rw [hd.deriv]
+    have hCS := M2_sq_lt_Z_mul_M4 α hα
+    have hZ_pos : 0 < quadraticPartFn α :=
+      lt_trans one_pos (quadraticPartFn_gt_one α hα)
+    unfold quadraticMeanEnergy
+    set M2 := ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)
+    set M4 := ∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)
+    set Z := quadraticPartFn α
+    rw [show (M2/Z)^2 - M4/Z = (M2^2 - Z*M4) / Z^2 by field_simp]
+    apply div_neg_of_neg_of_pos
+    · linarith
+    · exact pow_pos hZ_pos 2
+
+/-- `quadraticMeanEnergy` is injective on `(0, ∞)`: distinct couplings give
+    distinct mean values.  Immediate from strict anti-monotonicity. -/
+theorem quadraticMeanEnergy_injOn :
+    Set.InjOn quadraticMeanEnergy (Set.Ioi 0) :=
+  quadraticMeanEnergy_strictAntiOn.injOn
+
+/-- **Fluctuation-dissipation identity** at the `GroupoidObj` level:
+    `d⟨k²⟩/dα = -gibbsVariance((wind)²)` on the canonical quadratic family.
+
+    The derivative of the Gibbs mean of squared winding under coupling `α` is
+    the negative Gibbs variance of squared winding, a probabilistic identity
+    about the Gibbs density on `End (quadraticObj α).base`.  Strict positivity
+    of the variance (Cauchy–Schwarz: `(wind)²` is not constant) is the reason
+    `quadraticMeanEnergy` is strictly decreasing. -/
+theorem hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance
+    (α : ℝ) (hα : 0 < α) :
+    HasDerivAt quadraticMeanEnergy
+      (-((quadraticObj α hα).gibbsVariance
+            (fun g => (quadraticWind g : ℝ) ^ 2))) α := by
+  have h := hasDerivAt_quadraticMeanEnergy α hα
+  convert h using 1
+  unfold GroupoidObj.gibbsVariance
+  rw [quadraticMeanEnergy_eq_gibbsExpect α hα]
+  have h_pow4 : (quadraticObj α hα).gibbsExpect
+        (fun g => ((quadraticWind g : ℝ) ^ 2) ^ 2) =
+      (∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)) / quadraticPartFn α := by
+    unfold GroupoidObj.gibbsExpect GroupoidObj.gibbsMass
+    rw [quadraticObj_partFn α hα]
+    have h_term : ∀ g : End (quadraticObj α hα).base,
+        ((quadraticWind g : ℝ) ^ 2) ^ 2 *
+          (Real.exp (-(quadraticObj α hα).energy g) / quadraticPartFn α) =
+        ((quadraticWind g : ℝ) ^ 4 * Real.exp (-α * (quadraticWind g : ℝ) ^ 2)) /
+          quadraticPartFn α := by
+      intro g
+      show ((quadraticWind g : ℝ) ^ 2) ^ 2 *
+        (Real.exp (-(α * (quadraticWind g : ℝ) ^ 2)) / quadraticPartFn α) = _
+      rw [mul_div_assoc, neg_mul]
+      congr 1
+      ring
+    rw [tsum_congr h_term, tsum_div_const]
+    congr 1
+  rw [h_pow4]
+  ring
+
+/-- The Gibbs variance of squared winding is strictly positive on `(0, ∞)` —
+    Cauchy–Schwarz via `M₂² < Z·M₄`.  The observable `(wind)²` is not constant
+    under the Gibbs density, so its variance is nontrivially positive. -/
+theorem quadraticObj_gibbsVariance_pos (α : ℝ) (hα : 0 < α) :
+    0 < (quadraticObj α hα).gibbsVariance (fun g => (quadraticWind g : ℝ) ^ 2) := by
+  have h_expr : (quadraticObj α hα).gibbsVariance
+        (fun g => (quadraticWind g : ℝ) ^ 2) =
+      (∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)) / quadraticPartFn α -
+        (quadraticMeanEnergy α) ^ 2 := by
+    unfold GroupoidObj.gibbsVariance
+    rw [quadraticMeanEnergy_eq_gibbsExpect α hα]
+    have h_pow4 : (quadraticObj α hα).gibbsExpect
+          (fun g => ((quadraticWind g : ℝ) ^ 2) ^ 2) =
+        (∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)) / quadraticPartFn α := by
+      unfold GroupoidObj.gibbsExpect GroupoidObj.gibbsMass
+      rw [quadraticObj_partFn α hα]
+      have h_term : ∀ g : End (quadraticObj α hα).base,
+          ((quadraticWind g : ℝ) ^ 2) ^ 2 *
+            (Real.exp (-(quadraticObj α hα).energy g) / quadraticPartFn α) =
+          ((quadraticWind g : ℝ) ^ 4 * Real.exp (-α * (quadraticWind g : ℝ) ^ 2)) /
+            quadraticPartFn α := by
+        intro g
+        show ((quadraticWind g : ℝ) ^ 2) ^ 2 *
+          (Real.exp (-(α * (quadraticWind g : ℝ) ^ 2)) / quadraticPartFn α) = _
+        rw [mul_div_assoc, neg_mul]
+        congr 1
+        ring
+      rw [tsum_congr h_term, tsum_div_const]
+      congr 1
+    rw [h_pow4]
+  rw [h_expr]
+  have hCS := M2_sq_lt_Z_mul_M4 α hα
+  have hZ_pos : 0 < quadraticPartFn α :=
+    lt_trans one_pos (quadraticPartFn_gt_one α hα)
+  unfold quadraticMeanEnergy
+  set M2 := ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)
+  set M4 := ∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)
+  set Z := quadraticPartFn α
+  rw [show M4/Z - (M2/Z)^2 = (Z*M4 - M2^2) / Z^2 by field_simp]
+  apply div_pos _ (pow_pos hZ_pos 2)
+  linarith
+
+/-- `log Z(α)` is strictly convex on `(0, ∞)`.
+
+    Dual to strict anti-monotonicity of `⟨k²⟩_α = -d(log Z)/dα`: the derivative
+    of `log Z` is `-⟨k²⟩` (pointwise), and strict anti-monotonicity of `⟨k²⟩`
+    becomes strict monotonicity of the derivative, which is strict convexity. -/
+theorem log_quadraticPartFn_strictConvexOn :
+    StrictConvexOn ℝ (Set.Ioi 0) (fun α => Real.log (quadraticPartFn α)) := by
+  apply StrictMonoOn.strictConvexOn_of_deriv (convex_Ioi 0)
+  · intro α hα
+    exact (hasDerivAt_log_quadraticPartFn α hα).continuousAt.continuousWithinAt
+  · rw [interior_Ioi]
+    intro α hα β hβ hlt
+    have hdα := hasDerivAt_log_quadraticPartFn α hα
+    have hdβ := hasDerivAt_log_quadraticPartFn β hβ
+    rw [hdα.deriv, hdβ.deriv]
+    exact neg_lt_neg (quadraticMeanEnergy_strictAntiOn hα hβ hlt)
+
+/-- T-duality functional equation for mean energy:
+    `(π²/α²)·⟨k²⟩_{π²/α} + ⟨k²⟩_α = 1/(2α)`.
+
+    Obtained by differentiating `log Z(π²/α) = (1/2)·log(α/π) + log Z(α)` in α.
+    At α = π the two mean-energy terms coalesce into `2·⟨k²⟩_π = 1/(2π)`,
+    recovering `quadraticMeanEnergy_self_dual`. The full FE says T-duality
+    constrains the second moment as a function of α, not just at the fixed
+    point: `⟨k²⟩_{π²/α}` is a rational function of α and `⟨k²⟩_α`. -/
+theorem quadraticMeanEnergy_T_dual (α : ℝ) (hα : 0 < α) :
+    (Real.pi ^ 2 / α ^ 2) * quadraticMeanEnergy (Real.pi ^ 2 / α) +
+      quadraticMeanEnergy α = 1 / (2 * α) := by
+  have hπ := Real.pi_pos
+  have hπα : 0 < Real.pi ^ 2 / α := div_pos (sq_pos_of_pos hπ) hα
+  have hαπ : 0 < α / Real.pi := div_pos hα hπ
+  have h_log_eventually :
+      (fun β : ℝ => Real.log (quadraticPartFn (Real.pi ^ 2 / β))) =ᶠ[nhds α]
+        (fun β => (1/2 : ℝ) * Real.log (β / Real.pi) +
+          Real.log (quadraticPartFn β)) := by
+    filter_upwards [eventually_gt_nhds hα] with β hβ
+    have hβπ : 0 < β / Real.pi := div_pos hβ hπ
+    have hZβ : 0 < quadraticPartFn β :=
+      lt_trans one_pos (quadraticPartFn_gt_one β hβ)
+    have hrpow : 0 < (β / Real.pi) ^ ((1:ℝ)/2) := Real.rpow_pos_of_pos hβπ _
+    rw [quadraticPartFn_duality_real β hβ,
+        Real.log_mul (ne_of_gt hrpow) (ne_of_gt hZβ),
+        Real.log_rpow hβπ]
+  have hLogZ_πα := hasDerivAt_log_quadraticPartFn (Real.pi ^ 2 / α) hπα
+  have h_inv : HasDerivAt (fun β : ℝ => Real.pi ^ 2 / β)
+      (-(Real.pi ^ 2) / α ^ 2) α := by
+    have h := (hasDerivAt_const α (Real.pi ^ 2)).div
+              (hasDerivAt_id α) (ne_of_gt hα)
+    simp only [id] at h
+    convert h using 1
+    ring
+  have hLHS : HasDerivAt (fun β => Real.log (quadraticPartFn (Real.pi ^ 2 / β)))
+      ((- quadraticMeanEnergy (Real.pi ^ 2 / α)) * (-(Real.pi ^ 2) / α ^ 2)) α :=
+    hLogZ_πα.comp α h_inv
+  have h_div : HasDerivAt (fun β : ℝ => β / Real.pi) (1 / Real.pi) α := by
+    simpa using (hasDerivAt_id α).div_const Real.pi
+  have h_log_div : HasDerivAt (fun β => Real.log (β / Real.pi)) (1 / α) α := by
+    have := h_div.log (ne_of_gt hαπ)
+    convert this using 1
+    field_simp
+  have h_halflog : HasDerivAt (fun β : ℝ => (1/2 : ℝ) * Real.log (β / Real.pi))
+      (1 / (2 * α)) α := by
+    have := h_log_div.const_mul ((1:ℝ)/2)
+    convert this using 1
+    ring
+  have hLogZ_α := hasDerivAt_log_quadraticPartFn α hα
+  have hRHS : HasDerivAt (fun β : ℝ => (1/2 : ℝ) * Real.log (β / Real.pi) +
+      Real.log (quadraticPartFn β))
+      (1 / (2 * α) + (- quadraticMeanEnergy α)) α :=
+    h_halflog.add hLogZ_α
+  have heq := (hLHS.congr_of_eventuallyEq h_log_eventually.symm).unique hRHS
+  have hsimp : (- quadraticMeanEnergy (Real.pi ^ 2 / α)) *
+      (-(Real.pi ^ 2) / α ^ 2) =
+      (Real.pi ^ 2 / α ^ 2) * quadraticMeanEnergy (Real.pi ^ 2 / α) := by ring
+  rw [hsimp] at heq
+  linarith
+
+/-- **Structural bridge.** On any `GroupoidObj` carrying quadratic energy
+    `α·(wind g)²` for a ℤ-valued winding equivalence, the Gibbs expectation of
+    `(wind g)²` equals the canonical `quadraticMeanEnergy α`. -/
+theorem GroupoidObj.gibbsExpect_wind_sq_eq
+    (E : GroupoidObj) (wind : End E.base ≃ ℤ) (α : ℝ) (_hα : 0 < α)
+    (hK : ∀ g, E.energy g = α * (wind g : ℝ) ^ 2) :
+    E.gibbsExpect (fun g => (wind g : ℝ) ^ 2) = quadraticMeanEnergy α := by
+  unfold GroupoidObj.gibbsExpect GroupoidObj.gibbsMass quadraticMeanEnergy
+  rw [partFn_eq_quadraticPartFn E wind α hK]
+  have h_term : ∀ g : End E.base,
+      (wind g : ℝ) ^ 2 * (Real.exp (-E.energy g) / quadraticPartFn α) =
+      ((wind g : ℝ) ^ 2 * Real.exp (-α * (wind g : ℝ) ^ 2)) / quadraticPartFn α := by
+    intro g
+    rw [hK g, mul_div_assoc, neg_mul]
+  rw [tsum_congr h_term, tsum_div_const]
+  congr 1
+  exact Equiv.tsum_eq wind
+    (fun k : ℤ => (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2))
+
+/-- **Structural T-duality functional equation** for the Gibbs mean energy
+    of squared winding on any `GroupoidObj` with quadratic energy `α·(wind g)²`.
+    This lifts `quadraticMeanEnergy_T_dual` to arbitrary quadratic groupoid
+    objects via their canonical ℤ-valued winding. -/
+theorem GroupoidObj.meanEnergy_T_dual
+    (E : GroupoidObj) (wind : End E.base ≃ ℤ) (α : ℝ) (hα : 0 < α)
+    (hK : ∀ g, E.energy g = α * (wind g : ℝ) ^ 2) :
+    (Real.pi ^ 2 / α ^ 2) *
+        (E.dual wind α hα hK).gibbsExpect (fun g => (wind g : ℝ) ^ 2) +
+      E.gibbsExpect (fun g => (wind g : ℝ) ^ 2) = 1 / (2 * α) := by
+  have hπα : 0 < Real.pi ^ 2 / α := div_pos (sq_pos_of_pos Real.pi_pos) hα
+  have hK' : ∀ g, (E.dual wind α hα hK).energy g =
+      (Real.pi ^ 2 / α) * (wind g : ℝ) ^ 2 := fun _ => rfl
+  have hE := E.gibbsExpect_wind_sq_eq wind α hα hK
+  have hEdual := (E.dual wind α hα hK).gibbsExpect_wind_sq_eq wind
+    (Real.pi ^ 2 / α) hπα hK'
+  have hFE := quadraticMeanEnergy_T_dual α hα
+  linear_combination hE + (Real.pi^2/α^2) * hEdual + hFE
 
 /-- For A ≥ 4 and t ≥ 0: (A + 4t)·e⁻ᵗ ≤ A. Uses only e^t ≥ 1 + t and A ≥ 4. -/
 private lemma aux_exp_ineq (A t : ℝ) (hA : 4 ≤ A) (ht : 0 ≤ t) :
@@ -619,6 +1107,78 @@ private lemma N_nonneg (β : ℝ) (hβ : Real.pi ≤ β) :
   exact (summable_N_summand Real.pi Real.pi_pos).tsum_le_tsum
     (fun k => N_summand_mono k β hβ)
     (summable_N_summand β (lt_of_lt_of_le Real.pi_pos hβ))
+
+/-- Strict version of `aux_exp_ineq`: when `t > 0`, the inequality is strict. -/
+private lemma aux_exp_ineq_strict (A t : ℝ) (hA : 4 ≤ A) (ht : 0 < t) :
+    (A + 4 * t) * Real.exp (-t) < A := by
+  rw [Real.exp_neg, mul_inv_lt_iff₀ (Real.exp_pos t)]
+  calc A + 4 * t ≤ A + A * t := by nlinarith
+    _ = A * (1 + t) := by ring
+    _ < A * Real.exp t := by
+        apply mul_lt_mul_of_pos_left _ (by linarith)
+        have := Real.add_one_lt_exp (ne_of_gt ht)
+        linarith
+
+/-- Strict monotone increase of the `N` summand in β at a fixed nonzero k when β > π.
+    Proof: reduce to `aux_exp_ineq_strict` via `A = 4πx - 1 ≥ 4`, `u = (β-π)x > 0`,
+    where the shift A + 4u = 4βx - 1. -/
+private lemma N_summand_strict_mono (k : ℤ) (hk : k ≠ 0) (β : ℝ) (hβ : Real.pi < β) :
+    (1 - 4 * Real.pi * (k : ℝ) ^ 2) * Real.exp (-Real.pi * (k : ℝ) ^ 2) <
+    (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
+  have hx_ge_one : (1 : ℝ) ≤ (k : ℝ) ^ 2 := by
+    have hk_abs_r : (1 : ℝ) ≤ |(k : ℝ)| := by
+      have hint : (1 : ℤ) ≤ |k| := Int.one_le_abs hk
+      have : ((1 : ℤ) : ℝ) ≤ ((|k| : ℤ) : ℝ) := Int.cast_le.mpr hint
+      simpa [Int.cast_abs] using this
+    nlinarith [sq_abs (k : ℝ), abs_nonneg ((k : ℝ))]
+  set x : ℝ := (k : ℝ) ^ 2 with hx_def
+  have hx_pos : 0 < x := lt_of_lt_of_le zero_lt_one hx_ge_one
+  have hu_pos : 0 < (β - Real.pi) * x := mul_pos (by linarith) hx_pos
+  have hA_ge : (4 : ℝ) ≤ 4 * Real.pi * x - 1 := by
+    have h4π : (5 : ℝ) ≤ 4 * Real.pi := by
+      have : (3 : ℝ) < Real.pi := Real.pi_gt_three
+      linarith
+    have h5 : (5 : ℝ) ≤ 4 * Real.pi * x := by
+      calc (5 : ℝ)
+          ≤ 4 * Real.pi * 1 := by linarith
+        _ ≤ 4 * Real.pi * x := by
+            apply mul_le_mul_of_nonneg_left hx_ge_one
+            positivity
+    linarith
+  have h_aux := aux_exp_ineq_strict
+    (4 * Real.pi * x - 1) ((β - Real.pi) * x) hA_ge hu_pos
+  have h_shift : 4 * Real.pi * x - 1 + 4 * ((β - Real.pi) * x) = 4 * β * x - 1 := by ring
+  rw [h_shift] at h_aux
+  -- h_aux : (4 * β * x - 1) * Real.exp (-((β - Real.pi) * x)) < 4 * Real.pi * x - 1
+  have h_exp_split : Real.exp (-β * x) =
+      Real.exp (-Real.pi * x) * Real.exp (-((β - Real.pi) * x)) := by
+    rw [← Real.exp_add]
+    congr 1
+    ring
+  rw [h_exp_split]
+  have hE_pos : 0 < Real.exp (-Real.pi * x) := Real.exp_pos _
+  have h_neg : (1 - 4 * β * x) * Real.exp (-((β - Real.pi) * x)) =
+      -((4 * β * x - 1) * Real.exp (-((β - Real.pi) * x))) := by ring
+  have target : (1 - 4 * Real.pi * x) <
+      (1 - 4 * β * x) * Real.exp (-((β - Real.pi) * x)) := by
+    rw [h_neg]; linarith
+  calc (1 - 4 * Real.pi * x) * Real.exp (-Real.pi * x)
+      < (1 - 4 * β * x) * Real.exp (-((β - Real.pi) * x)) * Real.exp (-Real.pi * x) :=
+        mul_lt_mul_of_pos_right target hE_pos
+    _ = (1 - 4 * β * x) *
+        (Real.exp (-Real.pi * x) * Real.exp (-((β - Real.pi) * x))) := by ring
+
+/-- Strict positivity of `N(β)` for β > π. -/
+private lemma N_pos (β : ℝ) (hβ : Real.pi < β) :
+    0 < ∑' k : ℤ, (1 - 4 * β * (k : ℝ) ^ 2) *
+      Real.exp (-β * (k : ℝ) ^ 2) := by
+  rw [show (0 : ℝ) = ∑' k : ℤ, (1 - 4 * Real.pi * (k : ℝ) ^ 2) *
+    Real.exp (-Real.pi * (k : ℝ) ^ 2) from N_self_dual.symm]
+  exact Summable.tsum_lt_tsum (i := (1 : ℤ))
+    (fun k => N_summand_mono k β (le_of_lt hβ))
+    (N_summand_strict_mono 1 (by decide) β hβ)
+    (summable_N_summand Real.pi Real.pi_pos)
+    (summable_N_summand β (lt_trans Real.pi_pos hβ))
 
 /-- β ↦ (β/π)^{1/2}·Z(β)² is monotone on [π,∞).
 Reduces to N(β) ≥ 0 via `monotoneOn_of_deriv_nonneg` + `hasDerivAt_tsum`. -/
@@ -726,66 +1286,6 @@ theorem dual_pair_variational (α : ℝ) (hα : 0 < α) :
   rw [dual_pair_product α hα]
   exact quadraticPartFn_self_dual_minimum α hα
 
-/-- The completed partition function `f(α) := (α/π)^(1/4)·Z(α)` is invariant
-under T-duality `α ↔ π²/α`.
-
-Equivalently, `H(α) := (1/4)·log(α/π) + log Z(α)` satisfies `H(π²/α) = H(α)`
-— it is the natural invariant of the Z(α)-duality flow on (0, ∞). Direct
-calculation from `quadraticPartFn_duality_real` and rpow arithmetic. -/
-theorem quadraticPartFn_completed_T_dual_invariant (α : ℝ) (hα : 0 < α) :
-    (Real.pi ^ 2 / α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn (Real.pi ^ 2 / α) =
-      (α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α := by
-  have hπ := Real.pi_pos
-  have hαπ : 0 < α / Real.pi := div_pos hα hπ
-  have hdual := quadraticPartFn_duality_real α hα
-  rw [hdual]
-  have hsimp : Real.pi ^ 2 / α / Real.pi = Real.pi / α := by field_simp
-  rw [hsimp]
-  have h_inv : Real.pi / α = (α / Real.pi)⁻¹ := (inv_div α Real.pi).symm
-  rw [h_inv, Real.inv_rpow hαπ.le, ← Real.rpow_neg hαπ.le,
-      ← mul_assoc, ← Real.rpow_add hαπ]
-  congr 2
-  ring
-
-/-- The completed partition function `f(α) := (α/π)^(1/4) · Z(α)` attains its
-global minimum at the self-dual temperature α = π.
-
-By `quadraticPartFn_completed_T_dual_invariant`, `f(π²/α) = f(α)`: the self-dual
-axis is the symmetry axis of `f` on (0, ∞). This result says `f(π) ≤ f(α)` for
-all α > 0 — the invariant bottoms out at the symmetry axis.
-
-Follows from `dual_pair_variational` `Z(π)² ≤ Z(α)·Z(π²/α)` by substituting
-`Z(π²/α) = √(α/π)·Z(α)` on the right and taking a square root. -/
-theorem quadraticPartFn_completed_ge_self_dual (α : ℝ) (hα : 0 < α) :
-    quadraticPartFn Real.pi ≤
-      (α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α := by
-  have hπ := Real.pi_pos
-  have hαπ : 0 < α / Real.pi := div_pos hα hπ
-  have hZπ : 0 < quadraticPartFn Real.pi :=
-    lt_trans one_pos (quadraticPartFn_gt_one Real.pi hπ)
-  have hZα : 0 < quadraticPartFn α :=
-    lt_trans one_pos (quadraticPartFn_gt_one α hα)
-  have hrpow : 0 < (α / Real.pi) ^ ((1:ℝ)/4) := Real.rpow_pos_of_pos hαπ _
-  have hrhs : 0 ≤ (α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α :=
-    (mul_pos hrpow hZα).le
-  have hvar := dual_pair_variational α hα
-  have hdual := quadraticPartFn_duality_real α hα
-  have hsq : quadraticPartFn Real.pi ^ 2 ≤
-      ((α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α) ^ 2 := by
-    calc quadraticPartFn Real.pi ^ 2
-        ≤ quadraticPartFn α * quadraticPartFn (Real.pi ^ 2 / α) := hvar
-      _ = quadraticPartFn α * ((α / Real.pi) ^ ((1:ℝ)/2) * quadraticPartFn α) := by
-          rw [hdual]
-      _ = (α / Real.pi) ^ ((1:ℝ)/2) * quadraticPartFn α ^ 2 := by ring
-      _ = ((α / Real.pi) ^ ((1:ℝ)/4)) ^ 2 * quadraticPartFn α ^ 2 := by
-          congr 1
-          rw [← Real.rpow_natCast ((α/Real.pi)^((1:ℝ)/4)) 2,
-              ← Real.rpow_mul hαπ.le]
-          norm_num
-      _ = ((α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α) ^ 2 := by ring
-  have hsqrt := Real.sqrt_le_sqrt hsq
-  rwa [Real.sqrt_sq hZπ.le, Real.sqrt_sq hrhs] at hsqrt
-
 theorem GroupoidObj.dual_pair_variational
     (E : GroupoidObj) (wind : End E.base ≃ ℤ) (α : ℝ) (hα : 0 < α)
     (hK : ∀ g, E.energy g = α * (wind g : ℝ) ^ 2) :
@@ -793,6 +1293,396 @@ theorem GroupoidObj.dual_pair_variational
   rw [partFn_eq_quadraticPartFn E wind α hK,
       partFn_eq_quadraticPartFn (E.dual wind α hα hK) wind _ (fun _ => rfl)]
   exact Simplicial.dual_pair_variational α hα
+
+/-! ## Self-Dual Mean Energy: Uniqueness
+
+Two bounds sandwiching `⟨k²⟩_α` against `1/(4α)` — the upper bound for
+α ≥ π follows from `N_nonneg`, the lower bound for α ≤ π follows by
+reflecting the upper bound through the T-duality FE. At α = π the two
+collide: `⟨k²⟩_π = 1/(4π)`, uniquely. -/
+
+/-- Upper bound: for α ≥ π, `⟨k²⟩_α ≤ 1/(4α)`. Direct from `N_nonneg`. -/
+theorem quadraticMeanEnergy_le_inv (α : ℝ) (hα : Real.pi ≤ α) :
+    quadraticMeanEnergy α ≤ 1 / (4 * α) := by
+  have hα_pos : 0 < α := lt_of_lt_of_le Real.pi_pos hα
+  have hZ_pos : 0 < quadraticPartFn α :=
+    lt_trans one_pos (quadraticPartFn_gt_one α hα_pos)
+  have h4α_pos : (0 : ℝ) < 4 * α := by linarith
+  have h1 := summable_quadraticPartFn α hα_pos
+  have h2 : Summable (fun k : ℤ =>
+      4 * α * ((k : ℝ)^2 * Real.exp (-α * (k : ℝ)^2))) :=
+    (summable_sq_mul_exp α hα_pos).mul_left (4 * α)
+  have hsplit :
+      (∑' k : ℤ, (1 - 4 * α * (k : ℝ)^2) * Real.exp (-α * (k : ℝ)^2)) =
+      quadraticPartFn α -
+        4 * α * (∑' k : ℤ, (k : ℝ)^2 * Real.exp (-α * (k : ℝ)^2)) := by
+    unfold quadraticPartFn
+    rw [show (fun k : ℤ => (1 - 4 * α * (k : ℝ)^2) * Real.exp (-α * (k : ℝ)^2)) =
+        (fun k : ℤ => Real.exp (-α * (k : ℝ)^2) -
+          4 * α * ((k : ℝ)^2 * Real.exp (-α * (k : ℝ)^2))) from
+      funext fun k => by ring]
+    rw [h1.tsum_sub h2, tsum_mul_left]
+  have hN := N_nonneg α hα
+  rw [hsplit] at hN
+  unfold quadraticMeanEnergy
+  rw [div_le_div_iff₀ hZ_pos h4α_pos]
+  linarith
+
+/-- Strict upper bound: for α > π, `⟨k²⟩_α < 1/(4α)`. Uses `N_pos` strictly. -/
+theorem quadraticMeanEnergy_lt_inv (α : ℝ) (hα : Real.pi < α) :
+    quadraticMeanEnergy α < 1 / (4 * α) := by
+  have hα_pos : 0 < α := lt_trans Real.pi_pos hα
+  have hZ_pos : 0 < quadraticPartFn α :=
+    lt_trans one_pos (quadraticPartFn_gt_one α hα_pos)
+  have h4α_pos : (0 : ℝ) < 4 * α := by linarith
+  have h1 := summable_quadraticPartFn α hα_pos
+  have h2 : Summable (fun k : ℤ =>
+      4 * α * ((k : ℝ)^2 * Real.exp (-α * (k : ℝ)^2))) :=
+    (summable_sq_mul_exp α hα_pos).mul_left (4 * α)
+  have hsplit :
+      (∑' k : ℤ, (1 - 4 * α * (k : ℝ)^2) * Real.exp (-α * (k : ℝ)^2)) =
+      quadraticPartFn α -
+        4 * α * (∑' k : ℤ, (k : ℝ)^2 * Real.exp (-α * (k : ℝ)^2)) := by
+    unfold quadraticPartFn
+    rw [show (fun k : ℤ => (1 - 4 * α * (k : ℝ)^2) * Real.exp (-α * (k : ℝ)^2)) =
+        (fun k : ℤ => Real.exp (-α * (k : ℝ)^2) -
+          4 * α * ((k : ℝ)^2 * Real.exp (-α * (k : ℝ)^2))) from
+      funext fun k => by ring]
+    rw [h1.tsum_sub h2, tsum_mul_left]
+  have hN := N_pos α hα
+  rw [hsplit] at hN
+  unfold quadraticMeanEnergy
+  rw [div_lt_div_iff₀ hZ_pos h4α_pos]
+  linarith
+
+/-- Lower bound: for 0 < α ≤ π, `⟨k²⟩_α ≥ 1/(4α)`. Via the T-duality FE and
+    the upper bound at π²/α ≥ π. -/
+theorem quadraticMeanEnergy_ge_inv (α : ℝ) (hα : 0 < α) (hαπ : α ≤ Real.pi) :
+    1 / (4 * α) ≤ quadraticMeanEnergy α := by
+  have hπ := Real.pi_pos
+  have hπα_ge : Real.pi ≤ Real.pi ^ 2 / α := by
+    rw [le_div_iff₀ hα]; nlinarith
+  have h_upper_dual := quadraticMeanEnergy_le_inv (Real.pi ^ 2 / α) hπα_ge
+  have hFE := quadraticMeanEnergy_T_dual α hα
+  have h_coeff_nonneg : (0 : ℝ) ≤ Real.pi ^ 2 / α ^ 2 := by positivity
+  have h_mul : (Real.pi ^ 2 / α ^ 2) * quadraticMeanEnergy (Real.pi ^ 2 / α) ≤
+      (Real.pi ^ 2 / α ^ 2) * (1 / (4 * (Real.pi ^ 2 / α))) :=
+    mul_le_mul_of_nonneg_left h_upper_dual h_coeff_nonneg
+  have h_simp : (Real.pi ^ 2 / α ^ 2) * (1 / (4 * (Real.pi ^ 2 / α))) = 1 / (4 * α) := by
+    have hα_ne : α ≠ 0 := ne_of_gt hα
+    have hπ_ne : Real.pi ≠ 0 := ne_of_gt hπ
+    field_simp
+  rw [h_simp] at h_mul
+  have harith : (1 : ℝ) / (2 * α) - 1 / (4 * α) = 1 / (4 * α) := by
+    have hα_ne : α ≠ 0 := ne_of_gt hα
+    field_simp
+    ring
+  linarith
+
+/-- Strict lower bound: for 0 < α < π, `1/(4α) < ⟨k²⟩_α`.
+    Via T-duality FE and the strict upper bound at π²/α > π. -/
+theorem quadraticMeanEnergy_gt_inv (α : ℝ) (hα : 0 < α) (hαπ : α < Real.pi) :
+    1 / (4 * α) < quadraticMeanEnergy α := by
+  have hπ := Real.pi_pos
+  have hπα_gt : Real.pi < Real.pi ^ 2 / α := by
+    rw [lt_div_iff₀ hα]; nlinarith
+  have h_upper_dual := quadraticMeanEnergy_lt_inv (Real.pi ^ 2 / α) hπα_gt
+  have hFE := quadraticMeanEnergy_T_dual α hα
+  have h_coeff_pos : (0 : ℝ) < Real.pi ^ 2 / α ^ 2 := by positivity
+  have h_mul : (Real.pi ^ 2 / α ^ 2) * quadraticMeanEnergy (Real.pi ^ 2 / α) <
+      (Real.pi ^ 2 / α ^ 2) * (1 / (4 * (Real.pi ^ 2 / α))) :=
+    mul_lt_mul_of_pos_left h_upper_dual h_coeff_pos
+  have h_simp : (Real.pi ^ 2 / α ^ 2) * (1 / (4 * (Real.pi ^ 2 / α))) = 1 / (4 * α) := by
+    have hα_ne : α ≠ 0 := ne_of_gt hα
+    have hπ_ne : Real.pi ≠ 0 := ne_of_gt hπ
+    field_simp
+  rw [h_simp] at h_mul
+  have harith : (1 : ℝ) / (2 * α) - 1 / (4 * α) = 1 / (4 * α) := by
+    have hα_ne : α ≠ 0 := ne_of_gt hα
+    field_simp
+    ring
+  linarith
+
+/-- Positivity of the mean energy: `⟨k²⟩_α > 0` for all α > 0.
+    The numerator is strictly positive via the k = 1 term. -/
+theorem quadraticMeanEnergy_pos (α : ℝ) (hα : 0 < α) :
+    0 < quadraticMeanEnergy α := by
+  have hZ_pos : 0 < quadraticPartFn α :=
+    lt_trans one_pos (quadraticPartFn_gt_one α hα)
+  have hsum := summable_sq_mul_exp α hα
+  have h_nonneg : ∀ k : ℤ, 0 ≤ (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2) :=
+    fun k => mul_nonneg (sq_nonneg _) (le_of_lt (Real.exp_pos _))
+  have h_one_pos : 0 < ((1 : ℤ) : ℝ) ^ 2 * Real.exp (-α * ((1 : ℤ) : ℝ) ^ 2) := by
+    push_cast; positivity
+  have h_num_pos : 0 < ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2) := by
+    rw [show (0 : ℝ) = ∑' _ : ℤ, (0 : ℝ) from tsum_zero.symm]
+    exact Summable.tsum_lt_tsum (i := (1 : ℤ))
+      (fun k => h_nonneg k) h_one_pos summable_zero hsum
+  unfold quadraticMeanEnergy
+  exact div_pos h_num_pos hZ_pos
+
+/-- Symmetric (halving) form of the T-duality FE for mean energy:
+    `α·⟨k²⟩_α + (π²/α)·⟨k²⟩_{π²/α} = 1/2`.
+    The product `α·⟨k²⟩_α` at the two T-dual couplings averages to `1/4`. -/
+theorem quadraticMeanEnergy_T_dual_symmetric (α : ℝ) (hα : 0 < α) :
+    α * quadraticMeanEnergy α +
+      (Real.pi ^ 2 / α) * quadraticMeanEnergy (Real.pi ^ 2 / α) = 1 / 2 := by
+  have hFE := quadraticMeanEnergy_T_dual α hα
+  have hα_ne : α ≠ 0 := ne_of_gt hα
+  have h_mul_FE : α * ((Real.pi ^ 2 / α ^ 2) * quadraticMeanEnergy (Real.pi ^ 2 / α) +
+         quadraticMeanEnergy α) = α * (1 / (2 * α)) := by
+    rw [hFE]
+  have halg : α * ((Real.pi ^ 2 / α ^ 2) * quadraticMeanEnergy (Real.pi ^ 2 / α) +
+              quadraticMeanEnergy α) =
+              α * quadraticMeanEnergy α +
+              (Real.pi ^ 2 / α) * quadraticMeanEnergy (Real.pi ^ 2 / α) := by
+    field_simp
+    ring
+  have hhalf : α * (1 / (2 * α)) = 1 / 2 := by
+    field_simp
+  linarith [halg ▸ h_mul_FE, hhalf]
+
+/-- `α·⟨k²⟩_α = 1/4 ↔ α = π`.  The product `α·⟨k²⟩_α` on `(0, ∞)` equals
+    `1/4` iff α is the self-dual coupling.  Equivalent to
+    `quadraticMeanEnergy_self_dual_iff` via multiplication by α. -/
+theorem quadraticMeanEnergy_mul_eq_quarter_iff (α : ℝ) (hα : 0 < α) :
+    α * quadraticMeanEnergy α = 1 / 4 ↔ α = Real.pi := by
+  have hα_ne : α ≠ 0 := ne_of_gt hα
+  have hsimp : α * (1 / (4 * α)) = 1 / 4 := by field_simp
+  constructor
+  · intro h
+    rcases lt_trichotomy α Real.pi with h1 | h1 | h1
+    · have hlow := quadraticMeanEnergy_gt_inv α hα h1
+      have hmul : α * (1 / (4 * α)) < α * quadraticMeanEnergy α :=
+        mul_lt_mul_of_pos_left hlow hα
+      linarith
+    · exact h1
+    · have hup := quadraticMeanEnergy_lt_inv α h1
+      have hmul : α * quadraticMeanEnergy α < α * (1 / (4 * α)) :=
+        mul_lt_mul_of_pos_left hup hα
+      linarith
+  · intro h
+    have hπ_ne : Real.pi ≠ 0 := ne_of_gt Real.pi_pos
+    rw [h, quadraticMeanEnergy_self_dual]
+    field_simp
+
+/-- The self-dual coupling α = π is the UNIQUE α > 0 with `⟨k²⟩_α = 1/(4π)`.
+    Mirrors `quadraticPartFn_self_dual_iff` at the level of mean energy. -/
+theorem quadraticMeanEnergy_self_dual_iff (α : ℝ) (hα : 0 < α) :
+    quadraticMeanEnergy α = 1 / (4 * Real.pi) ↔ α = Real.pi := by
+  refine ⟨fun h => ?_, fun h => h ▸ quadraticMeanEnergy_self_dual⟩
+  rcases lt_trichotomy α Real.pi with h1 | h1 | h1
+  · have hlow := quadraticMeanEnergy_ge_inv α hα (le_of_lt h1)
+    have hlt : 1 / (4 * Real.pi) < 1 / (4 * α) := by
+      apply one_div_lt_one_div_of_lt (by positivity)
+      linarith
+    linarith
+  · exact h1
+  · have hup := quadraticMeanEnergy_le_inv α (le_of_lt h1)
+    have hlt : 1 / (4 * α) < 1 / (4 * Real.pi) := by
+      apply one_div_lt_one_div_of_lt (by positivity)
+      linarith
+    linarith
+
+/-- Corollary: the mean energy is strictly below the self-dual value iff α > π. -/
+theorem quadraticMeanEnergy_lt_self_dual_iff (α : ℝ) (hα : 0 < α) :
+    quadraticMeanEnergy α < 1 / (4 * Real.pi) ↔ Real.pi < α := by
+  constructor
+  · intro h
+    by_contra h_not
+    push_neg at h_not
+    have hlow := quadraticMeanEnergy_ge_inv α hα h_not
+    have hle : 1 / (4 * Real.pi) ≤ 1 / (4 * α) :=
+      one_div_le_one_div_of_le (by positivity) (by linarith)
+    linarith
+  · intro hπα
+    have hup := quadraticMeanEnergy_le_inv α (le_of_lt hπα)
+    have hlt : 1 / (4 * α) < 1 / (4 * Real.pi) :=
+      one_div_lt_one_div_of_lt (by positivity) (by linarith)
+    linarith
+
+/-- Corollary: the mean energy is strictly above the self-dual value iff α < π. -/
+theorem quadraticMeanEnergy_gt_self_dual_iff (α : ℝ) (hα : 0 < α) :
+    1 / (4 * Real.pi) < quadraticMeanEnergy α ↔ α < Real.pi := by
+  constructor
+  · intro h
+    by_contra h_not
+    push_neg at h_not
+    have hup := quadraticMeanEnergy_le_inv α h_not
+    have hle : 1 / (4 * α) ≤ 1 / (4 * Real.pi) :=
+      one_div_le_one_div_of_le (by positivity) (by linarith)
+    linarith
+  · intro hαπ
+    have hlow := quadraticMeanEnergy_ge_inv α hα (le_of_lt hαπ)
+    have hlt : 1 / (4 * Real.pi) < 1 / (4 * α) :=
+      one_div_lt_one_div_of_lt (by positivity) (by linarith)
+    linarith
+
+/-- **Canonical self-dual winding moment.** Gibbs mean of `(canonical winding)²`
+    on `quadraticObj π Real.pi_pos` equals `1/(4π)`. The winding is *derived* from
+    the one-object groupoid `SingleObj (Multiplicative ℤ)` via `quadraticWind`; no
+    external data is required. This is the undecorated groupoid-level version:
+    the groupoid alone witnesses `End ≃ ℤ`. -/
+theorem quadraticObj_meanWindingSq_self_dual :
+    (quadraticObj Real.pi Real.pi_pos).gibbsExpect
+        (fun g => (quadraticWind g : ℝ) ^ 2) = 1 / (4 * Real.pi) :=
+  ((quadraticObj Real.pi Real.pi_pos).gibbsExpect_wind_sq_eq
+      quadraticWind Real.pi Real.pi_pos
+      (quadraticObj_energy Real.pi Real.pi_pos)).trans
+    quadraticMeanEnergy_self_dual
+
+/-- **Canonical self-dual mean energy.** Gibbs mean of the energy on
+    `quadraticObj π Real.pi_pos` equals `1/4`.  Derived from
+    `quadraticObj_meanWindingSq_self_dual` by factoring π out of the energy.
+    Like its companion, this version takes no external winding data: the
+    canonical `quadraticWind` is built from the groupoid's own structure. -/
+theorem quadraticObj_meanEnergy_self_dual :
+    (quadraticObj Real.pi Real.pi_pos).gibbsExpect
+        (fun g => (quadraticObj Real.pi Real.pi_pos).energy g) = 1 / 4 := by
+  have h := quadraticObj_meanWindingSq_self_dual
+  unfold GroupoidObj.gibbsExpect at h ⊢
+  have h_sum :
+      ∑' g : End (quadraticObj Real.pi Real.pi_pos).base,
+        (quadraticObj Real.pi Real.pi_pos).energy g *
+          (quadraticObj Real.pi Real.pi_pos).gibbsMass g =
+      Real.pi *
+        ∑' g : End (quadraticObj Real.pi Real.pi_pos).base,
+          (fun g => (quadraticWind g : ℝ) ^ 2) g *
+            (quadraticObj Real.pi Real.pi_pos).gibbsMass g := by
+    rw [← tsum_mul_left]
+    refine tsum_congr (fun g => ?_)
+    simp only
+    rw [quadraticObj_energy Real.pi Real.pi_pos g]
+    ring
+  rw [h_sum, h]
+  field_simp
+
+/-! ## Completed Partition Function: T-duality invariant
+
+The "completed" Jacobi theta is `f(α) = (α/π)^(1/4) · Z(α)`, T-duality invariant:
+`f(π²/α) = f(α)`. Its unique minimum on `(0, ∞)` is at the self-dual point
+`α = π`, where `f(π) = Z(π)`. -/
+
+/-- Completed partition function: `f(α) = (α/π)^(1/4) · Z(α)`. -/
+noncomputable def completedPartFn (α : ℝ) : ℝ :=
+  (α / Real.pi) ^ ((1 : ℝ) / 4) * quadraticPartFn α
+
+theorem completedPartFn_at_self_dual :
+    completedPartFn Real.pi = quadraticPartFn Real.pi := by
+  unfold completedPartFn
+  rw [div_self (ne_of_gt Real.pi_pos), Real.one_rpow, one_mul]
+
+theorem completedPartFn_T_dual (α : ℝ) (hα : 0 < α) :
+    completedPartFn (Real.pi ^ 2 / α) = completedPartFn α := by
+  unfold completedPartFn
+  have hαπ_pos : 0 < α / Real.pi := div_pos hα Real.pi_pos
+  have h_ratio : Real.pi ^ 2 / α / Real.pi = (α / Real.pi)⁻¹ := by
+    rw [inv_div]; field_simp
+  rw [h_ratio, quadraticPartFn_duality_real α hα,
+      Real.inv_rpow (le_of_lt hαπ_pos),
+      ← Real.rpow_neg (le_of_lt hαπ_pos),
+      ← mul_assoc, ← Real.rpow_add hαπ_pos]
+  congr 2
+  norm_num
+
+/-- Derivative of `log(completedPartFn α) = (1/4) log(α/π) + log Z(α)`:
+    `1/(4α) - ⟨k²⟩_α`. Zero exactly at α = π (where ⟨k²⟩ = 1/(4π)). -/
+private lemma hasDerivAt_log_completedPartFn (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt (fun α : ℝ => (1/4 : ℝ) * Real.log (α / Real.pi) +
+                             Real.log (quadraticPartFn α))
+      (1 / (4 * β) - quadraticMeanEnergy β) β := by
+  have hπ := Real.pi_pos
+  have hβπ : 0 < β / Real.pi := div_pos hβ hπ
+  have h_div : HasDerivAt (fun α : ℝ => α / Real.pi) (1 / Real.pi) β := by
+    simpa using (hasDerivAt_id β).div_const Real.pi
+  have h_log_div : HasDerivAt (fun α => Real.log (α / Real.pi)) (1 / β) β := by
+    have := h_div.log (ne_of_gt hβπ)
+    convert this using 1
+    field_simp
+  have h_quart : HasDerivAt (fun α : ℝ => (1/4 : ℝ) * Real.log (α / Real.pi))
+      (1 / (4 * β)) β := by
+    have := h_log_div.const_mul ((1 : ℝ) / 4)
+    convert this using 1
+    ring
+  exact h_quart.add (hasDerivAt_log_quadraticPartFn β hβ)
+
+/-- **Strict minimum of the completed partition function at the self-dual point.**
+
+    For any `α > 0` with `α ≠ π`, `f(α) > f(π) = Z(π)`.
+
+    The self-dual coupling `α = π` is the unique minimum of the T-duality
+    invariant `f(α) = (α/π)^(1/4) · Z(α)` on `(0, ∞)`. Proof via the
+    sign of `d(log f)/dα = 1/(4α) - ⟨k²⟩_α`: negative for `α < π`,
+    positive for `α > π` (by `quadraticMeanEnergy_gt_inv` / `_lt_inv`),
+    so `log f` strictly decreases on `(0, π]` and strictly increases on `[π, ∞)`. -/
+theorem completedPartFn_strictMin (α : ℝ) (hα : 0 < α) (hαπ : α ≠ Real.pi) :
+    quadraticPartFn Real.pi < completedPartFn α := by
+  set g : ℝ → ℝ := fun β => (1/4 : ℝ) * Real.log (β / Real.pi) +
+                              Real.log (quadraticPartFn β) with hg_def
+  have hπ := Real.pi_pos
+  have hZπ_pos : 0 < quadraticPartFn Real.pi :=
+    lt_trans one_pos (quadraticPartFn_gt_one Real.pi hπ)
+  have hZα_pos : 0 < quadraticPartFn α :=
+    lt_trans one_pos (quadraticPartFn_gt_one α hα)
+  have hαπ_pos : 0 < α / Real.pi := div_pos hα hπ
+  have hf_pos : 0 < completedPartFn α :=
+    mul_pos (Real.rpow_pos_of_pos hαπ_pos _) hZα_pos
+  have hlog_α : Real.log (completedPartFn α) = g α := by
+    show Real.log ((α/Real.pi)^((1:ℝ)/4) * quadraticPartFn α) = _
+    rw [Real.log_mul (ne_of_gt (Real.rpow_pos_of_pos hαπ_pos _)) (ne_of_gt hZα_pos),
+        Real.log_rpow hαπ_pos]
+  have hg_π : g Real.pi = Real.log (quadraticPartFn Real.pi) := by
+    show (1/4 : ℝ) * Real.log (Real.pi / Real.pi) +
+         Real.log (quadraticPartFn Real.pi) = _
+    rw [div_self (ne_of_gt hπ), Real.log_one, mul_zero, zero_add]
+  suffices h_strict : g Real.pi < g α by
+    rw [hg_π, ← hlog_α] at h_strict
+    exact (Real.log_lt_log_iff hZπ_pos hf_pos).mp h_strict
+  rcases lt_or_gt_of_ne hαπ with h_lt | h_gt
+  · have h_anti : StrictAntiOn g (Set.Ioc 0 Real.pi) := by
+      apply strictAntiOn_of_deriv_neg (convex_Ioc _ _)
+      · intro β ⟨hβ, _⟩
+        exact (hasDerivAt_log_completedPartFn β hβ).continuousAt.continuousWithinAt
+      · intro β hβ
+        rw [interior_Ioc] at hβ
+        obtain ⟨hβ_pos, hβπ⟩ := hβ
+        rw [(hasDerivAt_log_completedPartFn β hβ_pos).deriv]
+        have h := quadraticMeanEnergy_gt_inv β hβ_pos hβπ
+        linarith
+    exact h_anti ⟨hα, le_of_lt h_lt⟩ ⟨hπ, le_refl _⟩ h_lt
+  · have h_mono : StrictMonoOn g (Set.Ici Real.pi) := by
+      apply strictMonoOn_of_deriv_pos (convex_Ici _)
+      · intro β hβ
+        have hβ_pos : 0 < β := lt_of_lt_of_le hπ hβ
+        exact (hasDerivAt_log_completedPartFn β hβ_pos).continuousAt.continuousWithinAt
+      · intro β hβ
+        rw [interior_Ici] at hβ
+        have hβ_pos : 0 < β := lt_trans hπ hβ
+        rw [(hasDerivAt_log_completedPartFn β hβ_pos).deriv]
+        have h := quadraticMeanEnergy_lt_inv β hβ
+        linarith
+    exact h_mono (Set.left_mem_Ici) (le_of_lt h_gt) h_gt
+
+/-- **Non-strict form of the self-dual minimum**: `Z(π) ≤ f(α)` for every `α > 0`.
+    Covers the boundary case `α = π` (equality) along with the strict version. -/
+theorem completedPartFn_ge_self_dual (α : ℝ) (hα : 0 < α) :
+    quadraticPartFn Real.pi ≤ completedPartFn α := by
+  rcases eq_or_ne α Real.pi with rfl | hne
+  · exact completedPartFn_at_self_dual.ge
+  · exact (completedPartFn_strictMin α hα hne).le
+
+/-- **Sharp uniqueness**: `f(α) = Z(π)` iff `α = π`.
+
+    Every `α ≠ π` gives `f(α) > Z(π)` (strict by `completedPartFn_strictMin`), and
+    `f(π) = Z(π)` by `completedPartFn_at_self_dual`. So the self-dual coupling is the
+    unique point on `(0, ∞)` where the T-duality-invariant completed partition
+    function matches its self-dual value — equivalently, the unique minimizer of
+    `f` on `(0, ∞)`. -/
+theorem completedPartFn_eq_self_dual_iff (α : ℝ) (hα : 0 < α) :
+    completedPartFn α = quadraticPartFn Real.pi ↔ α = Real.pi := by
+  refine ⟨fun h => ?_, fun h => h ▸ completedPartFn_at_self_dual⟩
+  by_contra hne
+  exact absurd h (ne_of_gt (completedPartFn_strictMin α hα hne))
 
 /-! ## Mass Duality
 
