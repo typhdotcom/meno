@@ -726,6 +726,46 @@ theorem dual_pair_variational (α : ℝ) (hα : 0 < α) :
   rw [dual_pair_product α hα]
   exact quadraticPartFn_self_dual_minimum α hα
 
+/-- The completed partition function `f(α) := (α/π)^(1/4) · Z(α)` attains its
+global minimum at the self-dual temperature α = π.
+
+`f` is `T-duality invariant`: `f(π²/α) = f(α)` for all α > 0 (direct from
+`quadraticPartFn_duality_real` and rpow arithmetic). Equivalently, the
+"completed free energy" `H(α) := (1/4)·log(α/π) + log Z(α)` is the natural
+invariant under T-duality α ↔ π²/α and is minimized at α = π.
+
+Follows from `dual_pair_variational` `Z(π)² ≤ Z(α)·Z(π²/α)` by substituting
+`Z(π²/α) = √(α/π)·Z(α)` on the right and taking a square root. -/
+theorem quadraticPartFn_completed_ge_self_dual (α : ℝ) (hα : 0 < α) :
+    quadraticPartFn Real.pi ≤
+      (α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α := by
+  have hπ := Real.pi_pos
+  have hαπ : 0 < α / Real.pi := div_pos hα hπ
+  have hZπ : 0 < quadraticPartFn Real.pi :=
+    lt_trans one_pos (quadraticPartFn_gt_one Real.pi hπ)
+  have hZα : 0 < quadraticPartFn α :=
+    lt_trans one_pos (quadraticPartFn_gt_one α hα)
+  have hrpow : 0 < (α / Real.pi) ^ ((1:ℝ)/4) := Real.rpow_pos_of_pos hαπ _
+  have hrhs : 0 ≤ (α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α :=
+    (mul_pos hrpow hZα).le
+  have hvar := dual_pair_variational α hα
+  have hdual := quadraticPartFn_duality_real α hα
+  have hsq : quadraticPartFn Real.pi ^ 2 ≤
+      ((α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α) ^ 2 := by
+    calc quadraticPartFn Real.pi ^ 2
+        ≤ quadraticPartFn α * quadraticPartFn (Real.pi ^ 2 / α) := hvar
+      _ = quadraticPartFn α * ((α / Real.pi) ^ ((1:ℝ)/2) * quadraticPartFn α) := by
+          rw [hdual]
+      _ = (α / Real.pi) ^ ((1:ℝ)/2) * quadraticPartFn α ^ 2 := by ring
+      _ = ((α / Real.pi) ^ ((1:ℝ)/4)) ^ 2 * quadraticPartFn α ^ 2 := by
+          congr 1
+          rw [← Real.rpow_natCast ((α/Real.pi)^((1:ℝ)/4)) 2,
+              ← Real.rpow_mul hαπ.le]
+          norm_num
+      _ = ((α / Real.pi) ^ ((1:ℝ)/4) * quadraticPartFn α) ^ 2 := by ring
+  have hsqrt := Real.sqrt_le_sqrt hsq
+  rwa [Real.sqrt_sq hZπ.le, Real.sqrt_sq hrhs] at hsqrt
+
 theorem GroupoidObj.dual_pair_variational
     (E : GroupoidObj) (wind : End E.base ≃ ℤ) (α : ℝ) (hα : 0 < α)
     (hK : ∀ g, E.energy g = α * (wind g : ℝ) ^ 2) :

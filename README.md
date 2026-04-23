@@ -259,6 +259,7 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `duality_flow_pos_iff` | D(α) > 0 iff α < π: sub-critical objects outweigh their duals |
 | `duality_flow_zero_iff` | D(α) = 0 iff α = π: the self-dual point is the unique zero |
 | `dual_pair_variational` | Z(π)² ≤ Z(α)·Z(π²/α): the self-dual pair minimizes joint descriptive cost |
+| `quadraticPartFn_completed_ge_self_dual` | Z(π) ≤ (α/π)^(1/4)·Z(α): the T-duality-invariant "completed" partition function is minimized at the self-dual temperature |
 | `GroupoidObj.dual_pair_variational` | Lifted to groupoid objects: self-dual pair is optimal among all dual pairs |
 | `mass_duality` | n · (1/n) = 1: geodesic mass × harmonic mass = 1 |
 | `quadraticObj` | Canonical quadratic groupoid family: `GroupoidObj` over `SingleObj (Multiplicative ℤ)` with energy `α·(winding)²` |
