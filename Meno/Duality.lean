@@ -530,6 +530,39 @@ private lemma N_self_dual :
     rw [show Z'π = ∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2) from rfl]
     rw [← tsum_mul_left]
 
+/-- Mean energy at the self-dual temperature is `1/(4π)`.
+
+Thermodynamic reading: `quadraticPartFn α = ∑ exp(-α n²)` is a partition function
+with α as inverse temperature. At the self-dual point α = π, the expectation of
+the "energy" `n²` in the Gibbs measure equals `1/(4π)`. Equivalently,
+`∑ n² e^{-π n²} = Z(π) / (4π)`. Follows by differentiating the T-duality
+`Z(π²/α) = √(α/π)·Z(α)` at the fixed point α = π. -/
+theorem quadraticPartFn_moment_self_dual :
+    quadraticPartFn Real.pi =
+      4 * Real.pi *
+        (∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2)) := by
+  have hπ := Real.pi_pos
+  have h1 : Summable (fun k : ℤ => Real.exp (-Real.pi * (k : ℝ) ^ 2)) :=
+    summable_quadraticPartFn Real.pi hπ
+  have h2 : Summable (fun k : ℤ =>
+      4 * Real.pi * ((k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2))) :=
+    (summable_sq_mul_exp Real.pi hπ).mul_left (4 * Real.pi)
+  have split :
+      (∑' k : ℤ, (1 - 4 * Real.pi * (k : ℝ) ^ 2) *
+        Real.exp (-Real.pi * (k : ℝ) ^ 2)) =
+      quadraticPartFn Real.pi -
+        4 * Real.pi *
+          (∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2)) := by
+    unfold quadraticPartFn
+    rw [show (fun k : ℤ => (1 - 4 * Real.pi * (k : ℝ) ^ 2) *
+             Real.exp (-Real.pi * (k : ℝ) ^ 2)) =
+        (fun k : ℤ => Real.exp (-Real.pi * (k : ℝ) ^ 2) -
+          4 * Real.pi *
+            ((k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2))) from
+      funext fun k => by ring]
+    rw [h1.tsum_sub h2, tsum_mul_left]
+  linarith [split, N_self_dual]
+
 /-- For A ≥ 4 and t ≥ 0: (A + 4t)·e⁻ᵗ ≤ A. Uses only e^t ≥ 1 + t and A ≥ 4. -/
 private lemma aux_exp_ineq (A t : ℝ) (hA : 4 ≤ A) (ht : 0 ≤ t) :
     (A + 4 * t) * Real.exp (-t) ≤ A := by

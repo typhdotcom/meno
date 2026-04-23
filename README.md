@@ -251,6 +251,7 @@ Lifts the analytic T-duality identity from Theta.lean to a structural operation 
 | `complexity_gap_pos` | The dual residual log Z(π²/α) > 0: the bound is never tight |
 | `GroupoidObj.self_dual` | At α = π, object ≃ its own Fourier dual (self-dual fixed point) |
 | `quadraticPartFn_self_dual_iff` | Z(π²/α) = Z(α) iff α = π: uniqueness of the self-dual coupling |
+| `quadraticPartFn_moment_self_dual` | Z(π) = 4π·∑ k²·e^{−π k²}: mean "energy" ⟨k²⟩ at the self-dual temperature is 1/(4π) |
 | `dual_partFn_lt_iff` | Z(π²/α) < Z(α) iff α < π: sub-critical regime (dual is simpler) |
 | `dualityFlow` | D(α) = log Z(α) - log Z(π²/α): asymmetry between object and dual |
 | `duality_flow_eq` | D(α) = (1/2)·log(π/α): closed form from complexity decomposition |
