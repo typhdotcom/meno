@@ -1,3 +1,15 @@
+-- Foundational analytic primitives (new architecture)
+import Meno.SectorAction
+import Meno.QuadraticAction
+import Meno.LoopKernel
+import Meno.Geodesic
+import Meno.HarmonicForm
+import Meno.SectorPresentation
+import Meno.MatterHomology
+import Meno.InfoRatchet
+import Meno.HomKernel
+
+-- Pre-existing layers (to be migrated downstream)
 import Meno.Basic
 import Meno.Instances
 import Meno.Simplicial
