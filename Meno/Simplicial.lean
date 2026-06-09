@@ -491,6 +491,24 @@ theorem loopWinding_homotopy_invariant {n : ℕ} {hn : n ≥ 3} {s : Fin n}
   | cons h tail ih =>
     simp [Walk.append, Walk.windingCount, ih, add_assoc]
 
+/-- The trivial loop has zero winding sector. -/
+@[simp] theorem Walk.loopWinding_nil {n : ℕ} {hn : n ≥ 3} {s : Fin n} :
+    (Walk.nil s : Walk (CycleGraph n hn).toGraph s s).loopWinding = 0 := by
+  simp [Walk.loopWinding, Walk.windingCount]
+
+/-- Loop winding sector is additive under loop concatenation: the sector
+map `loopWinding : (loops at s, append) → (ℤ, +)` is a monoid morphism.
+Divisibility (`windingCount_dvd_card`) makes integer division exact. -/
+theorem Walk.loopWinding_append {n : ℕ} {hn : n ≥ 3} {s : Fin n}
+    (p q : Walk (CycleGraph n hn).toGraph s s) :
+    (p.append q).loopWinding = p.loopWinding + q.loopWinding := by
+  have hn0 : (n : ℤ) ≠ 0 := by exact_mod_cast (by omega : n ≠ 0)
+  show (p.append q).windingCount / (n : ℤ) = p.loopWinding + q.loopWinding
+  rw [Walk.windingCount_append,
+      Walk.windingCount_eq_loopWinding_mul_card p,
+      Walk.windingCount_eq_loopWinding_mul_card q,
+      ← add_mul, Int.mul_ediv_cancel _ hn0]
+
 /-! ## Canonical Cycle Walk -/
 
 /-- Repeat a loop by concatenation. -/
@@ -1698,21 +1716,6 @@ theorem summable_partitionFn (n : ℕ) (hn : n ≥ 3) :
     Summable (fun k : ℤ => Real.exp (-(k : ℝ) ^ 2 / ↑n)) :=
   .of_nat_of_neg (summable_exp_neg_sq_div n hn)
     ((summable_exp_neg_sq_div n hn).congr fun i => by push_cast; congr 1; ring)
-
-private lemma summable_quadraticPartFn_nat (α : ℝ) (hα : 0 < α) :
-    Summable (fun i : ℕ => Real.exp (-α * (↑i : ℝ) ^ 2)) := by
-  have hle : ∀ i : ℕ, (↑i : ℝ) ≤ (↑i : ℝ) ^ 2 := by
-    intro i; rcases i with _ | i
-    · simp
-    · nlinarith [sq_nonneg ((↑(i + 1) : ℝ) - 1),
-        show (1 : ℝ) ≤ ↑(i + 1) from by exact_mod_cast Nat.succ_pos i]
-  exact (Real.summable_exp_nat_mul_of_ge (neg_neg_of_pos hα)
-    (f := fun i => (↑i : ℝ) ^ 2) hle).congr fun i => by congr 1
-
-theorem summable_quadraticPartFn (α : ℝ) (hα : 0 < α) :
-    Summable (fun k : ℤ => Real.exp (-α * (k : ℝ) ^ 2)) :=
-  .of_nat_of_neg (summable_quadraticPartFn_nat α hα)
-    ((summable_quadraticPartFn_nat α hα).congr fun i => by push_cast; congr 1; ring)
 
 /-- The partition function of the n-cycle: Z(Cₙ) = Σ_{k∈ℤ} exp(-k²/n).
     Sums Boltzmann weights over topological sectors (winding number k),

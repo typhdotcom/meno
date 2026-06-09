@@ -17,3 +17,6 @@ import Meno.Groupoid
 import Meno.Hodge
 import Meno.Duality
 import Meno.Zeta
+
+-- Flagship integration: cycle-graph harmonic data routed through the new spine
+import Meno.CycleHarmonic

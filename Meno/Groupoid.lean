@@ -1,4 +1,6 @@
 import Meno.Simplicial
+import Meno.SectorPresentation
+import Meno.CycleHarmonic
 import Mathlib.CategoryTheory.Groupoid
 import Mathlib.CategoryTheory.Endomorphism
 import Mathlib.CategoryTheory.Products.Basic
@@ -237,6 +239,39 @@ theorem summable_cycleCanonicalEnergy (n : ℕ) (hn : n ≥ 3)
   rw [hcomp]
   exact wind.summable_iff.mpr hsumZ
 
+/-- The canonical winding of the identity loop is zero. -/
+theorem cycleCanonicalWinding_id (n : ℕ) (hn : n ≥ 3)
+    (x : SimplicialGroupoid (CycleGraph n hn)) :
+    cycleCanonicalWinding n hn x (𝟙 x) = 0 := by
+  show (Walk.nil x.as : Walk (CycleGraph n hn).toGraph x.as x.as).loopWinding = 0
+  simp
+
+/-- The canonical winding is additive under loop composition: winding is
+a monoid morphism `(End x, ≫) → (ℤ, +)`. Reduces to `loopWinding_append`
+through the `Quot.lift` computation rule. -/
+theorem cycleCanonicalWinding_comp (n : ℕ) (hn : n ≥ 3)
+    (x : SimplicialGroupoid (CycleGraph n hn)) (g h : End x) :
+    cycleCanonicalWinding n hn x (g ≫ h) =
+    cycleCanonicalWinding n hn x g + cycleCanonicalWinding n hn x h := by
+  refine Quot.inductionOn g (fun p => ?_)
+  refine Quot.inductionOn h (fun q => ?_)
+  show (p.append q).loopWinding = p.loopWinding + q.loopWinding
+  exact Walk.loopWinding_append p q
+
+/-- The canonical cycle energy vanishes on the identity loop. -/
+theorem cycleCanonicalEnergy_id (n : ℕ) (hn : n ≥ 3)
+    (x : SimplicialGroupoid (CycleGraph n hn)) :
+    cycleCanonicalEnergy n hn x (𝟙 x) = 0 := by
+  rw [cycleCanonicalEnergy_eq_winding_sq, cycleCanonicalWinding_id]
+  simp
+
+/-- The canonical cycle energy is non-negative. -/
+theorem cycleCanonicalEnergy_nonneg (n : ℕ) (hn : n ≥ 3)
+    (x : SimplicialGroupoid (CycleGraph n hn)) (g : End x) :
+    0 ≤ cycleCanonicalEnergy n hn x g := by
+  rw [cycleCanonicalEnergy_eq_winding_sq]
+  positivity
+
 /-- Canonical cycle partition identity with no extra hypotheses:
     both energy and summability are derived canonically. -/
 theorem cycleGroupoid_partitionFn_eq_canonical_energy (n : ℕ) (hn : n ≥ 3)
@@ -280,11 +315,31 @@ structure GroupoidObj where
 
 attribute [instance] GroupoidObj.grpd
 
+/-- **Bridge to the spine**: every groupoid object satisfying the two
+ground conditions (zero identity energy, non-negative energy) is a loop
+kernel. All five data fields transfer verbatim — the bridge is pure
+repackaging (plan falsification clause #4: near-`rfl`). -/
+noncomputable def GroupoidObj.toLoopKernelObj (E : GroupoidObj)
+    (h_id : E.energy (𝟙 E.base) = 0)
+    (h_nonneg : ∀ g, 0 ≤ E.energy g) : Meno.LoopKernelObj where
+  C := E.G
+  base := E.base
+  energy := E.energy
+  energy_id := h_id
+  energy_nonneg := h_nonneg
+  summable := E.summable
+
 noncomputable def GroupoidObj.complexity (E : GroupoidObj) : ℝ :=
   groupoidComplexity (C := E.G) E.base E.energy E.summable
 
 noncomputable def GroupoidObj.partFn (E : GroupoidObj) : ℝ :=
   groupoidPartitionFn (C := E.G) E.base E.energy E.summable
+
+/-- The bridge preserves partition functions definitionally: both sides
+are `∑' g : End base, exp (-energy g)`. -/
+theorem GroupoidObj.toLoopKernelObj_partFn (E : GroupoidObj)
+    (h_id : E.energy (𝟙 E.base) = 0) (h_nonneg : ∀ g, 0 ≤ E.energy g) :
+    (E.toLoopKernelObj h_id h_nonneg).partFn = E.partFn := rfl
 
 open scoped BigOperators
 
@@ -657,5 +712,122 @@ theorem GroupoidObj.sigmaComplexity_ge_sup (D : Type*) [Fintype D] [Nonempty D]
       (Finset.mem_univ d)
 
 end Bridge
+
+/-! ## The Cycle Groupoid Through the Spine
+
+The canonical cycle groupoid object factors through the analytic spine:
+
+    cycleCanonicalObj ──toLoopKernelObj──▶ cycleLoopKernel
+      ──cycleSectorPresentation──▶ QuadraticAction with Q = !![1/n]
+      ──partFn_eq_of_Q_eq──▶ scalarPartFn (1/n)
+      ──scalarPartFn_one_div_n_eq_partitionFn──▶ partitionFn n hn
+
+and its T-duality is a corollary of the spine flagship
+`Meno.partitionFn_T_duality_via_spine` — no reference to
+`quadraticPartFn_duality` or the `GroupoidObj.dual` machinery.
+
+The Gram form of the presentation is **the same** `!![1/n]` as
+`Meno.cycleHarmonicGramData`: its symmetry and positive-definiteness
+proofs are reused, not re-proved. Two origins (winding classes of the
+fundamental groupoid; Hodge harmonic Gram data) feed one analytic
+object. -/
+
+section CycleSpine
+
+/-- Canonical cycle groupoid object at the basepoint: energy and
+summability are both derived from the proved winding equivalence.
+(Relocated upstream from `Duality.lean`.) -/
+noncomputable def cycleCanonicalObj (n : ℕ) (hn : n ≥ 3) : GroupoidObj where
+  G := SimplicialGroupoid (CycleGraph n hn)
+  base := cycleBaseObj n hn
+  energy := cycleCanonicalEnergy n hn (cycleBaseObj n hn)
+  summable := summable_cycleCanonicalEnergy n hn (cycleBaseObj n hn)
+
+/-- Canonical cycle object partition function recovers `partitionFn`
+with no extra hypotheses. (Relocated upstream from `Duality.lean`.) -/
+theorem cycleCanonicalObj_partFn_eq_partitionFn (n : ℕ) (hn : n ≥ 3) :
+    (cycleCanonicalObj n hn).partFn = partitionFn n hn := by
+  simpa [cycleCanonicalObj, GroupoidObj.partFn] using
+    cycleGroupoid_partitionFn_eq_base_canonical_energy n hn
+
+/-- The canonical cycle loop kernel: the cycle groupoid object pushed
+through the spine bridge. Ground conditions are the proved
+identity/non-negativity lemmas for the canonical Hodge energy. -/
+noncomputable def cycleLoopKernel (n : ℕ) (hn : n ≥ 3) : Meno.LoopKernelObj :=
+  (cycleCanonicalObj n hn).toLoopKernelObj
+    (cycleCanonicalEnergy_id n hn (cycleBaseObj n hn))
+    (cycleCanonicalEnergy_nonneg n hn (cycleBaseObj n hn))
+
+/-- Sector presentation of the cycle loop kernel: winding coordinates
+identify `End (cycleBaseObj)` with the rank-1 lattice `Fin 1 → ℤ`, and
+the canonical Hodge energy is the quadratic form of the harmonic Gram
+matrix `!![1/n]`. Structural compatibility (`coord_one`, `coord_comp`)
+is winding additivity under loop composition. -/
+noncomputable def cycleSectorPresentation (n : ℕ) (hn : n ≥ 3) :
+    Meno.SectorPresentation (cycleLoopKernel n hn) 1 where
+  coord := (cycleLoopClassEquivInt n hn (cycleBase n hn)).trans
+    (Equiv.funUnique (Fin 1) ℤ).symm
+  coord_one := by
+    funext i
+    show cycleCanonicalWinding n hn (cycleBaseObj n hn) (𝟙 (cycleBaseObj n hn)) = 0
+    exact cycleCanonicalWinding_id n hn (cycleBaseObj n hn)
+  coord_comp := by
+    intro g h
+    funext i
+    show cycleCanonicalWinding n hn (cycleBaseObj n hn) (g ≫ h)
+      = cycleCanonicalWinding n hn (cycleBaseObj n hn) g
+        + cycleCanonicalWinding n hn (cycleBaseObj n hn) h
+    exact cycleCanonicalWinding_comp n hn (cycleBaseObj n hn) g h
+  Q := !![1 / (n : ℝ)]
+  Q_symm := (Meno.cycleHarmonicGramData n hn).gram_symm
+  Q_posDef := (Meno.cycleHarmonicGramData n hn).gram_posDef
+  energy_eq := by
+    intro g
+    show cycleCanonicalEnergy n hn (cycleBaseObj n hn) g = _
+    rw [cycleCanonicalEnergy_eq_winding_sq n hn (cycleBaseObj n hn) g]
+    show (cycleCanonicalWinding n hn (cycleBaseObj n hn) g : ℝ) ^ 2 / n
+      = ∑ i : Fin 1, ∑ j : Fin 1, !![1 / (n : ℝ)] i j
+          * ((cycleCanonicalWinding n hn (cycleBaseObj n hn) g : ℤ) : ℝ)
+          * ((cycleCanonicalWinding n hn (cycleBaseObj n hn) g : ℤ) : ℝ)
+    simp [Matrix.cons_val_fin_one]
+    ring
+
+/-- **Groupoid partition function through the spine.** The cycle loop
+kernel's partition function transits the presentation to the quadratic
+action with Gram `!![1/n]`, to `scalarPartFn (1/n)`, to
+`partitionFn n hn` — every step a spine theorem. -/
+theorem cycleLoopKernel_partFn_eq_partitionFn (n : ℕ) (hn : n ≥ 3) :
+    (cycleLoopKernel n hn).partFn = partitionFn n hn := by
+  rw [(cycleSectorPresentation n hn).partFn_eq]
+  have hα : (0 : ℝ) < 1 / n := one_div_pos.mpr
+    (by exact_mod_cast (show 0 < n by omega))
+  rw [Meno.QuadraticAction.partFn_eq_of_Q_eq
+        (cycleSectorPresentation n hn).toQuadraticAction
+        (Meno.QuadraticAction.ofScalar (1 / n) hα) rfl,
+      Meno.QuadraticAction.ofScalar_partFn_eq,
+      Meno.scalarPartFn_one_div_n_eq_partitionFn n hn]
+
+/-- **Two origins, one analytic object**: the groupoid presentation and
+the Hodge harmonic Gram data produce quadratic actions with the same
+Gram matrix, hence the same partition function. -/
+theorem cycleSectorPresentation_partFn_eq_gramData (n : ℕ) (hn : n ≥ 3) :
+    (cycleSectorPresentation n hn).toQuadraticAction.toSectorAction.partFn
+    = (Meno.cycleHarmonicGramData n hn).toQuadraticAction.toSectorAction.partFn :=
+  Meno.QuadraticAction.partFn_eq_of_Q_eq _ _ rfl
+
+/-- **Cycle groupoid T-duality, rederived through the spine.** The
+canonical cycle groupoid object's partition function obeys T-duality as
+a corollary of `Meno.partitionFn_T_duality_via_spine`. This supersedes
+the route through `GroupoidObj.dual` / `quadraticPartFn_duality` for the
+canonical cycle: no winding hypothesis, no dual-object construction —
+the spine carries the duality. -/
+theorem cycleCanonicalObj_T_duality (n : ℕ) (hn : n ≥ 3) :
+    (↑(Meno.QuadraticAction.scalarPartFn (Real.pi ^ 2 * n)) : ℂ) =
+    ↑((1 / (n : ℝ)) / Real.pi) ^ ((1 : ℂ) / 2)
+      * ↑((cycleCanonicalObj n hn).partFn) := by
+  rw [cycleCanonicalObj_partFn_eq_partitionFn]
+  exact Meno.partitionFn_T_duality_via_spine n hn
+
+end CycleSpine
 
 end Simplicial

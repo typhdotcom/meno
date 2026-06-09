@@ -1009,3 +1009,306 @@ All 9 new files plus the updated top-level `Meno.lean` build clean
 alongside the unchanged legacy 8-file codebase.
 
 **End of implementation summary.**
+
+---
+
+## Addendum: Phase 11 — Strict Ratchet & Flagship Spine Integration
+
+Closing the two gaps identified in external review of the Phase 1–10 work.
+
+### Strict InfoRatchet (closes Phase 8 tautology)
+
+`Meno/InfoRatchet.lean` (+30 LOC):
+
+- `fiberInfoCost_pos_of_not_injective` — for `f : A → B` non-injective,
+  `0 < fiberInfoCost f`. Proof: `Function.not_injective_iff` gives the
+  collision pair `a₁ ≠ a₂` with `f a₁ = f a₂`; embed `{a₁, a₂} ⊆ f ⁻¹' {f a₁}`
+  to lower-bound `Nat.card` by 2 (via `Set.ncard_pair` +
+  `Set.ncard_le_ncard` + `Nat.card_coe_set_eq`); `Real.log 2 > 0`;
+  `Finset.sum_pos'` closes.
+- `sectionCost_gt_descriptionCost_of_not_injective` — direct corollary via
+  the section/description identity. This is the actual **ratchet
+  inequality**: non-injective `f` forces strict
+  `descriptionCost < sectionCost`.
+
+The file was previously a tautology — it only proved the "easy direction"
+(injective ⇒ zero cost). It now proves the load-bearing converse and the
+section-cost inequality. The Landauer reconciliation remains skipped (the
+existing `SGD.TransitionComplexity` 2/1 convention has opposite inequality
+direction, documented in §Architectural Decisions).
+
+### Flagship spine integration (closes "beside vs underneath" gap)
+
+`Meno/CycleHarmonic.lean` (+155 LOC, new file):
+
+The full chain from concrete graph → spine → duality:
+
+```
+    cycleGraph_harmonicEnergy_k          (Simplicial.lean, k²/n)
+              │
+              ▼
+    cycleHarmonicGramData n hn           (HarmonicGramData (Fin n), rank 1, Q = !![1/n])
+              │
+              ▼ toQuadraticAction
+    QuadraticAction 1                    (matches QuadraticAction.ofScalar (1/n))
+              │
+              ▼ partFn_eq_of_Q_eq (new helper in QuadraticAction.lean)
+    QuadraticAction.scalarPartFn (1/n)
+              │
+              ▼ scalarPartFn_one_div_n_eq_partitionFn (this file)
+    partitionFn n hn                     (Simplicial.lean)
+              │
+              ▼ scalarPartFn_duality (QuadraticAction.lean)
+    (↑(scalarPartFn (π²·n)) : ℂ)
+       = ↑((1/n)/π)^(1/2) · ↑(partitionFn n hn)
+```
+
+Theorems landed:
+
+1. `cycleHarmonicGramData n hn : HarmonicGramData (Fin n)` — the rank-1
+   Hodge Gram data of the n-cycle. Concrete instance of the abstract
+   interface.
+2. `cycleHarmonicGramData_energy_eq_harmonicEnergy_k` — the **variational
+   identity** at this graph: the Gram-form energy at winding `k` equals
+   the harmonic minimum action over the winding-`k` class. Proved by
+   `cycleGraph_harmonicEnergy_k`.
+3. `cycleHarmonicGramData_toQuadraticAction_Q` — Gram-matrix-level
+   identification with `QuadraticAction.ofScalar (1/n)`. Definitional
+   (`rfl`).
+4. `cycleHarmonicGramData_partFn_eq_scalar` — partition function transit
+   through the spine equals scalar partition function at α = 1/n.
+5. `scalarPartFn_one_div_n_eq_partitionFn` — definitional matching with
+   legacy `partitionFn`.
+6. `cycleHarmonicGramData_partFn_eq_partitionFn` — composed: spine-side
+   partition function equals legacy `partitionFn n hn`. The new layer is
+   not new analytic content; it factors the existing object.
+7. **`partitionFn_T_duality_via_spine`** — THE FLAGSHIP. The existing
+   cycle-graph T-duality `Z(π²·n) = √((1/n)/π) · Z(n-cycle)` is a
+   three-line consequence of `QuadraticAction.scalarPartFn_duality`. The
+   categorical groupoid wrapper from `Duality.lean` is no longer
+   load-bearing for this correspondence.
+
+### Architectural payoff
+
+Before Phase 11: the spine *could* express the analytic primitive but
+had not absorbed any existing flagship theorem. Reviewer verdict was
+"vocabulary, not compression."
+
+After Phase 11: at least one flagship — the scalar Jacobi-theta
+T-duality on cycle graphs — is now a corollary of the spine. The chain
+has no bespoke analytic content; every step is either definitional, a
+Q-matrix-level identity, or a direct invocation of
+`scalarPartFn_duality`. The abstraction stack passes its first
+falsifiability test: the proof of `partitionFn_T_duality_via_spine` is
+three `rw` calls.
+
+Helper added to `Meno/QuadraticAction.lean` (+7 LOC):
+
+- `partFn_eq_of_Q_eq` — two quadratic actions with equal Gram matrices
+  have equal partition functions. General-purpose, used for the
+  scalar-action identification.
+
+### Verification
+
+```
+$ lake build Meno
+✔ [3308/3312] Built Meno.InfoRatchet (1.5s)
+✔ [3309/3312] Built Meno.SectorPresentation (1.7s)
+✔ [3310/3312] Built Meno.MatterHomology (1.7s)
+✔ [3311/3312] Built Meno (1.5s)
+Build completed successfully (3312 jobs).
+```
+
+`rg "sorry|axiom " Meno/InfoRatchet.lean Meno/CycleHarmonic.lean Meno/QuadraticAction.lean`
+returns zero matches. File totals across the four affected files: 588 LOC
+(133 InfoRatchet + 155 CycleHarmonic + 228 QuadraticAction + 72
+HarmonicForm).
+
+### What this validates and what remains
+
+**Validated.**
+
+- Falsification criterion #1: scalar duality reduces to
+  `scalarPartFn_duality` through the new spine. Confirmed.
+- §Architectural Decision 5: "interface-only" status of `HarmonicForm` is
+  actually fine — the concrete instance lives in a dedicated bridge file
+  and supplies the variational identity downstream. The interface
+  factoring works.
+- Reviewer verdict reversal: the spine now compresses (not merely names)
+  the cycle-graph T-duality content.
+
+**Still open.**
+
+- `Duality.lean` and `Zeta.lean` themselves have *not* been migrated.
+  Their internal proofs still go through `quadraticPartFn` /
+  `groupoidPartitionFn` rather than `cycleHarmonicGramData`. The flagship
+  shows the migration is possible; the migration itself is one more
+  session.
+- Matrix Siegel–Poisson (rank ≥ 2) still gapped — needs multidim Poisson
+  summation in Mathlib.
+- `GroupoidObj → LoopKernelObj` bridge still pending.
+- Geodesic instantiation from `Simplicial.lean` walks still pending.
+
+The strict ratchet and the cycle-graph flagship were the two
+highest-leverage outstanding items. Both are now closed.
+
+**End of Phase 11 addendum.**
+
+---
+
+## Addendum: Phase 12 — Groupoid Migration (2026-06-10, session A)
+
+The reviewer's "collapse the parallel roads" directive, part one: the
+groupoid layer now factors through the spine.
+
+### What landed
+
+- `Simplicial.lean`: `Walk.loopWinding_nil`, `Walk.loopWinding_append`
+  (winding sector is a monoid morphism on loops; exactness of the
+  integer division via `windingCount_dvd_card`).
+- `Groupoid.lean` **now imports the spine** (`Meno.SectorPresentation`,
+  `Meno.CycleHarmonic`) — the legacy origin file depends on the new
+  analytic layer, which is the plan's end-state direction. Added:
+  - ground lemmas `cycleCanonicalWinding_id/_comp`,
+    `cycleCanonicalEnergy_id/_nonneg`;
+  - `GroupoidObj.toLoopKernelObj` (bridge; ground conditions as
+    arguments since `GroupoidObj` lacks the fields);
+  - `GroupoidObj.toLoopKernelObj_partFn` — proved by **literal `rfl`**,
+    satisfying falsification clause #4 exactly;
+  - `cycleCanonicalObj` + partFn theorem (relocated upstream from
+    `Duality.lean`; references unchanged);
+  - `cycleLoopKernel` (the bridge applied to the canonical object);
+  - `cycleSectorPresentation : SectorPresentation (cycleLoopKernel n hn) 1`
+    — `coord_comp` is winding additivity through the `Quot.lift`
+    computation rule; **`Q_symm`/`Q_posDef` are reused from
+    `cycleHarmonicGramData`**, so the groupoid and Hodge origins feed
+    literally the same Gram object;
+  - `cycleLoopKernel_partFn_eq_partitionFn` (groupoid partition function
+    through the spine), `cycleSectorPresentation_partFn_eq_gramData`
+    (two origins, one analytic object),
+    `cycleCanonicalObj_T_duality` (cycle groupoid T-duality as a 2-line
+    corollary of the spine flagship — `GroupoidObj.dual` machinery not
+    involved).
+
+All defeq-heavy proofs (`coord_one`, `coord_comp`, the `rfl` bridge,
+`energy_eq`) went through on first attempt; the only fixes were a
+nonexistent lemma name (`Quot.inductionOn₂` is `Quotient`-only) and a
+declaration-order slip.
+
+---
+
+## Addendum: Phase 13 — One Analytic Source of Truth (2026-06-10, session B)
+
+Directive: no deferral gestures; everything known becomes session work.
+Queue executed: duplicate-proof collapse, Theta absorption, Zeta
+re-pointing, diagonal rank-2 Siegel–Poisson, rank-2 matter.
+
+### The collapse
+
+The modular S-transformation proof existed in **three** copies
+(`QuadraticAction.lean`, `Duality.lean` privates, `Theta.lean`
+specialized at τ = i/(πn)). Now in **one**:
+
+- `Duality.lean`: private modular block (~50 LOC) deleted.
+  `quadraticPartFn_eq_scalarPartFn : quadraticPartFn = scalarPartFn`
+  is `rfl` (character-identical definitions). `quadraticPartFn_duality`,
+  `quadraticPartFn_gt_one`, `quadraticPartFn_duality_real` are now
+  one-line forwards to spine theorems. The 20+ internal consumers and
+  the entire `GroupoidObj.dual` interpretation layer flow unchanged —
+  wrappers stay, analytic authority moves.
+- `Theta.lean`: **deleted** (zero consumers — verified by grep before
+  removal). Its two public statements survive as spine corollaries in
+  `CycleHarmonic.lean`: `partitionFn_eq_jacobiTheta`,
+  `partitionFn_T_duality_theta`.
+- `Simplicial.lean`: duplicate `summable_quadraticPartFn` (+ private
+  helper) deleted; 15 call sites across `Duality`/`Hodge`/`Zeta`
+  redirected to `QuadraticAction.summable_scalarPartFn`. `Hodge.lean`
+  now imports the spine.
+- `QuadraticAction.lean`: theta identification made public API
+  (`quadTau`, `scalarPartFn_eq_jacobiTheta`); added
+  `scalarPartFn_gt_one`, `scalarPartFn_duality_real`.
+
+### Zeta re-pointed (plan goal #10 fulfilled)
+
+`Zeta.lean` imports **only** `Meno.QuadraticAction` (plus Mathlib),
+namespace moved `Simplicial → Meno`, all `quadraticPartFn` names →
+`scalarPartFn`. Build evidence of the cut: `lake build Meno.Zeta` is
+2934 jobs vs 3262 with the old import — the Riemann functional equation
+machinery no longer touches the simplicial/groupoid layers at all. The
+Mellin → ζ chain sits directly on the analytic primitive, exactly the
+reviewer's target shape.
+
+### Diagonal rank-2 Siegel–Poisson duality (falsification #3, diagonal case)
+
+`QuadraticAction.lean` rank-2 block:
+
+- `ofDiagonal₂ α β : QuadraticAction 2` with `Q = diag(α, β)`;
+- `ofDiagonal₂_partFn : Z(diag(α,β)) = Z(α) · Z(β)` (lattice decoupling
+  via a Cauchy-product lemma);
+- `ofDiagonal₂_det`, `ofDiagonal₂_dual_Q` — the dual coupling matrix
+  **is** `π² • Q⁻¹` (exact, via `Matrix.inv_eq_right_inv`);
+- `ofDiagonal₂_duality` / `_det_form` —
+  `Z(π²·Q⁻¹) = √(det Q / π²) · Z(Q)`, two scalar S-transformations and
+  `Complex.mul_cpow_ofReal_nonneg`. **No multidimensional Poisson
+  summation needed.** The general non-diagonal case remains gated on
+  Mathlib.
+
+### Rank-2 matter (the "not secretly rank-1" test)
+
+`CycleHarmonic.lean`: `wedgeHarmonicGramData n₁ n₂ : HarmonicGramData
+(Fin n₁ ⊕ Fin n₂)` — rank 2, Gram `diag(1/n₁, 1/n₂)`, all proof fields
+inherited from `ofDiagonal₂` by defeq. `wedgeMatter₁` (explicit `(1,0)`
+sector), `wedge_exists_matter`, and the energy computation
+`energy (1,0) = 1/n₁`. Honest scope note **in the docstring**: the
+wedge *complex* does not exist in `Simplicial.lean`, so the graph-level
+variational derivation of this Gram form is not formalized — the Gram
+data is asserted as the wedge's on the (true, unformalized) ground that
+wedge harmonics have disjoint edge supports.
+
+### Engineering lessons (cost: ~5 build cycles)
+
+1. **HO-unification blow-ups in tsum transport.** `piFinTwoEquiv`'s
+   coercion and `tsum_prod'`-against-β-redexes both exceeded 1.6M
+   heartbeats. Diagnosis by a 4-theorem `sorry` test battery in one
+   build. Fix: hand-rolled `finTwoPair` equiv (one-β `toFun`) +
+   `tsum_mul_tsum_of_summable_norm` with named `f`, `g` — every
+   unification first-order. Raising heartbeats was useless (loop, not
+   slowness); bisection was the move.
+2. **Pin structure projections near heavy proof terms.**
+   `ofDiagonal₂_Q … = !![α,0;0,β] := rfl` + `simp_rw` keeps later
+   goals from delta-unfolding a structure whose `PosDef` field carries
+   `nlinarith` certificates.
+3. **`field_simp` strands `ring`** — three more occurrences this
+   session ("No goals to be solved"). Reflex: drop the `ring` first.
+
+### Findings for the deferral ledger (decisions are the user's, not encoded gaps)
+
+1. **Rank-r diagonal duality is unblocked.** `Hodge.lean` already has
+   the rank-r diagonal *factorization* machinery
+   (`tsum_finPi_factor`, `summable_graphPartitionFn_diagonal`,
+   Hodge.lean ~322–347). Combining it with per-coordinate
+   `scalarPartFn_duality` and an induction on the cpow product
+   prefactor gives `Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` for any diagonal
+   `Q` — est. ~80 LOC, nothing gated on Mathlib. The rank-2 version
+   landed this session is the base case.
+2. **Hodge.lean's diagonal constructors could unify with a generalized
+   `ofDiagonal (α : Fin r → ℝ)`.** Hodge now imports the spine, so the
+   direction is open.
+3. **`GroupoidObj.dual` retained deliberately** as interpretation layer
+   (reviewer's verdict); its analytic content is fully forwarded. A
+   future strip would change the statement inventory, which is a taste
+   call.
+4. **The wedge complex** (graph-level Hodge for `C_{n₁} ∨ C_{n₂}`) is
+   the missing piece between `wedgeHarmonicGramData` and a *derived*
+   rank-2 variational identity. Large (cycle-graph machinery was
+   ~2500 LOC); the abstract layer no longer waits on it.
+
+### Verification
+
+- `lake build Meno`: 3311 jobs, success (note: −1 module net — Theta
+  deleted, nothing added at top level).
+- `lake build Meno.Zeta` alone: 2934 jobs (spine-only cone).
+- Zero `sorry` (diagnostic test battery removed before final build);
+  zero axiom declarations.
+
+**End of Phase 12/13 addendum.**

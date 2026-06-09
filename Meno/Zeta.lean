@@ -1,4 +1,4 @@
-import Meno.Duality
+import Meno.QuadraticAction
 import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.ZetaValues
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
@@ -16,7 +16,8 @@ Mellin-transforming `Z(α) − 1` against `α^(s−1) dα` gives the Mellin iden
   `menoMellin s = ∫₀^∞ (Z(α) − 1) · α^(s−1) dα = 2 · Γ(s) · ζ(2s)`   (for `s > 1/2`)
 
 Splitting the integral at the self-dual point `α = π` and applying Jacobi's
-theta identity `Z(π²/α) = √(α/π)·Z(α)` (from `Duality.lean`) folds the `(0, π]`
+theta identity `Z(π²/α) = √(α/π)·Z(α)` (`QuadraticAction.scalarPartFn_duality_real`,
+the spine's single analytic source) folds the `(0, π]`
 piece onto `[π, ∞)`. The resulting symmetry
 
   `π^(-s) · menoMellin s = π^(-(1/2 − s)) · menoMellinC (1/2 − s)`
@@ -28,9 +29,9 @@ Specialization of the Mellin identity at `s = 3/2` yields Apéry's constant:
   `ζ(3) = (1/√π) · ∫₀^∞ (Z(α) − 1) · √α dα`.
 -/
 
-namespace Simplicial
+namespace Meno
 
-open MeasureTheory Set Real
+open MeasureTheory Set Real QuadraticAction
 
 /-! ## Apéry's constant -/
 
@@ -123,7 +124,7 @@ private lemma integral_mellin_mode_sq_gen (k : ℕ) {s : ℝ} (hs : 0 < s) :
 /-- The Meno spectral integral: the non-vacuum excitation content of the
     partition function, integrated against `√α dα` over all couplings. -/
 noncomputable def menoSpectralIntegral : ℝ :=
-  ∫ α in Ioi 0, (quadraticPartFn α - 1) * Real.sqrt α
+  ∫ α in Ioi 0, (scalarPartFn α - 1) * Real.sqrt α
 
 /-! ## Symmetric split of the partition function -/
 
@@ -145,8 +146,8 @@ private lemma summable_exp_sq_shift (α : ℝ) (hα : 0 < α) :
 /-- Symmetric split: the partition function minus its vacuum term equals
     twice the sum over positive modes. The ℤ-sum over `k²` collapses to
     the ℕ-sum over `(k+1)²` doubled (by evenness) plus the `k=0` term. -/
-private lemma quadraticPartFn_sub_one_eq (α : ℝ) (hα : 0 < α) :
-    quadraticPartFn α - 1 = 2 * ∑' k : ℕ, Real.exp (-α * ((k:ℝ) + 1) ^ 2) := by
+private lemma scalarPartFn_sub_one_eq (α : ℝ) (hα : 0 < α) :
+    scalarPartFn α - 1 = 2 * ∑' k : ℕ, Real.exp (-α * ((k:ℝ) + 1) ^ 2) := by
   set S : ℝ := ∑' k : ℕ, Real.exp (-α * ((k:ℝ) + 1) ^ 2) with hS_def
   have hshift : Summable (fun k : ℕ => Real.exp (-α * ((k:ℝ) + 1) ^ 2)) :=
     summable_exp_sq_shift α hα
@@ -162,7 +163,7 @@ private lemma quadraticPartFn_sub_one_eq (α : ℝ) (hα : 0 < α) :
   have hZ : HasSum (fun k : ℤ => Real.exp (-α * ((k:ℤ):ℝ) ^ 2))
       (S + Real.exp (-α * (((0:ℤ):ℝ)) ^ 2) + S) :=
     HasSum.of_add_one_of_neg_add_one hf₁ hf₂
-  have hZ_val : quadraticPartFn α = S + 1 + S := by
+  have hZ_val : scalarPartFn α = S + 1 + S := by
     have h := hZ.tsum_eq
     have h0 : Real.exp (-α * (((0:ℤ):ℝ)) ^ 2) = 1 := by simp
     rw [h0] at h
@@ -205,7 +206,7 @@ private lemma integral_menoMode_gen (k : ℕ) {s : ℝ} (hs : 0 < s) :
 /-- The Meno Mellin transform at arbitrary exponent `s`:
     `∫₀^∞ (Z(α) - 1) · α^(s-1) dα`. -/
 noncomputable def menoMellin (s : ℝ) : ℝ :=
-  ∫ α in Ioi 0, (quadraticPartFn α - 1) * α ^ (s - 1)
+  ∫ α in Ioi 0, (scalarPartFn α - 1) * α ^ (s - 1)
 
 /-- Summability of `∑ 1/(k+1)^(2s)` at `s > 1/2`. -/
 private lemma summable_apery_gen {s : ℝ} (hs : 1/2 < s) :
@@ -268,8 +269,8 @@ theorem meno_mellin {s : ℝ} (hs : 1/2 < s) :
           tsum_mul_right
       _ = (2 * ∑' k : ℕ, Real.exp (-α * ((k:ℝ)+1)^2)) * α ^ (s - 1) := by
           rw [(summable_exp_sq_shift α hαpos).tsum_mul_left]
-      _ = (quadraticPartFn α - 1) * α ^ (s - 1) := by
-          rw [← quadraticPartFn_sub_one_eq α hαpos]
+      _ = (scalarPartFn α - 1) * α ^ (s - 1) := by
+          rw [← scalarPartFn_sub_one_eq α hαpos]
   rw [hRHS] at hInterchange
   have hSum_val : HasSum (fun k : ℕ => 2 * Real.Gamma s / ((k:ℝ) + 1) ^ (2 * s))
       (2 * Real.Gamma s * ∑' k : ℕ, 1 / ((k:ℝ) + 1) ^ (2 * s)) := by
@@ -280,17 +281,17 @@ theorem meno_mellin {s : ℝ} (hs : 1/2 < s) :
 
 /-! ## T-duality on the Mellin integrand
 
-`quadraticPartFn_duality_real` (from `Meno.Duality`) is Jacobi's theta identity.
+`scalarPartFn_duality_real` (from `Meno.Duality`) is Jacobi's theta identity.
 The results in this section lift it to the Mellin level. -/
 
-/-- The form of `quadraticPartFn_duality_real` that appears inside the Mellin
+/-- The form of `scalarPartFn_duality_real` that appears inside the Mellin
     integrand, which sees `Z − 1` rather than `Z`. The `√(α/π) − 1` shift is
     the vacuum-subtracted correction to a multiplicative rescaling. -/
 theorem dual_partFn_sub_one_eq_residual (α : ℝ) (hα : 0 < α) :
-    quadraticPartFn (Real.pi ^ 2 / α) - 1 =
-      Real.sqrt (α / Real.pi) * (quadraticPartFn α - 1) +
+    scalarPartFn (Real.pi ^ 2 / α) - 1 =
+      Real.sqrt (α / Real.pi) * (scalarPartFn α - 1) +
         (Real.sqrt (α / Real.pi) - 1) := by
-  have h := quadraticPartFn_duality_real α hα
+  have h := scalarPartFn_duality_real α hα
   have hsqrt : (α / Real.pi) ^ ((1 : ℝ) / 2) = Real.sqrt (α / Real.pi) :=
     (Real.sqrt_eq_rpow _).symm
   rw [hsqrt] at h
@@ -302,20 +303,20 @@ theorem dual_partFn_sub_one_eq_residual (α : ℝ) (hα : 0 < α) :
     No duality used — this is a pure measure-theoretic substitution. -/
 private lemma menoMellin_cov_pi_sq {s : ℝ} :
     menoMellin s = Real.pi ^ (2 * s) *
-      ∫ β in Ioi 0, (quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1) := by
+      ∫ β in Ioi 0, (scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1) := by
   have hpi_pos : (0 : ℝ) < Real.pi := Real.pi_pos
   have hpi2_pos : (0 : ℝ) < Real.pi ^ 2 := sq_pos_of_pos hpi_pos
   have hpi2_ne : (Real.pi ^ 2 : ℝ) ≠ 0 := ne_of_gt hpi2_pos
   have hscale := MeasureTheory.integral_comp_mul_left_Ioi
-    (fun α => (quadraticPartFn α - 1) * α ^ (s - 1)) 0 hpi2_pos
+    (fun α => (scalarPartFn α - 1) * α ^ (s - 1)) 0 hpi2_pos
   simp only [mul_zero, smul_eq_mul] at hscale
   have hinv := MeasureTheory.integral_comp_rpow_Ioi
-    (g := fun y => (quadraticPartFn (Real.pi ^ 2 * y) - 1) * (Real.pi ^ 2 * y) ^ (s - 1))
+    (g := fun y => (scalarPartFn (Real.pi ^ 2 * y) - 1) * (Real.pi ^ 2 * y) ^ (s - 1))
     (p := -1) (by norm_num : (-1 : ℝ) ≠ 0)
   simp only [abs_neg, abs_one, one_mul, smul_eq_mul] at hinv
   have hmellin : menoMellin s = Real.pi ^ 2 *
       ∫ x in Ioi 0, x ^ ((-1 : ℝ) - 1) *
-        ((quadraticPartFn (Real.pi ^ 2 * x ^ ((-1 : ℝ))) - 1) *
+        ((scalarPartFn (Real.pi ^ 2 * x ^ ((-1 : ℝ))) - 1) *
          (Real.pi ^ 2 * x ^ ((-1 : ℝ))) ^ (s - 1)) := by
     unfold menoMellin
     rw [hinv, hscale]
@@ -329,7 +330,7 @@ private lemma menoMellin_cov_pi_sq {s : ℝ} :
   rw [h1]
   have h2 : Real.pi ^ 2 * x⁻¹ = Real.pi ^ 2 / x := by rw [div_eq_mul_inv]
   rw [h2]
-  set Z := quadraticPartFn (Real.pi ^ 2 / x) - 1
+  set Z := scalarPartFn (Real.pi ^ 2 / x) - 1
   have h3 : (Real.pi ^ 2 / x) ^ (s - 1) =
             Real.pi ^ (2 * (s - 1)) * x ^ (-(s - 1)) := by
     rw [Real.div_rpow hpi2_pos.le hxnn, div_eq_mul_inv, ← Real.rpow_neg hxnn,
@@ -365,7 +366,7 @@ private lemma menoMellin_cov_pi_sq {s : ℝ} :
     `(π, ∞)` via a sub-interval CoV. -/
 theorem menoMellin_duality_representation {s : ℝ} :
     menoMellin s = Real.pi ^ (2 * s) *
-      ∫ β in Ioi 0, (Real.sqrt (β / Real.pi) * (quadraticPartFn β - 1) +
+      ∫ β in Ioi 0, (Real.sqrt (β / Real.pi) * (scalarPartFn β - 1) +
                        (Real.sqrt (β / Real.pi) - 1)) * β ^ (-s - 1) := by
   rw [menoMellin_cov_pi_sq]
   congr 1
@@ -444,19 +445,19 @@ theorem menoMellin_cast_eq_riemannZeta_real {s : ℝ} (hs : 1/2 < s) :
 
 /-- **Continuity of the partition function on the closed half-line `[π, ∞)`**.
     Weierstrass M-test with dominating series `exp(-π·k²)` (absolutely summable
-    by `summable_quadraticPartFn`). Each per-mode term `exp(-α·k²)` decreases in
+    by `summable_scalarPartFn`). Each per-mode term `exp(-α·k²)` decreases in
     `α`, so on `α ≥ π` is dominated by `exp(-π·k²)`. -/
-private lemma continuousOn_quadraticPartFn_Ici_pi :
-    ContinuousOn quadraticPartFn (Ici Real.pi) := by
+private lemma continuousOn_scalarPartFn_Ici_pi :
+    ContinuousOn scalarPartFn (Ici Real.pi) := by
   have hπ : 0 < Real.pi := Real.pi_pos
-  unfold quadraticPartFn
+  unfold scalarPartFn
   refine continuousOn_tsum
     (f := fun (k : ℤ) (α : ℝ) => Real.exp (-α * (k : ℝ) ^ 2))
     (u := fun (k : ℤ) => Real.exp (-Real.pi * (k : ℝ) ^ 2)) ?_ ?_ ?_
   · intro k
     refine Real.continuous_exp.continuousOn.comp ?_ (Set.mapsTo_univ _ _)
     exact ((continuous_id.neg.mul continuous_const).continuousOn)
-  · exact summable_quadraticPartFn Real.pi hπ
+  · exact summable_scalarPartFn Real.pi hπ
   · intro k α hα
     have hα_ge : Real.pi ≤ α := hα
     rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
@@ -470,8 +471,8 @@ private lemma continuousOn_quadraticPartFn_Ici_pi :
     `∑_{k≥0} exp(-α(k+1)²) ≤ ∑_{k≥0} exp(-α)·exp(-α)^k = exp(-α)/(1-exp(-α))`.
     Monotonicity in the denominator (`exp(-α) ≤ exp(-π)`) gives the π-normalized
     bound. -/
-private lemma quadraticPartFn_sub_one_tail_bound (α : ℝ) (hα : Real.pi ≤ α) :
-    quadraticPartFn α - 1 ≤ 2 * Real.exp (-α) / (1 - Real.exp (-Real.pi)) := by
+private lemma scalarPartFn_sub_one_tail_bound (α : ℝ) (hα : Real.pi ≤ α) :
+    scalarPartFn α - 1 ≤ 2 * Real.exp (-α) / (1 - Real.exp (-Real.pi)) := by
   have hπ : 0 < Real.pi := Real.pi_pos
   have hα_pos : 0 < α := hπ.trans_le hα
   have hα_exp_pos : 0 < Real.exp (-α) := Real.exp_pos _
@@ -510,7 +511,7 @@ private lemma quadraticPartFn_sub_one_tail_bound (α : ℝ) (hα : Real.pi ≤ �
       _ = Real.exp (-α) * (1 - Real.exp (-α))⁻¹ := by
           rw [tsum_geometric_of_lt_one hα_exp_pos.le hα_exp_lt_one]
       _ = Real.exp (-α) / (1 - Real.exp (-α)) := by rw [div_eq_mul_inv]
-  rw [quadraticPartFn_sub_one_eq α hα_pos]
+  rw [scalarPartFn_sub_one_eq α hα_pos]
   have hstep2 : Real.exp (-α) / (1 - Real.exp (-α))
               ≤ Real.exp (-α) / (1 - Real.exp (-Real.pi)) := by
     apply div_le_div_of_nonneg_left hα_exp_pos.le h_one_sub_π_pos
@@ -521,18 +522,18 @@ private lemma quadraticPartFn_sub_one_tail_bound (α : ℝ) (hα : Real.pi ≤ �
     _ = 2 * Real.exp (-α) / (1 - Real.exp (-Real.pi)) := by ring
 
 /-- Non-negativity of the tail integrand factor `Z(α) - 1` for `α > 0`.
-    Immediate from `quadraticPartFn_gt_one`. -/
-private lemma quadraticPartFn_sub_one_nonneg (α : ℝ) (hα : 0 < α) :
-    0 ≤ quadraticPartFn α - 1 :=
-  le_of_lt (sub_pos.mpr (quadraticPartFn_gt_one α hα))
+    Immediate from `scalarPartFn_gt_one`. -/
+private lemma scalarPartFn_sub_one_nonneg (α : ℝ) (hα : 0 < α) :
+    0 ≤ scalarPartFn α - 1 :=
+  le_of_lt (sub_pos.mpr (scalarPartFn_gt_one α hα))
 
 /-- **Integrability of the tail integrand** for any real `s`. Uses
     `integrable_of_isBigO_exp_neg` with `b = 1/2`: continuity on `[π, ∞)` from
-    `continuousOn_quadraticPartFn_Ici_pi`, and `=O(exp(-α/2))` at `∞` by:
+    `continuousOn_scalarPartFn_Ici_pi`, and `=O(exp(-α/2))` at `∞` by:
     `(Z-1)·α^(s-1) ≤ C·exp(-α)·α^(s-1) = exp(-α/2)·(exp(-α/2)·α^(s-1))` where
     the last factor is `o(1)` since `α^(s-1) = o(exp(α/2))` at `∞`. -/
 private lemma menoMellinTail_integrableOn (s : ℝ) :
-    IntegrableOn (fun α => (quadraticPartFn α - 1) * α ^ (s - 1)) (Ioi Real.pi) := by
+    IntegrableOn (fun α => (scalarPartFn α - 1) * α ^ (s - 1)) (Ioi Real.pi) := by
   have hπ : 0 < Real.pi := Real.pi_pos
   have hπ_exp_lt_one : Real.exp (-Real.pi) < 1 := by
     rw [← Real.exp_zero]; exact Real.exp_lt_exp.mpr (neg_neg_of_pos hπ)
@@ -541,24 +542,24 @@ private lemma menoMellinTail_integrableOn (s : ℝ) :
     div_pos (by norm_num : (0:ℝ) < 2) h_one_sub_π_pos
   apply integrable_of_isBigO_exp_neg (show (0:ℝ) < 1/2 by norm_num)
   · apply ContinuousOn.mul
-    · exact continuousOn_quadraticPartFn_Ici_pi.sub continuousOn_const
+    · exact continuousOn_scalarPartFn_Ici_pi.sub continuousOn_const
     · intro α hα
       have hα_pos : 0 < α := hπ.trans_le hα
       exact (Real.continuousAt_rpow_const α (s - 1)
         (Or.inl (ne_of_gt hα_pos))).continuousWithinAt
-  · have hO1 : (fun α : ℝ => (quadraticPartFn α - 1) * α ^ (s - 1)) =O[Filter.atTop]
+  · have hO1 : (fun α : ℝ => (scalarPartFn α - 1) * α ^ (s - 1)) =O[Filter.atTop]
               (fun α => Real.exp (-α) * α ^ (s - 1)) := by
       refine Asymptotics.IsBigO.of_bound (2 / (1 - Real.exp (-Real.pi))) ?_
       filter_upwards [Filter.eventually_ge_atTop Real.pi] with α hα
       have hα_pos : 0 < α := hπ.trans_le hα
-      have h_znn : 0 ≤ quadraticPartFn α - 1 := quadraticPartFn_sub_one_nonneg α hα_pos
+      have h_znn : 0 ≤ scalarPartFn α - 1 := scalarPartFn_sub_one_nonneg α hα_pos
       have h_rpos : 0 < α ^ (s - 1) := Real.rpow_pos_of_pos hα_pos _
       have h_epos : 0 < Real.exp (-α) := Real.exp_pos _
-      have h_bd := quadraticPartFn_sub_one_tail_bound α hα
-      have h_nonneg_l : (0 : ℝ) ≤ (quadraticPartFn α - 1) * α ^ (s - 1) := by positivity
+      have h_bd := scalarPartFn_sub_one_tail_bound α hα
+      have h_nonneg_l : (0 : ℝ) ≤ (scalarPartFn α - 1) * α ^ (s - 1) := by positivity
       have h_nonneg_r : (0 : ℝ) ≤ Real.exp (-α) * α ^ (s - 1) := by positivity
       rw [Real.norm_of_nonneg h_nonneg_l, Real.norm_of_nonneg h_nonneg_r]
-      have hbound_prod : (quadraticPartFn α - 1) * α ^ (s - 1) ≤
+      have hbound_prod : (scalarPartFn α - 1) * α ^ (s - 1) ≤
           (2 / (1 - Real.exp (-Real.pi)) * Real.exp (-α)) * α ^ (s - 1) := by
         apply mul_le_mul_of_nonneg_right _ h_rpos.le
         have : 2 * Real.exp (-α) / (1 - Real.exp (-Real.pi))
@@ -584,7 +585,7 @@ private lemma menoMellinTail_integrableOn (s : ℝ) :
     tail-only nature (no singularity at `α = 0`) lifts the `s > 1/2` restriction
     that binds `menoMellin s`. -/
 noncomputable def menoMellinTail (s : ℝ) : ℝ :=
-  ∫ α in Ioi Real.pi, (quadraticPartFn α - 1) * α ^ (s - 1)
+  ∫ α in Ioi Real.pi, (scalarPartFn α - 1) * α ^ (s - 1)
 
 /-! ### Sub-interval CoV `α = π²/β` on `Ioc 0 π ↔ Ici π` -/
 
@@ -666,13 +667,13 @@ private lemma cov_rpow_identity (β : ℝ) (hβ : 0 < β) (s : ℝ) :
     Jacobian `|−π²/β²|` combines with the rpow-transformed integrand to produce
     the `π^(2s) · β^(-s-1)` kernel. -/
 private lemma menoMellin_head_cov_pi_sq (s : ℝ) :
-    ∫ α in Ioc 0 Real.pi, (quadraticPartFn α - 1) * α ^ (s - 1) =
+    ∫ α in Ioc 0 Real.pi, (scalarPartFn α - 1) * α ^ (s - 1) =
       Real.pi ^ (2 * s) *
-        ∫ β in Ici Real.pi, (quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1) := by
+        ∫ β in Ici Real.pi, (scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1) := by
   have hπ : 0 < Real.pi := Real.pi_pos
   set f : ℝ → ℝ := fun β => Real.pi ^ 2 / β with hf_def
   set f' : ℝ → ℝ := fun β => -(Real.pi ^ 2 / β ^ 2) with hf'_def
-  set g : ℝ → ℝ := fun α => (quadraticPartFn α - 1) * α ^ (s - 1) with hg_def
+  set g : ℝ → ℝ := fun α => (scalarPartFn α - 1) * α ^ (s - 1) with hg_def
   have h_deriv : ∀ β ∈ Ici Real.pi, HasDerivWithinAt f (f' β) (Ici Real.pi) β :=
     fun β hβ => hasDerivWithinAt_pi_sq_div β hβ
   have hCoV :=
@@ -689,13 +690,13 @@ private lemma menoMellin_head_cov_pi_sq (s : ℝ) :
     show |-(Real.pi ^ 2 / β ^ 2)| = Real.pi ^ 2 / β ^ 2
     rw [abs_neg, abs_of_pos (div_pos (sq_pos_of_pos hπ) hβ2_pos)]
   show |f' β| • g (f β) =
-      Real.pi ^ (2 * s) * ((quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1))
+      Real.pi ^ (2 * s) * ((scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1))
   rw [smul_eq_mul, habs]
   show (Real.pi ^ 2 / β ^ 2) *
-        ((quadraticPartFn (Real.pi ^ 2 / β) - 1) * (Real.pi ^ 2 / β) ^ (s - 1)) =
-      Real.pi ^ (2 * s) * ((quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1))
+        ((scalarPartFn (Real.pi ^ 2 / β) - 1) * (Real.pi ^ 2 / β) ^ (s - 1)) =
+      Real.pi ^ (2 * s) * ((scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1))
   have hid := cov_rpow_identity β hβ_pos s
-  set Z := quadraticPartFn (Real.pi ^ 2 / β) - 1 with hZ
+  set Z := scalarPartFn (Real.pi ^ 2 / β) - 1 with hZ
   calc (Real.pi ^ 2 / β ^ 2) * (Z * (Real.pi ^ 2 / β) ^ (s - 1))
       = ((Real.pi ^ 2 / β ^ 2) * (Real.pi ^ 2 / β) ^ (s - 1)) * Z := by ring
     _ = (Real.pi ^ (2 * s) * β ^ (-s - 1)) * Z := by rw [hid]
@@ -838,7 +839,7 @@ private lemma integral_sqrt_shift_tail (s : ℝ) (hs : 1/2 < s) :
     `√(β/π) · (Z(β) − 1) + (√(β/π) − 1)`, splits by linearity, and uses
     `integral_sqrt_shift_tail` for the elementary piece. -/
 private lemma head_integral_eq_tail_pieces {s : ℝ} (hs : 1/2 < s) :
-    ∫ β in Ici Real.pi, (quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1) =
+    ∫ β in Ici Real.pi, (scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1) =
       (1 / Real.sqrt Real.pi) * menoMellinTail (1/2 - s)
         + Real.pi ^ (-s) / (s * (2*s - 1)) := by
   have hπ : 0 < Real.pi := Real.pi_pos
@@ -849,9 +850,9 @@ private lemma head_integral_eq_tail_pieces {s : ℝ} (hs : 1/2 < s) :
   rw [MeasureTheory.integral_Ici_eq_integral_Ioi]
   -- Pointwise identity via duality
   have h_pointwise : ∀ β ∈ Ioi Real.pi,
-      (quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1)
+      (scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1)
     = (1 / Real.sqrt Real.pi) *
-        ((quadraticPartFn β - 1) * β ^ ((1/2 - s) - 1))
+        ((scalarPartFn β - 1) * β ^ ((1/2 - s) - 1))
     + (Real.sqrt (β / Real.pi) - 1) * β ^ (-s - 1) := by
     intro β hβ
     have hβ_pos : 0 < β := hπ.trans hβ
@@ -870,16 +871,16 @@ private lemma head_integral_eq_tail_pieces {s : ℝ} (hs : 1/2 < s) :
     -- (√(β/π)·(Z(β)-1) + (√(β/π)-1)) · β^(-s-1)
     --   = (1/√π)·((Z(β)-1)·β^((1/2-s)-1)) + (√(β/π)-1)·β^(-s-1)
     have h_expand :
-        (Real.sqrt (β / Real.pi) * (quadraticPartFn β - 1) +
+        (Real.sqrt (β / Real.pi) * (scalarPartFn β - 1) +
           (Real.sqrt (β / Real.pi) - 1)) * β ^ (-s - 1) =
-        Real.sqrt (β / Real.pi) * β ^ (-s - 1) * (quadraticPartFn β - 1)
+        Real.sqrt (β / Real.pi) * β ^ (-s - 1) * (scalarPartFn β - 1)
         + (Real.sqrt (β / Real.pi) - 1) * β ^ (-s - 1) := by ring
     rw [h_expand, h_sqrt_mul]
     ring
   -- Integrabilities
   have hint_half_s : IntegrableOn
       (fun β : ℝ => (1 / Real.sqrt Real.pi) *
-        ((quadraticPartFn β - 1) * β ^ ((1/2 - s) - 1))) (Ioi Real.pi) :=
+        ((scalarPartFn β - 1) * β ^ ((1/2 - s) - 1))) (Ioi Real.pi) :=
     (menoMellinTail_integrableOn (1/2 - s)).const_mul _
   have hint_sqrt : IntegrableOn
       (fun β : ℝ => Real.sqrt (β / Real.pi) * β ^ (-s - 1)) (Ioi Real.pi) :=
@@ -895,10 +896,10 @@ private lemma head_integral_eq_tail_pieces {s : ℝ} (hs : 1/2 < s) :
        = (Real.sqrt (β / Real.pi) - 1) * β ^ (-s - 1)
     ring
   -- Apply pointwise rewrite, then linearity
-  rw [show ∫ β in Ioi Real.pi, (quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1)
+  rw [show ∫ β in Ioi Real.pi, (scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1)
         = ∫ β in Ioi Real.pi,
             ((1 / Real.sqrt Real.pi) *
-              ((quadraticPartFn β - 1) * β ^ ((1/2 - s) - 1))
+              ((scalarPartFn β - 1) * β ^ ((1/2 - s) - 1))
             + (Real.sqrt (β / Real.pi) - 1) * β ^ (-s - 1)) from by
     refine MeasureTheory.setIntegral_congr_ae measurableSet_Ioi ?_
     filter_upwards with β hβ using h_pointwise β hβ]
@@ -932,13 +933,13 @@ theorem menoMellin_split_at_pi {s : ℝ} (hs : 1/2 < s) :
   -- Integrability hypotheses on Ici π for the transformed integrand
   have hint_transformed_Ioi : IntegrableOn
       (fun β : ℝ => Real.pi ^ (2*s) *
-        ((quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1))) (Ioi Real.pi) := by
+        ((scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1))) (Ioi Real.pi) := by
     -- Apply pointwise identity, then linearity
     have h_pt : ∀ β ∈ Ioi Real.pi,
         Real.pi ^ (2*s) *
-          ((quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1)) =
+          ((scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1)) =
         Real.pi ^ (2*s) * (1 / Real.sqrt Real.pi) *
-          ((quadraticPartFn β - 1) * β ^ ((1/2 - s) - 1))
+          ((scalarPartFn β - 1) * β ^ ((1/2 - s) - 1))
         + Real.pi ^ (2*s) *
           ((Real.sqrt (β / Real.pi) - 1) * β ^ (-s - 1)) := by
       intro β hβ
@@ -956,17 +957,17 @@ theorem menoMellin_split_at_pi {s : ℝ} (hs : 1/2 < s) :
         congr 2; ring
       have h_expand :
           Real.pi ^ (2*s) *
-            ((Real.sqrt (β / Real.pi) * (quadraticPartFn β - 1) +
+            ((Real.sqrt (β / Real.pi) * (scalarPartFn β - 1) +
               (Real.sqrt (β / Real.pi) - 1)) * β ^ (-s - 1)) =
           Real.pi ^ (2*s) * (Real.sqrt (β / Real.pi) * β ^ (-s - 1)) *
-            (quadraticPartFn β - 1)
+            (scalarPartFn β - 1)
           + Real.pi ^ (2*s) *
             ((Real.sqrt (β / Real.pi) - 1) * β ^ (-s - 1)) := by ring
       rw [h_expand, h_sqrt_mul]
       ring
     have hint_A : IntegrableOn
         (fun β : ℝ => Real.pi ^ (2*s) * (1 / Real.sqrt Real.pi) *
-          ((quadraticPartFn β - 1) * β ^ ((1/2 - s) - 1))) (Ioi Real.pi) :=
+          ((scalarPartFn β - 1) * β ^ ((1/2 - s) - 1))) (Ioi Real.pi) :=
       (menoMellinTail_integrableOn (1/2 - s)).const_mul _
     have hint_B : IntegrableOn
         (fun β : ℝ => Real.pi ^ (2*s) *
@@ -984,14 +985,14 @@ theorem menoMellin_split_at_pi {s : ℝ} (hs : 1/2 < s) :
     intro β hβ; exact (h_pt β hβ).symm
   have hint_transformed_Ici : IntegrableOn
       (fun β : ℝ => Real.pi ^ (2*s) *
-        ((quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1))) (Ici Real.pi) :=
+        ((scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1))) (Ici Real.pi) :=
     (integrableOn_Ici_iff_integrableOn_Ioi).mpr hint_transformed_Ioi
   -- Transfer integrability via CoV iff
   have hint_head_Ioc : IntegrableOn
-      (fun α : ℝ => (quadraticPartFn α - 1) * α ^ (s - 1)) (Ioc 0 Real.pi) := by
+      (fun α : ℝ => (scalarPartFn α - 1) * α ^ (s - 1)) (Ioc 0 Real.pi) := by
     have h_iff := MeasureTheory.integrableOn_image_iff_integrableOn_abs_deriv_smul
       (measurableSet_Ici (a := Real.pi)) h_deriv injOn_pi_sq_div
-      (fun α : ℝ => (quadraticPartFn α - 1) * α ^ (s - 1))
+      (fun α : ℝ => (scalarPartFn α - 1) * α ^ (s - 1))
     rw [image_pi_sq_div_Ici_pi] at h_iff
     apply h_iff.mpr
     refine hint_transformed_Ici.congr_fun ?_ measurableSet_Ici
@@ -1000,19 +1001,19 @@ theorem menoMellin_split_at_pi {s : ℝ} (hs : 1/2 < s) :
     have hβ_pos : 0 < β := hπ.trans_le hβ_ge
     have hβ2_pos : 0 < β ^ 2 := sq_pos_of_pos hβ_pos
     show Real.pi ^ (2*s) *
-        ((quadraticPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1)) =
+        ((scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1)) =
       |-(Real.pi ^ 2 / β ^ 2)| •
-        ((quadraticPartFn (Real.pi ^ 2 / β) - 1) * (Real.pi ^ 2 / β) ^ (s - 1))
+        ((scalarPartFn (Real.pi ^ 2 / β) - 1) * (Real.pi ^ 2 / β) ^ (s - 1))
     rw [smul_eq_mul, abs_neg, abs_of_pos (div_pos (sq_pos_of_pos hπ) hβ2_pos)]
     have hid := cov_rpow_identity β hβ_pos s
-    set Z := quadraticPartFn (Real.pi ^ 2 / β) - 1 with hZ
+    set Z := scalarPartFn (Real.pi ^ 2 / β) - 1 with hZ
     calc Real.pi ^ (2*s) * (Z * β ^ (-s - 1))
         = (Real.pi ^ (2*s) * β ^ (-s - 1)) * Z := by ring
       _ = ((Real.pi ^ 2 / β ^ 2) * (Real.pi ^ 2 / β) ^ (s - 1)) * Z := by rw [← hid]
       _ = (Real.pi ^ 2 / β ^ 2) * (Z * (Real.pi ^ 2 / β) ^ (s - 1)) := by ring
   -- Tail integrability
   have hint_tail_s : IntegrableOn
-      (fun α : ℝ => (quadraticPartFn α - 1) * α ^ (s - 1)) (Ioi Real.pi) :=
+      (fun α : ℝ => (scalarPartFn α - 1) * α ^ (s - 1)) (Ioi Real.pi) :=
     menoMellinTail_integrableOn s
   -- Split Ioi 0 = Ioc 0 π ∪ Ioi π
   have hdisj : Disjoint (Ioc (0:ℝ) Real.pi) (Ioi Real.pi) :=
@@ -1121,4 +1122,4 @@ theorem meno_zeta_functional_equation_real {s : ℝ} (hs : 1/2 < s) :
         exact Complex.ofReal_cpow hπ _] at h
   exact h
 
-end Simplicial
+end Meno

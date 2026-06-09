@@ -1,4 +1,5 @@
 import Meno.Simplicial
+import Meno.QuadraticAction
 import Mathlib.Topology.Algebra.InfiniteSum.Real
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 
@@ -321,7 +322,7 @@ theorem graphPartitionFn_diagonal (b₁ : ℕ)
   simp_rw [hrw]
   exact tsum_finPi_factor b₁ (fun i z => Real.exp (-α i * (z : ℝ) ^ 2))
     (fun _ _ => le_of_lt (Real.exp_pos _))
-    (fun i => summable_quadraticPartFn (α i) (hα i))
+    (fun i => Meno.QuadraticAction.summable_scalarPartFn (α i) (hα i))
 
 /-- Summability of the diagonal quadratic form: when Q = diag(α) with positive entries,
     the Boltzmann weights over ℤ^{b₁} are summable. Derives the summability hypothesis
@@ -344,7 +345,7 @@ theorem summable_graphPartitionFn_diagonal (b₁ : ℕ)
     exact Real.exp_sum Finset.univ _
   exact (summable_finPi_prod b₁ (fun i z => Real.exp (-α i * (z : ℝ) ^ 2))
     (fun _ _ => le_of_lt (Real.exp_pos _))
-    (fun i => summable_quadraticPartFn (α i) (hα i))).congr fun k => (hrw k).symm
+    (fun i => Meno.QuadraticAction.summable_scalarPartFn (α i) (hα i))).congr fun k => (hrw k).symm
 
 /-- Corollary: for cycle couplings αᵢ = 1/nᵢ, the graph partition function factors
     into a product of cycle partition functions.

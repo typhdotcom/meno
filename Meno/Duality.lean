@@ -1,5 +1,4 @@
 import Meno.Groupoid
-import Meno.Theta
 import Mathlib.Analysis.Real.Pi.Bounds
 
 /-! # Fourier Duality on GroupoidObj
@@ -21,59 +20,23 @@ theorem quadraticPartFn_eq_partitionFn (n : ℕ) (hn : n ≥ 3) :
     quadraticPartFn (1 / ↑n) = partitionFn n hn := by
   simp only [quadraticPartFn, partitionFn]; congr 1; ext k; congr 1; ring
 
-/-! ## Generalized T-duality via modular S-transformation -/
+/-! ## Generalized T-duality, inherited from the spine
 
-private noncomputable def quadTau (α : ℝ) : ℂ :=
-  Complex.I * ↑α / ↑Real.pi
+The modular S-transformation proof lives in **one** place:
+`Meno.QuadraticAction.scalarPartFn_duality`. `quadraticPartFn` is
+definitionally the spine's scalar partition function, so the duality
+here is a name-transport, not an independent analytic theorem. -/
 
-private lemma quad_tau_im_pos (α : ℝ) (hα : 0 < α) : (quadTau α).im > 0 := by
-  unfold quadTau
-  rw [mul_div_assoc, ← Complex.ofReal_div, Complex.mul_im,
-      Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.ofReal_im]
-  simp only [zero_mul, one_mul, zero_add]
-  exact div_pos hα Real.pi_pos
-
-private noncomputable def quadUHP (α : ℝ) (hα : 0 < α) : UpperHalfPlane :=
-  ⟨quadTau α, quad_tau_im_pos α hα⟩
-
-private lemma quad_theta_exponent (α : ℝ) (k : ℤ) :
-    ↑Real.pi * Complex.I * (↑k : ℂ) ^ 2 * quadTau α =
-    ↑(-α * (k : ℝ) ^ 2) := by
-  simp only [quadTau]
-  have hpi : (↑Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt Real.pi_pos)
-  push_cast; field_simp; rw [Complex.I_sq]; ring
-
-private theorem quadraticPartFn_eq_jacobiTheta (α : ℝ) :
-    (↑(quadraticPartFn α) : ℂ) = jacobiTheta (quadTau α) := by
-  simp only [quadraticPartFn, jacobiTheta]
-  rw [Complex.ofReal_tsum]
-  congr 1; ext k
-  rw [quad_theta_exponent α k, ← Complex.ofReal_exp]
-
-private theorem quad_S_transform (α : ℝ) (hα : 0 < α) :
-    (↑(ModularGroup.S • quadUHP α hα) : ℂ) = quadTau (Real.pi ^ 2 / α) := by
-  have h : (↑(quadUHP α hα) : ℂ) = quadTau α := rfl
-  rw [modular_S_smul, coe_mk, h]
-  simp only [quadTau]
-  have hpi : (↑Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt Real.pi_pos)
-  have hα0 : (↑α : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hα)
-  push_cast; field_simp; exact Complex.I_sq.symm
-
-private theorem quad_prefactor (α : ℝ) (hα : 0 < α) :
-    -Complex.I * (↑(quadUHP α hα) : ℂ) = ↑(α / Real.pi : ℝ) := by
-  have : (↑(quadUHP α hα) : ℂ) = quadTau α := rfl
-  rw [this]; simp only [quadTau]
-  have hpi : (↑Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt Real.pi_pos)
-  push_cast; field_simp; rw [Complex.I_sq]; ring
+/-- `quadraticPartFn` *is* the spine's scalar partition function. One
+analytic object, two historical names. -/
+theorem quadraticPartFn_eq_scalarPartFn (α : ℝ) :
+    quadraticPartFn α = Meno.QuadraticAction.scalarPartFn α := rfl
 
 theorem quadraticPartFn_duality (α : ℝ) (hα : 0 < α) :
     (↑(quadraticPartFn (Real.pi ^ 2 / α)) : ℂ) =
     ↑(α / Real.pi : ℝ) ^ ((1 : ℂ) / 2) * ↑(quadraticPartFn α) := by
-  have hτ : (↑(quadUHP α hα) : ℂ) = quadTau α := rfl
-  rw [quadraticPartFn_eq_jacobiTheta, quadraticPartFn_eq_jacobiTheta,
-      show quadTau (Real.pi ^ 2 / α) = ↑(ModularGroup.S • quadUHP α hα) from
-        (quad_S_transform α hα).symm,
-      jacobiTheta_S_smul, quad_prefactor α hα, hτ]
+  rw [quadraticPartFn_eq_scalarPartFn, quadraticPartFn_eq_scalarPartFn]
+  exact Meno.QuadraticAction.scalarPartFn_duality α hα
 
 /-! ## Fourier dual of a GroupoidObj -/
 
@@ -84,7 +47,7 @@ noncomputable def GroupoidObj.dual
   base := E.base
   energy g := (Real.pi ^ 2 / α) * (wind g : ℝ) ^ 2
   summable := by
-    have h := summable_quadraticPartFn (Real.pi ^ 2 / α)
+    have h := Meno.QuadraticAction.summable_scalarPartFn (Real.pi ^ 2 / α)
       (div_pos (sq_pos_of_pos Real.pi_pos) hα)
     exact (wind.summable_iff.mpr h).congr fun g => by simp only [Function.comp_apply, neg_mul]
 
@@ -148,7 +111,7 @@ noncomputable def quadraticObj (α : ℝ) (hα : 0 < α) : GroupoidObj where
   base := CategoryTheory.SingleObj.star (Multiplicative ℤ)
   energy g := α * (quadraticWind g : ℝ) ^ 2
   summable := by
-    have h := summable_quadraticPartFn α hα
+    have h := Meno.QuadraticAction.summable_scalarPartFn α hα
     exact (quadraticWind.summable_iff.mpr h).congr fun g => by
       simp only [Function.comp_apply, neg_mul]
 
@@ -224,23 +187,14 @@ the partition function: Z(α) ≥ √(π/α). Taking logs gives a complexity flo
 that grows with topological rank. -/
 
 theorem quadraticPartFn_gt_one (α : ℝ) (hα : 0 < α) : quadraticPartFn α > 1 := by
-  have hsm := summable_quadraticPartFn α hα
-  have hle : ({0, 1} : Finset ℤ).sum (fun k => Real.exp (-α * (k : ℝ) ^ 2)) ≤
-      quadraticPartFn α := by
-    show _ ≤ ∑' k, _
-    exact hsm.sum_le_tsum {0, 1} (fun k _ => le_of_lt (Real.exp_pos _))
-  simp at hle
-  linarith [Real.exp_pos (-α)]
+  rw [quadraticPartFn_eq_scalarPartFn]
+  exact Meno.QuadraticAction.scalarPartFn_gt_one α hα
 
 theorem quadraticPartFn_duality_real (α : ℝ) (hα : 0 < α) :
     quadraticPartFn (Real.pi ^ 2 / α) =
     (α / Real.pi) ^ ((1 : ℝ) / 2) * quadraticPartFn α := by
-  have h := quadraticPartFn_duality α hα
-  have hnn : (0 : ℝ) ≤ α / Real.pi := le_of_lt (div_pos hα Real.pi_pos)
-  apply Complex.ofReal_inj.mp
-  rw [Complex.ofReal_mul, Complex.ofReal_cpow hnn]
-  convert h using 2
-  push_cast; ring
+  rw [quadraticPartFn_eq_scalarPartFn, quadraticPartFn_eq_scalarPartFn]
+  exact Meno.QuadraticAction.scalarPartFn_duality_real α hα
 
 theorem quadraticPartFn_lower_bound (α : ℝ) (hα : 0 < α) :
     quadraticPartFn α ≥ (Real.pi / α) ^ ((1 : ℝ) / 2) := by
@@ -283,21 +237,9 @@ theorem cycle_complexity_ge (E : GroupoidObj) (wind : End E.base ≃ ℤ)
   have : (0 : ℝ) < n := hn0
   field_simp
 
-/-- Canonical cycle groupoid object at the basepoint:
-    energy and summability are both derived from the proved winding equivalence. -/
-noncomputable def cycleCanonicalObj (n : ℕ) (hn : n ≥ 3) : GroupoidObj where
-  G := SimplicialGroupoid (CycleGraph n hn)
-  base := cycleBaseObj n hn
-  energy := cycleCanonicalEnergy n hn (cycleBaseObj n hn)
-  summable := summable_cycleCanonicalEnergy n hn (cycleBaseObj n hn)
-
-/-- Canonical cycle object partition function recovers `partitionFn` with no extra hypotheses. -/
-theorem cycleCanonicalObj_partFn_eq_partitionFn (n : ℕ) (hn : n ≥ 3) :
-    (cycleCanonicalObj n hn).partFn = partitionFn n hn := by
-  simpa [cycleCanonicalObj, GroupoidObj.partFn] using
-    cycleGroupoid_partitionFn_eq_base_canonical_energy n hn
-
-/-- Canonical cycle object complexity lower bound with no external `hK`. -/
+/-- Canonical cycle object complexity lower bound with no external `hK`.
+(`cycleCanonicalObj` itself now lives upstream in `Groupoid.lean`,
+where it feeds the spine through `cycleLoopKernel`.) -/
 theorem cycleCanonicalObj_complexity_ge (n : ℕ) (hn : n ≥ 3) :
     (cycleCanonicalObj n hn).complexity ≥ (1 / 2) * Real.log (Real.pi * n) := by
   have hn0 : 0 < n := by omega
@@ -462,8 +404,8 @@ theorem quadraticPartFn_strictAnti :
   exact Summable.tsum_lt_tsum (i := (1 : ℤ))
     (fun k => Real.exp_le_exp_of_le (by nlinarith [sq_nonneg (k : ℝ)]))
     (Real.exp_lt_exp.mpr (by push_cast; nlinarith))
-    (summable_quadraticPartFn β hβ)
-    (summable_quadraticPartFn α hα)
+    (Meno.QuadraticAction.summable_scalarPartFn β hβ)
+    (Meno.QuadraticAction.summable_scalarPartFn α hα)
 
 theorem dual_pair_product (α : ℝ) (hα : 0 < α) :
     quadraticPartFn α * quadraticPartFn (Real.pi ^ 2 / α) =
@@ -482,7 +424,7 @@ private lemma summable_sq_mul_exp (β : ℝ) (hβ : 0 < β) :
     Summable (fun k : ℤ => (k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) := by
   have hβ2 : 0 < β / 2 := by linarith
   have hdom : Summable (fun k : ℤ => (2 / β) * Real.exp (-(β / 2) * (k : ℝ) ^ 2)) :=
-    (summable_quadraticPartFn (β / 2) hβ2).const_smul (2 / β)
+    (Meno.QuadraticAction.summable_scalarPartFn (β / 2) hβ2).const_smul (2 / β)
   exact Summable.of_nonneg_of_le
     (fun k => mul_nonneg (sq_nonneg _) (le_of_lt (Real.exp_pos _)))
     (fun k => by
@@ -523,7 +465,7 @@ private lemma hasDerivAt_quadraticPartFn (β : ℝ) (hβ : 0 < β) :
         (Real.exp_le_exp_of_le (by nlinarith [sq_nonneg (k : ℝ)]))
         (sq_nonneg _))
     (Set.mem_Ioi.mpr (by linarith))
-    (summable_quadraticPartFn β hβ)
+    (Meno.QuadraticAction.summable_scalarPartFn β hβ)
     (Set.mem_Ioi.mpr (by linarith))
 
 private lemma summable_pow4_mul_exp (β : ℝ) (hβ : 0 < β) :
@@ -589,7 +531,7 @@ private lemma hasDerivAt_M₂ (β : ℝ) (hβ : 0 < β) :
 
 private lemma summable_N_summand (β : ℝ) (hβ : 0 < β) :
     Summable (fun k : ℤ => (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2)) := by
-  have h1 := summable_quadraticPartFn β hβ
+  have h1 := Meno.QuadraticAction.summable_scalarPartFn β hβ
   have h2 := (summable_sq_mul_exp β hβ).mul_left (4 * β)
   exact (h1.sub h2).congr fun k => by ring
 
@@ -625,7 +567,7 @@ private lemma N_self_dual :
   suffices hN : ∑' k : ℤ, (1 - 4 * Real.pi * (k : ℝ) ^ 2) *
       Real.exp (-Real.pi * (k : ℝ) ^ 2) = quadraticPartFn Real.pi + 4 * Real.pi * Z'π by
     linarith
-  have h1 := summable_quadraticPartFn Real.pi hπ_pos
+  have h1 := Meno.QuadraticAction.summable_scalarPartFn Real.pi hπ_pos
   have h2 : Summable (fun k : ℤ =>
       4 * Real.pi * (-(k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2))) :=
     ((summable_sq_mul_exp Real.pi hπ_pos).neg.mul_left (4 * Real.pi)).congr fun k => by ring
@@ -646,7 +588,7 @@ theorem quadraticPartFn_moment_self_dual :
         (∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2)) := by
   have hπ := Real.pi_pos
   have h1 : Summable (fun k : ℤ => Real.exp (-Real.pi * (k : ℝ) ^ 2)) :=
-    summable_quadraticPartFn Real.pi hπ
+    Meno.QuadraticAction.summable_scalarPartFn Real.pi hπ
   have h2 : Summable (fun k : ℤ =>
       4 * Real.pi * ((k : ℝ) ^ 2 * Real.exp (-Real.pi * (k : ℝ) ^ 2))) :=
     (summable_sq_mul_exp Real.pi hπ).mul_left (4 * Real.pi)
@@ -798,7 +740,7 @@ private lemma M2_sq_lt_Z_mul_M4 (α : ℝ) (hα : 0 < α) :
       (-(2 * Z * M2)) * ((k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2))) :=
     (summable_sq_mul_exp α hα).mul_left _
   have s3 : Summable (fun k : ℤ => M2 ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)) :=
-    (summable_quadraticPartFn α hα).mul_left _
+    (Meno.QuadraticAction.summable_scalarPartFn α hα).mul_left _
   have h_summable : Summable (fun k : ℤ =>
       (Z * (k : ℝ) ^ 2 - M2) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)) :=
     ((s1.add s2).add s3).congr (fun k => (h_expand k).symm)
@@ -1227,7 +1169,7 @@ private lemma quadraticPartFn_rpow_sq_monotone :
             (∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) =
             ∑' k : ℤ, (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2)
         unfold quadraticPartFn; rw [← tsum_mul_left]
-        rw [← (summable_quadraticPartFn β hβ_pos).tsum_add
+        rw [← (Meno.QuadraticAction.summable_scalarPartFn β hβ_pos).tsum_add
             (((summable_sq_mul_exp β hβ_pos).neg.mul_left (4 * β)).congr fun k => by ring)]
         congr 1; ext k; ring]
       exact hN
@@ -1308,7 +1250,7 @@ theorem quadraticMeanEnergy_le_inv (α : ℝ) (hα : Real.pi ≤ α) :
   have hZ_pos : 0 < quadraticPartFn α :=
     lt_trans one_pos (quadraticPartFn_gt_one α hα_pos)
   have h4α_pos : (0 : ℝ) < 4 * α := by linarith
-  have h1 := summable_quadraticPartFn α hα_pos
+  have h1 := Meno.QuadraticAction.summable_scalarPartFn α hα_pos
   have h2 : Summable (fun k : ℤ =>
       4 * α * ((k : ℝ)^2 * Real.exp (-α * (k : ℝ)^2))) :=
     (summable_sq_mul_exp α hα_pos).mul_left (4 * α)
@@ -1335,7 +1277,7 @@ theorem quadraticMeanEnergy_lt_inv (α : ℝ) (hα : Real.pi < α) :
   have hZ_pos : 0 < quadraticPartFn α :=
     lt_trans one_pos (quadraticPartFn_gt_one α hα_pos)
   have h4α_pos : (0 : ℝ) < 4 * α := by linarith
-  have h1 := summable_quadraticPartFn α hα_pos
+  have h1 := Meno.QuadraticAction.summable_scalarPartFn α hα_pos
   have h2 : Summable (fun k : ℤ =>
       4 * α * ((k : ℝ)^2 * Real.exp (-α * (k : ℝ)^2))) :=
     (summable_sq_mul_exp α hα_pos).mul_left (4 * α)

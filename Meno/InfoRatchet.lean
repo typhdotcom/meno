@@ -62,6 +62,34 @@ theorem fiberInfoCost_of_injective [Fintype B] [DecidableEq B]
     have h0 : Nat.card (f ⁻¹' {b}) = 0 := Nat.card_eq_zero.mpr (Or.inl hne)
     rw [h0]; simp
 
+/-- **Strict ratchet**: a non-injective function has strictly positive
+fiber information cost. The pair `a₁ ≠ a₂` with `f a₁ = f a₂` forces
+`|f ⁻¹ {f a₁}| ≥ 2`, contributing `log 2 > 0`; all other fibers
+contribute `≥ 0`. -/
+theorem fiberInfoCost_pos_of_not_injective [Fintype A] [Fintype B] [DecidableEq B]
+    {f : A → B} (hf : ¬ Function.Injective f) :
+    0 < fiberInfoCost f := by
+  obtain ⟨a₁, a₂, hfa, hne⟩ := Function.not_injective_iff.mp hf
+  have hcard : 2 ≤ Nat.card (f ⁻¹' {f a₁}) := by
+    have hsub : ({a₁, a₂} : Set A) ⊆ f ⁻¹' {f a₁} := by
+      rintro x (rfl | rfl)
+      · rfl
+      · exact hfa.symm
+    have hpair : ({a₁, a₂} : Set A).ncard = 2 := Set.ncard_pair hne
+    have hfin : (f ⁻¹' {f a₁}).Finite := Set.toFinite _
+    have h2 : 2 ≤ (f ⁻¹' {f a₁}).ncard := by
+      rw [← hpair]; exact Set.ncard_le_ncard hsub hfin
+    rwa [← Nat.card_coe_set_eq] at h2
+  have hlogpos : 0 < Real.log (Nat.card (f ⁻¹' {f a₁}) : ℝ) := by
+    apply Real.log_pos
+    have h2 : (2 : ℝ) ≤ (Nat.card (f ⁻¹' {f a₁}) : ℝ) := by exact_mod_cast hcard
+    linarith
+  unfold fiberInfoCost
+  refine Finset.sum_pos' (fun c _ => ?_) ⟨f a₁, Finset.mem_univ _, hlogpos⟩
+  rcases (Nat.card (f ⁻¹' {c})).eq_zero_or_pos with hzero | hpos
+  · simp [hzero]
+  · exact Real.log_nonneg (by exact_mod_cast hpos)
+
 /-- Description cost of a function: `|A| · log |B|`. The number of bits
 to specify which of `|B|^|A|` total functions `f` is. -/
 noncomputable def descriptionCost [Fintype A] [Fintype B] (_f : A → B) : ℝ :=
@@ -89,5 +117,17 @@ theorem sectionCost_eq_of_injective [Fintype A] [Fintype B] [DecidableEq B]
     sectionCost f s hs = descriptionCost f := by
   unfold sectionCost
   rw [fiberInfoCost_of_injective hf]; ring
+
+/-- **The ratchet inequality**: when `f` is non-injective, every section's
+description cost strictly exceeds the forward description cost. The gap
+is exactly the fiber information overhead — non-invertible computation
+forces a strictly positive penalty on any reverse description. -/
+theorem sectionCost_gt_descriptionCost_of_not_injective
+    [Fintype A] [Fintype B] [DecidableEq B]
+    {f : A → B} (s : B → A) (hs : ∀ b, f (s b) = b)
+    (hf : ¬ Function.Injective f) :
+    descriptionCost f < sectionCost f s hs := by
+  unfold sectionCost
+  linarith [fiberInfoCost_pos_of_not_injective hf]
 
 end Meno
