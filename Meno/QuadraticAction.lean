@@ -604,8 +604,9 @@ theorem ofDiagonal_dual_Q {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i)
   · simp [Matrix.smul_apply, smul_eq_mul, Matrix.diagonal_apply_ne _ h]
 
 /-- Half-power of a product of non-negative reals, complex `cpow` form:
-`∏ᵢ (fᵢ)^(1/2) = (∏ᵢ fᵢ)^(1/2)`. -/
-private lemma prod_cpow_half : ∀ (r : ℕ) (f : Fin r → ℝ), (∀ i, 0 ≤ f i) →
+`∏ᵢ (fᵢ)^(1/2) = (∏ᵢ fᵢ)^(1/2)`. Public: also used by the
+Siegel–Poisson spine (`Meno/SiegelPoisson.lean`). -/
+lemma prod_cpow_half : ∀ (r : ℕ) (f : Fin r → ℝ), (∀ i, 0 ≤ f i) →
     ∏ i, (↑(f i) : ℂ) ^ ((1 : ℂ) / 2) = (↑(∏ i, f i) : ℂ) ^ ((1 : ℂ) / 2)
   | 0, f, _ => by simp
   | (n + 1), f, hf => by

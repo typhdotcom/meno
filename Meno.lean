@@ -1,6 +1,7 @@
 -- Foundational analytic primitives (new architecture)
 import Meno.SectorAction
 import Meno.QuadraticAction
+import Meno.SiegelPoisson
 import Meno.LoopKernel
 import Meno.Geodesic
 import Meno.HarmonicForm

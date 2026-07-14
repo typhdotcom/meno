@@ -1416,3 +1416,147 @@ Consequences, now load-bearing architecture facts:
   of session C) was clean, and all code added since is in this record.
 
 **End of Phase 14 addendum.**
+
+---
+
+## Addendum: Phase 15 — Multivariate Poisson Summation, Falsification #3 Closed (2026-07-13)
+
+The last analytic gap in the plan. Phase 14 left exactly one clause of
+the falsification table open: the non-diagonal matrix Siegel–Poisson
+duality, "genuinely gated on Mathlib's missing lattice Poisson
+summation." External review of that framing corrected it: **not gated on
+Mathlib — blocked on us formalizing the multivariate bridge, and the
+ingredients are already in the pin.** Mathlib v4.26.0 has the
+multivariate torus Fourier machinery (`UnitAddTorus`, `mFourierCoeff`,
+`hasSum_mFourier_series_apply_of_summable` in `AddCircleMulti`) and the
+one-dimensional bridge blueprint (`Real.fourierCoeff_tsum_comp_add`,
+~50 lines); what it lacks is the connecting theorem — periodize over
+`ℤ^d`, identify torus Fourier coefficients with Euclidean Fourier
+samples, reconstruct. This session built that bridge, **scope-cut to
+the Gaussian family** `x ↦ exp(-π·xᵀMx)`, and derived the general
+duality from it.
+
+### What landed
+
+`Meno/SiegelPoisson.lean` (new, 1220 LOC), imported by `Meno.lean`
+directly after `QuadraticAction`. Zero `sorry`, zero axioms; full
+project builds (3331 jobs).
+
+**Foundations (retiring a Session-1 deferral).**
+
+- `Matrix.PosDef.exists_coercivity` — a positive-definite form
+  dominates `c·∑xᵢ²` for some `c > 0`. **Eigenvalue-free**: minimize
+  the form on the compact sphere `{∑xᵢ² = 1}` (extreme value theorem),
+  scale by degree-2 homogeneity. No spectral machinery.
+- `summable_exp_neg_quadForm` — Boltzmann weights of any posdef form
+  are summable on `ℤ^d` (coercivity + the spine's own
+  `summable_finPi_prod`). **Session-1 architectural decision 1 is
+  retired**: summability is now derivable from `Q.PosDef`, and
+  `QuadraticAction.of_posDef` is the field-free constructor.
+
+**The bridge (the load-bearing new mathematics).**
+
+- `gaussian M`, `periodization M` (lattice sum of translates),
+  continuity of the periodization via box-uniform domination —
+  the coordinatewise estimate `(t+z)² ≥ z²/2 − B²` for `|t| ≤ B`
+  makes the sup-norms a product of scalar Gaussian tails.
+- Descent to the torus (`torusPeriodization`) by the compact-quotient
+  argument: the closed unit cube is compact, the torus Hausdorff, and a
+  continuous surjection compact → Hausdorff is a quotient map. No
+  open-quotient-map API needed.
+- `mFourierCoeff_torusPeriodization` — **the periodization bridge**:
+  the `m`-th torus coefficient of the descended periodization equals
+  `∫_{ℝ^d} char·gaussian`. Proof: transfer the torus integral to the
+  half-open cube through `measurePreserving_pi` of
+  `AddCircle.measurePreserving_mk`; swap sum and integral by
+  norm-summability (`integral_tsum_of_summable_integral_norm`); shift
+  each term to its lattice cell (`setIntegral_image_emb` along the
+  translation, character invariance via `torusMk`); reassemble the
+  exactly-tiling cells with `hasSum_integral_iUnion`.
+- `integral_charGauss_eq` — **the multivariate Gaussian Fourier
+  transform** `∫ e^(-2πi⟨m,x⟩)e^(-π·xᵀMx) = (det M)^(-1/2)·e^(-π·mᵀM⁻¹m)`,
+  by spectral rotation. The Phase 14 division-of-labor principle is now
+  implemented, not just stated: diagonalization is legitimate on the
+  *integral* side (Lebesgue measure is `|det|`-covariant under linear
+  maps; the eigenvector rotation has `|det| = 1` so it is measure
+  preserving), and only there. The rotated integral factors into 1-D
+  Gaussians (`integral_fintype_prod_volume_eq_prod`), each evaluated by
+  Mathlib's `fourierIntegral_gaussian`.
+- `tsum_gaussian_eq` — **Poisson summation for Gaussians on `ℤ^d`**:
+  reconstruction at the basepoint (`hasSum_mFourier_series_apply_of_summable`
+  at `torusMk 0`), coefficient summability from `summable_exp_neg_quadForm`
+  applied to `π·M⁻¹` (posdef by the hand-rolled `posDef_inv`/`posDef_smul'`).
+
+**The payoff.**
+
+- `QuadraticAction.dual` — the general dual `Q ↦ π²·Q⁻¹` as a genuine
+  `QuadraticAction`: symmetry, positive-definiteness, and summability
+  all **derived**, no fields supplied.
+- **`QuadraticAction.duality`** — `Z(π²·Q⁻¹) = √(det Q/π^r)·Z(Q)` for
+  every symmetric positive-definite `Q` at every rank, as a complex
+  `cpow` identity matching the diagonal-case conventions. Obtained from
+  `tsum_gaussian_eq` at `M := π⁻¹·Q` (so `M⁻¹ = π·Q⁻¹` and the dual
+  coupling `π²·Q⁻¹` appears in the exponent).
+- `ofDiagonal_dual_partFn_eq` — dedup witness: the Phase 14 diagonal
+  dual is the general dual restricted to diagonal Gram forms;
+  `ofDiagonal_duality` is now a corollary of the general theorem.
+
+**Falsification clause #3: closed.** No diagonal restriction, no
+Mathlib precondition. The plan's original phrasing ("if such
+infrastructure is needed, this phase delivers it as part of the plan
+rather than as a precondition") is finally satisfied — two sessions of
+work later than promised, at Gaussian scope rather than Schwartz scope,
+which is all the plan ever needed.
+
+### Engineering lessons
+
+- **The Gaussian scope-cut is what made this tractable.** The two
+  analytically delicate steps of general Poisson summation — continuity
+  of the periodization and summability of the transform samples — are
+  elementary for Gaussians (everything factors coordinatewise through
+  scalar Gaussian tails). Mathlib's 1-D theorem must serve all
+  functions; ours serves one family, and that family is all the spine
+  sums.
+- **Import cones lie in wait.** `Matrix.IsHermitian.eigenvectorUnitary`
+  "did not exist" for half a build cycle: the spectral theorem lives in
+  `Mathlib.Analysis.Matrix.PosDef` / `Spectrum`, not the
+  `Mathlib.LinearAlgebra.Matrix.PosDef` the spine already imported.
+- **Dot notation dies on `def`-valued Props.** `hHerm.eigenvectorUnitary`
+  resolved to `Eq.eigenvectorUnitary` (IsHermitian unfolds to `Mᴴ = M`).
+  Full names everywhere in the spectral block.
+- **`AddCircleMulti` uses a local `MeasureSpace` instance** (pi of
+  `haarAddCircle`, probability). For `T = 1` it is propositionally the
+  global mass-`T` Haar volume (`volume_eq_smul_haarAddCircle` is `rfl`
+  plus `ofReal 1 • μ = μ`), and one `Measure.pi`-congruence reconciles
+  `mFourierCoeff`'s baked-in measure with `measurePreserving_mk`'s.
+- **`rw` under beta-redexes and unparenthesized `-a * b`** (which
+  parses as `-(a * b)`) cost several cycles; `simp only [...]` and
+  explicit `have`-based equality chains are the robust forms. `set`
+  abstracts occurrences, so a later `rw [← hy]` on the definiendum
+  finds nothing.
+- **`posDef_iff_dotProduct_mulVec` remains the workhorse.** Mathlib's
+  `Matrix.PosDef.smul` needs `StarOrderedRing ℝ` synthesis (fails at
+  this pin, same as Phase 14's `posDef_diagonal_iff`); hand-rolled
+  `posDef_smul'` and `posDef_inv` are ~15 lines each.
+
+### What this unlocks / still open
+
+- `harmonicGramForm G` of an **arbitrary** finite graph can now feed
+  the duality directly — no diagonality hypothesis. The Phase 5
+  variational program (graph-level Hodge for general graphs, wedge
+  complex) is the remaining consumer-side work.
+- `dual_dual = id` and the self-dual/duality-flow layer of the plan's
+  Phase 2 wishlist are now cheap targets (the dual is a genuine
+  `QuadraticAction`; `(π²·Q⁻¹)` inverts to `π⁻²·Q` by the same
+  right-inverse verification).
+- `Basic.lean`/`TypeKernel` (Phase 10) and the wedge complex are
+  unchanged — next in the priority order.
+
+### Verification
+
+- `lake build Meno`: 3331 jobs, success, zero warnings after lint
+  cleanup.
+- `rg "sorry|^axiom" Meno/`: no matches (all hits are prose in
+  docstrings).
+
+**End of Phase 15 addendum.**
