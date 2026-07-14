@@ -828,6 +828,22 @@ theorem cycleCanonicalObj_T_duality (n : ℕ) (hn : n ≥ 3) :
   rw [cycleCanonicalObj_partFn_eq_partitionFn]
   exact Meno.partitionFn_T_duality_via_spine n hn
 
+/-- **The categorical dual of the cycle loop kernel** (Phase 6's
+`dualVia`, instantiated): the dual object built by transporting
+`π²·Q⁻¹` through the winding coordinates has partition function
+`√((1/n)/π) · Z(C_n)`. The concrete witness that
+`SectorPresentation.dualVia_partFn_duality` has a consumer. -/
+theorem cycleLoopKernel_dualVia_partFn (n : ℕ) (hn : n ≥ 3) :
+    (((Meno.LoopKernelObj.dualVia (cycleSectorPresentation n hn)).partFn : ℝ) : ℂ)
+      = ↑((1 / (n : ℝ)) / Real.pi : ℝ) ^ ((1 : ℂ) / 2)
+        * ↑(partitionFn n hn) := by
+  rw [Meno.SectorPresentation.dualVia_partFn_duality,
+    cycleLoopKernel_partFn_eq_partitionFn]
+  congr 3
+  rw [show (cycleSectorPresentation n hn).Q = !![1 / (n : ℝ)] from rfl,
+    Matrix.det_fin_one, pow_one]
+  simp
+
 end CycleSpine
 
 end Simplicial

@@ -1217,4 +1217,239 @@ theorem ofDiagonal_dual_partFn_eq {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0
 end Duality
 
 
+/-! ## Duality algebra: involution, self-duality, flow
+
+The Phase 2 wishlist, now cheap because `dual` is a first-class
+`QuadraticAction`. One plan claim is **falsified** here:
+`dualityFlow_zero_iff_selfDual` is false at rank ≥ 2 (zero flow
+constrains only the determinant), witnessed by `diag(2π, π/2)`. -/
+
+section DualityAlgebra
+
+open Complex
+
+/-- A quadratic action is determined by its Gram matrix: the proof
+fields are propositions. -/
+theorem QuadraticAction.eq_of_Q_eq {r : ℕ} {A B : QuadraticAction r}
+    (h : A.Q = B.Q) : A = B := by
+  obtain ⟨QA, sA, pA, mA⟩ := A
+  obtain ⟨QB, sB, pB, mB⟩ := B
+  have h' : QA = QB := h
+  subst h'
+  rfl
+
+/-- Inverse of a nonzero scalar multiple of an invertible matrix. -/
+private lemma smul_inv_of_isUnit {r : ℕ} {c : ℝ} (hc : c ≠ 0)
+    {A : Matrix (Fin r) (Fin r) ℝ} (hA : IsUnit A.det) :
+    (c • A)⁻¹ = c⁻¹ • A⁻¹ := by
+  apply Matrix.inv_eq_right_inv
+  rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul, mul_inv_cancel₀ hc,
+    Matrix.mul_nonsing_inv _ hA, one_smul]
+
+/-- **The duality is an involution**: `A.dual.dual = A`. What licenses
+calling `Q ↦ π²·Q⁻¹` a duality at all. -/
+theorem QuadraticAction.dual_dual {r : ℕ} (A : QuadraticAction r) :
+    A.dual.dual = A := by
+  apply QuadraticAction.eq_of_Q_eq
+  rw [QuadraticAction.dual_Q, QuadraticAction.dual_Q]
+  have hdetQ : IsUnit A.Q.det :=
+    isUnit_iff_ne_zero.mpr (ne_of_gt A.Q_posDef.det_pos)
+  have hpi2 : (Real.pi ^ 2 : ℝ) ≠ 0 := ne_of_gt (by positivity)
+  have hdetInv : IsUnit (A.Q⁻¹).det :=
+    isUnit_iff_ne_zero.mpr (ne_of_gt (posDef_inv A.Q_posDef).det_pos)
+  rw [smul_inv_of_isUnit hpi2 hdetInv,
+    Matrix.nonsing_inv_nonsing_inv _ hdetQ, smul_smul,
+    mul_inv_cancel₀ hpi2, one_smul]
+
+/-- Self-duality: the dual coupling matrix is the original. -/
+def QuadraticAction.selfDual {r : ℕ} (A : QuadraticAction r) : Prop :=
+  A.dual.Q = A.Q
+
+/-- Self-duality is the quadratic condition `Q² = π²·1`. -/
+theorem QuadraticAction.selfDual_iff {r : ℕ} (A : QuadraticAction r) :
+    A.selfDual ↔ A.Q * A.Q = (Real.pi ^ 2) • (1 : Matrix (Fin r) (Fin r) ℝ) := by
+  have hdetQ : IsUnit A.Q.det :=
+    isUnit_iff_ne_zero.mpr (ne_of_gt A.Q_posDef.det_pos)
+  constructor
+  · intro h
+    have h' : Real.pi ^ 2 • A.Q⁻¹ = A.Q := h
+    calc A.Q * A.Q = A.Q * (Real.pi ^ 2 • A.Q⁻¹) := by rw [h']
+      _ = Real.pi ^ 2 • (A.Q * A.Q⁻¹) := by rw [Matrix.mul_smul]
+      _ = Real.pi ^ 2 • 1 := by rw [Matrix.mul_nonsing_inv _ hdetQ]
+  · intro h
+    show Real.pi ^ 2 • A.Q⁻¹ = A.Q
+    have h2 : A.Q⁻¹ * (A.Q * A.Q) = A.Q⁻¹ * (Real.pi ^ 2 • 1) := by rw [h]
+    rw [← Matrix.mul_assoc, Matrix.nonsing_inv_mul _ hdetQ, Matrix.one_mul,
+      Matrix.mul_smul, Matrix.mul_one] at h2
+    exact h2.symm
+
+/-- Rank 1: the unique self-dual coupling is `α = π` — the fixed point
+the legacy `Duality.lean` layer knows as the variational minimum. -/
+theorem QuadraticAction.ofScalar_selfDual_iff (α : ℝ) (hα : 0 < α) :
+    (QuadraticAction.ofScalar α hα).selfDual ↔ α = Real.pi := by
+  rw [QuadraticAction.selfDual_iff,
+    show (QuadraticAction.ofScalar α hα).Q = !![α] from rfl]
+  constructor
+  · intro h
+    have h00 := congrFun (congrFun h 0) 0
+    simp [Matrix.mul_apply, Matrix.smul_apply] at h00
+    have hfac : (α - Real.pi) * (α + Real.pi) = 0 := by linear_combination h00
+    rcases mul_eq_zero.mp hfac with h0 | h0
+    · linarith
+    · linarith [Real.pi_pos]
+  · rintro rfl
+    ext i j
+    fin_cases i
+    fin_cases j
+    simp [Matrix.mul_apply, Matrix.smul_apply]
+    try ring
+
+/-- Real form of the general Siegel–Poisson duality, with the real
+`rpow` prefactor. -/
+theorem QuadraticAction.duality_real {r : ℕ} (A : QuadraticAction r) :
+    A.dual.toSectorAction.partFn
+      = (A.Q.det / Real.pi ^ r) ^ ((1 : ℝ) / 2) * A.toSectorAction.partFn := by
+  have h := A.duality
+  have hnn : (0 : ℝ) ≤ A.Q.det / Real.pi ^ r :=
+    (div_pos A.Q_posDef.det_pos (pow_pos Real.pi_pos r)).le
+  apply Complex.ofReal_inj.mp
+  rw [Complex.ofReal_mul, Complex.ofReal_cpow hnn]
+  convert h using 2
+  push_cast
+  ring
+
+/-- The duality flow: complexity lost (or gained) in passing to the
+dual description. -/
+noncomputable def QuadraticAction.dualityFlow {r : ℕ}
+    (A : QuadraticAction r) : ℝ :=
+  A.toSectorAction.complexity - A.dual.toSectorAction.complexity
+
+/-- The flow in closed form: `-½·log(det Q / π^r)`. The generalization
+of the scalar `D(α) = ½·log(π/α)`. -/
+theorem QuadraticAction.dualityFlow_eq {r : ℕ} (A : QuadraticAction r) :
+    A.dualityFlow = -(1 / 2) * Real.log (A.Q.det / Real.pi ^ r) := by
+  have hZ : 0 < A.toSectorAction.partFn := A.toSectorAction.partFn_pos
+  have ha : 0 < A.Q.det / Real.pi ^ r :=
+    div_pos A.Q_posDef.det_pos (pow_pos Real.pi_pos r)
+  show Real.log A.toSectorAction.partFn
+      - Real.log A.dual.toSectorAction.partFn = _
+  rw [A.duality_real,
+    Real.log_mul (Real.rpow_pos_of_pos ha ((1 : ℝ) / 2)).ne' (ne_of_gt hZ),
+    Real.log_rpow ha]
+  ring
+
+/-- The flow is antisymmetric under the duality involution. -/
+theorem QuadraticAction.dualityFlow_dual {r : ℕ} (A : QuadraticAction r) :
+    A.dual.dualityFlow = -A.dualityFlow := by
+  unfold QuadraticAction.dualityFlow
+  rw [A.dual_dual]
+  ring
+
+/-- Zero flow characterizes couplings of determinant `π^r` — a
+determinant condition, **not** self-duality (see the falsification
+below). -/
+theorem QuadraticAction.dualityFlow_eq_zero_iff {r : ℕ}
+    (A : QuadraticAction r) :
+    A.dualityFlow = 0 ↔ A.Q.det = Real.pi ^ r := by
+  rw [A.dualityFlow_eq]
+  have ha : 0 < A.Q.det / Real.pi ^ r :=
+    div_pos A.Q_posDef.det_pos (pow_pos Real.pi_pos r)
+  constructor
+  · intro h
+    have hlog : Real.log (A.Q.det / Real.pi ^ r) = 0 := by linarith
+    have hexp := Real.exp_log ha
+    rw [hlog, Real.exp_zero] at hexp
+    have hπr : Real.pi ^ r ≠ 0 := ne_of_gt (pow_pos Real.pi_pos r)
+    field_simp at hexp
+    linarith
+  · intro h
+    rw [h, div_self (ne_of_gt (pow_pos Real.pi_pos r)), Real.log_one, mul_zero]
+
+/-- Self-dual actions have zero flow (via `det(Q²) = det(π²·1)`). -/
+theorem QuadraticAction.selfDual.dualityFlow_eq_zero {r : ℕ}
+    {A : QuadraticAction r} (h : A.selfDual) : A.dualityFlow = 0 := by
+  rw [A.dualityFlow_eq_zero_iff]
+  have h' := A.selfDual_iff.mp h
+  have hdet : A.Q.det * A.Q.det = (Real.pi ^ 2) ^ r := by
+    have hc := congrArg Matrix.det h'
+    rwa [Matrix.det_mul, Matrix.det_smul, Matrix.det_one, mul_one,
+      Fintype.card_fin] at hc
+  have hfac : (A.Q.det - Real.pi ^ r) * (A.Q.det + Real.pi ^ r) = 0 := by
+    linear_combination hdet
+  rcases mul_eq_zero.mp hfac with h0 | h0
+  · linarith
+  · linarith [A.Q_posDef.det_pos, pow_pos Real.pi_pos r]
+
+/-- **Falsification of the plan's `dualityFlow_zero_iff_selfDual`** at
+rank ≥ 2: `Q = diag(2π, π/2)` has determinant `π²`, hence zero flow,
+but `Q² = diag(4π², π²/4) ≠ π²·1`, so it is not self-dual. Zero flow
+sees only the determinant; self-duality is a condition on the whole
+form. The plan's iff is true only at rank 1
+(`ofScalar_selfDual_iff` + `dualityFlow_eq_zero_iff`). -/
+theorem exists_dualityFlow_eq_zero_not_selfDual :
+    ∃ A : QuadraticAction 2, A.dualityFlow = 0 ∧ ¬ A.selfDual := by
+  have hpos : ∀ i : Fin 2, 0 < (![2 * Real.pi, Real.pi / 2]) i := by
+    intro i
+    fin_cases i <;> simp <;> positivity
+  refine ⟨QuadraticAction.ofDiagonal ![2 * Real.pi, Real.pi / 2] hpos, ?_, ?_⟩
+  · rw [QuadraticAction.dualityFlow_eq_zero_iff, QuadraticAction.ofDiagonal_det,
+      Fin.prod_univ_two]
+    show 2 * Real.pi * (Real.pi / 2) = Real.pi ^ 2
+    ring
+  · intro h
+    have h' := (QuadraticAction.ofDiagonal ![2 * Real.pi, Real.pi / 2]
+      hpos).selfDual_iff.mp h
+    rw [QuadraticAction.ofDiagonal_Q, Matrix.diagonal_mul_diagonal] at h'
+    have h00 := congrFun (congrFun h' 0) 0
+    simp [Matrix.diagonal_apply_eq, Matrix.smul_apply] at h00
+    nlinarith [Real.pi_pos, h00]
+
+/-- Rank-1 matrix inverse. -/
+private lemma inv_fin_one (α : ℝ) (hα : α ≠ 0) :
+    (!![α] : Matrix (Fin 1) (Fin 1) ℝ)⁻¹ = !![α⁻¹] := by
+  apply Matrix.inv_eq_right_inv
+  ext i j
+  fin_cases i
+  fin_cases j
+  simp [Matrix.mul_apply, mul_inv_cancel₀ hα]
+
+/-- The general dual at rank 1 is the scalar dual coupling `π²/α`. -/
+theorem QuadraticAction.ofScalar_dual_partFn (α : ℝ) (hα : 0 < α) :
+    (QuadraticAction.ofScalar α hα).dual.toSectorAction.partFn
+      = QuadraticAction.scalarPartFn (Real.pi ^ 2 / α) := by
+  have hπα : 0 < Real.pi ^ 2 / α := div_pos (by positivity) hα
+  have hQ : (QuadraticAction.ofScalar α hα).dual.Q
+      = (QuadraticAction.ofScalar (Real.pi ^ 2 / α) hπα).Q := by
+    rw [QuadraticAction.dual_Q]
+    show Real.pi ^ 2 • (!![α] : Matrix (Fin 1) (Fin 1) ℝ)⁻¹ = !![Real.pi ^ 2 / α]
+    rw [inv_fin_one α (ne_of_gt hα)]
+    ext i j
+    fin_cases i
+    fin_cases j
+    simp [Matrix.smul_apply, div_eq_mul_inv]
+  rw [QuadraticAction.partFn_eq_of_Q_eq _ _ hQ,
+    QuadraticAction.ofScalar_partFn_eq]
+
+/-- **The scalar T-duality, re-proved through Poisson summation.** The
+same statement as `scalarPartFn_duality`, whose existing proof goes
+through `jacobiTheta` and the modular `S`-transformation. Two
+independent proof traditions — modular forms and Poisson summation —
+now corroborate each other inside the spine; the general theorem
+specializes to the theta transformation rather than depending on it. -/
+theorem scalarPartFn_duality_via_poisson (α : ℝ) (hα : 0 < α) :
+    (↑(QuadraticAction.scalarPartFn (Real.pi ^ 2 / α)) : ℂ)
+      = ↑(α / Real.pi : ℝ) ^ ((1 : ℂ) / 2)
+        * ↑(QuadraticAction.scalarPartFn α) := by
+  have h := (QuadraticAction.ofScalar α hα).duality
+  rw [QuadraticAction.ofScalar_dual_partFn, QuadraticAction.ofScalar_partFn_eq] at h
+  rw [h]
+  congr 2
+  have hdet : (QuadraticAction.ofScalar α hα).Q.det = α := by
+    rw [show (QuadraticAction.ofScalar α hα).Q = !![α] from rfl,
+      Matrix.det_fin_one]
+    simp
+  rw [hdet, pow_one]
+
+end DualityAlgebra
+
 end Meno

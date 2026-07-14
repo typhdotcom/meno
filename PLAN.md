@@ -1560,3 +1560,85 @@ which is all the plan ever needed.
   docstrings).
 
 **End of Phase 15 addendum.**
+
+---
+
+## Addendum: Phase 16 — Duality Algebra & the Categorical Dual (2026-07-13, session B)
+
+The "cheap wins" pass: everything Phase 15 made nearly free. Goals 2
+and 6 of the plan are now **fully** realized. One more plan claim
+falsified in code.
+
+### Duality algebra (`Meno/SiegelPoisson.lean`, +240 LOC)
+
+- `QuadraticAction.eq_of_Q_eq` — a quadratic action is its Gram matrix
+  (proof fields are propositions).
+- **`dual_dual : A.dual.dual = A`** — the duality is an involution;
+  what licenses the name.
+- `selfDual`, **`selfDual_iff`** (`Q² = π²·1`), and
+  `ofScalar_selfDual_iff` (`α = π` at rank 1 — the fixed point the
+  legacy layer knows as the variational minimum).
+- `duality_real` — the duality with real `rpow` prefactor.
+- `dualityFlow` with closed form **`-½·log(det Q/π^r)`**
+  (generalizing the scalar `D(α) = ½·log(π/α)`), antisymmetry under
+  the involution, and `dualityFlow_eq_zero_iff : flow = 0 ↔ det Q = π^r`.
+- **`exists_dualityFlow_eq_zero_not_selfDual`** — the plan's
+  `dualityFlow_zero_iff_selfDual` is **false at rank ≥ 2**, witnessed
+  by `diag(2π, π/2)`: zero flow sees only the determinant;
+  self-duality constrains the whole form. The iff survives only at
+  rank 1. Falsification-by-formalization, `end_comm` tradition; the
+  plan's Phase 2 wishlist item is closed by *refutation with corrected
+  statement*, not by proof.
+- `ofScalar_dual_partFn` and **`scalarPartFn_duality_via_poisson`** —
+  the scalar T-duality re-proved through the Poisson bridge. The same
+  statement `scalarPartFn_duality` proves via `jacobiTheta` and the
+  modular S-transformation. Two independent proof traditions now
+  corroborate each other inside the spine; Mathlib's modular machinery
+  is henceforth corroboration, not dependency.
+
+### The categorical dual (`Meno/SectorPresentation.lean`, +60 LOC; Goal 6 closed)
+
+- `LoopKernelObj.dualVia P` — the dual loop kernel: same category, same
+  basepoint, energy transported from `π²·Q⁻¹` through the
+  presentation's coordinates. All obligations (`energy_id`,
+  `energy_nonneg`, `summable`) discharged by the dual quadratic
+  action's own fields — nothing is asserted.
+- `dualPresentation` — the **same** `coord` presents the dual object as
+  the dual action (`energy_eq` is `rfl`).
+- **`dualVia_partFn_duality`** — categorical Siegel–Poisson duality:
+  `Z(L.dualVia P) = √(det Q/π^r) · Z(L)` for any loop kernel admitting
+  a presentation, any rank, any Gram form. Two lines from
+  `QuadraticAction.duality`.
+- Concrete witness (`Meno/Groupoid.lean`, +15 LOC):
+  `cycleLoopKernel_dualVia_partFn` — the categorical dual of the cycle
+  loop kernel obeys `Z(dual) = √((1/n)/π)·Z(C_n)`. The construction
+  has a consumer on day one.
+
+Import direction: `SectorPresentation` now imports `SiegelPoisson`
+(analytic primitives upstream of categorical presentation — the plan's
+intended flow). No cycles; full build 3331 jobs.
+
+### Engineering notes
+
+- Structure projections of noncomputable defs (`(ofScalar α hα).Q`)
+  are invisible to `simp` until rewritten by a `show ... from rfl`;
+  two build cycles.
+- `linear_combination` is the right tool for `(a−b)(a+b) = 0` from
+  `a² = b²` — `nlinarith` does not take equality goals gracefully.
+- `dualVia`, `dualPresentation`, and the cycle witness all built on
+  the **first attempt** — the spine's interfaces are now load-bearing
+  enough that new constructions compose without friction. That is what
+  "the abstraction is right" feels like operationally.
+
+### Ledger after this phase
+
+| Goal | Status |
+|-----:|:-------|
+| 1, 2, 3, 6, 8, 10, 12, 13 | **Closed** |
+| 4 (Geodesic instance) | Open — plumbing |
+| 5 (general-graph Hodge variational layer) | Open — the big analytic build; theta graph first (non-diagonal consumer for Phase 15) |
+| 7 (concrete MatterHomology: binding, homological matter) | Open — downstream of 5 |
+| 9 (magnitude) | Open — needs an in/out **decision** |
+| 11 (TypeKernel/Basic rewrite — gravity) | Open — design-first |
+
+**End of Phase 16 addendum.**

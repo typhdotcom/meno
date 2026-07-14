@@ -1,5 +1,6 @@
 import Meno.LoopKernel
 import Meno.QuadraticAction
+import Meno.SiegelPoisson
 
 /-! # Sector Presentation: connecting categorical and quadratic layers
 
@@ -108,6 +109,59 @@ conventional. -/
 theorem end_comm (g h : End L.base) : g ≫ h = h ≫ g := by
   apply P.coord.injective
   rw [P.coord_comp, P.coord_comp, add_comm]
+
+/-! ## The categorical dual via a presentation (Phase 6 target)
+
+With the general dual available (`Meno/SiegelPoisson.lean`), the
+categorical dual is transport: same category, same basepoint, energy
+pulled back from the dual quadratic action `π²·Q⁻¹` through the same
+coordinates. The **same** `coord` then presents the dual object as the
+dual action, and the categorical duality theorem is a two-line
+consequence of `QuadraticAction.duality`. -/
+
+/-- The dual loop kernel through a presentation: energy is the dual
+quadratic action's energy in the presentation's coordinates. -/
+noncomputable def _root_.Meno.LoopKernelObj.dualVia
+    (P : SectorPresentation L r) : LoopKernelObj.{u, v} where
+  C := L.C
+  cat := L.cat
+  base := L.base
+  energy g := P.toQuadraticAction.dual.energy (P.coord g)
+  energy_id := by
+    rw [P.coord_one]
+    exact P.toQuadraticAction.dual.energy_zero
+  energy_nonneg g := P.toQuadraticAction.dual.energy_nonneg _
+  summable :=
+    P.coord.summable_iff.mpr P.toQuadraticAction.dual.summable
+
+/-- The presentation of the dual: the same coordinates exhibit
+`L.dualVia P` as the dual quadratic action. -/
+noncomputable def dualPresentation (P : SectorPresentation L r) :
+    SectorPresentation (LoopKernelObj.dualVia P) r where
+  coord := P.coord
+  coord_one := P.coord_one
+  coord_comp := P.coord_comp
+  Q := P.toQuadraticAction.dual.Q
+  Q_symm := P.toQuadraticAction.dual.Q_symm
+  Q_posDef := P.toQuadraticAction.dual.Q_posDef
+  energy_eq g := rfl
+
+/-- The dual object's partition function is the dual action's. -/
+theorem dualVia_partFn (P : SectorPresentation L r) :
+    (LoopKernelObj.dualVia P).partFn
+      = P.toQuadraticAction.dual.toSectorAction.partFn := by
+  rw [(P.dualPresentation).partFn_eq]
+  exact QuadraticAction.partFn_eq_of_Q_eq _ _ rfl
+
+/-- **Categorical Siegel–Poisson duality**: the partition function of
+the dual loop kernel is `√(det Q / π^r)` times the original's, for any
+loop kernel admitting a presentation — at any rank, any Gram form.
+Phase 6's `dualVia_partFn` target, now at full generality. -/
+theorem dualVia_partFn_duality (P : SectorPresentation L r) :
+    ((LoopKernelObj.dualVia P).partFn : ℂ)
+      = ↑(P.Q.det / Real.pi ^ r : ℝ) ^ ((1 : ℂ) / 2) * ↑L.partFn := by
+  rw [dualVia_partFn P, P.partFn_eq]
+  exact P.toQuadraticAction.duality
 
 end SectorPresentation
 
