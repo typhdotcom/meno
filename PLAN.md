@@ -1312,3 +1312,107 @@ wedge harmonics have disjoint edge supports.
   zero axiom declarations.
 
 **End of Phase 12/13 addendum.**
+
+---
+
+## Addendum: Phase 14 — The Ledger Drained (2026-06-10, session C)
+
+Standing rule, set by the user this session: **we don't defer**. The
+Phase 13 findings ledger became the Phase 14 queue. All four items
+resolved — three by proof, one by decision.
+
+### 1. Rank-r diagonal Siegel–Poisson duality (was finding #1) — PROVED
+
+`QuadraticAction.lean`:
+
+- `diag_quadForm_eq`, `summable_finPi_prod`, `tsum_finPi_factor` —
+  relocated upstream from `Hodge.lean` (were `private` there), now
+  public spine API. Pure Fubini-for-counting-measure on `ℤ^r`.
+- `ofDiagonal (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) : QuadraticAction r`
+  with `Q = Matrix.diagonal α`. PosDef proved manually
+  (`Matrix.posDef_diagonal_iff` failed `StarOrderedRing ℝ` synthesis;
+  the manual `Finset.sum_pos'` route is 15 lines and robust).
+- `ofDiagonal_partFn : Z(diag α) = ∏ᵢ Z(αᵢ)` — rank-r factorization.
+- `ofDiagonal_det` (`= ∏ αᵢ` via `Matrix.det_diagonal`),
+  `ofDiagonal_dual_Q` (dual coupling matrix **is** `π² • Q⁻¹`, inverse
+  by explicit diagonal multiplication).
+- `prod_cpow_half` — `∏ᵢ (fᵢ)^(1/2) = (∏ᵢ fᵢ)^(1/2)` for nonneg reals
+  in `ℂ`-cpow form, by structural recursion on `Fin`.
+- **`ofDiagonal_duality`** — `Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` for
+  every diagonal `Q` at every rank, plus `_det_form`. `r` scalar
+  S-transformations; zero multidimensional Poisson summation.
+
+**Falsification clause #3 status**: closed for all diagonal Gram forms,
+all ranks. Open only for non-diagonal `Q` (genuinely gated on Mathlib's
+missing lattice Poisson summation). The rank-2 hand-built case from
+session B remains as the concrete instance; `ofDiagonal₂_partFn_eq_ofDiagonal`
+is the dedup witness identifying it with the general family (kept both
+because `wedgeHarmonicGramData` reuses `ofDiagonal₂`'s literal-matrix
+defeq shape).
+
+### 2. Hodge routed through the spine (was finding #2) — DONE
+
+The three Fubini lemmas deleted from `Hodge.lean`; its
+`graphPartitionFn_diagonal` / `summable_graphPartitionFn_diagonal` now
+consume `Meno.QuadraticAction.*`. Hodge's diagonal analytics are spine
+consumers, not an independent source.
+
+### 3. `GroupoidObj.dual` (was finding #3) — DECIDED, not deferred
+
+Kept as interpretation layer, per the external reviewer's explicit
+verdict ("Duality.lean should become an interpretation layer over
+QuadraticAction"). Its analytic content is already fully forwarded
+(Phase 13); the wrapper inventory is the interpretation. Decision
+recorded; nothing pending.
+
+### 4. The wedge (was finding #4) — the naive plan is FALSE, and now provably so
+
+**`SectorPresentation.end_comm`** (SectorPresentation.lean): any sector
+presentation forces `g ≫ h = h ≫ g` on `End L.base` — `coord` is an
+injective map turning composition into (commutative) addition. Proof is
+3 lines.
+
+Consequences, now load-bearing architecture facts:
+
+- π₁ of the wedge of two cycles is the **free group on two
+  generators** — nonabelian — so the wedge loop kernel admits **no
+  sector presentation at any rank**. A session that attempted the
+  "wedge `SectorPresentation` of rank 2" would have been building
+  toward a false theorem; `end_comm` is the 3-line proof that falsifies
+  the naive plan before the ~2500-LOC graph build, not after.
+- Summing Boltzmann weights over `End` diverges for nonabelian π₁
+  (every `H₁` class contains infinitely many equal-energy homotopy
+  classes). The spine's "sector = homology class" formulation is
+  thereby **forced**, not conventional — `O2` in the technical
+  preamble was the right call for reasons the preamble didn't state.
+- The corrected wedge target: a **quotient presentation**
+  (`End →* ℤ^r` surjective, energy descending to classes), not an
+  equivalence. This structure is *not* defined this session — it would
+  have exactly one degenerate instance (the cycle, where the quotient
+  is an iso) until the wedge complex exists, and vocabulary without a
+  nontrivial consumer is the InfoRatchet-tautology failure mode. The
+  wedge complex (graph-level walks/homotopy/Hodge for `C_{n₁} ∨ C_{n₂}`)
+  is the one remaining object on this front; its true size is the
+  cycle-machinery class (~2500 LOC), and its target shape is now
+  correct.
+
+### Engineering notes
+
+- `Matrix.posDef_diagonal_iff` fails instance synthesis
+  (`StarOrderedRing ℝ`) in this Mathlib pin; manual route works.
+- `Matrix.smul_diagonal` does not exist; entrywise `by_cases` does.
+- ℝ's `star` is definitionally `id`: `congr 1` closes
+  `diagonal (star α) = diagonal α` outright (a trailing `funext` then
+  errors with "no goals").
+- `include P in` (like `set_option … in`) must precede the docstring.
+  Section variables used only in proof bodies are not auto-included.
+
+### Verification
+
+- `lake build Meno`: 3311 jobs, success, zero warnings (a `sorry`
+  would warn; none did).
+- The session's `rg` sweeps for `sorry`/`axiom` were intermittently
+  blocked by tool-permission outages; the last completed sweep (start
+  of session C) was clean, and all code added since is in this record.
+
+**End of Phase 14 addendum.**

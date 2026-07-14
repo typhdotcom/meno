@@ -91,6 +91,24 @@ theorem complexity_eq :
   show Real.log L.partFn = Real.log P.toQuadraticAction.toSectorAction.partFn
   rw [P.partFn_eq]
 
+include P in
+/-- **Presentations force commutativity**: `coord` is injective and
+sends composition to addition, so `End L.base` must be commutative.
+
+Contrapositive: a loop kernel with nonabelian endomorphism monoid —
+e.g. the wedge of two cycles, whose loop monoid is the free group on
+two generators — admits **no** sector presentation, at any rank. For
+such spaces the analytic layer cannot live on `End` at all: every `H₁`
+sector contains infinitely many endomorphisms of equal energy, so the
+Boltzmann sum over `End` diverges. Sectors must be homology classes
+(the abelianization), and the bridge from a nonabelian `π₁` is a
+quotient map onto `ℤ^r`, not an equivalence. This theorem is what makes
+the spine's "sector = homology class" formulation forced rather than
+conventional. -/
+theorem end_comm (g h : End L.base) : g ≫ h = h ≫ g := by
+  apply P.coord.injective
+  rw [P.coord_comp, P.coord_comp, add_comm]
+
 end SectorPresentation
 
 end Meno

@@ -197,106 +197,6 @@ to arbitrary b₁.
 
 The key identity: independence of cycles ↔ factorization of the partition function. -/
 
-/-- Diagonal quadratic form simplification: off-diagonal terms vanish,
-    leaving a sum of independent squared terms. -/
-private theorem diag_quadForm_eq (b₁ : ℕ) (α : Fin b₁ → ℝ)
-    (Q : Fin b₁ → Fin b₁ → ℝ)
-    (hQ_diag : ∀ i, Q i i = α i)
-    (hQ_off : ∀ i j, i ≠ j → Q i j = 0)
-    (k : Fin b₁ → ℤ) :
-    ∑ i : Fin b₁, ∑ j : Fin b₁, Q i j * (k i : ℝ) * (k j : ℝ) =
-    ∑ i : Fin b₁, α i * (k i : ℝ) ^ 2 := by
-  congr 1; ext i
-  have : ∀ j : Fin b₁, Q i j * (k i : ℝ) * (k j : ℝ) =
-      if j = i then α i * (k i : ℝ) ^ 2 else 0 := by
-    intro j
-    split_ifs with h
-    · subst h; rw [hQ_diag]; ring
-    · rw [hQ_off i j (fun heq => h heq.symm)]; ring
-  simp_rw [this, Finset.sum_ite_eq', Finset.mem_univ, if_true]
-
-/-- Summability of a product of independent non-negative summable factors over Fin n → ℤ.
-    This is the summability half of Fubini for counting measure on ℤ^n. -/
-private theorem summable_finPi_prod (n : ℕ) (f : Fin n → ℤ → ℝ)
-    (hf_nn : ∀ i z, 0 ≤ f i z)
-    (hf_sum : ∀ i, Summable (f i)) :
-    Summable (fun k : Fin n → ℤ => ∏ i, f i (k i)) := by
-  induction n with
-  | zero =>
-    exact (hasSum_single default fun b hb =>
-      absurd (Subsingleton.elim b default) hb).summable
-  | succ n ih =>
-    let e := Fin.succFunEquiv ℤ n
-    set F : (Fin n → ℤ) → ℝ := fun q => ∏ i : Fin n, f (Fin.castSucc i) (q i)
-    set G : ℤ → ℝ := f (Fin.last n)
-    have hF_nn : ∀ q, 0 ≤ F q := fun q =>
-      Finset.prod_nonneg (fun i _ => hf_nn (Fin.castSucc i) (q i))
-    have hG_nn : ∀ z, 0 ≤ G z := hf_nn (Fin.last n)
-    have hF_sum : Summable F :=
-      ih (fun i => f (Fin.castSucc i))
-        (fun i z => hf_nn (Fin.castSucc i) z)
-        (fun i => hf_sum (Fin.castSucc i))
-    have hG_sum : Summable G := hf_sum (Fin.last n)
-    have hFG : Summable (fun p : (Fin n → ℤ) × ℤ => F p.1 * G p.2) :=
-      summable_mul_of_summable_norm
-        (hF_sum.congr fun q => (Real.norm_eq_abs (F q) ▸ abs_of_nonneg (hF_nn q)).symm)
-        (hG_sum.congr fun z => (Real.norm_eq_abs (G z) ▸ abs_of_nonneg (hG_nn z)).symm)
-    exact (e.summable_iff.mpr hFG).congr fun k =>
-      (Fin.prod_univ_castSucc (fun i => f i (k i))).symm
-
-/-- Product factorization of tsum over Fin n → ℤ: when the summand is a product
-    of independent non-negative summable factors, the tsum equals the product of tsums.
-    This is Fubini's theorem for counting measure on ℤ^n. -/
-private theorem tsum_finPi_factor (n : ℕ) (f : Fin n → ℤ → ℝ)
-    (hf_nn : ∀ i z, 0 ≤ f i z)
-    (hf_sum : ∀ i, Summable (f i)) :
-    ∑' k : Fin n → ℤ, ∏ i, f i (k i) = ∏ i : Fin n, ∑' z, f i z := by
-  induction n with
-  | zero =>
-    simp only [Finset.univ_eq_empty, Finset.prod_empty]
-    exact tsum_eq_single default (fun b hb => absurd (Subsingleton.elim b default) hb)
-  | succ n ih =>
-    -- Split off last coordinate: (Fin (n+1) → ℤ) ≃ (Fin n → ℤ) × ℤ
-    let e := Fin.succFunEquiv ℤ n
-    -- Decompose: ∏ i, f i (k i) = (∏ i : Fin n, f (castSucc i) (p.1 i)) * f (last n) p.2
-    have hrw : ∀ k : Fin (n + 1) → ℤ,
-        ∏ i, f i (k i) = (∏ i : Fin n, f (Fin.castSucc i) ((e k).1 i)) * f (Fin.last n) (e k).2 := by
-      intro k; exact Fin.prod_univ_castSucc (fun i => f i (k i))
-    -- Define the two factors
-    set F : (Fin n → ℤ) → ℝ := fun q => ∏ i : Fin n, f (Fin.castSucc i) (q i)
-    set G : ℤ → ℝ := f (Fin.last n)
-    -- Summability of F (inductive hypothesis)
-    have hF_nn : ∀ q, 0 ≤ F q := fun q =>
-      Finset.prod_nonneg (fun i _ => hf_nn (Fin.castSucc i) (q i))
-    have hG_nn : ∀ z, 0 ≤ G z := hf_nn (Fin.last n)
-    have hF_sum : Summable F :=
-      summable_finPi_prod n (fun i => f (Fin.castSucc i))
-        (fun i z => hf_nn (Fin.castSucc i) z)
-        (fun i => hf_sum (Fin.castSucc i))
-    have hG_sum : Summable G := hf_sum (Fin.last n)
-    -- Summability of the product F × G
-    have hFG : Summable (fun p : (Fin n → ℤ) × ℤ => F p.1 * G p.2) :=
-      summable_mul_of_summable_norm
-        (hF_sum.congr fun q => (Real.norm_eq_abs (F q) ▸ abs_of_nonneg (hF_nn q)).symm)
-        (hG_sum.congr fun z => (Real.norm_eq_abs (G z) ▸ abs_of_nonneg (hG_nn z)).symm)
-    -- Rewrite the sum
-    have step1 : ∑' k : Fin (n + 1) → ℤ, ∏ i, f i (k i) =
-        ∑' p : (Fin n → ℤ) × ℤ, F p.1 * G p.2 := by
-      conv_lhs => arg 1; ext k; rw [hrw k]
-      exact e.tsum_eq (fun p => F p.1 * G p.2)
-    -- Factor using tsum_mul_tsum
-    have step2 : ∑' p : (Fin n → ℤ) × ℤ, F p.1 * G p.2 =
-        (∑' q, F q) * (∑' z, G z) :=
-      (hF_sum.tsum_mul_tsum hG_sum hFG).symm
-    -- Apply inductive hypothesis
-    have step3 : ∑' q, F q = ∏ i : Fin n, ∑' z, f (Fin.castSucc i) z :=
-      ih (fun i => f (Fin.castSucc i))
-        (fun i z => hf_nn (Fin.castSucc i) z)
-        (fun i => hf_sum (Fin.castSucc i))
-    -- Reassemble
-    rw [step1, step2, step3]
-    exact (Fin.prod_univ_castSucc (fun i => ∑' z, f i z)).symm
-
 /-- For diagonal Gram matrix Q = diag(α₁,...,α_{b₁}) with positive entries,
     the graph partition function factors into a product of one-dimensional
     partition functions: Z(diag(α)) = ∏ᵢ ∑'_k exp(-αᵢ k²).
@@ -314,13 +214,13 @@ theorem graphPartitionFn_diagonal (b₁ : ℕ)
       Real.exp (-∑ i, ∑ j, Q i j * (k i : ℝ) * (k j : ℝ)) =
       ∏ i, Real.exp (-α i * (k i : ℝ) ^ 2) := by
     intro k
-    rw [diag_quadForm_eq b₁ α Q hQ_diag hQ_off k]
+    rw [Meno.QuadraticAction.diag_quadForm_eq b₁ α Q hQ_diag hQ_off k]
     rw [show -(∑ i : Fin b₁, α i * (↑(k i) : ℝ) ^ 2) =
         ∑ i : Fin b₁, (-α i * (↑(k i) : ℝ) ^ 2) from by
       rw [← Finset.sum_neg_distrib]; congr 1; ext i; ring]
     exact Real.exp_sum Finset.univ _
   simp_rw [hrw]
-  exact tsum_finPi_factor b₁ (fun i z => Real.exp (-α i * (z : ℝ) ^ 2))
+  exact Meno.QuadraticAction.tsum_finPi_factor b₁ (fun i z => Real.exp (-α i * (z : ℝ) ^ 2))
     (fun _ _ => le_of_lt (Real.exp_pos _))
     (fun i => Meno.QuadraticAction.summable_scalarPartFn (α i) (hα i))
 
@@ -338,12 +238,12 @@ theorem summable_graphPartitionFn_diagonal (b₁ : ℕ)
       Real.exp (-∑ i, ∑ j, Q i j * (k i : ℝ) * (k j : ℝ)) =
       ∏ i, Real.exp (-α i * (k i : ℝ) ^ 2) := by
     intro k
-    rw [diag_quadForm_eq b₁ α Q hQ_diag hQ_off k]
+    rw [Meno.QuadraticAction.diag_quadForm_eq b₁ α Q hQ_diag hQ_off k]
     rw [show -(∑ i : Fin b₁, α i * (↑(k i) : ℝ) ^ 2) =
         ∑ i : Fin b₁, (-α i * (↑(k i) : ℝ) ^ 2) from by
       rw [← Finset.sum_neg_distrib]; congr 1; ext i; ring]
     exact Real.exp_sum Finset.univ _
-  exact (summable_finPi_prod b₁ (fun i z => Real.exp (-α i * (z : ℝ) ^ 2))
+  exact (Meno.QuadraticAction.summable_finPi_prod b₁ (fun i z => Real.exp (-α i * (z : ℝ) ^ 2))
     (fun _ _ => le_of_lt (Real.exp_pos _))
     (fun i => Meno.QuadraticAction.summable_scalarPartFn (α i) (hα i))).congr fun k => (hrw k).symm
 
