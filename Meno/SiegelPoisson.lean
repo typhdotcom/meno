@@ -1283,6 +1283,71 @@ theorem QuadraticAction.selfDual_iff {r : ℕ} (A : QuadraticAction r) :
       Matrix.mul_smul, Matrix.mul_one] at h2
     exact h2.symm
 
+/-- The identity matrix is positive definite. Hand-rolled, as with
+`posDef_smul'`. -/
+lemma posDef_one {r : ℕ} : (1 : Matrix (Fin r) (Fin r) ℝ).PosDef := by
+  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
+  · show (1 : Matrix (Fin r) (Fin r) ℝ)ᴴ = 1
+    exact Matrix.conjTranspose_one
+  · rw [Matrix.one_mulVec]
+    have hstar : star x = x := funext fun i => star_trivial _
+    rw [hstar]
+    obtain ⟨i, hi⟩ := Function.ne_iff.mp hx
+    refine Finset.sum_pos' (fun j _ => mul_self_nonneg (x j))
+      ⟨i, Finset.mem_univ i, mul_self_pos.mpr hi⟩
+
+/-- The sum of positive-definite matrices is positive definite. -/
+lemma posDef_add {r : ℕ} {A B : Matrix (Fin r) (Fin r) ℝ}
+    (hA : A.PosDef) (hB : B.PosDef) : (A + B).PosDef := by
+  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
+  · show (A + B)ᴴ = A + B
+    rw [Matrix.conjTranspose_add]
+    congr 1
+    · exact (posDef_iff_dotProduct_mulVec.mp hA).1
+    · exact (posDef_iff_dotProduct_mulVec.mp hB).1
+  · rw [Matrix.add_mulVec, dotProduct_add]
+    exact add_pos ((posDef_iff_dotProduct_mulVec.mp hA).2 hx)
+      ((posDef_iff_dotProduct_mulVec.mp hB).2 hx)
+
+/-- **Sharpening (Phase 17, from external review)**: for a
+positive-definite form, `Q² = π²·1` already forces `Q = π·1` — the
+factor `Q + π·1` is positive definite, hence invertible, so
+`(Q − π·1)(Q + π·1) = 0` kills the first factor. The self-dual locus
+is a **single point**, while zero duality flow is the whole determinant
+hypersurface `det Q = π^r`: the gap between the two conditions is now
+exactly quantified. -/
+theorem QuadraticAction.selfDual_iff_eq {r : ℕ} (A : QuadraticAction r) :
+    A.selfDual ↔ A.Q = Real.pi • (1 : Matrix (Fin r) (Fin r) ℝ) := by
+  rw [QuadraticAction.selfDual_iff]
+  constructor
+  · intro h
+    have hsum : (A.Q + Real.pi • 1).PosDef :=
+      posDef_add A.Q_posDef (posDef_smul' posDef_one Real.pi_pos)
+    have hdet : IsUnit (A.Q + Real.pi • 1).det :=
+      isUnit_iff_ne_zero.mpr (ne_of_gt hsum.det_pos)
+    have hc1 : A.Q * (Real.pi • 1) = Real.pi • A.Q := by
+      rw [Matrix.mul_smul, Matrix.mul_one]
+    have hc2 : (Real.pi • (1 : Matrix (Fin r) (Fin r) ℝ)) * A.Q
+        = Real.pi • A.Q := by
+      rw [Matrix.smul_mul, Matrix.one_mul]
+    have hc3 : (Real.pi • (1 : Matrix (Fin r) (Fin r) ℝ)) * (Real.pi • 1)
+        = (Real.pi ^ 2) • 1 := by
+      rw [Matrix.smul_mul, Matrix.one_mul, smul_smul]
+      congr 1
+      ring
+    have hzero : (A.Q - Real.pi • 1) * (A.Q + Real.pi • 1) = 0 := by
+      rw [Matrix.sub_mul, Matrix.mul_add, Matrix.mul_add, h, hc1, hc2, hc3]
+      abel
+    have hcancel := congrArg (fun M => M * (A.Q + Real.pi • 1)⁻¹) hzero
+    simp only [Matrix.zero_mul] at hcancel
+    rw [Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hdet, Matrix.mul_one]
+      at hcancel
+    exact sub_eq_zero.mp hcancel
+  · intro h
+    rw [h, Matrix.smul_mul, Matrix.one_mul, smul_smul]
+    congr 1
+    ring
+
 /-- Rank 1: the unique self-dual coupling is `α = π` — the fixed point
 the legacy `Duality.lean` layer knows as the variational minimum. -/
 theorem QuadraticAction.ofScalar_selfDual_iff (α : ℝ) (hα : 0 < α) :

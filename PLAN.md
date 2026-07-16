@@ -1642,3 +1642,111 @@ intended flow). No cycles; full build 3331 jobs.
 | 11 (TypeKernel/Basic rewrite — gravity) | Open — design-first |
 
 **End of Phase 16 addendum.**
+
+---
+
+## Addendum: Phase 17 — Review Handoff, Honesty Pass, Course Corrections (2026-07-16)
+
+The plan's original author reviewed Phases 15–16. Verdict: "the central
+plan is validated, the work is strong, theta is the correct next test.
+Prune magnitude, halt TypeKernel, settle the homology/cohomology
+distinction before building MatterHomology." All six of the review's
+code citations were verified accurate against the source. This addendum
+records the verification, the immediate actions, the decisions, and a
+corrected goals ledger (the Phase 16 ledger overstated closure of
+Goals 10 and 12).
+
+### Immediate actions taken
+
+- **`QuadraticAction.selfDual_iff_eq`** (the review's free theorem):
+  for positive-definite `Q`, `Q² = π²·1` already forces `Q = π·1` —
+  `Q + π·1` is positive definite hence invertible, and
+  `(Q − π·1)(Q + π·1) = 0` kills the first factor. The self-dual locus
+  is a **single point**; zero duality flow is the whole hypersurface
+  `det Q = π^r`. Phase 16's falsification is now exactly quantified:
+  a point versus a hypersurface. Helpers `posDef_one`, `posDef_add`
+  added (hand-rolled; the pin's versions carry `StarOrderedRing`
+  baggage that fails synthesis for ℝ).
+- **`Geodesic.selfMass` deleted** — it was `length (𝟙 X)`, provably
+  zero by the class's own axiom (the file even proved
+  `selfMass_eq_zero`), with zero consumers. Degenerate vocabulary,
+  removed per the Theta.lean precedent.
+- **`HarmonicForm` docstrings corrected** — the structure documentation
+  claimed a `variational` field that does not exist. The docs now say
+  plainly: `HarmonicGramData` is positive-definite matrix data and
+  nothing more; the variational identity is proved per instance,
+  outside the structure. Same correction to the `energy` docstring.
+
+### Decisions (recorded, not deferred)
+
+1. **Magnitude is OUT** (Goal 9 pruned). No consumer connects it to
+   the harmonic-Gram/partition-function spine. Re-entry ticket: a
+   concrete theorem linking magnitude to the spine, stated before any
+   vocabulary is built.
+2. **TypeKernel is HALTED as a falsified design** (Goal 11 reopened as
+   a design problem, not an implementation task). Three independent
+   defects in the plan's sketch: `E(f) = log|im f|` gives
+   `E(id_A) = log|A| ≠ 0`, contradicting `HomKernelCat.energy_id`;
+   `atBase A` sums over *endofunctions*, not elements, so the intended
+   `C(A) = log|A|` is not what the kernel computes; and arbitrary
+   (infinite) types cannot satisfy positive-weight summability.
+   `Basic.lean` remains independent until a valid object-level kernel
+   design exists. Gravity stays expressed in the legacy vocabulary —
+   honestly labeled as such — rather than in a broken new one.
+3. **H₁ versus H¹ is resolved: the spine's sectors are cohomological.**
+   The existing cycle result minimizes cochain energy at prescribed
+   winding/period — the value `1/n` is the norm on the *dual* (period /
+   integral cohomology) lattice; an integral 1-chain generator has
+   squared norm `n`. Rank 1 hides the distinction (both lattices are
+   `ℤ`); rank 2 will not. Goal 7 will be built on integral cohomology
+   classes with harmonic representatives (equivalently, homology with
+   explicit basis-aware dualization). The plan's "implement the H₁
+   quotient and call its minimum action 1/n" is **not** to be
+   implemented as written.
+4. **Next build: the theta graph, concretely, via `K₂,₃`.** The
+   `Graph` structure (`edge : V → V → Prop`) cannot represent parallel
+   edges, so the subdivided theta — three length-two paths between two
+   junction vertices — is the representative. Calculation oracle from
+   the review, verified by hand: with cycle basis `p₁−p₃`, `p₂−p₃`,
+   the cycle-chain Gram is `C = [[4,2],[2,4]]` and the harmonic period
+   Gram is `Q = C⁻¹ = [[1/3,−1/6],[−1/6,1/3]]` (off-diagonal sign
+   orientation-dependent, but necessarily nonzero; consistent with the
+   cycle case, where `C = [[n]]` and `Q = [[1/n]]`). This will be the
+   first Gram form **derived** from graph topology and variational
+   minimization that is non-diagonal — the first genuine consumer of
+   the Phase 15 general duality. Concrete-first: build the theta
+   result, extract the general finite-graph API afterward.
+
+### Ledger corrections (honesty pass)
+
+- **Goals 10 and 12 downgraded from Closed to Partial.** Only
+  `Zeta.lean` meets the letter of Goal 10 (imports only the analytic
+  primitives). `Duality.lean` still imports `Groupoid`; `Hodge.lean`
+  still imports `Simplicial`; `Meno.lean` labels those layers "to be
+  migrated." The Phase 13/14 decision to keep them as interpretation
+  layers is legitimate, but a decision to deviate from a goal does not
+  close the goal — it amends it. Recorded as: *amended by decision,
+  deviation documented*.
+- **InfoRatchet**: `sectionCost` is *defined* as
+  `descriptionCost + fiberInfoCost`, so the "ratchet identity" is
+  definitional bookkeeping (`unfold; ring`). The substantive content of
+  the file is `fiberInfoCost_pos_of_not_injective` (Phase 11) and the
+  strict inequality it yields. The Landauer reconciliation remains
+  open-by-decision.
+- **MatterHomology**: `MatterSector` is a nonzero vector in an abstract
+  positive-definite lattice — not yet homology (and per decision 3,
+  will become *cohomology*). Interface status re-affirmed.
+
+### Corrected ledger
+
+| Goal | Status |
+|-----:|:-------|
+| 1, 2, 3, 6, 8, 13 | **Closed** |
+| 10, 12 | **Amended by decision** (Zeta literal; Duality/Hodge kept as interpretation layers; deviation documented) |
+| 4 (Geodesic instance) | Open — plumbing; degenerate `selfMass` removed |
+| 5 (variational layer) | Open — **theta via K₂,₃ is the entry point**, concrete-first |
+| 7 (matter) | Open — reformulated cohomologically (decision 3) |
+| 9 (magnitude) | **Pruned** (decision 1) |
+| 11 (TypeKernel) | **Halted — design falsified** (decision 2) |
+
+**End of Phase 17 addendum.**

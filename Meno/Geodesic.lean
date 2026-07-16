@@ -37,14 +37,6 @@ class Geodesic (C : Type u) [Category.{v} C] where
 
 namespace Geodesic
 
-/-- The geodesic mass of an object: the length of the identity. Zero by
-`length_id`. -/
-def selfMass {C : Type u} [Category.{v} C] [Geodesic C] (X : C) : ℝ :=
-  Geodesic.length (𝟙 X)
-
-theorem selfMass_eq_zero {C : Type u} [Category.{v} C] [Geodesic C] (X : C) :
-    selfMass X = 0 := Geodesic.length_id X
-
 /-- Triangle subadditivity over three composable morphisms. -/
 theorem length_comp_three {C : Type u} [Category.{v} C] [Geodesic C]
     {X Y Z W : C} (f : X ⟶ Y) (g : Y ⟶ Z) (h : Z ⟶ W) :
