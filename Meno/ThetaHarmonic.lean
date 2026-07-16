@@ -1,0 +1,357 @@
+import Meno.SiegelPoisson
+import Meno.MatterHomology
+
+/-! # The Theta Graph: the First Non-Diagonal Harmonic Gram Form
+
+The subdivided theta graph `K₂,₃` — two junction vertices joined by
+three internal-vertex paths — is the smallest graph whose harmonic Gram
+form is **not diagonal**: its two independent cycles share a path, so
+the periods couple. This file derives that Gram form from the graph's
+topology by variational minimization and feeds it to the general
+Siegel–Poisson duality (`Meno/SiegelPoisson.lean`), giving Phase 15 its
+first genuinely non-diagonal consumer.
+
+Following the Phase 17 review:
+
+* **Sectors are cohomological.** The variational problem is posed on
+  *periods*: minimize `‖ω‖²` over 1-cochains `ω` with prescribed
+  integrals `⟨ω, cᵢ⟩ = kᵢ` against the basis cycles. The resulting
+  Gram form is the inverse `C⁻¹` of the cycle-chain Gram matrix `C` —
+  the norm on the dual (period / integral cohomology) lattice. For the
+  cycle graph this reproduces `1/n`; here it produces
+  `C = [[4,2],[2,4]]`, `Q = C⁻¹ = [[1/3,−1/6],[−1/6,1/3]]`.
+* **Concrete first.** The general least-norm lemma
+  (`isLeast_energy_periods`) is proved for an arbitrary finite edge
+  type and arbitrary period vectors — it is the seed of the general
+  finite-graph API — but the graph-level work is done concretely for
+  `K₂,₃`, not through a universal graph-Hodge framework.
+
+## The variational lemma
+
+In `ℝ^E` with the standard dot product, given period vectors
+`c₁, …, c_r` with invertible Gram matrix `C`, the minimum of `‖ω‖²`
+over `{ω | ⟨ω, cᵢ⟩ = kᵢ}` is `kᵀC⁻¹k`, attained at the combination
+`ω* = ∑ᵢ (C⁻¹k)ᵢ cᵢ`. Pythagoras: any feasible `ω` is `ω* + δ` with
+`δ ⊥ span(cᵢ) ∋ ω*`. No boundary operators, no Hodge decomposition —
+the period constraint *is* the cohomology. -/
+
+namespace Meno
+
+open scoped BigOperators
+open Matrix
+
+/-! ## Least norm at prescribed periods -/
+
+section PeriodMinimization
+
+variable {ι : Type*} [Fintype ι] {r : ℕ}
+
+/-- Gram matrix of a family of period vectors under the standard dot
+product. -/
+noncomputable def gramOf (c : Fin r → ι → ℝ) : Matrix (Fin r) (Fin r) ℝ :=
+  fun i j => c i ⬝ᵥ c j
+
+theorem gramOf_isSymm (c : Fin r → ι → ℝ) : (gramOf c).IsSymm := by
+  ext i j
+  exact dotProduct_comm (c j) (c i)
+
+/-- The minimum-norm cochain with periods `k`: the combination of the
+period vectors with coefficients `C⁻¹k`. -/
+noncomputable def periodRep (c : Fin r → ι → ℝ) (k : Fin r → ℝ) : ι → ℝ :=
+  fun e => ∑ i, ((gramOf c)⁻¹.mulVec k) i * c i e
+
+/-- A dot product against a member of the family, for any coefficient
+combination: `⟨∑ᵢ xᵢcᵢ, cⱼ⟩ = (x ᵥ* C) j`. -/
+private lemma comb_dotProduct (c : Fin r → ι → ℝ) (x : Fin r → ℝ) (j : Fin r) :
+    (fun e => ∑ i, x i * c i e) ⬝ᵥ c j = ∑ i, x i * gramOf c i j := by
+  calc (fun e => ∑ i, x i * c i e) ⬝ᵥ c j
+      = ∑ e, (∑ i, x i * c i e) * c j e := rfl
+    _ = ∑ e, ∑ i, x i * c i e * c j e := by
+        refine Finset.sum_congr rfl fun e _ => ?_
+        rw [Finset.sum_mul]
+    _ = ∑ i, ∑ e, x i * c i e * c j e := Finset.sum_comm
+    _ = ∑ i, x i * gramOf c i j := by
+        refine Finset.sum_congr rfl fun i _ => ?_
+        show _ = x i * ∑ e, c i e * c j e
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun e _ => by ring
+
+/-- The minimum-norm cochain has the prescribed periods. -/
+theorem periodRep_periods (c : Fin r → ι → ℝ) (hC : IsUnit (gramOf c).det)
+    (k : Fin r → ℝ) (j : Fin r) :
+    periodRep c k ⬝ᵥ c j = k j := by
+  rw [show periodRep c k = fun e => ∑ i, ((gramOf c)⁻¹.mulVec k) i * c i e from rfl,
+    comb_dotProduct]
+  have hCT : (gramOf c)ᵀ = gramOf c := gramOf_isSymm c
+  have hv : (((gramOf c)⁻¹.mulVec k) ᵥ* gramOf c) j = k j := by
+    calc (((gramOf c)⁻¹.mulVec k) ᵥ* gramOf c) j
+        = (((gramOf c)⁻¹.mulVec k) ᵥ* ((gramOf c)ᵀ)ᵀ) j := by
+          rw [Matrix.transpose_transpose]
+      _ = ((gramOf c)ᵀ *ᵥ ((gramOf c)⁻¹ *ᵥ k)) j := by
+          rw [Matrix.vecMul_transpose]
+      _ = (gramOf c *ᵥ ((gramOf c)⁻¹ *ᵥ k)) j := by rw [hCT]
+      _ = k j := by
+          rw [Matrix.mulVec_mulVec, Matrix.mul_nonsing_inv _ hC,
+            Matrix.one_mulVec]
+  exact hv
+
+/-- Energy of the minimum-norm cochain: `kᵀC⁻¹k`. -/
+theorem periodRep_energy (c : Fin r → ι → ℝ) (hC : IsUnit (gramOf c).det)
+    (k : Fin r → ℝ) :
+    periodRep c k ⬝ᵥ periodRep c k = k ⬝ᵥ ((gramOf c)⁻¹.mulVec k) := by
+  have h1 : periodRep c k ⬝ᵥ periodRep c k
+      = ∑ i, ((gramOf c)⁻¹.mulVec k) i * (periodRep c k ⬝ᵥ c i) := by
+    calc periodRep c k ⬝ᵥ periodRep c k
+        = ∑ e, periodRep c k e * ∑ i, ((gramOf c)⁻¹.mulVec k) i * c i e := rfl
+      _ = ∑ e, ∑ i, ((gramOf c)⁻¹.mulVec k) i * (periodRep c k e * c i e) := by
+          refine Finset.sum_congr rfl fun e _ => ?_
+          rw [Finset.mul_sum]
+          exact Finset.sum_congr rfl fun i _ => by ring
+      _ = ∑ i, ∑ e, ((gramOf c)⁻¹.mulVec k) i * (periodRep c k e * c i e) :=
+          Finset.sum_comm
+      _ = ∑ i, ((gramOf c)⁻¹.mulVec k) i * (periodRep c k ⬝ᵥ c i) := by
+          refine Finset.sum_congr rfl fun i _ => ?_
+          rw [← Finset.mul_sum]
+          rfl
+  rw [h1]
+  calc ∑ i, ((gramOf c)⁻¹.mulVec k) i * (periodRep c k ⬝ᵥ c i)
+      = ∑ i, ((gramOf c)⁻¹.mulVec k) i * k i := by
+        refine Finset.sum_congr rfl fun i _ => ?_
+        rw [periodRep_periods c hC k i]
+    _ = ((gramOf c)⁻¹.mulVec k) ⬝ᵥ k := rfl
+    _ = k ⬝ᵥ ((gramOf c)⁻¹.mulVec k) := dotProduct_comm _ _
+
+/-- **Pythagoras**: any cochain with the prescribed periods has energy
+at least `kᵀC⁻¹k`. -/
+theorem le_energy_of_periods (c : Fin r → ι → ℝ) (hC : IsUnit (gramOf c).det)
+    (k : Fin r → ℝ) (ω : ι → ℝ) (hω : ∀ j, ω ⬝ᵥ c j = k j) :
+    k ⬝ᵥ ((gramOf c)⁻¹.mulVec k) ≤ ω ⬝ᵥ ω := by
+  set δ : ι → ℝ := ω - periodRep c k with hδ
+  have hδc : ∀ j, δ ⬝ᵥ c j = 0 := fun j => by
+    rw [hδ, sub_dotProduct, hω j, periodRep_periods c hC k j, sub_self]
+  have hcross : periodRep c k ⬝ᵥ δ = 0 := by
+    calc periodRep c k ⬝ᵥ δ
+        = ∑ e, (∑ i, ((gramOf c)⁻¹.mulVec k) i * c i e) * δ e := rfl
+      _ = ∑ e, ∑ i, ((gramOf c)⁻¹.mulVec k) i * (c i e * δ e) := by
+          refine Finset.sum_congr rfl fun e _ => ?_
+          rw [Finset.sum_mul]
+          exact Finset.sum_congr rfl fun i _ => by ring
+      _ = ∑ i, ∑ e, ((gramOf c)⁻¹.mulVec k) i * (c i e * δ e) :=
+          Finset.sum_comm
+      _ = ∑ i, ((gramOf c)⁻¹.mulVec k) i * (δ ⬝ᵥ c i) := by
+          refine Finset.sum_congr rfl fun i _ => ?_
+          rw [← Finset.mul_sum]
+          congr 1
+          exact Finset.sum_congr rfl fun e _ => by ring
+      _ = 0 := by
+          refine Finset.sum_eq_zero fun i _ => ?_
+          rw [hδc i, mul_zero]
+  have hω_eq : ω = periodRep c k + δ := by
+    funext e
+    simp [hδ]
+  have hexpand : ω ⬝ᵥ ω
+      = periodRep c k ⬝ᵥ periodRep c k + 2 * (periodRep c k ⬝ᵥ δ) + δ ⬝ᵥ δ := by
+    rw [hω_eq, add_dotProduct, dotProduct_add, dotProduct_add,
+      dotProduct_comm δ (periodRep c k)]
+    ring
+  have hδδ : 0 ≤ δ ⬝ᵥ δ :=
+    Finset.sum_nonneg fun e _ => mul_self_nonneg (δ e)
+  rw [hexpand, hcross, periodRep_energy c hC k]
+  linarith
+
+/-- **The variational identity, packaged**: `kᵀC⁻¹k` is the least
+energy among cochains with periods `k` — attained, with witness
+`periodRep`. This is the Hodge variational principle in its
+cohomological (period) formulation. -/
+theorem isLeast_energy_periods (c : Fin r → ι → ℝ) (hC : IsUnit (gramOf c).det)
+    (k : Fin r → ℝ) :
+    IsLeast {E : ℝ | ∃ ω : ι → ℝ, (∀ j, ω ⬝ᵥ c j = k j) ∧ E = ω ⬝ᵥ ω}
+      (k ⬝ᵥ ((gramOf c)⁻¹.mulVec k)) :=
+  ⟨⟨periodRep c k, fun j => periodRep_periods c hC k j,
+      (periodRep_energy c hC k).symm⟩,
+    fun _ ⟨ω, hω, hE⟩ => hE ▸ le_energy_of_periods c hC k ω hω⟩
+
+end PeriodMinimization
+
+/-! ## The subdivided theta graph `K₂,₃`
+
+Vertices: `0 = u`, `1 = v` (junctions), `2, 3, 4` (path interiors).
+Edges (all oriented junction-to-junction): `e₀ : u→a₁`, `e₁ : a₁→v`,
+`e₂ : u→a₂`, `e₃ : a₂→v`, `e₄ : u→a₃`, `e₅ : a₃→v`. Cycle basis
+`c₁ = p₁ − p₃`, `c₂ = p₂ − p₃`. -/
+
+section Theta
+
+/-- Edge sources in `K₂,₃`. -/
+def thetaSrc : Fin 6 → Fin 5 := ![0, 2, 0, 3, 0, 4]
+
+/-- Edge targets in `K₂,₃`. -/
+def thetaTgt : Fin 6 → Fin 5 := ![2, 1, 3, 1, 4, 1]
+
+/-- The boundary of a 1-cochain: net flow into each vertex. -/
+noncomputable def thetaBoundary (ω : Fin 6 → ℝ) (w : Fin 5) : ℝ :=
+  ∑ e, ((if thetaTgt e = w then (1 : ℝ) else 0)
+    - (if thetaSrc e = w then (1 : ℝ) else 0)) * ω e
+
+/-- The basis cycles: `c₁ = p₁ − p₃` and `c₂ = p₂ − p₃`. -/
+noncomputable def thetaCycles : Fin 2 → Fin 6 → ℝ :=
+  ![![1, 1, 0, 0, -1, -1], ![0, 0, 1, 1, -1, -1]]
+
+/-- The basis vectors are cycles: their boundary vanishes at every
+vertex. -/
+theorem thetaBoundary_cycles (i : Fin 2) (w : Fin 5) :
+    thetaBoundary (thetaCycles i) w = 0 := by
+  fin_cases i <;> fin_cases w <;>
+    simp +decide [thetaBoundary, thetaSrc, thetaTgt, thetaCycles,
+      Fin.sum_univ_six]
+
+/-- **The cycle space is exactly the span of the basis** (`b₁ = 2`):
+a cochain with vanishing boundary is determined by its flows on the
+first and second paths, as a combination of `c₁` and `c₂`. Flow
+conservation at each interior vertex equalizes the two edges of each
+path; conservation at the junction forces the third path's flow to be
+minus the sum of the first two. -/
+theorem eq_comb_of_thetaBoundary_eq_zero (ω : Fin 6 → ℝ)
+    (h : ∀ w, thetaBoundary ω w = 0) :
+    ω = fun e => ω 0 * thetaCycles 0 e + ω 2 * thetaCycles 1 e := by
+  have h0 := h 0
+  have h2 := h 2
+  have h3 := h 3
+  have h4 := h 4
+  simp +decide [thetaBoundary, thetaSrc, thetaTgt, Fin.sum_univ_six]
+    at h0 h2 h3 h4
+  funext e
+  fin_cases e <;> simp +decide [thetaCycles] <;> linarith
+
+/-- The cycle-chain Gram matrix of `K₂,₃`: paths have length two, and
+distinct basis cycles share (only) the third path. -/
+theorem gramOf_thetaCycles : gramOf thetaCycles = !![4, 2; 2, 4] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp +decide [gramOf, dotProduct, thetaCycles, Fin.sum_univ_six] <;>
+    norm_num
+
+/-- The chain Gram matrix is positive definite. -/
+theorem thetaChainGram_posDef :
+    (!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ).PosDef := by
+  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
+  · show (!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ)ᴴ = !![4, 2; 2, 4]
+    ext i j
+    fin_cases i <;> fin_cases j <;> rfl
+  · have hcomp : star x ⬝ᵥ (!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ).mulVec x
+        = 4 * x 0 ^ 2 + 4 * (x 0 * x 1) + 4 * x 1 ^ 2 := by
+      simp [dotProduct, Matrix.mulVec, Fin.sum_univ_two, Pi.star_apply]
+      ring
+    rw [hcomp]
+    have h01 : x 0 ≠ 0 ∨ x 1 ≠ 0 := by
+      by_contra hc
+      push_neg at hc
+      exact hx (funext fun i => by fin_cases i <;> simp [hc.1, hc.2])
+    rcases h01 with h0 | h1
+    · nlinarith [sq_nonneg (x 0 + x 1), sq_nonneg (x 1),
+        lt_of_le_of_ne (sq_nonneg (x 0)) (Ne.symm (pow_ne_zero 2 h0))]
+    · nlinarith [sq_nonneg (x 0 + x 1), sq_nonneg (x 0),
+        lt_of_le_of_ne (sq_nonneg (x 1)) (Ne.symm (pow_ne_zero 2 h1))]
+
+/-- The harmonic period Gram form: the inverse of the chain Gram. -/
+theorem thetaChainGram_inv :
+    (!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ)⁻¹
+      = !![1/3, -(1/6); -(1/6), 1/3] := by
+  apply Matrix.inv_eq_right_inv
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    norm_num [Matrix.mul_apply, Fin.sum_univ_two]
+
+/-- The period Gram form is positive definite (inverse of a
+positive-definite matrix). -/
+theorem thetaGram_posDef :
+    (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ).PosDef := by
+  rw [← thetaChainGram_inv]
+  exact posDef_inv thetaChainGram_posDef
+
+/-- **The harmonic Gram data of the theta graph** — the first
+non-diagonal instance in the spine. The Gram form is derived from the
+graph (`gramOf_thetaCycles` + `thetaChainGram_inv`), not asserted. -/
+noncomputable def thetaHarmonicGramData : HarmonicGramData (Fin 5) where
+  r := 2
+  gram := !![1/3, -(1/6); -(1/6), 1/3]
+  gram_symm := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> rfl
+  gram_posDef := thetaGram_posDef
+  summable := summable_exp_neg_quadForm thetaGram_posDef
+
+/-- The Gram matrix of the theta data, in literal form. -/
+theorem thetaHarmonicGramData_gram :
+    thetaHarmonicGramData.gram = !![1/3, -(1/6); -(1/6), 1/3] := rfl
+
+/-- The Gram form genuinely couples the two sectors: the off-diagonal
+entry is `−1/6 ≠ 0`. No diagonal machinery could have produced this
+instance. -/
+theorem thetaGram_offDiag_ne_zero :
+    (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ) 0 1 ≠ 0 := by
+  norm_num
+
+/-- **The variational identity at the theta graph**: the Gram-data
+energy of the sector `k ∈ ℤ²` is the least energy among 1-cochains
+with periods `k` against the basis cycles — attained. The Gram form
+`[[1/3,−1/6],[−1/6,1/3]]` is *derived* from `K₂,₃`'s topology by
+minimization, fulfilling the honesty note in `HarmonicForm`. -/
+theorem thetaGramData_energy_isLeast (k : Fin 2 → ℤ) :
+    IsLeast {E : ℝ | ∃ ω : Fin 6 → ℝ,
+        (∀ j, ω ⬝ᵥ thetaCycles j = (k j : ℝ)) ∧ E = ω ⬝ᵥ ω}
+      (thetaHarmonicGramData.energy k) := by
+  have hdet : IsUnit (gramOf thetaCycles).det := by
+    rw [gramOf_thetaCycles]
+    exact isUnit_iff_ne_zero.mpr (ne_of_gt thetaChainGram_posDef.det_pos)
+  have h := isLeast_energy_periods thetaCycles hdet (fun j => (k j : ℝ))
+  have hval : thetaHarmonicGramData.energy k
+      = (fun j => (k j : ℝ)) ⬝ᵥ
+          ((gramOf thetaCycles)⁻¹.mulVec (fun j => (k j : ℝ))) := by
+    show ∑ i, ∑ j, (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ) i j
+        * (k i : ℝ) * (k j : ℝ) = _
+    rw [quadForm_dotProduct, gramOf_thetaCycles, thetaChainGram_inv]
+  rw [hval]
+  exact h
+
+/-- The canonical matter sector of the theta graph: winding `(1, 0)`
+(once around the first-and-third-path cycle), with harmonic minimum
+action `1/3`. -/
+theorem thetaGramData_energy_one_zero :
+    thetaHarmonicGramData.energy ![1, 0] = 1/3 := by
+  show ∑ i, ∑ j, (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ) i j
+      * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1/3
+  norm_num [Fin.sum_univ_two]
+
+/-- The theta graph has matter: the `(1,0)` sector is nontrivial with
+positive minimum action. -/
+noncomputable def thetaMatter : MatterSector thetaHarmonicGramData where
+  k := ![1, 0]
+  nontrivial := by
+    intro hc
+    have h0 := congrFun hc 0
+    norm_num at h0
+  positive_action := by
+    rw [thetaGramData_energy_one_zero]
+    norm_num
+
+/-- **The first non-diagonal consumer of the general Siegel–Poisson
+duality**: the theta graph's quadratic action, with its topologically
+derived coupled Gram form of determinant `1/12`, obeys
+`Z(π²·Q⁻¹) = √((1/12)/π²)·Z(Q)`. Phases 15 and 17 meet. -/
+theorem theta_siegelPoisson_duality :
+    (↑(thetaHarmonicGramData.toQuadraticAction.dual.toSectorAction.partFn) : ℂ)
+      = ↑((1/12 : ℝ) / Real.pi ^ 2) ^ ((1 : ℂ) / 2)
+        * ↑(thetaHarmonicGramData.toQuadraticAction.toSectorAction.partFn) := by
+  have h := (thetaHarmonicGramData.toQuadraticAction).duality
+  have hdet : (thetaHarmonicGramData.toQuadraticAction).Q.det = 1/12 := by
+    show (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ).det = 1/12
+    rw [Matrix.det_fin_two]
+    norm_num
+  rw [hdet] at h
+  exact h
+
+end Theta
+
+
+end Meno

@@ -1750,3 +1750,86 @@ Goals 10 and 12).
 | 11 (TypeKernel) | **Halted — design falsified** (decision 2) |
 
 **End of Phase 17 addendum.**
+
+---
+
+## Addendum: Phase 18 — The Theta Graph (2026-07-16)
+
+The review's designated next test, executed. `Meno/ThetaHarmonic.lean`
+(new, ~340 LOC), full build 3332 jobs, zero `sorry`. The first harmonic
+Gram form in the spine that is **derived from graph topology by
+variational minimization** — and the first that is **non-diagonal**.
+Phase 15's general duality has its consumer.
+
+### The variational lemma (the general-API seed)
+
+`isLeast_energy_periods`: in `ℝ^E` with the standard dot product, given
+period vectors `c₁,…,c_r` with invertible Gram matrix `C`, the least
+energy among cochains with prescribed periods `⟨ω, cᵢ⟩ = kᵢ` is
+`kᵀC⁻¹k`, **attained** at `ω* = ∑ᵢ(C⁻¹k)ᵢcᵢ`. Pythagoras: a feasible
+`ω` is `ω* + δ` with `δ` period-orthogonal, hence orthogonal to
+`ω* ∈ span(cᵢ)`. Proved for an arbitrary finite edge type — this is
+the Hodge variational principle in its **cohomological (period)
+formulation**, per the Phase 17 H¹ decision: no boundary operators, no
+Hodge decomposition, the period constraint *is* the cohomology. When
+the general finite-graph API is extracted (post-theta, per the
+concrete-first directive), this lemma is its analytic core.
+
+### The theta instantiation (`K₂,₃`)
+
+- Graph data: 5 vertices (2 junctions, 3 path interiors), 6 oriented
+  edges via explicit `src`/`tgt` maps. Basis cycles `c₁ = p₁ − p₃`,
+  `c₂ = p₂ − p₃`.
+- `thetaBoundary_cycles` — the basis vectors have vanishing boundary at
+  every vertex (they are cycles of the graph, not postulated vectors).
+- `eq_comb_of_thetaBoundary_eq_zero` — **the cycle space is exactly
+  their span** (`b₁ = 2`): flow conservation at interior vertices
+  equalizes path edges; conservation at a junction eliminates the third
+  flow.
+- `gramOf_thetaCycles : C = [[4,2],[2,4]]` and
+  `thetaChainGram_inv : C⁻¹ = [[1/3,−1/6],[−1/6,1/3]]` — the review's
+  oracle, confirmed in Lean. Positive-definiteness of the period form
+  comes from `posDef_inv` (Phase 15 helper) applied to the chain form.
+- `thetaHarmonicGramData` — the first non-diagonal `HarmonicGramData`,
+  with `summable` derived by `summable_exp_neg_quadForm` (no field
+  supplied), and `thetaGramData_energy_isLeast` — the per-instance
+  variational identity demanded by the Phase 17 honesty note on
+  `HarmonicForm`: the Gram energy of sector `k ∈ ℤ²` *is* the least
+  cochain energy at periods `k`.
+- `thetaGram_offDiag_ne_zero` — the coupling is real: `−1/6 ≠ 0`.
+- `thetaMatter` — the `(1,0)` sector is matter with minimum action
+  `1/3` (`thetaGramData_energy_one_zero`).
+- **`theta_siegelPoisson_duality`** — the theta action obeys
+  `Z(π²·Q⁻¹) = √((1/12)/π²)·Z(Q)` via the general duality, with
+  `det Q = 1/12` computed. Phases 15, 17, and 18 meet in one theorem:
+  topology → minimization → coupled Gram form → duality.
+
+### Engineering notes
+
+- `simp +decide` is the tool for `Fin`-literal combinatorics
+  (if-conditions `(2 : Fin 5) = 0`, vector-literal lookups at indices
+  ≥ 2 after `fin_cases`). Plain `simp`/`norm_num` reduce indices 0 and
+  1 only (`cons_val_zero/one` are `@[simp]`; the `cons_val` dsimproc
+  did not fire in the `fin_cases` contexts at this pin). Diagnosed by
+  a minimal probe file after two failed guesses — bisection beats
+  theorizing about simprocs.
+- Structure-projection types (`Fin H.r`) block `OfNat` synthesis in
+  theorem *statements* even when `H.r` is definitionally a literal;
+  state entry-level facts about the literal matrix and bridge with a
+  `rfl` lemma.
+- The dot-product lemma family (`add_dotProduct`, `sub_dotProduct`,
+  `dotProduct_comm`) lives in the **root** namespace at this pin, not
+  under `Matrix`.
+
+### Status after this phase
+
+Goal 5's entry point is done: the variational identity is proved and
+consumed at a genuinely coupled instance. Remaining on this front:
+extract the general finite-graph API (graph → cycles → Gram →
+`HarmonicGramData`, parametrized), connect `MatterSector` to the
+cohomological formulation (Goal 7), and re-derive the cycle graph
+`C_n` through the same period machinery (unifying `CycleHarmonic` with
+`ThetaHarmonic`). The wedge complex should follow the same
+concrete-first route.
+
+**End of Phase 18 addendum.**
