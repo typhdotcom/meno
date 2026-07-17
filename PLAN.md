@@ -17,16 +17,20 @@ enumerates the discrete sectors a system can occupy; the action prices
 them; the Boltzmann sum reads the partition function; duality,
 minimization, and counting theorems connect the faces.
 
-What the spine proves today (Phases 1-28, zero `sorry`, zero `axiom`):
+What the spine proves today (zero `sorry`, zero `axiom`; the
+Completion Path C1-C12 below is fully CLOSED as of Phase 37):
 
 - **Duality**: Siegel-Poisson at full generality -- non-diagonal, any rank
   (`Meno/SiegelPoisson.lean`, Phase 15) -- consumed by the theta graph's
   genuinely non-diagonal Gram form (`Meno/ThetaHarmonic.lean`).
-- **Harmonic/topological** (per presented finite graph): periods vanish
-  iff the cochain is a gradient, with **no connectivity hypothesis**
+- **Harmonic/topological** (for **every** finite graph, via the
+  fundamental-presentation theorem, C2): periods vanish iff the cochain
+  is a gradient, with **no connectivity hypothesis**
   (`CyclePresentation.period_eq_zero_iff_exists_grad`); real cochains
   modulo gradients `≃ₗ[ℝ] ℝ^{b₁}` (`cochainQuotEquiv`); integer cochains
-  modulo integer gradients `≃ₗ[ℤ] ℤ^{b₁}` (`latticeQuotEquiv`).
+  modulo integer gradients `≃ₗ[ℤ] ℤ^{b₁}` (`latticeQuotEquiv`);
+  intrinsic `harmonicEnergy` on `H¹(G;ℤ)` with basis independence (C3,
+  C4).
 - **Counting/information**: at every resolution `q ≥ 1`, descriptions
   modulo local re-descriptions number exactly `q^{b₁}` (K1); the log
   splits as gauge + `b₁ · log q` (K2); every compression fiber is uniform
@@ -41,9 +45,12 @@ What the spine proves today (Phases 1-28, zero `sorry`, zero `axiom`):
   `n · (1/n) = 1` between combinatorial and harmonic mass --
   `Meno/Groupoid.lean`.
 
-What remains is stated below as **C1-C12**: one path each, with
-acceptance theorems. Under the discipline that follows, C10 and C11 are
-CLOSED and the rest are OPEN. That is the honest ledger.
+The Completion Path is stated below as **C1-C12**: one path each, with
+acceptance theorems. At adoption (Phase 28), C10 and C11 were CLOSED
+and the rest OPEN; as of Phase 37 all twelve are CLOSED. The Status
+Ledger is the honest per-item record. (Amended Phase 39, review #3
+finding 3: this paragraph previously still declared C1-C9 and C12
+open.)
 
 ## Completion Discipline
 
@@ -661,9 +668,37 @@ data/presentations extracted to a new topology-layer file
 lists imports grouped by the actual layers with the stale
 "(to be migrated downstream)" comment gone.
 
+**Completed (Phase 39, review #3 finding 2).** The Phase-38 repairs
+left the advertised flow still false in three places: generic
+`Binding` imported `ThetaHarmonic` (hence the information layer);
+`ThetaGraph` still imported `PeriodLattice` and carried Gram
+positivity/inversion; and `CyclePresentation` — labeled topology —
+imported `PeriodHarmonic`, because the presentation structure bundles
+the Gram. The structural fix: the purely topological
+**`CycleBasis`** (`Meno/CycleBasis.lean`, imports only
+`IncidenceGraph`) is split from `CyclePresentation`, which now
+`extends` it with `gram_posDef` — the topological and harmonic halves
+are separate structures. `ThetaGraph` is reduced to incidence data +
+`thetaCycleBasis` (Gram and presentations moved to `ThetaHarmonic`);
+`thetaGraph_b1` is re-proved by walks + Euler in `GraphInstances`;
+the theta binding consumer moved to `Meno/ThetaBinding.lean`, leaving
+`Binding` importing only `Matter`; and the specialized operators
+`cycleBoundary`/`thetaBoundary`/`thetaGrad` are **deleted**, their
+closed forms restated through `IncidenceGraph.boundary`/`.grad`
+(finding 4). The honest layer order, now matching the import DAG:
+Foundation → Topology (`CycleBasis`, `ThetaGraph`, `GraphInstances`)
+→ Variational (`PeriodHarmonic`) → Priced presentations
+(`CyclePresentation`, `PeriodLattice`, `FundamentalPresentation`) →
+Intrinsic harmonic → Matter/Binding → Information → Realizations →
+Concrete consumers (`WedgePresentation`, `ThetaHarmonic`,
+`ThetaBinding`) → Corroborating models. One deliberate residue:
+`GraphInstances` imports `FundamentalPresentation` because `b₁`
+itself is *defined* by the fundamental construction — computing a
+graph's Betti number legitimately consumes the fundamental theorem.
+
 **README** rewritten (Phase 37): staleness banner removed; the
-architecture section lists the actual source files (31 as of Phase 38)
-and every physical claim cites its theorem by name.
+architecture section lists the actual source files (33 as of
+Phase 39) and every physical claim cites its theorem by name.
 
 ## Execution Order
 
@@ -3936,9 +3971,42 @@ before any fix. The ledger:
 | 5 | Audit omits `Simplicial`'s `Mass`/`IsMatter`/`cycleBindingEnergy` — shared physical names with no identification | **CONFIRMED** — none of the three appeared in the Phase-37 table | Renamed `geodesicMass`/`IsGeodesicMatter`/`geodesicBindingDrop` (with `geodesicBindingDrop_add_union`); docstrings state the non-identification and cite `geodesic_harmonic_duality` as the flagship comparison; two audit rows added |
 | 6 | Four documentation spots contradict the closed state (PLAN rule 6; `HarmonicForm` "binding still open"; `ThetaHarmonic` "keystone remains a design problem"; `Meno.lean` "awaiting migration") | **CONFIRMED** — all four verbatim as cited | All four rewritten to the actual state; rule 6 now past-tense with the amendment recorded |
 
+*Phase-39 correction (review #3, finding 3): the four **cited** spots
+were rewritten, but the row read as if the contradiction class were
+exhausted — it was not. Phase 39 found and fixed five more (PLAN's
+intro "Phases 1-28"/"presented graphs"/"the rest are OPEN" sentences,
+README's "spectral release" architecture line, `LoopKernel`'s "Later
+phases" promise). A ledger row must claim exactly what was checked.*
+
 **Discipline check.** No goal reopens: findings 1-3 sharpen *how* C7-C9
 discharge their acceptance (repaired in place, same phase, with the
 false audit claim recorded rather than erased); findings 4-6 are
 architecture/documentation defects under C12's standing invariant.
 All twelve items remain CLOSED. Build green end-to-end
 (`lake build Meno`), zero `sorry`, zero `axiom`, zero warnings.
+
+## Phase 39 addendum: third external review — five findings, five confirmed, five repaired (2026-07-17)
+
+Review #3 arrived against the Phase-38 state. Every claim verified
+against code before acting; all five CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | The cost API still prices infinite ambiguity and impossible local recovery at zero (`recoveryCost`/`sectionCost` unrestricted — `ℕ → Unit` had cost `0` via `Nat.card = 0`; the Phase-38 `omit [NeZero q]` let `q = 0`'s infinite `ZMod 0` fibers into a finite-cost theorem) | **CONFIRMED** — no finiteness anywhere on the numerical defs; the `omit` was this session's own regression | `[Finite A]`/`[Finite B]` demanded by `fiberInfoCost`, `recoveryCost`, `sectionCost`, `sectionCostE`; new `recoveryCostE` (`⊤` on empty fibers, `recoveryCostE_eq_top_iff`) and the extended coding identity `sectionCostE_eq_sum_recoveryCostE`; `[NeZero q]` restored and documented as load-bearing; `section_not_surjective_of_not_injective` remains the sole infinite-cardinality cost result |
+| 2 | The advertised import flow remained false (generic `Binding` → `ThetaHarmonic` → information; `ThetaGraph` carried Gram content and imported `PeriodLattice`; `CyclePresentation` — "topology" — imported `PeriodHarmonic`) | **CONFIRMED** — all three import edges as cited | `CycleBasis` split (topological structure upstream, `CyclePresentation extends` it); `ThetaGraph` reduced to incidence data + `thetaCycleBasis`; presentations/Gram to `ThetaHarmonic`; `thetaGraph_b1` by walks + Euler; theta binding consumer to new `Meno/ThetaBinding.lean` (`Binding` imports only `Matter`); layer description re-amended to the true DAG, with the one deliberate residue (`GraphInstances` consumes `b₁`'s defining construction) recorded |
+| 3 | Phase 38 falsely recorded the documentation contradiction as repaired (PLAN intro still said "Phases 1-28", "presented" graphs, "the rest are OPEN"; README still said "spectral release"; `LoopKernel` still promised "Later phases") | **CONFIRMED** — all five spots verbatim | All five rewritten; the Phase-38 ledger row amended to state that only the four *cited* spots had been checked — a ledger row must claim exactly what was checked |
+| 4 | C1's single-substrate claim violated by `thetaBoundary`, `thetaGrad`, `cycleBoundary` — specialized copies of `IncidenceGraph.boundary`/`.grad` | **CONFIRMED** — three standalone operators, defeq to the substrate's on the reducible concrete graphs | All three deleted; closed-form lemmas restated through `(cycleGraph n hn).boundary`, `thetaGraph.boundary`, `thetaGraph.grad` (`cycleGraph_boundary_eq`, `thetaGraph_boundary_eq_sum`, `thetaGrad_period` et al.) |
+| 5 | Simplicial physical-name cleanup incomplete (self-referential "renamed from `geodesicBindingDrop`" docstring — a Phase-38 blanket-replace bug; `binding_releases_mass`, `simplicial_gravity`, `matter_noncontractible`, "Binding Energy"/"Mass Defect" headings) | **CONFIRMED** — including the self-reference, this session's own bug | Docstring fixed to cite `cycleBindingEnergy`; renames completed: `geodesicBindingDrop_eq_geodesicMass`, `geodesicBindingDrop_pos` (its docstring no longer claims to be a `gravity_uniform` analogue — no such identification exists), `hollowTriangle_bindingDrop_pos`, `geodesicMatter_noncontractible`; headings retitled in geodesic vocabulary |
+
+**Also caught in passing**: `Binding.lean`'s section heading "the rest
+is released" (finding-2-class energy language, now "the killed weight
+is removed") and `cycleGraph_b1'` moved beside the other C5 rebase
+witnesses in `Meno/WedgePresentation.lean`.
+
+**Discipline check.** No goal reopens: findings 1 and 4 harden C8 and
+C1's discharge in place; findings 2 and 3 are C12's standing
+invariant; finding 5 completes Phase 38's finding-5 execution. Two of
+the five defects (the `omit` and the self-referential docstring) were
+introduced by Phase 38 itself — recorded as such. All twelve items
+remain CLOSED. Build green end-to-end, zero `sorry`, zero `axiom`,
+zero warnings.

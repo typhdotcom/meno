@@ -26,6 +26,15 @@ fiberInfoCost`. An injective `f` has at most one section
 genuine count: `descriptionCost f = log (#{functions A → B})`
 (`descriptionCost_eq`).
 
+The numerical (`ℝ`-valued) cost API is **restricted to finite types**
+(review #3, finding 1): `Nat.card` of an infinite type is `0`, so an
+unrestricted `log (Nat.card ·)` silently prices infinite ambiguity at
+zero (`ℕ → Unit` would have had cost `0`). Finiteness is demanded by
+the definitions themselves; the extended (`ℝ≥0∞`-valued) costs
+`sectionCostE` and `recoveryCostE` price the impossible cases at `⊤`;
+and the only cost statement about infinite types is the
+cardinality-free ratchet `section_not_surjective_of_not_injective`.
+
 This file isolates the fiber-information layer. Basic.lean's old
 `TransitionComplexity` class (an axiomatized cost convention; its
 reconciliation program was falsified in Phase 17) is deleted as of C9 —
@@ -41,22 +50,38 @@ universe u
 
 variable {A B : Type u}
 
-/-- Fiber information cost of a function: `∑ b, log |f ⁻¹ {b}|`. Empty
-fibers (`b ∉ image f`) contribute `log 0 = 0` by Mathlib convention. -/
-noncomputable def fiberInfoCost [Fintype B] [DecidableEq B] (f : A → B) : ℝ :=
+/-- Fiber information cost of a function on a **finite** domain:
+`∑ b, log |f ⁻¹ {b}|`. Empty fibers (`b ∉ image f`) contribute
+`log 0 = 0` by Mathlib convention — the extended per-output cost
+`recoveryCostE` prices them honestly at `⊤`. -/
+noncomputable def fiberInfoCost [Finite A] [Fintype B] [DecidableEq B]
+    (f : A → B) : ℝ :=
   ∑ b : B, Real.log (Nat.card (f ⁻¹' {b}) : ℝ)
 
-/-- **Per-output recovery cost**: the information needed to pick the
-preimage of *one* output — `log |f⁻¹{b}|`. -/
-noncomputable def recoveryCost (f : A → B) (b : B) : ℝ :=
+/-- **Per-output recovery cost** on a **finite** domain: the
+information needed to pick the preimage of *one* output —
+`log |f⁻¹{b}|`. Beware the boundary: on an *empty* fiber this is
+`log 0 = 0` by Mathlib convention — an impossible recovery is not
+free, it is impossible; `recoveryCostE` prices it at `⊤`. -/
+noncomputable def recoveryCost [Finite A] (f : A → B) (b : B) : ℝ :=
   Real.log (Nat.card (f ⁻¹' {b}) : ℝ)
 
 /-- The fiber information cost is the aggregate of the per-output
 recovery costs. -/
-theorem fiberInfoCost_eq_sum_recoveryCost [Fintype B] [DecidableEq B]
-    (f : A → B) : fiberInfoCost f = ∑ b : B, recoveryCost f b := rfl
+theorem fiberInfoCost_eq_sum_recoveryCost [Finite A] [Fintype B]
+    [DecidableEq B] (f : A → B) :
+    fiberInfoCost f = ∑ b : B, recoveryCost f b := rfl
 
-theorem fiberInfoCost_nonneg [Fintype B] [DecidableEq B] (f : A → B) :
+/-- Recovery costs are nonnegative (fibers of a finite domain have
+natural cardinalities). -/
+theorem recoveryCost_nonneg [Finite A] (f : A → B) (b : B) :
+    0 ≤ recoveryCost f b := by
+  unfold recoveryCost
+  rcases (Nat.card (f ⁻¹' {b})).eq_zero_or_pos with hzero | hpos
+  · simp [hzero]
+  · exact Real.log_nonneg (by exact_mod_cast hpos)
+
+theorem fiberInfoCost_nonneg [Finite A] [Fintype B] [DecidableEq B] (f : A → B) :
     0 ≤ fiberInfoCost f := by
   unfold fiberInfoCost
   refine Finset.sum_nonneg (fun b _ => ?_)
@@ -66,7 +91,7 @@ theorem fiberInfoCost_nonneg [Fintype B] [DecidableEq B] (f : A → B) :
 
 /-- Injective functions have zero fiber-info cost: every fiber is a
 singleton (or empty), and `log 1 = log 0 = 0`. -/
-theorem fiberInfoCost_of_injective [Fintype B] [DecidableEq B]
+theorem fiberInfoCost_of_injective [Finite A] [Fintype B] [DecidableEq B]
     {f : A → B} (hf : Function.Injective f) :
     fiberInfoCost f = 0 := by
   unfold fiberInfoCost
@@ -141,8 +166,10 @@ sections. Beware the boundary: when *no* section exists this is
 `log 0 = 0` by Mathlib's junk convention — an impossible inverse is
 not free, it is impossible. `sectionCostE` below is the honest
 extended cost (`⊤` when no section exists); use it for cost
-readings. -/
-noncomputable def sectionCost (f : A → B) : ℝ :=
+readings. Finiteness of both types is demanded (review #3): on
+infinite types `Nat.card` of the section type is `0` and this would
+price infinite ambiguity at zero. -/
+noncomputable def sectionCost [Finite A] [Finite B] (f : A → B) : ℝ :=
   Real.log (Nat.card {s : B → A // ∀ b, f (s b) = b})
 
 /-- **The coding theorem** (C8): for a surjection the reverse-description
@@ -172,7 +199,7 @@ is zero. This does **not** say reversal is free: an injective
 non-surjective `f` has *no* section, and its honest extended cost is
 `⊤` (`sectionCostE_eq_top_iff`). Zero honest cost characterizes
 bijections (`sectionCostE_eq_zero_iff`). -/
-theorem sectionCost_eq_zero_of_injective
+theorem sectionCost_eq_zero_of_injective [Finite A] [Finite B]
     {f : A → B} (hf : Function.Injective f) :
     sectionCost f = 0 := by
   haveI : Subsingleton {s : B → A // ∀ b, f (s b) = b} :=
@@ -223,11 +250,11 @@ theorem sections_nonempty_iff_surjective (f : A → B) :
 open Classical in
 /-- **The extended reverse-description cost**: `⊤` when no section
 exists. An impossible inverse is not free — it is impossible. -/
-noncomputable def sectionCostE (f : A → B) : ℝ≥0∞ :=
+noncomputable def sectionCostE [Finite A] [Finite B] (f : A → B) : ℝ≥0∞ :=
   if Function.Surjective f then ENNReal.ofReal (sectionCost f) else ⊤
 
 /-- Infinite reverse cost characterizes non-surjectivity. -/
-theorem sectionCostE_eq_top_iff (f : A → B) :
+theorem sectionCostE_eq_top_iff [Finite A] [Finite B] (f : A → B) :
     sectionCostE f = ⊤ ↔ ¬ Function.Surjective f := by
   classical
   unfold sectionCostE
@@ -268,6 +295,51 @@ theorem sectionCostE_eq_zero_iff [Fintype A] [Fintype B] [DecidableEq B]
     rw [if_pos hbij.surjective, log_card_sections hbij.surjective,
       fiberInfoCost_of_injective hbij.injective]
     simp
+
+open Classical in
+/-- **The extended per-output recovery cost**: `⊤` on an empty fiber.
+An output that cannot be produced cannot be recovered from — that
+recovery is not free, it is impossible. -/
+noncomputable def recoveryCostE [Finite A] (f : A → B) (b : B) : ℝ≥0∞ :=
+  if b ∈ Set.range f then ENNReal.ofReal (recoveryCost f b) else ⊤
+
+/-- Infinite recovery cost characterizes the outputs `f` misses. -/
+theorem recoveryCostE_eq_top_iff [Finite A] (f : A → B) (b : B) :
+    recoveryCostE f b = ⊤ ↔ b ∉ Set.range f := by
+  classical
+  unfold recoveryCostE
+  split_ifs with h
+  · simp [h, ENNReal.ofReal_ne_top]
+  · simp [h]
+
+/-- **The extended coding identity**: the extended reverse-description
+cost is the sum of the extended per-output recovery costs — on both
+sides of the boundary. For a surjection both sides are the finite
+fiber information; the moment one output is missed, both sides are
+`⊤`. -/
+theorem sectionCostE_eq_sum_recoveryCostE [Fintype A] [Fintype B]
+    [DecidableEq B] (f : A → B) :
+    sectionCostE f = ∑ b : B, recoveryCostE f b := by
+  classical
+  by_cases hf : Function.Surjective f
+  · have hall : ∀ b : B, b ∈ Set.range f := fun b => hf b
+    have hterm : ∀ b : B, recoveryCostE f b
+        = ENNReal.ofReal (recoveryCost f b) := fun b => by
+      unfold recoveryCostE
+      rw [if_pos (hall b)]
+    rw [sectionCostE_eq_fiberInfoCost hf,
+      Finset.sum_congr rfl (fun b _ => hterm b),
+      ← ENNReal.ofReal_sum_of_nonneg (fun b _ => recoveryCost_nonneg f b),
+      fiberInfoCost_eq_sum_recoveryCost]
+  · obtain ⟨b, hb⟩ := not_forall.mp fun hc => hf fun b => (hc b)
+    have hbtop : recoveryCostE f b = ⊤ :=
+      (recoveryCostE_eq_top_iff f b).mpr (by
+        intro hmem
+        exact hb (by obtain ⟨a, ha⟩ := hmem; exact ⟨a, ha⟩))
+    have htop : (∑ b : B, recoveryCostE f b) = ⊤ :=
+      eq_top_iff.mpr (le_trans (le_of_eq hbtop.symm)
+        (Finset.single_le_sum (fun c _ => zero_le _) (Finset.mem_univ b)))
+    rw [(sectionCostE_eq_top_iff f).mpr hf, htop]
 
 /-- **Forward description cost**: `|A| · log |B|` — the bits to specify
 which of `|B|^|A|` functions `f` is. -/

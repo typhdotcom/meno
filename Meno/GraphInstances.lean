@@ -15,9 +15,14 @@ machinery instead of hand-built cycle bases:
   the fundamental presentation supplies the rank, connectivity
   supplies the component count, and the vertex count is genuinely
   `n₁ + n₂ − 1`.
-* `cycleGraph_b1'`, `thetaGraph_b1` — rank corroborations through
-  `IntegralCyclePresentation.r_eq_b1`: the hand-built presentations'
-  ranks (1 and 2) equal the graphs' Betti numbers.
+* `thetaGraph_preconnected`, `thetaGraph_b1` — the theta graph is
+  connected and has `b₁ = 2`, by walks and Euler's formula. This file
+  computes **topology only** — `b₁` (defined by the fundamental
+  construction, hence the one import from the presentation layer),
+  connectivity, vertex/edge counts; it builds no presentation. The
+  presentation-rank corroborations live downstream (`cycleGraph_b1'`
+  in `Meno/WedgePresentation.lean`, `thetaGraph_b1'` in
+  `Meno/ThetaHarmonic.lean`) (review #3).
 
 (The Phase-21 spectator model is gone — removed once the genuine
 wedge's presentation existed. Its `b₁` was also `2`, which is exactly
@@ -69,14 +74,38 @@ theorem cycleGraph_b1 (n : ℕ) (hn : 0 < n) : (cycleGraph n hn).b1 = 1 := by
   rw [hc] at h
   omega
 
-/-- The hand-built cycle presentation's rank corroborates: `r = b₁`. -/
-theorem cycleGraph_b1' (n : ℕ) (hn : 0 < n) : (cycleGraph n hn).b1 = 1 :=
-  ((cycleIntegralPresentation n hn).r_eq_b1).symm.trans rfl
+/-- The theta graph is connected: the junction `0` reaches every
+vertex along its own path. -/
+theorem thetaGraph_preconnected : ∀ u v, thetaGraph.Reaches u v := by
+  have hbase : ∀ w : Fin 5, thetaGraph.Reaches 0 w := by
+    intro w
+    fin_cases w
+    · exact ⟨.nil _⟩
+    · exact ⟨IncidenceGraph.Walk.consF (G := thetaGraph) 0
+        (IncidenceGraph.Walk.consF (G := thetaGraph) 1 (.nil _))⟩
+    · exact ⟨IncidenceGraph.Walk.consF (G := thetaGraph) 0 (.nil _)⟩
+    · exact ⟨IncidenceGraph.Walk.consF (G := thetaGraph) 2 (.nil _)⟩
+    · exact ⟨IncidenceGraph.Walk.consF (G := thetaGraph) 4 (.nil _)⟩
+  intro u v
+  obtain ⟨p⟩ := hbase u
+  obtain ⟨q⟩ := hbase v
+  exact ⟨p.reverse.append q⟩
 
-/-- The theta graph's Betti number is `2`: the hand-built rank-2
-presentation meets the fundamental one through `r_eq_b1`. -/
-theorem thetaGraph_b1 : thetaGraph.b1 = 2 :=
-  (thetaIntegralPresentation.r_eq_b1).symm.trans rfl
+/-- **`b₁(K₂,₃) = 2`**, by Euler: `6 − 5 + 1` — topology only, no
+presentation (review #3; the rank corroboration through `r_eq_b1` is
+`thetaGraph_b1'` in `Meno/ThetaHarmonic.lean`). -/
+theorem thetaGraph_b1 : thetaGraph.b1 = 2 := by
+  have h := thetaGraph.b1_eq
+  have hc : thetaGraph.componentCard = 1 :=
+    thetaGraph.componentCard_eq_one ⟨0⟩ thetaGraph_preconnected
+  have hV : Fintype.card thetaGraph.V = 5 := by
+    show Fintype.card (Fin 5) = 5
+    simp
+  have hE : Fintype.card thetaGraph.E = 6 := by
+    show Fintype.card (Fin 6) = 6
+    simp
+  rw [hc, hV, hE] at h
+  omega
 
 /-! ## The genuine wedge -/
 

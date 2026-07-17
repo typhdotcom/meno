@@ -75,7 +75,7 @@ drops — by at least the killed sector's entire Boltzmann weight
 (`attach_partFn_add_le`, `attach_partFn_lt`). Concretely: filling the
 theta graph's first cycle kills its `1/3`-mass sector and costs the
 spectrum at least `exp(−1/3)` (`theta_binding_kills`,
-`theta_removed_weight`). The spectrum *partitions exactly* into
+`theta_removed_weight`, `Meno/ThetaBinding.lean`). The spectrum *partitions exactly* into
 survivors and casualties (`TwoComplex.partFn_add_killed`); the drop is
 a removed Boltzmann weight — the theorem that releases an *energy*
 equal to a rest mass is algebraic annihilation.
@@ -91,10 +91,16 @@ descriptions of a map are its sections, counted exactly
 (`card_sections`), so reverse-description cost *equals* fiber
 information as a coding theorem (`log_card_sections`,
 `sectionCost_compression` for the global gauge-fixing,
-`recoveryCost_compression` for a single class). The extended cost is
-`⊤` when no section exists, and zero cost characterizes bijections
-(`sectionCostE_eq_top_iff`, `sectionCostE_eq_zero_iff`) — an
-impossible inverse is not free. Where fibers are infinite, the
+`recoveryCost_compression` for a single class). The numerical costs are
+defined only on finite types — `Nat.card`'s junk zero on infinite
+types is refused, not exploited. The extended cost is `⊤` when no
+section exists, zero cost characterizes bijections
+(`sectionCostE_eq_top_iff`, `sectionCostE_eq_zero_iff`), the extended
+per-output cost prices unproducible outputs at `⊤`
+(`recoveryCostE_eq_top_iff`), and the extended coding identity holds
+on both sides of the boundary
+(`sectionCostE_eq_sum_recoveryCostE`) — an impossible inverse is not
+free. Where fibers are infinite, the
 cardinality-free form holds: a section of a non-injective map always
 misses states (`section_not_surjective_of_not_injective`,
 `simplicial_ratchet`).
@@ -126,9 +132,10 @@ Meno/
 ├── Geodesic.lean              Lawvere-subadditive length class
 ├── HarmonicForm.lean          HarmonicGramData; variational builder; binding algebra
 ├── IncidenceGraph.lean        THE graph substrate: ∂, grad, Stokes (any ring); walks; components; gauge
+├── CycleBasis.lean            Purely topological chosen cycle bases — no Gram, no pricing
+├── ThetaGraph.lean            The theta graph: incidence data and its topological cycle basis
 ├── PeriodHarmonic.lean        Least-norm-at-prescribed-periods machinery; cycle & wedge Gram forms
-├── ThetaGraph.lean            The theta graph's raw data and presentations (topology layer)
-├── CyclePresentation.lean     Chosen cycle bases; exactness (no connectivity); rebase (GL(r,ℤ))
+├── CyclePresentation.lean     Priced presentations (CycleBasis + Gram); exactness (no connectivity); rebase (GL(r,ℤ))
 ├── PeriodLattice.lean         The keystone, ℤ-form: ℤ-cochains ⧸ gradients ≃ ℤ^{b₁}
 ├── FundamentalPresentation.lean  Every finite graph satisfies the keystone interface; Euler; H¹ coords
 ├── BasisIndependence.lean     Primitivity forced; presentations GL(r,ℤ)-related; partFn is the graph's
@@ -136,8 +143,9 @@ Meno/
 ├── GraphInstances.lean        Cycle, theta, genuine wedge: connectivity and Betti numbers by Euler
 ├── WedgePresentation.lean     The n₁+n₂−1-vertex wedge as a consumer (spanning by Euler)
 ├── Matter.lean                MatterSector = nonzero H¹ class; mass, positivity, trapped paradox
-├── Binding.lean               2-complexes; the induced map; binding kills matter; spectral release
-├── InfoRatchet.lean           Fiber information; the coding theorem (sections counted); ratchets
+├── Binding.lean               2-complexes; the induced map; binding kills matter; exact spectral decomposition
+├── ThetaBinding.lean          Binding at the theta graph: kill, rank drop `2 → 1`, removed weight
+├── InfoRatchet.lean           Fiber information; the coding theorem (finite-only costs, extended costs); ratchets
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; compression section cost
 ├── UniformAction.lean         Type-level gravity realized on the uniform sector action
 ├── Basic.lean                 Abstract complexity hierarchy; pullback gravity (interface layer)

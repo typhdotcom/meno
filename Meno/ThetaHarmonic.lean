@@ -43,6 +43,110 @@ open Matrix
 
 section Theta
 
+/-! ### The priced presentations
+
+Moved from the topology layer (review #3, finding 2): Gram
+positivity, matrix inversion, and the presentations are **harmonic**
+content — `Meno/ThetaGraph.lean` keeps only incidence data. -/
+
+/-- The cycle-chain Gram matrix of `K₂,₃`: paths have length two, and
+distinct basis cycles share (only) the third path. -/
+theorem gramOf_thetaCycles : gramOf thetaCycles = !![4, 2; 2, 4] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp +decide [gramOf, dotProduct, thetaCycles, Fin.sum_univ_six] <;>
+    norm_num
+
+/-- The chain Gram matrix is positive definite. -/
+theorem thetaChainGram_posDef :
+    (!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ).PosDef := by
+  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
+  · show (!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ)ᴴ = !![4, 2; 2, 4]
+    ext i j
+    fin_cases i <;> fin_cases j <;> rfl
+  · have hcomp : star x ⬝ᵥ (!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ).mulVec x
+        = 4 * x 0 ^ 2 + 4 * (x 0 * x 1) + 4 * x 1 ^ 2 := by
+      simp [dotProduct, Matrix.mulVec, Fin.sum_univ_two, Pi.star_apply]
+      ring
+    rw [hcomp]
+    have h01 : x 0 ≠ 0 ∨ x 1 ≠ 0 := by
+      by_contra hc
+      push_neg at hc
+      exact hx (funext fun i => by fin_cases i <;> simp [hc.1, hc.2])
+    rcases h01 with h0 | h1
+    · nlinarith [sq_nonneg (x 0 + x 1), sq_nonneg (x 1),
+        lt_of_le_of_ne (sq_nonneg (x 0)) (Ne.symm (pow_ne_zero 2 h0))]
+    · nlinarith [sq_nonneg (x 0 + x 1), sq_nonneg (x 0),
+        lt_of_le_of_ne (sq_nonneg (x 1)) (Ne.symm (pow_ne_zero 2 h1))]
+
+/-- The harmonic period Gram form: the inverse of the chain Gram. -/
+theorem thetaChainGram_inv :
+    (!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ)⁻¹
+      = !![1/3, -(1/6); -(1/6), 1/3] := by
+  apply Matrix.inv_eq_right_inv
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    norm_num [Matrix.mul_apply, Fin.sum_univ_two]
+
+/-- The theta graph as a **priced** cycle presentation: the
+topological `thetaCycleBasis` extended with the positive-definite
+chain Gram. -/
+@[reducible] noncomputable def thetaPresentation :
+    CyclePresentation thetaGraph :=
+  { thetaCycleBasis with
+    gram_posDef := by
+      rw [gramOf_thetaCycles]
+      exact thetaChainGram_posDef }
+
+/-- The theta graph as an **integral** presentation: integer basis,
+integer period realizability (single-edge cochains on the first and
+second paths), and integer integration (the Phase-19 explicit
+potential, whose entries are integer combinations of `ω`). Feeds the
+keystone `latticeQuotEquiv`. -/
+@[reducible] noncomputable def thetaIntegralPresentation :
+    IntegralCyclePresentation thetaGraph :=
+  { thetaPresentation with
+    cyclesZ := ![![1, 1, 0, 0, -1, -1], ![0, 0, 1, 1, -1, -1]]
+    cyclesZ_cast := fun i e => by
+      fin_cases i <;> fin_cases e <;> norm_num [thetaCycles]
+    periods_onto := fun k => by
+      refine ⟨![k 0, 0, k 1, 0, 0, 0], fun j => ?_⟩
+      fin_cases j <;>
+        simp +decide [dotProduct, Fin.sum_univ_six]
+    integral_potentials := fun ω h => by
+      have h0 := h 0
+      have h1 := h 1
+      simp +decide [dotProduct, Fin.sum_univ_six] at h0 h1
+      refine ⟨![0, ω 4 + ω 5, ω 0, ω 2, ω 4], ?_⟩
+      have hgrad : (fun e =>
+          (![0, ω 4 + ω 5, ω 0, ω 2, ω 4] : Fin 5 → ℤ) (thetaTgt e)
+            - (![0, ω 4 + ω 5, ω 0, ω 2, ω 4] : Fin 5 → ℤ) (thetaSrc e))
+          = ω := by
+        funext e
+        fin_cases e <;> simp +decide [thetaSrc, thetaTgt] <;> omega
+      exact hgrad }
+
+/-- The hand-built rank-2 presentation corroborates the fundamental
+one: `r = b₁ = 2` through `r_eq_b1`. (The topology-layer proof by
+Euler is `thetaGraph_b1`, `Meno/GraphInstances.lean`.) -/
+theorem thetaGraph_b1' : thetaGraph.b1 = 2 :=
+  (thetaIntegralPresentation.r_eq_b1).symm.trans rfl
+
+/-- C5's acceptance witness for theta: the hand-built presentation is
+a rebase-image of the fundamental one (C3's `exists_rebase_related`;
+the cycle and wedge instances live in
+`Meno/WedgePresentation.lean`). -/
+theorem thetaIntegralPresentation_rebase_related :
+    ∃ (U : Matrix (Fin (thetaGraph.fundamentalPresentation).r)
+        (Fin (thetaGraph.fundamentalPresentation).r) ℤ)
+      (hU : IsUnit U.det),
+      ∀ i e, thetaIntegralPresentation.cycles
+          (Fin.cast ((thetaGraph.fundamentalPresentation).r_eq_b1.trans
+            thetaIntegralPresentation.r_eq_b1.symm) i) e
+        = ((thetaGraph.fundamentalPresentation).toCyclePresentation.rebase
+            U hU).cycles i e :=
+  IntegralCyclePresentation.exists_rebase_related _ _
+
 /-- The period Gram form is positive definite (inverse of a
 positive-definite matrix). -/
 theorem thetaGram_posDef :
@@ -255,24 +359,21 @@ the keystone is a coding theorem now, not a design problem. -/
 
 section Gauge
 
-/-- The gradient (coboundary) of a vertex potential. -/
-noncomputable def thetaGrad (f : Fin 5 → ℝ) : Fin 6 → ℝ :=
-  fun e => f (thetaTgt e) - f (thetaSrc e)
-
-/-- Gradients have vanishing periods: local re-description is invisible
-to the sectors. -/
+/-- Gradients — the substrate's `IncidenceGraph.grad`, not a
+specialized copy (review #3, finding 4) — have vanishing periods:
+local re-description is invisible to the sectors. -/
 theorem thetaGrad_period (f : Fin 5 → ℝ) (i : Fin 2) :
-    thetaGrad f ⬝ᵥ thetaCycles i = 0 := by
+    thetaGraph.grad f ⬝ᵥ thetaCycles i = 0 := by
   fin_cases i <;>
-    simp +decide [thetaGrad, dotProduct, thetaSrc, thetaTgt, thetaCycles,
-      Fin.sum_univ_six]
+    simp +decide [IncidenceGraph.grad, dotProduct, thetaSrc, thetaTgt,
+      thetaCycles, Fin.sum_univ_six]
 
 /-- **Exactness at the theta graph**: a cochain has vanishing periods
 iff it is a gradient. The forward direction constructs the potential
 explicitly by integrating along the first path and using the two period
 conditions to certify consistency across the others. -/
 theorem thetaExactness (ω : Fin 6 → ℝ) :
-    (∀ i, ω ⬝ᵥ thetaCycles i = 0) ↔ ∃ f : Fin 5 → ℝ, thetaGrad f = ω := by
+    (∀ i, ω ⬝ᵥ thetaCycles i = 0) ↔ ∃ f : Fin 5 → ℝ, thetaGraph.grad f = ω := by
   constructor
   · intro h
     have h0 := h 0
@@ -281,7 +382,7 @@ theorem thetaExactness (ω : Fin 6 → ℝ) :
     refine ⟨![0, ω 4 + ω 5, ω 0, ω 2, ω 4], ?_⟩
     funext e
     fin_cases e <;>
-      simp +decide [thetaGrad, thetaSrc, thetaTgt] <;> linarith
+      simp +decide [IncidenceGraph.grad, thetaSrc, thetaTgt] <;> linarith
   · rintro ⟨f, rfl⟩ i
     exact thetaGrad_period f i
 
@@ -290,7 +391,7 @@ of a nonzero sector is not a gradient. The constraint system it
 encodes is locally consistent and globally unsatisfiable. -/
 theorem matter_no_potential (k : Fin 2 → ℤ) (hk : k ≠ 0) :
     ¬ ∃ f : Fin 5 → ℝ,
-      thetaGrad f = periodRep thetaCycles (fun i => (k i : ℝ)) := by
+      thetaGraph.grad f = periodRep thetaCycles (fun i => (k i : ℝ)) := by
   intro hpot
   have hdet : IsUnit (gramOf thetaCycles).det := by
     rw [gramOf_thetaCycles]

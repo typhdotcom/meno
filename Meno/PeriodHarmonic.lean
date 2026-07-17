@@ -217,87 +217,17 @@ end Builder
 
 Edges `e : Fin n` run from vertex `e` to vertex `e + 1` (cyclically).
 One basis cycle: the all-ones cochain. Chain Gram `[[n]]`, period Gram
-`[[1/n]]` — the spine's original harmonic mass, re-derived. -/
+`[[1/n]]` — the spine's original harmonic mass, re-derived. The
+boundary closed form and spanning lemmas live with `cycleGraph`'s
+presentation in `Meno/CyclePresentation.lean`, stated through the
+substrate's `boundary` (review #3, finding 4). -/
 
 section CyclePeriods
 
 variable (n : ℕ)
 
-/-- Boundary operator of the cycle graph: net flow into each vertex.
-Edge `e` runs `e → e + 1`. -/
-noncomputable def cycleBoundary [NeZero n] (ω : Fin n → ℝ) (v : Fin n) : ℝ :=
-  ∑ e, ((if e + 1 = v then (1 : ℝ) else 0)
-    - (if e = v then (1 : ℝ) else 0)) * ω e
-
 /-- The single basis cycle: the all-ones cochain. -/
 noncomputable def cycleAllOnes : Fin 1 → Fin n → ℝ := fun _ _ => 1
-
-/-- The boundary in closed form: inflow minus outflow. -/
-theorem cycleBoundary_eq [NeZero n] (ω : Fin n → ℝ) (v : Fin n) :
-    cycleBoundary n ω v = ω (v - 1) - ω v := by
-  unfold cycleBoundary
-  rw [show (fun e => ((if e + 1 = v then (1 : ℝ) else 0)
-      - (if e = v then (1 : ℝ) else 0)) * ω e)
-      = fun e => ((if e = v - 1 then ω e else 0) - if e = v then ω e else 0) from
-    funext fun e => by
-      by_cases h1 : e + 1 = v
-      · have h1' : e = v - 1 := by rw [eq_sub_iff_add_eq]; exact h1
-        by_cases h2 : e = v
-        · rw [if_pos h1, if_pos h2, if_pos h1', if_pos h2]; ring
-        · rw [if_pos h1, if_neg h2, if_pos h1', if_neg h2]; ring
-      · have h1' : ¬(e = v - 1) := fun hc =>
-          h1 (by rw [← eq_sub_iff_add_eq]; exact hc)
-        by_cases h2 : e = v
-        · rw [if_neg h1, if_pos h2, if_neg h1', if_pos h2]; ring
-        · rw [if_neg h1, if_neg h2, if_neg h1', if_neg h2]; ring]
-  rw [Finset.sum_sub_distrib, Finset.sum_ite_eq' Finset.univ (v - 1) ω,
-    Finset.sum_ite_eq' Finset.univ v ω]
-  simp
-
-/-- The all-ones cochain is a cycle. -/
-theorem cycleBoundary_allOnes [NeZero n] (v : Fin n) :
-    cycleBoundary n (cycleAllOnes n 0) v = 0 := by
-  rw [cycleBoundary_eq]
-  show (1 : ℝ) - 1 = 0
-  ring
-
-/-- **`b₁(C_n) = 1`**: a cochain with vanishing boundary is constant,
-hence a multiple of the all-ones cycle. -/
-theorem eq_smul_allOnes_of_cycleBoundary_eq_zero [NeZero n] (ω : Fin n → ℝ)
-    (h : ∀ v, cycleBoundary n ω v = 0) :
-    ω = fun e => ω 0 * cycleAllOnes n 0 e := by
-  have hstep : ∀ v : Fin n, ω (v - 1) = ω v := by
-    intro v
-    have := h v
-    rw [cycleBoundary_eq] at this
-    linarith
-  have hsucc : ∀ v : Fin n, ω v = ω (v + 1) := fun v => by
-    have := hstep (v + 1)
-    rwa [add_sub_cancel_right] at this
-  have hval : ∀ (m : ℕ) (hm : m < n), ω ⟨m, hm⟩ = ω 0 := by
-    intro m
-    induction m with
-    | zero =>
-      intro hm
-      have h0 : (⟨0, hm⟩ : Fin n) = 0 := Fin.ext (by simp)
-      rw [h0]
-    | succ m ih =>
-      intro hm
-      have hm' : m < n := Nat.lt_of_succ_lt hm
-      have hmk : (⟨m + 1, hm⟩ : Fin n) = ⟨m, hm'⟩ + 1 := by
-        apply Fin.ext
-        rw [Fin.val_add]
-        have h1 : (1 : Fin n).val = 1 := by
-          rw [Fin.val_one']
-          exact Nat.mod_eq_of_lt (by omega)
-        rw [h1]
-        exact (Nat.mod_eq_of_lt hm).symm
-      rw [hmk, ← hsucc ⟨m, hm'⟩]
-      exact ih hm'
-  funext e
-  show ω e = ω 0 * 1
-  rw [mul_one, show e = ⟨e.val, e.isLt⟩ from (Fin.eta e e.isLt).symm,
-    hval e.val e.isLt]
 
 /-- The chain Gram of the cycle graph: `[[n]]`. -/
 theorem gramOf_cycleAllOnes : gramOf (cycleAllOnes n) = !![(n : ℝ)] := by

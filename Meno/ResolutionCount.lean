@@ -308,10 +308,11 @@ theorem card_compression_sections :
     Finset.prod_const, Finset.card_univ, ← Nat.card_eq_fintype_card,
     Q.card_quotient q]
 
-omit [NeZero q] in
 /-- **The per-class recovery cost**: recovering which description
 produced *one* class costs `log |G_q|` — the fiber ambiguity of a
-single output (K3 in `recoveryCost` form). -/
+single output (K3 in `recoveryCost` form). `[NeZero q]` is load-bearing
+(review #3): at `q = 0` the fibers are infinite and the numerical cost
+API refuses them. -/
 theorem recoveryCost_compression
     (x : (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :
     recoveryCost (fun y : G.E → ZMod q =>

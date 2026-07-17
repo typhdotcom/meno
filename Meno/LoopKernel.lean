@@ -10,10 +10,10 @@ A `LoopKernelObj` is a basepointed category equipped with an energy on
 the categorical structure and keeping only `(End base, energy)`.
 
 This is the upstream primitive that `GroupoidObj` (a groupoid plus energy)
-specialises. Currently, the bridge `GroupoidObj.toLoopKernelObj` takes the
-two ground conditions as explicit arguments — `GroupoidObj` does not yet
-carry them as fields. Later phases promote `wind` to a `MulEquiv` and then
-the conditions become derivable on each construction site. -/
+specialises. The bridge `GroupoidObj.toLoopKernelObj` takes the two ground
+conditions as explicit arguments — `GroupoidObj` does not carry them as
+fields, and each construction site discharges them where it builds the
+bridge (`Meno/Hodge.lean`, `Meno/Duality.lean`). -/
 
 namespace Meno
 

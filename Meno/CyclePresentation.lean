@@ -1,4 +1,5 @@
 import Meno.IncidenceGraph
+import Meno.CycleBasis
 import Meno.PeriodHarmonic
 
 /-! # Cycle Presentation: a graph with a chosen cycle basis
@@ -43,18 +44,12 @@ open Matrix
 
 universe u v
 
-/-- A chosen cycle basis on the graph `G`: `r` closed cycle vectors
-spanning the cycle space, with positive-definite chain Gram matrix. -/
-structure CyclePresentation (G : IncidenceGraph.{u, v}) where
-  /-- Number of basis cycles (the intended `b₁`). -/
-  r : ℕ
-  /-- The chosen cycle vectors. -/
-  cycles : Fin r → G.E → ℝ
-  /-- Each basis vector is a cycle: zero boundary at every vertex. -/
-  cycles_closed : ∀ i v, G.boundary (cycles i) v = 0
-  /-- The basis spans the cycle space. -/
-  spanning : ∀ ω : G.E → ℝ, (∀ v, G.boundary ω v = 0) →
-    ∃ a : Fin r → ℝ, ω = fun e => ∑ i, a i * cycles i e
+/-- A chosen cycle basis on the graph `G`, **priced**: the purely
+topological `CycleBasis` (`Meno/CycleBasis.lean`) extended with the
+positive-definite chain Gram — the harmonic content (review #3: the
+topological and harmonic halves are separate structures). -/
+structure CyclePresentation (G : IncidenceGraph.{u, v}) extends
+    CycleBasis G where
   /-- The chain Gram matrix is positive definite (in particular the
   cycles are linearly independent). The basis is *chosen*: sector
   labels are basis-relative, physics is not (`rebase_energy`,
@@ -505,7 +500,83 @@ end CyclePresentation
 
 end Rebase
 
-/-! ## Instances: the cycle graph -/
+/-! ## Instances: the cycle graph
+
+The boundary closed form and spanning lemmas are stated directly
+through `(cycleGraph n hn).boundary` — the substrate's single operator,
+not a specialized copy (review #3, finding 4; the old `cycleBoundary`
+is deleted). -/
+
+/-- The cycle graph's boundary in closed form: inflow minus outflow. -/
+theorem cycleGraph_boundary_eq (n : ℕ) (hn : 0 < n) [NeZero n]
+    (ω : Fin n → ℝ) (v : Fin n) :
+    (cycleGraph n hn).boundary ω v = ω (v - 1) - ω v := by
+  show ∑ e : Fin n, ((if e + 1 = v then (1 : ℝ) else 0)
+    - (if e = v then (1 : ℝ) else 0)) * ω e = ω (v - 1) - ω v
+  rw [show (fun e : Fin n => ((if e + 1 = v then (1 : ℝ) else 0)
+      - (if e = v then (1 : ℝ) else 0)) * ω e)
+      = fun e => ((if e = v - 1 then ω e else 0) - if e = v then ω e else 0) from
+    funext fun e => by
+      by_cases h1 : e + 1 = v
+      · have h1' : e = v - 1 := by rw [eq_sub_iff_add_eq]; exact h1
+        by_cases h2 : e = v
+        · rw [if_pos h1, if_pos h2, if_pos h1', if_pos h2]; ring
+        · rw [if_pos h1, if_neg h2, if_pos h1', if_neg h2]; ring
+      · have h1' : ¬(e = v - 1) := fun hc =>
+          h1 (by rw [← eq_sub_iff_add_eq]; exact hc)
+        by_cases h2 : e = v
+        · rw [if_neg h1, if_pos h2, if_neg h1', if_pos h2]; ring
+        · rw [if_neg h1, if_neg h2, if_neg h1', if_neg h2]; ring]
+  rw [Finset.sum_sub_distrib, Finset.sum_ite_eq' Finset.univ (v - 1) ω,
+    Finset.sum_ite_eq' Finset.univ v ω]
+  simp
+
+/-- The all-ones cochain is a cycle of the cycle graph. -/
+theorem cycleGraph_boundary_allOnes (n : ℕ) (hn : 0 < n) [NeZero n]
+    (v : Fin n) :
+    (cycleGraph n hn).boundary (cycleAllOnes n 0) v = 0 := by
+  rw [cycleGraph_boundary_eq]
+  show (1 : ℝ) - 1 = 0
+  ring
+
+/-- **`b₁(C_n) = 1`**: a cochain with vanishing boundary is constant,
+hence a multiple of the all-ones cycle. -/
+theorem eq_smul_allOnes_of_boundary_eq_zero (n : ℕ) (hn : 0 < n)
+    [NeZero n] (ω : Fin n → ℝ)
+    (h : ∀ v, (cycleGraph n hn).boundary ω v = 0) :
+    ω = fun e => ω 0 * cycleAllOnes n 0 e := by
+  have hstep : ∀ v : Fin n, ω (v - 1) = ω v := by
+    intro v
+    have := h v
+    rw [cycleGraph_boundary_eq] at this
+    linarith
+  have hsucc : ∀ v : Fin n, ω v = ω (v + 1) := fun v => by
+    have := hstep (v + 1)
+    rwa [add_sub_cancel_right] at this
+  have hval : ∀ (m : ℕ) (hm : m < n), ω ⟨m, hm⟩ = ω 0 := by
+    intro m
+    induction m with
+    | zero =>
+      intro hm
+      have h0 : (⟨0, hm⟩ : Fin n) = 0 := Fin.ext (by simp)
+      rw [h0]
+    | succ m ih =>
+      intro hm
+      have hm' : m < n := Nat.lt_of_succ_lt hm
+      have hmk : (⟨m + 1, hm⟩ : Fin n) = ⟨m, hm'⟩ + 1 := by
+        apply Fin.ext
+        rw [Fin.val_add]
+        have h1 : (1 : Fin n).val = 1 := by
+          rw [Fin.val_one']
+          exact Nat.mod_eq_of_lt (by omega)
+        rw [h1]
+        exact (Nat.mod_eq_of_lt hm).symm
+      rw [hmk, ← hsucc ⟨m, hm'⟩]
+      exact ih hm'
+  funext e
+  show ω e = ω 0 * 1
+  rw [mul_one, show e = ⟨e.val, e.isLt⟩ from (Fin.eta e e.isLt).symm,
+    hval e.val e.isLt]
 
 /-- The cycle graph `C_n` as a presentation: one basis cycle (all
 ones) on `cycleGraph n`. -/
@@ -514,10 +585,10 @@ ones) on `cycleGraph n`. -/
   haveI : NeZero n := ⟨hn.ne'⟩
   { r := 1
     cycles := cycleAllOnes n
-    cycles_closed := fun _ v => cycleBoundary_allOnes n v
+    cycles_closed := fun _ v => cycleGraph_boundary_allOnes n hn v
     spanning := fun ω hω => by
       refine ⟨![ω 0], ?_⟩
-      have h := eq_smul_allOnes_of_cycleBoundary_eq_zero n ω (fun v => hω v)
+      have h := eq_smul_allOnes_of_boundary_eq_zero n hn ω (fun v => hω v)
       funext e
       rw [congrFun h e, Fin.sum_univ_one]
       rfl
@@ -543,11 +614,12 @@ mod-`q` period map surjective, hence the compression residue exactly
 `Meno/ThetaHarmonic.lean`. -/
 
 /-- The cycle graph's all-ones basis is integrally primitive. -/
-theorem cycle_integral_spanning (n : ℕ) [NeZero n] (ω : Fin n → ℤ)
-    (h : ∀ v, cycleBoundary n (fun e => (ω e : ℝ)) v = 0) :
+theorem cycle_integral_spanning (n : ℕ) (hn : 0 < n) [NeZero n]
+    (ω : Fin n → ℤ)
+    (h : ∀ v, (cycleGraph n hn).boundary (fun e => (ω e : ℝ)) v = 0) :
     ∃ a : Fin 1 → ℤ, ∀ e, (ω e : ℝ) = ∑ i, (a i : ℝ) * cycleAllOnes n i e := by
   refine ⟨![ω 0], fun e => ?_⟩
-  have hr := eq_smul_allOnes_of_cycleBoundary_eq_zero n
+  have hr := eq_smul_allOnes_of_boundary_eq_zero n hn
     (fun e => (ω e : ℝ)) h
   calc (ω e : ℝ) = (ω 0 : ℝ) * cycleAllOnes n 0 e := congrFun hr e
     _ = ∑ i, ((![ω 0] : Fin 1 → ℤ) i : ℝ) * cycleAllOnes n i e := by

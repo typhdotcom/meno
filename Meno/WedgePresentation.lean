@@ -226,7 +226,14 @@ theorem wedgeGraph_exists_matter (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 <
 
 Each concrete presentation is a rebase-image of its graph's
 fundamental presentation — instances of C3's
-`exists_rebase_related`. -/
+`exists_rebase_related`. (The theta instance lives with its
+presentation in `Meno/ThetaHarmonic.lean`, review #3.) -/
+
+/-- The hand-built cycle presentation's rank corroborates the Euler
+proof: `r = b₁ = 1` (moved from `Meno/GraphInstances.lean`, review #3
+— that file is pure topology now). -/
+theorem cycleGraph_b1' (n : ℕ) (hn : 0 < n) : (cycleGraph n hn).b1 = 1 :=
+  ((cycleIntegralPresentation n hn).r_eq_b1).symm.trans rfl
 
 theorem cycleIntegralPresentation_rebase_related (n : ℕ) (hn : 0 < n) :
     ∃ (U : Matrix (Fin ((cycleGraph n hn).fundamentalPresentation).r)
@@ -236,17 +243,6 @@ theorem cycleIntegralPresentation_rebase_related (n : ℕ) (hn : 0 < n) :
           (Fin.cast (((cycleGraph n hn).fundamentalPresentation).r_eq_b1.trans
             (cycleIntegralPresentation n hn).r_eq_b1.symm) i) e
         = (((cycleGraph n hn).fundamentalPresentation).toCyclePresentation.rebase
-            U hU).cycles i e :=
-  IntegralCyclePresentation.exists_rebase_related _ _
-
-theorem thetaIntegralPresentation_rebase_related :
-    ∃ (U : Matrix (Fin (thetaGraph.fundamentalPresentation).r)
-        (Fin (thetaGraph.fundamentalPresentation).r) ℤ)
-      (hU : IsUnit U.det),
-      ∀ i e, thetaIntegralPresentation.cycles
-          (Fin.cast ((thetaGraph.fundamentalPresentation).r_eq_b1.trans
-            thetaIntegralPresentation.r_eq_b1.symm) i) e
-        = ((thetaGraph.fundamentalPresentation).toCyclePresentation.rebase
             U hU).cycles i e :=
   IntegralCyclePresentation.exists_rebase_related _ _
 

@@ -220,7 +220,7 @@ theorem contractible_zero_mass (C : Complex V) (c : Cycle C.toGraph v)
   cycleComplexity_zero_of_contractible C c hc
 
 /-- Geodesic-matter cycles are non-contractible. -/
-theorem matter_noncontractible (C : Complex V) (c : Cycle C.toGraph v)
+theorem geodesicMatter_noncontractible (C : Complex V) (c : Cycle C.toGraph v)
     (hm : IsGeodesicMatter C c) : ¬c.isContractible₂ C := by
   intro hc
   rw [IsGeodesicMatter, contractible_zero_mass C c hc] at hm
@@ -1027,13 +1027,13 @@ theorem geodesicLength_union_le₁ (C₁ C₂ : Complex V) (p : Walk C₁.toGrap
   · -- C₁'s lengths ⊆ union's lengths
     exact homotopyLengths_lift_subset C₁ C₂ p
 
-/-! ## Binding Energy -/
+/-! ## The geodesic binding drop -/
 
 /-- Two complexes share a face if they both contain the same triangle. -/
 def Complex.sharesFace (C₁ C₂ : Complex V) : Prop :=
   ∃ a b c, C₁.face a b c ∧ C₂.face a b c
 
-/-- **Geodesic binding drop** (renamed from `geodesicBindingDrop`,
+/-- **Geodesic binding drop** (renamed from `cycleBindingEnergy`,
 review #2, C12 audit): the `ℕ`-valued drop in geodesic length when
 the union allows more reduction than either complex alone. Distinct
 from the spine's spectral binding (`HarmonicGramData.bindingEnergy`,
@@ -1057,21 +1057,25 @@ theorem geodesicBindingDrop_add_union (C₁ C₂ : Complex V) (c : Cycle C₁.to
   unfold geodesicBindingDrop
   exact Nat.sub_add_cancel (cycleComplexity_union_le C₁ C₂ c)
 
-/-! ## Shared Faces Enable Binding -/
+/-! ## Shared faces enable geodesic binding -/
 
 /-- A cycle becomes contractible in the union if C₂ provides the missing face. -/
 def Cycle.contractibleInUnion (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) : Prop :=
   (c.toUnion₁ C₁ C₂).isContractible₂ (C₁.union C₂)
 
-/-- When a cycle contracts in the union, all its mass becomes binding energy. -/
-theorem binding_releases_mass (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v)
-    (hc : c.contractibleInUnion C₁ C₂) :
+/-- When a cycle contracts in the union, the geodesic binding drop is
+its entire geodesic mass (`cycleComplexity C₁ c = geodesicMass C₁ c`,
+definitionally). Renamed from `binding_releases_mass` (review #3): the
+`ℕ`-valued drop is not identified with the spectral model's released
+rest mass and must not borrow its name. -/
+theorem geodesicBindingDrop_eq_geodesicMass (C₁ C₂ : Complex V)
+    (c : Cycle C₁.toGraph v) (hc : c.contractibleInUnion C₁ C₂) :
     geodesicBindingDrop C₁ C₂ c = cycleComplexity C₁ c := by
   simp only [geodesicBindingDrop]
   have h := cycleComplexity_zero_of_contractible (C₁.union C₂) _ hc
   simp only [h, Nat.sub_zero]
 
-/-! ## The Mass Defect: Hollow Triangle Example -/
+/-! ## The geodesic mass defect: hollow triangle example -/
 
 /-- The hollow triangle: same edges as Disk, but NO face.
     This represents "potential matter" - a cycle waiting to be filled. -/
@@ -1178,21 +1182,25 @@ theorem triangle_binding (C₁ C₂ : Complex V) {a b c : V}
   · exact Homotopic₂.face (Or.inr hyes) (Walk.cons (Or.inl hca) (Walk.nil a))
   · exact Homotopic₂.backtrack (Or.inl hac) (Or.inl hca) (Walk.nil a)
 
-/-! ## Simplicial Gravity -/
+/-! ## Positive geodesic binding -/
 
-/-- **Simplicial Gravity**: The analog of `gravity_uniform`.
-    When a cycle gains contractibility from the union, binding energy is positive. -/
-theorem simplicial_gravity (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v)
+/-- **Positive geodesic binding**: when a noncontractible cycle gains
+contractibility from the union, the geodesic binding drop is strictly
+positive. Renamed from `simplicial_gravity` (review #3): this is
+binding positivity in the geodesic model, not an instance or analogue
+of the spine's `SGD.gravity` — no such identification is proved and
+none is claimed. -/
+theorem geodesicBindingDrop_pos (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v)
     (hmatter : ¬c.isContractible₂ C₁)
     (hcontracts : c.contractibleInUnion C₁ C₂) :
     geodesicBindingDrop C₁ C₂ c > 0 := by
-  rw [binding_releases_mass C₁ C₂ c hcontracts]
+  rw [geodesicBindingDrop_eq_geodesicMass C₁ C₂ c hcontracts]
   exact cycleComplexity_pos_of_noncontractible C₁ c hmatter
 
-/-- The hollow triangle is an instance of simplicial gravity. -/
-theorem hollow_is_simplicial_gravity :
+/-- The hollow triangle's binding drop is positive. -/
+theorem hollowTriangle_bindingDrop_pos :
     geodesicBindingDrop HollowTriangle Disk hollowCycle > 0 :=
-  simplicial_gravity HollowTriangle Disk hollowCycle
+  geodesicBindingDrop_pos HollowTriangle Disk hollowCycle
     hollow_not_contractible₂ hollow_contractible_in_union
 
 /-! ## Discrete Hodge Theory -/
