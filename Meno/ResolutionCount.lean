@@ -432,9 +432,7 @@ theorem uniformAction_quotient_complexity :
 /-- **K2 on the sector-action carrier**: the description-cost split
 `log |C_q| = log |G_q| + b₁ · log q` as an identity of uniform
 sector-action complexities — description complexity = gauge
-complexity + residue complexity. Gravity, matter, time, and
-uncertainty now share one carrier: the sector lattice with its
-action. -/
+complexity + residue complexity. -/
 theorem uniformComplexity_split :
     (uniformAction (G.E → ZMod q)).complexity
       = (uniformAction ↥(LinearMap.range (G.gradLin (ZMod q)))).complexity
@@ -445,6 +443,206 @@ theorem uniformComplexity_split :
     G.uniformAction_quotient_complexity q, ← Nat.card_eq_fintype_card,
     ← Nat.card_eq_fintype_card]
   exact G.log_card_split G.cycleBasis q
+
+/-! ## The finite reduction of the intrinsic carrier
+
+Review #6, finding 1: the residue is not merely a finite type sharing
+the `uniformAction` API — it is the **finite reduction of the one
+integral carrier**. The intrinsic carrier's lattice is
+`H¹(G;ℤ) = (G.E → ℤ) ⧸ range ∂ᵀℤ` (the sector lattice of
+`classSectorAction`, `Meno/BasisIndependence.lean`, definitionally by
+`classSectorAction_Λ`). Coefficient reduction `h1Res` maps it onto the
+resolution-`q` residue, its kernel is exactly `q·H¹(G;ℤ)`
+(`ker_h1Res`), so the residue **is** `H¹(G;ℤ) ⧸ q·H¹(G;ℤ)`
+(`h1ResQuotEquiv`), the coordinates commute with the keystones
+(`latticeQuotEquivQ_h1Res`), and the uniform complexity and the K2
+split are derived **through that reduction**
+(`uniformAction_h1ResQuot_complexity`,
+`uniformComplexity_split_carrier`). -/
+
+omit [NeZero q] in
+/-- Componentwise mod-`q` reduction of integer cochains, landing in
+the resolution-`q` description quotient. -/
+noncomputable def cochainResHom :
+    (G.E → ℤ) →+ ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) where
+  toFun τ := Submodule.Quotient.mk (fun e => ((τ e : ℤ) : ZMod q))
+  map_zero' := by
+    rw [show (fun e => (((0 : G.E → ℤ) e : ℤ) : ZMod q))
+        = (0 : G.E → ZMod q) from funext fun e => by
+      show ((0 : ℤ) : ZMod q) = 0
+      exact Int.cast_zero]
+    rfl
+  map_add' τ σ := by
+    rw [show (fun e => (((τ + σ) e : ℤ) : ZMod q))
+        = (fun e => ((τ e : ℤ) : ZMod q)) + fun e => ((σ e : ℤ) : ZMod q) from
+      funext fun e => by
+        show ((τ e + σ e : ℤ) : ZMod q) = ((τ e : ℤ) : ZMod q) + ((σ e : ℤ) : ZMod q)
+        push_cast
+        rfl]
+    exact Submodule.Quotient.mk_add _
+
+omit [NeZero q] in
+/-- Gradients reduce to gradients, so the reduction descends to the
+intrinsic carrier's lattice `H¹(G;ℤ)`. -/
+noncomputable def h1Res :
+    ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
+      ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
+  Submodule.liftQ _ (G.cochainResHom q).toIntLinearMap (by
+    rintro τ ⟨g, rfl⟩
+    rw [LinearMap.mem_ker]
+    show Submodule.Quotient.mk (fun e => (((G.gradLin ℤ g) e : ℤ) : ZMod q))
+      = (0 : (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+    rw [Submodule.Quotient.mk_eq_zero]
+    refine ⟨fun v => ((g v : ℤ) : ZMod q), ?_⟩
+    funext e
+    show ((g (G.tgt e) : ℤ) : ZMod q) - ((g (G.src e) : ℤ) : ZMod q)
+      = ((g (G.tgt e) - g (G.src e) : ℤ) : ZMod q)
+    push_cast
+    rfl)
+
+omit [NeZero q] in
+theorem h1Res_mk (τ : G.E → ℤ) :
+    G.h1Res q (Submodule.Quotient.mk τ)
+      = Submodule.Quotient.mk (fun e => ((τ e : ℤ) : ZMod q)) := rfl
+
+/-- The reduction is surjective: every mod-`q` class lifts through
+`ZMod.val`. -/
+theorem h1Res_surjective : Function.Surjective (G.h1Res q) := by
+  intro x
+  obtain ⟨ω, rfl⟩ := Submodule.Quotient.mk_surjective _ x
+  refine ⟨Submodule.Quotient.mk (fun e => ((ω e).val : ℤ)), ?_⟩
+  rw [G.h1Res_mk q]
+  exact congrArg _ (funext fun e => cast_val_int q (ω e))
+
+/-- **The identification with the resolution keystone**: reducing a
+class and reading mod-`q` coordinates equals reading integer
+coordinates and reducing them — the square with `latticeQuotEquiv`
+and `latticeQuotEquivQ` commutes, for every basis. -/
+theorem latticeQuotEquivQ_h1Res
+    (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :
+    G.latticeQuotEquivQ B q (G.h1Res q κ)
+      = fun j => (((G.latticeQuotEquiv B κ) j : ℤ) : ZMod q) := by
+  obtain ⟨τ, rfl⟩ := Submodule.Quotient.mk_surjective _ κ
+  funext j
+  show (fun e => ((τ e : ℤ) : ZMod q)) ⬝ᵥ G.cyclesQ B q j
+    = ((τ ⬝ᵥ G.cyclesZ B j : ℤ) : ZMod q)
+  exact (G.dot_cast_eq q τ (G.cyclesZ B j)
+    (fun e => ((τ e : ℤ) : ZMod q)) (G.cyclesQ B q j)
+    (fun e => rfl) (fun e => rfl)).symm
+
+/-- **The kernel is exactly `q·H¹(G;ℤ)`**: the reduction kills
+precisely the `q`-th multiples of the integral carrier. -/
+theorem ker_h1Res :
+    LinearMap.ker (G.h1Res q)
+      = LinearMap.range ((q : ℤ) •
+          (LinearMap.id :
+            ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
+              ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)))) := by
+  ext κ
+  constructor
+  · intro hκ
+    rw [LinearMap.mem_ker] at hκ
+    have hsq := G.latticeQuotEquivQ_h1Res G.cycleBasis q κ
+    rw [hκ, map_zero] at hsq
+    have hx : ∀ j, ((G.latticeQuotEquiv G.cycleBasis κ j : ℤ) : ZMod q) = 0 :=
+      fun j => (congrFun hsq.symm j).symm ▸ rfl
+    have hdvd : ∀ j, (q : ℤ) ∣ G.latticeQuotEquiv G.cycleBasis κ j := by
+      intro j
+      have h := hx j
+      rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at h
+    choose y hy using hdvd
+    rw [LinearMap.mem_range]
+    refine ⟨(G.latticeQuotEquiv G.cycleBasis).symm y, ?_⟩
+    show (q : ℤ) • ((G.latticeQuotEquiv G.cycleBasis).symm y) = κ
+    apply (G.latticeQuotEquiv G.cycleBasis).injective
+    rw [map_smul, LinearEquiv.apply_symm_apply]
+    funext j
+    show (q : ℤ) • y j = G.latticeQuotEquiv G.cycleBasis κ j
+    rw [smul_eq_mul]
+    exact (hy j).symm
+  · rintro ⟨κ', hκ'⟩
+    rw [LinearMap.mem_ker, ← hκ']
+    show G.h1Res q ((q : ℤ) • κ') = 0
+    rw [map_smul]
+    generalize G.h1Res q κ' = x
+    obtain ⟨ω, rfl⟩ := Submodule.Quotient.mk_surjective _ x
+    have hω : (q : ℤ) • ω = (0 : G.E → ZMod q) := by
+      funext e
+      show (q : ℤ) • ω e = 0
+      rw [zsmul_eq_mul,
+        show ((q : ℤ) : ZMod q) = 0 from by
+          push_cast
+          exact ZMod.natCast_self q,
+        zero_mul]
+    calc (q : ℤ) • (Submodule.Quotient.mk ω :
+          (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+        = Submodule.Quotient.mk ((q : ℤ) • ω) :=
+          (map_zsmul (Submodule.mkQ _) _ _).symm
+      _ = Submodule.Quotient.mk (0 : G.E → ZMod q) := by rw [hω]
+      _ = 0 := rfl
+
+/-- **THE FINITE REDUCTION OF THE INTRINSIC CARRIER** (review #6,
+finding 1): the resolution-`q` residue is exactly the integral
+carrier's quotient by `q` — `H¹(G;ℤ) ⧸ q·H¹(G;ℤ) ≃ H¹(G;ZMod q)`.
+One integral carrier; its finite reductions. -/
+noncomputable def h1ResQuotEquiv :
+    (((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
+        ⧸ LinearMap.range ((q : ℤ) •
+          (LinearMap.id :
+            ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
+              ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)))))
+      ≃ₗ[ℤ] ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
+  (Submodule.quotEquivOfEq _ _ (G.ker_h1Res q).symm).trans
+    ((G.h1Res q).quotKerEquivOfSurjective (G.h1Res_surjective q))
+
+noncomputable instance :
+    Fintype (((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
+        ⧸ LinearMap.range ((q : ℤ) •
+          (LinearMap.id :
+            ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
+              ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))) :=
+  Fintype.ofEquiv _ (G.h1ResQuotEquiv q).toEquiv.symm
+
+instance :
+    Nonempty (((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
+        ⧸ LinearMap.range ((q : ℤ) •
+          (LinearMap.id :
+            ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
+              ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))) :=
+  ⟨0⟩
+
+/-- **The uniform complexity, through the reduction**: the integral
+carrier's mod-`q` quotient carries `b₁ · log q` of complexity — the
+incompressible content at resolution `q` is a statement about
+`H¹(G;ℤ) ⧸ q·H¹(G;ℤ)`. -/
+theorem uniformAction_h1ResQuot_complexity :
+    (uniformAction (((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
+        ⧸ LinearMap.range ((q : ℤ) •
+          (LinearMap.id :
+            ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
+              ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)))))).complexity
+      = G.b1 * Real.log q := by
+  rw [uniformAction_complexity, ← Nat.card_eq_fintype_card,
+    Nat.card_congr (G.h1ResQuotEquiv q).toEquiv, G.card_quotient_eq q]
+  push_cast [Real.log_pow]
+  ring
+
+/-- **K2 through the intrinsic carrier's reduction** (review #6,
+finding 1): description complexity splits as gauge complexity plus
+the complexity of the integral carrier's mod-`q` reduction. Gravity,
+matter, time, and uncertainty share one carrier — the sector lattice
+`H¹(G;ℤ)` with its harmonic action (`classSectorAction`) — and the
+information face is priced on that carrier's finite reductions. -/
+theorem uniformComplexity_split_carrier :
+    (uniformAction (G.E → ZMod q)).complexity
+      = (uniformAction ↥(LinearMap.range (G.gradLin (ZMod q)))).complexity
+        + (uniformAction (((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
+            ⧸ LinearMap.range ((q : ℤ) •
+              (LinearMap.id :
+                ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
+                  ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)))))).complexity := by
+  rw [G.uniformComplexity_split q, G.uniformAction_quotient_complexity q,
+    G.uniformAction_h1ResQuot_complexity q]
 
 end IncidenceGraph
 

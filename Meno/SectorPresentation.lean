@@ -13,7 +13,8 @@ as a quadratic action of rank `r`. The data:
   in `End L.base` corresponds to addition in the lattice. Together these
   promote `coord` to a monoid isomorphism (between the multiplicative
   `End` and the additive `Fin r → ℤ`).
-* `Q`, `Q_symm`, `Q_posDef` — the Gram form of the quadratic action.
+* `Q`, `Q_posDef` — the Gram form of the quadratic action (symmetry
+  is derived, review #6).
 * `energy_eq` — the energy on the loop kernel coincides with the
   quadratic form in lattice coordinates.
 
@@ -43,7 +44,6 @@ structure SectorPresentation (L : LoopKernelObj.{u, v}) (r : ℕ) where
   coord_comp : ∀ g h : End L.base, coord (g ≫ h) = coord g + coord h
   /-- Gram form of the quadratic action. -/
   Q : Matrix (Fin r) (Fin r) ℝ
-  Q_symm : Q.IsSymm
   Q_posDef : Q.PosDef
   /-- Energy on the loop kernel is the quadratic form in lattice
   coordinates. -/
@@ -54,13 +54,17 @@ namespace SectorPresentation
 
 variable {L : LoopKernelObj.{u, v}} {r : ℕ} (P : SectorPresentation L r)
 
+/-- Symmetry of the presentation's Gram form — a theorem of
+positive-definiteness over ℝ, with the retired field's name and
+statement (review #6). -/
+theorem Q_symm : P.Q.IsSymm := P.Q_posDef.isSymm
+
 /-- The quadratic action induced by a presentation. Summability is a
 theorem of every quadratic action (`QuadraticAction.summable`) — the
 old transport of `L.summable` through the `coord` equivalence is no
 longer needed to build the action. -/
 noncomputable def toQuadraticAction : QuadraticAction r where
   Q := P.Q
-  Q_symm := P.Q_symm
   Q_posDef := P.Q_posDef
 
 /-- The partition function transports: `L.partFn` equals the partition
@@ -133,7 +137,6 @@ noncomputable def dualPresentation (P : SectorPresentation L r) :
   coord_one := P.coord_one
   coord_comp := P.coord_comp
   Q := P.toQuadraticAction.dual.Q
-  Q_symm := P.toQuadraticAction.dual.Q_symm
   Q_posDef := P.toQuadraticAction.dual.Q_posDef
   energy_eq _ := rfl
 

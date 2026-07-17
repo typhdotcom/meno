@@ -48,12 +48,15 @@ theta-graph program. -/
 structure HarmonicGramData (V : Type u) where
   r : ℕ
   gram : Matrix (Fin r) (Fin r) ℝ
-  gram_symm : gram.IsSymm
   gram_posDef : gram.PosDef
 
 namespace HarmonicGramData
 
 variable {V : Type u} (H : HarmonicGramData V)
+
+/-- Symmetry of the Gram form — a theorem of positive-definiteness
+over ℝ, with the retired field's name and statement (review #6). -/
+theorem gram_symm : H.gram.IsSymm := H.gram_posDef.isSymm
 
 /-- Summability of the Boltzmann weight — a theorem of the
 positive-definite Gram, with the retired field's name and statement
@@ -72,7 +75,6 @@ noncomputable def energy (k : Fin H.r → ℤ) : ℝ :=
 /-- The `QuadraticAction` produced by the harmonic Gram data. -/
 noncomputable def toQuadraticAction : QuadraticAction H.r where
   Q := H.gram
-  Q_symm := H.gram_symm
   Q_posDef := H.gram_posDef
 
 theorem toQuadraticAction_Q : H.toQuadraticAction.Q = H.gram := rfl

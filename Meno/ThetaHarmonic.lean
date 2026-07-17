@@ -116,9 +116,6 @@ graph (`basisGramData_theta_gram`), not asserted. -/
 noncomputable def thetaHarmonicGramData : HarmonicGramData (Fin 5) where
   r := 2
   gram := !![1/3, -(1/6); -(1/6), 1/3]
-  gram_symm := by
-    ext i j
-    fin_cases i <;> fin_cases j <;> rfl
   gram_posDef := thetaGram_posDef
 
 /-- The Gram matrix of the theta data, in literal form. -/

@@ -207,21 +207,34 @@ theorem summable_exp_neg_quadForm {d : ℕ} {M : Matrix (Fin d) (Fin d) ℝ}
         rw [Finset.mul_sum, ← Finset.sum_neg_distrib]
         exact Finset.sum_congr rfl (fun i _ => by ring)
 
-/-- A quadratic action of rank `r`: a symmetric positive-definite Gram
-form `Q : Matrix (Fin r) (Fin r) ℝ`. Summability of the Boltzmann
-weight `exp(-kᵀ Q k)` on `Fin r → ℤ` is **derived**
-(`QuadraticAction.summable`), never stored (review #5).
+/-- Over `ℝ`, a positive-definite matrix is symmetric: hermitian with
+trivial star. Named so the retired `Q_symm`/`gram_symm` fields become
+derived theorems (review #6). -/
+theorem _root_.Matrix.PosDef.isSymm {d : ℕ} {A : Matrix (Fin d) (Fin d) ℝ}
+    (hA : A.PosDef) : A.IsSymm := by
+  have h : Aᴴ = A := hA.1
+  ext i j
+  calc Aᵀ i j = A j i := rfl
+    _ = star (A j i) := (star_trivial _).symm
+    _ = Aᴴ i j := rfl
+    _ = A i j := by rw [h]
 
-`Q_symm` is redundant over ℝ (`Q_posDef.isHermitian` already gives
-symmetry) but we keep it as natural data. -/
+/-- A quadratic action of rank `r`: a positive-definite Gram form
+`Q : Matrix (Fin r) (Fin r) ℝ`. Symmetry (`QuadraticAction.Q_symm`)
+and summability of the Boltzmann weight (`QuadraticAction.summable`)
+are **derived**, never stored (reviews #5, #6). -/
 structure QuadraticAction (r : ℕ) where
   Q : Matrix (Fin r) (Fin r) ℝ
-  Q_symm : Q.IsSymm
   Q_posDef : Q.PosDef
 
 namespace QuadraticAction
 
 variable {r : ℕ} (A : QuadraticAction r)
+
+/-- **Symmetry is a theorem** (review #6): positive-definiteness over
+`ℝ` gives it. Same name and statement as the retired field, so
+consumers are unchanged. -/
+theorem Q_symm : A.Q.IsSymm := A.Q_posDef.isSymm
 
 /-- **Summability is a theorem** (PLAN Goal 2, closed): the Boltzmann
 weight of a quadratic action is summable, by coercivity of its
@@ -284,8 +297,6 @@ noncomputable def scalarPartFn (α : ℝ) : ℝ :=
 /-- Scalar quadratic action at coupling `α > 0`: rank 1 with `Q = !![α]`. -/
 noncomputable def ofScalar (α : ℝ) (hα : 0 < α) : QuadraticAction 1 where
   Q := !![α]
-  Q_symm := by
-    ext i j; fin_cases i; fin_cases j; rfl
   Q_posDef := by
     refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, ?_⟩
     · ext i j; fin_cases i; fin_cases j; rfl
@@ -418,9 +429,6 @@ survives as the elementary corroborating derivation. -/
 noncomputable def ofDiagonal₂ (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
     QuadraticAction 2 where
   Q := !![α, 0; 0, β]
-  Q_symm := by
-    ext i j
-    fin_cases i <;> fin_cases j <;> rfl
   Q_posDef := by
     refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, ?_⟩
     · ext i j; fin_cases i <;> fin_cases j <;> rfl
@@ -642,7 +650,6 @@ entries positive. -/
 noncomputable def ofDiagonal {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) :
     QuadraticAction r where
   Q := Matrix.diagonal α
-  Q_symm := Matrix.isSymm_diagonal α
   Q_posDef := by
     refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, ?_⟩
     · show (Matrix.diagonal α)ᴴ = Matrix.diagonal α

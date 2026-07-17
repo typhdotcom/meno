@@ -1,4 +1,5 @@
 import Meno.HarmonicClass
+import Mathlib.LinearAlgebra.Matrix.Basis
 
 /-! # Basis Independence (C3)
 
@@ -86,6 +87,79 @@ theorem basisGramData_partFn {n : ℕ}
   rw [G.basisGramData_partFn_eq_tsum_classes B,
     ← G.basisGramData_partFn_eq_tsum_classes G.cycleBasis]
   rfl
+
+/-! ## The intrinsic carrier
+
+The thesis's carrier, as one object (review #6, finding 1): the sector
+lattice is `H¹(G;ℤ)` and the action is the harmonic energy — the
+positive-definite quadratic action in intrinsic form, with the zero
+class as vacuum. Every basis-coordinate quadratic action is a *chart*
+of this carrier: the keystone equivalence `latticeQuotEquiv B`
+transports the energies (`classSectorAction_energy`) and the partition
+functions agree (`classSectorAction_partFn`,
+`basisGramData_partFn_eq_classSectorAction`). The finite-resolution
+reductions of this carrier live in `Meno/ResolutionCount.lean`
+(`h1ResQuotEquiv`, `uniformComplexity_split_carrier`). -/
+
+/-- The class weights are summable — transported from the fundamental
+basis's sector action along the keystone equivalence. -/
+theorem summable_classWeight :
+    Summable (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
+      Real.exp (-G.harmonicEnergy κ)) := by
+  have h := (Equiv.summable_iff (G.h1QuotEquiv.toEquiv)
+    (f := fun k : Fin G.b1 → ℤ =>
+      Real.exp (-((G.basisGramData G.cycleBasis).energy k)))).mpr
+    (G.basisGramData G.cycleBasis).toQuadraticAction.toSectorAction.summable
+  exact h.congr fun κ => rfl
+
+/-- **THE INTRINSIC CARRIER** (review #6, finding 1): the sector
+lattice `H¹(G;ℤ)` with the harmonic energy, as a `SectorAction`. The
+zero class is the vacuum, energies are nonnegative and positive off
+zero (`harmonicEnergy_pos`), and the Boltzmann weight is summable —
+all derived. This is the one integral carrier of which every
+basis-coordinate quadratic action is a chart and every
+finite-resolution residue is a quotient. -/
+noncomputable def classSectorAction : SectorAction.{v} where
+  Λ := (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)
+  E := G.harmonicEnergy
+  E_zero := ⟨0, G.harmonicEnergy_zero⟩
+  E_nonneg := fun κ => G.harmonicEnergy_nonneg κ
+  summable := G.summable_classWeight
+
+/-- The carrier's sector lattice is `H¹(G;ℤ)` — definitionally. -/
+theorem classSectorAction_Λ :
+    (G.classSectorAction).Λ
+      = ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) := rfl
+
+/-- **Every basis action is a chart of the carrier** (energy half):
+the keystone equivalence carries the basis-coordinate energy to the
+intrinsic harmonic energy. -/
+theorem classSectorAction_energy {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice)
+    (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :
+    ((G.basisGramData B).toQuadraticAction.toSectorAction).E
+        (G.latticeQuotEquiv B κ)
+      = (G.classSectorAction).E κ := by
+  show (G.basisGramData B).toQuadraticAction.energy (G.latticeQuotEquiv B κ)
+    = G.harmonicEnergy κ
+  rw [(G.basisGramData B).toQuadraticAction_energy]
+  exact G.basisGramData_energy_latticeQuot B κ
+
+/-- The intrinsic carrier's partition function is the graph's. -/
+theorem classSectorAction_partFn :
+    (G.classSectorAction).partFn = G.partFn := by
+  show (∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
+      Real.exp (-G.harmonicEnergy κ)) = G.partFn
+  rw [← G.basisGramData_partFn_eq_tsum_classes G.cycleBasis]
+  rfl
+
+/-- **Every basis action is a chart of the carrier** (partition
+half): the basis-coordinate Boltzmann sum equals the carrier's. -/
+theorem basisGramData_partFn_eq_classSectorAction {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
+    (G.basisGramData B).toQuadraticAction.toSectorAction.partFn
+      = (G.classSectorAction).partFn := by
+  rw [G.basisGramData_partFn B, G.classSectorAction_partFn]
 
 end IncidenceGraph
 

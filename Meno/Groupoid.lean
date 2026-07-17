@@ -780,7 +780,6 @@ noncomputable def cycleSectorPresentation (n : ℕ) (hn : n ≥ 3) :
         + cycleCanonicalWinding n hn (cycleBaseObj n hn) h
     exact cycleCanonicalWinding_comp n hn (cycleBaseObj n hn) g h
   Q := !![1 / (n : ℝ)]
-  Q_symm := (Meno.cycleHarmonicGramData n hn).gram_symm
   Q_posDef := (Meno.cycleHarmonicGramData n hn).gram_posDef
   energy_eq := by
     intro g

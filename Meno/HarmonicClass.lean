@@ -167,6 +167,21 @@ theorem harmonicEnergy_pos
     (G.h1QuotEquiv κ)
     (fun h0 => hκ (G.h1QuotEquiv.injective (h0.trans (map_zero _).symm)))
 
+/-- The zero class has zero harmonic energy — the vacuum sector of the
+intrinsic carrier (`classSectorAction`, `Meno/BasisIndependence.lean`). -/
+theorem harmonicEnergy_zero : G.harmonicEnergy 0 = 0 := by
+  show (G.basisGramData G.cycleBasis).energy (G.h1QuotEquiv 0) = 0
+  rw [map_zero]
+  exact (G.basisGramData G.cycleBasis).energy_zero
+
+/-- The harmonic energy is nonnegative on every class. -/
+theorem harmonicEnergy_nonneg
+    (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :
+    0 ≤ G.harmonicEnergy κ := by
+  have h := (G.basisGramData G.cycleBasis).toQuadraticAction.energy_nonneg
+    (G.h1QuotEquiv κ)
+  rwa [(G.basisGramData G.cycleBasis).toQuadraticAction_energy] at h
+
 end IncidenceGraph
 
 end Meno

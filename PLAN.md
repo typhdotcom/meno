@@ -92,52 +92,12 @@ are the same path.
 
 ## The Completion Path
 
-*(Amendment, Phase 41, rule 3 — the presentation carriers changed.
-Review #5 retired the presentation **structures** entirely: a
-presentation is now an actual lattice basis `Module.Basis (Fin n) ℤ
-G.cycleLattice`, every former field a theorem of it
-(`Meno/GraphHomology.lean`), and the priced Gram data is derived
-(`IncidenceGraph.basisGramData`). Where the closed C-items below
-record their closure through `CycleBasis`/`CyclePresentation`/
-`IntegralCyclePresentation` — structures that no longer exist — the
-acceptance content survives verbatim on the basis abstraction:
-`r_eq_b1` became `card_eq_b1`, `exists_rebase_related` became
-`exists_unimodular_relating` (Mathlib's change-of-basis matrix),
-`partFn_welldef` became `basisGramData_partFn`, and the four stored
-fields of the integral presentation are the theorems `cyclesZ_mem`,
-`cast_independent`/`gramOf_cyclesR_posDef`, `periods_onto`, and
-`integral_potentials`. No goal state changed; the objects carrying
-the theorems did.)*
-
 ### C1 -- One incidence-graph foundation — CLOSED (Phase 32)
 
 **Intent.** A single graph substrate under everything, and a wedge model
 that is genuinely a wedge.
 
-**Current state (Phase 29).** Substantially built: `IncidenceGraph`
-exists (`Meno/IncidenceGraph.lean`) with boundary/gradient/Stokes
-defined once over any commutative ring, the walk calculus, components,
-the gauge theorem `finrank_gauge` (acceptance ✓), and walk
-integration; `CyclePresentation`/`IntegralCyclePresentation` are
-graph-indexed and every downstream file compiles through them (the
-parallel `grad`/`gradLinZ`/`gradLinQ` definitions are deleted); the
-**genuine wedge** `wedgeGraph` exists (`Meno/GraphInstances.lean`) on
-`Option (Fin (n₁−1) ⊕ Fin (n₂−1))` — `n₁ + n₂ − 1` vertices, no
-spectator — with `wedgeGraph_preconnected` (`c = 1`) and
-`wedgeGraph_b1 : b₁ = 2` by Euler, with no hand-built basis. Cycle and
-theta instances exist with `b₁ = 1` and `b₁ = 2`.
-
-**Closed (Phase 32).** The spectator stack is gone: the old graph and
-presentations, `PeriodHarmonic`'s vertex-bound wedge machinery
-(routing, indicator lemmas, the constancy spanning argument) — all
-deleted; the vertex-free Gram layer (`wedgeCycles`,
-`gramOf_wedgeCycles`, `wedgePeriodData`) survives and serves the
-genuine wedge. `CycleHarmonic`'s wedge matter and the diagonal-Gram
-closed forms (`wedgeMatter₁_mass = 1/n₁`) now run over the
-`n₁ + n₂ − 1`-vertex model — the rewiring changed no proofs, because
-the Gram data never saw the vertex type.
-
-**Path.** Define
+**The object.**
 
 ```lean
 structure IncidenceGraph where
@@ -147,132 +107,135 @@ structure IncidenceGraph where
   src tgt : E → V
 ```
 
-with `∂ℤ : (E → ℤ) →ₗ[ℤ] (V → ℤ)`, `∂ℝ`, and `grad` defined once here
-(the existing `flowBoundary`/`grad` relocate), plus the component count
-`c(G)` (cardinality of the quotient of `V` by the equivalence generated
-by edge adjacency). `CyclePresentation` refactors to present an
-`IncidenceGraph` instead of carrying `src`/`tgt` itself.
+with `∂` and `grad` defined **once**, over any commutative ring — `ℝ`,
+`ℤ`, and `ZMod q` are the consumers — plus the walk calculus,
+components, walk integration, the cycle lattice
+`H₁(G;ℤ) := ker ∂ℤ`, and the intrinsic
+`b1 := Module.finrank ℤ G.cycleLattice`
+(`Meno/IncidenceGraph.lean`). Every downstream file speaks through
+this substrate; no parallel boundary or gradient operators exist.
 
-**Acceptance theorems.**
+**Acceptance, delivered.**
 
 ```lean
-theorem finrank_ker_grad (G : IncidenceGraph) :
-    Module.finrank ℝ (LinearMap.ker G.gradLin) = c G        -- gauge = locally constant
+theorem finrank_gauge (G : IncidenceGraph) :
+    Module.finrank ℝ (LinearMap.ker (G.gradLin ℝ)) = G.componentCard
 ```
 
-and three `IncidenceGraph` instances -- cycle, theta, wedge -- where the
-wedge instance has `Fintype.card V = n₁ + n₂ − 1` and `c = 1`
-(connected), so Euler gives `b₁ = 2` with no spectator vertex.
+— gauge = locally constant functions — and three instances: cycle,
+theta, and the **genuine wedge** `wedgeGraph`
+(`Meno/GraphInstances.lean`) on `Option (Fin (n₁−1) ⊕ Fin (n₂−1))` —
+`n₁ + n₂ − 1` vertices, no spectator — with `wedgeGraph_preconnected`
+(`c = 1`) and `wedgeGraph_b1 : b₁ = 2` by Euler. Cycle and theta have
+`b₁ = 1` and `b₁ = 2` (`cycleGraph_b1`, `thetaGraph_b1`), each
+corroborated through its lattice basis (`cycleGraph_b1'`,
+`thetaGraph_b1'`, `wedgeGraph_b1'` via `card_eq_b1`).
 
-**Consumers.** Every current `CyclePresentation` theorem compiles through
-the refactored structure; the wedge closed forms (diagonal Gram
-`!![1/n₁, 0; 0, 1/n₂]`) re-derive over the corrected vertex type.
+**Consumers.** The wedge closed forms (diagonal Gram
+`!![1/n₁, 0; 0, 1/n₂]`) and wedge matter (`wedgeMatter₁_mass = 1/n₁`)
+run over the genuine `n₁ + n₂ − 1`-vertex model; the spectator stack
+(the Phase-21 graph, its constancy machinery) is deleted.
 
-### C2 -- Intrinsic integral topology and the fundamental-presentation theorem — CLOSED (Phase 29)
+### C2 -- Intrinsic integral topology and the fundamental-basis theorem — CLOSED (Phase 29)
 
-**Intent.** Retire the adopting review's central conditionality: the
-then-current `IntegralCyclePresentation` *stored* `periods_onto` and
-`integral_potentials` as fields, discharged instance-by-instance. The
-object had to become intrinsic and the fields theorems available for
-**every** finite graph. *(Completed in two steps: Phase 29 made the
-fields theorems of the fundamental construction; Phase 41 — review #5,
-finding 2 — deleted the storing structure itself, so the fields
-cannot be stored anywhere: `periods_onto`, `integral_potentials`,
-independence, and Gram positivity are theorems of every
-`Module.Basis (Fin n) ℤ G.cycleLattice`.)*
+**Intent.** Retire the adopting review's central conditionality:
+period realizability and integral potentials were stored obligations,
+discharged instance-by-instance. The object had to become intrinsic
+and the obligations theorems available for **every** finite graph.
+The current state is stronger than the intent: a presentation **is**
+a lattice basis `Module.Basis (Fin n) ℤ G.cycleLattice`, and no
+structure exists in which the obligations could be stored.
 
 **Definitions.** `H₁(G;ℤ) := LinearMap.ker G.∂ℤ` (a submodule of
-`E → ℤ`); `H¹(G;ℤ) := (E → ℤ) ⧸ LinearMap.range G.gradℤ`. Coordinates on
-either are *produced* by choosing a primitive basis; they no longer
-define the object.
+`E → ℤ`); `H¹(G;ℤ) := (E → ℤ) ⧸ LinearMap.range G.gradℤ`. Coordinates
+on either are *produced* by choosing a basis; they do not define the
+object.
 
-**Path — amended Phase 29 and executed** (rule 3: amendment recorded
-here, same acceptance theorems). The spanning-forest/chord sketch was
-replaced by an equivalent, cleaner construction
-(`Meno/FundamentalPresentation.lean`): `H₁(G;ℤ) := ker ∂ℤ` is
-**saturated**, so `ℤ^E ⧸ H₁` is torsion-free, hence free, hence
-projective — the quotient splits and `ℤ^E` retracts onto `H₁`; a
-`ℤ`-basis comes from the PID structure theorem
-(`Submodule.basisOfPid`), and extending its coordinates along the
-retraction yields one integer matrix `P` with `P Cᵀ = 1` that
-discharges independence (hence the positive-definite Gram) and
-`periods_onto` (`τ := Pᵀk`) at once. `integral_potentials` and real
-spanning come from walk integration (`grad_integrate`): chains of
-closed walks lie in `H₁`, so vanishing periods kill all closed-walk
-sums (`closedWalkSum_eq_zero`), and integrating along chosen walks
-from component basepoints produces the potential — the forest-path
-idea, without the forest bookkeeping.
+**The construction** (`Meno/GraphHomology.lean`). `H₁(G;ℤ) = ker ∂ℤ`
+is **saturated**, so `ℤ^E ⧸ H₁` is torsion-free, hence free, hence
+projective — the quotient splits and `ℤ^E` retracts onto `H₁`; the
+fundamental basis `cycleBasis` comes from the PID structure theorem
+(`Submodule.basisOfPid`). For an *arbitrary* basis `B`, extending its
+coordinates along the retraction yields one integer matrix `P` with
+`P Cᵀ = 1` that discharges real independence (`cast_independent`) and
+period surjectivity (`periods_onto`, `τ := Pᵀk`; `periodsR_onto` over
+`ℝ`) at once. `integral_potentials`, exactness, and real spanning
+come from walk integration (`grad_integrate`): chains of closed walks
+lie in `H₁`, so vanishing periods kill all closed-walk sums
+(`closedWalkSum_eq_zero`), and integrating along chosen walks from
+component basepoints produces the potential.
 
-**Acceptance theorems.**
+**Acceptance, delivered** (for **every** finite graph and every
+lattice basis).
 
 ```lean
-noncomputable def IncidenceGraph.fundamentalPresentation (G : IncidenceGraph) :
-    IntegralCyclePresentation G                  -- with r = |E| − |V| + c G
+noncomputable def IncidenceGraph.cycleBasis (G : IncidenceGraph) :
+    Module.Basis (Fin G.b1) ℤ G.cycleLattice     -- existence, PID route
 
-theorem h1_free (G) : Module.Free ℤ (H₁ G)       -- finite free, rank b₁
-theorem h1_quot_coords (G) :
-    H¹(G;ℤ) ≃ₗ[ℤ] (Fin (b₁ G) → ℤ)               -- latticeQuotEquiv ∘ fundamentalPresentation
+instance : Module.Free ℤ G.cycleLattice           -- H₁ finite free, rank b₁
+noncomputable def IncidenceGraph.h1QuotEquiv (G) :
+    ((G.E → ℤ) ⧸ range ∂ᵀℤ) ≃ₗ[ℤ] (Fin G.b1 → ℤ) -- latticeQuotEquiv at cycleBasis
 ```
 
-**Delivered (Phase 29).** `fundamentalPresentation G :
-IntegralCyclePresentation G` for every finite graph; `Module.Free ℤ
-H₁` + `finrank_cycleLattice` (= b₁); `h1QuotEquiv` (`(G.E → ℤ) ⧸
-range ∂ᵀℤ ≃ₗ[ℤ] ℤ^{b₁}` — the intrinsic `H¹` coordinates); `b1_eq`
-(Euler `b₁ = |E| − |V| + c` for every finite graph); `card_quotient_eq`
-(K1 at every resolution, every finite graph, no presentation
-hypotheses); consumers exercised on concrete graphs
-(`wedgeGraph_b1 = 2` via Euler alone; `thetaGraph_b1 = 2` and
-`cycleGraph_b1' = 1` via `r_eq_b1`). C3-C6 are unblocked.
+plus `b1_eq` (Euler `b₁ = |E| − |V| + c`, proved in the topology
+layer), `finrank_ker_boundaryLin` (the real cycle-space rank),
+`spanning_of_card_eq_b1` (the spanning criterion), `basisOfCycles`
+(the concrete-instance bridge), and `card_quotient_eq` (K1 at every
+resolution, no per-graph hypotheses, `Meno/ResolutionCount.lean`).
+Concrete corroborations: `wedgeGraph_b1 = 2` by Euler alone;
+`cycleGraph_b1'`, `thetaGraph_b1'`, `wedgeGraph_b1'` through each
+graph's hand-built basis via `card_eq_b1`.
 
 ### C3 -- Basis independence as a property of the graph — CLOSED (Phase 30)
 
-**Current state.** Phase 23 proved invariance under a *given* unimodular
-change: `rebase_energy`, `rebase_partFn`, `MatterSector.rebaseEquiv` +
-`rebaseEquiv_mass`. Phase 29 added the first brick: **rank
-well-definedness** (`IntegralCyclePresentation.r_eq_b1` — every
-presentation of `G` has rank `b₁ G`, by composing the two keystone
-equivalences). Missing is the full statement that any two integral
-presentations of the *same graph* are `GL(r,ℤ)`-related -- which is
-where the Phase 24 primitivity hypothesis gets consumed (two primitive
-bases of one lattice differ by GL(r,ℤ)).
+**Intent.** No physical quantity may depend on the chosen basis:
+rank, energy, mass, and the partition function must be functions of
+the graph alone.
 
-**Acceptance theorems.**
+**Acceptance, delivered** (statements at the current basis carrier).
 
 ```lean
-theorem presentations_rebase_related (P P' : IntegralCyclePresentation G) :
-    ∃ U hU, ∀ i, P'.cycles i = ((P.rebase U hU).cycles) i
+theorem card_eq_b1 (B : Module.Basis (Fin n) ℤ G.cycleLattice) : n = G.b1
 
-theorem partFn_welldef (P P' : IntegralCyclePresentation G) :
-    P.partFn = P'.partFn
+theorem exists_unimodular_relating (B B' : Module.Basis (Fin n) ℤ G.cycleLattice) :
+    ∃ U : Matrix (Fin n) (Fin n) ℤ, IsUnit U.det ∧
+      ∀ j, G.cyclesZ B' j = fun e => ∑ i, U i j * G.cyclesZ B i e
+
+theorem basisGramData_partFn (B) :
+    (G.basisGramData B).toQuadraticAction.toSectorAction.partFn = G.partFn
 ```
 
 so `IncidenceGraph.partFn`, `IncidenceGraph.harmonicEnergy`, and the mass
 spectrum become functions of the graph alone.
 
-**Delivered (Phase 30, `Meno/BasisIndependence.lean`).**
-`exists_rebase_related` (the acceptance's `presentations_rebase_related`,
-with the `Fin`-cast along `r = r' = b₁` made explicit): any two integral
-presentations are `GL(r,ℤ)`-related. The load-bearing new theorem is
-`exists_int_coords` — **primitivity is forced**: every integral cycle
-is an integer combination of any presentation's basis, because
-`periods_onto` supplies unit-period realizers `τ⁽ⁱ⁾` and the real
-coordinates are the integers `⟨τ⁽ⁱ⁾, x⟩`. Energy transports
-*variationally* (`energy_reindex` via `IsLeast.unique` — no
-matrix-inverse reindexing), giving `partFn_welldef` and the
-graph-level `IncidenceGraph.partFn` with `partFn_eq`: the partition
-function is a function of the graph alone. Consumed by C4.
+**Delivered (`Meno/BasisIndependence.lean`,
+`Meno/GraphHomology.lean`).** Rank well-definedness is `card_eq_b1`
+(one line from `finrank_eq_card_basis`); unimodular relatedness is
+Mathlib's change-of-basis matrix (`Module.Basis.toMatrix` +
+`invertibleToMatrix`); primitivity is `Module.Basis.sum_repr` — a
+basis of the lattice spans it integrally by definition — with the
+raw-family form `exists_int_coords` (real spanning + unit-period
+realizers force integer coordinates) serving the concrete-instance
+bridge. Energy transports *variationally*
+(`basisGramData_energy_latticeQuot` via `IsLeast.unique` — no
+matrix-inverse reindexing), giving `basisGramData_partFn` and the
+graph-level `IncidenceGraph.partFn`: the partition function is a
+function of the graph alone. The intrinsic form of all of this is
+the carrier `classSectorAction` (`H¹(G;ℤ)` with the harmonic energy),
+of which every basis action is a chart (`classSectorAction_energy`,
+`basisGramData_partFn_eq_classSectorAction`). Consumed by C4.
 
 ### C4 -- General harmonic theory for every finite graph — CLOSED (Phase 30)
 
-**Current state.** All core theorems exist at presentation level:
-`period_eq_zero_iff_exists_grad` (generic exactness, no connectivity),
-`cochainQuotEquiv` + `finrank_cochainQuot`, the variational identity
-`ofCycles_energy_isLeast` (unique least-norm representative through the
-Gram form), and the bridge to `QuadraticAction` via `toGramData`. Only
-the quantifier is missing: these hold for graphs *given* a presentation.
+**The generic layer.** All core theorems hold for every lattice
+basis: `period_eq_zero_iff_exists_grad` (exactness, no connectivity,
+by the walk engine), `cochainQuotEquiv` + `finrank_cochainQuot`, the
+variational identity `ofCycles_energy_isLeast` (unique least-norm
+representative through the Gram form), and the bridge to
+`QuadraticAction` via `basisGramData`.
 
-**Acceptance theorems** (compositions once C2/C3 close -- listed
-explicitly so closure is checked against statements, not intentions):
+**Acceptance theorems** (stated at adoption as compositions to check
+against statements, not intentions):
 
 ```lean
 noncomputable def IncidenceGraph.harmonicEnergy (G) : H¹(G;ℤ) → ℝ   -- basis-free via C3
@@ -292,10 +255,10 @@ for **every** finite `G`, no presentation in the hypotheses.
 identity, with "realizes" concretized as prescribed periods);
 `cochainQuotEquivR` + `finrank_cochainQuotR` (real cochains modulo
 gradients ≃ `ℝ^{b₁}`, every finite graph). Basis-freeness is
-`energy_eq_harmonicEnergy`: **every** presentation's energy at the
-periods of `τ` equals the harmonic energy of `τ`'s class — proved
-through `periods_eq_cast_iff` (realizing a class means `τ̂ + grad f`,
-a presentation-free condition), so the variational sets coincide and
+`energy_eq_harmonicEnergy`: **every** basis's energy at the periods
+of `τ` equals the harmonic energy of `τ`'s class — proved through
+`periods_eq_cast_iff` (realizing a class means `τ̂ + grad f`, a
+basis-free condition), so the variational sets coincide and
 `IsLeast.unique` finishes; no coordinate transport appears in the
 proof. `h1QuotEquiv_mk` is `rfl` — the keystone equivalence computes
 definitionally on representatives. Consumer: `harmonicEnergy_pos`
@@ -304,67 +267,53 @@ inequality, C6's bridge).
 
 ### C5 -- Concrete graphs as consumers — CLOSED (Phase 32)
 
-**Path — amended Phase 32 and executed.** Every concrete presentation
-is a rebase-image of its graph's fundamental presentation — delivered
-as instances of C3's general `exists_rebase_related`
-(`cycleIntegralPresentation_rebase_related`,
-`thetaIntegralPresentation_rebase_related`,
-`wedgeGraphIntegralPresentation_rebase_related`,
-`Meno/WedgePresentation.lean`). The closed forms -- `Q = !![1/n]`,
-theta's non-diagonal rank-2 Gram, the wedge diagonal -- survive as
-corroborating computations. Amendment (rule 3): the sentence "no
-concrete file constructs its own spanning theory by hand" is
-sharpened to what it meant — the *parallel spanning framework* (the
-Phase-21 wedge constancy machinery) is deleted, its role taken by the
-Euler criterion; the cycle and theta instances retain their ~10-line
-per-instance spanning witnesses as corroborating primitivity data,
-exactly as the C2 section describes ("concrete instances discharge
-these by hand; C2 discharges them for every finite graph"). Moving
-those instances downstream of `FundamentalPresentation` to route them
-through Euler would invert the import graph for zero mathematical
-gain; the general theorems already subsume them.
+**Delivered.** The concrete graphs carry genuine lattice bases —
+`cycleLatticeBasis`, `thetaLatticeBasis`, `wedgeLatticeBasis`
+(`Meno/GraphInstances.lean`), assembled by `basisOfCycles` from raw
+closedness, independence, and integral-spanning facts (the wedge's
+integral spanning via `exists_int_coords`: Euler real spanning +
+single-edge period realizers). Each hand-built basis is a unimodular
+recombination of its graph's fundamental basis — instances of C3's
+`exists_unimodular_relating` (`cycleLatticeBasis_unimodular_related`,
+`wedgeLatticeBasis_unimodular_related`,
+`Meno/WedgePresentation.lean`; `thetaLatticeBasis_unimodular_related`,
+`Meno/ThetaHarmonic.lean`). The closed forms — `Q = !![1/n]`, theta's
+non-diagonal rank-2 Gram (`basisGramData_theta_gram` ties the derived
+pricing to the literal), the wedge diagonal — survive as
+corroborating computations, and each basis's cardinality re-derives
+its graph's `b₁` (`card_eq_b1`), corroborating Euler.
 
 ### C6 -- Intrinsic matter — CLOSED (Phase 33)
 
-**Current state.** `MatterSector P := {k : Fin P.r → ℤ // k ≠ 0}`
-(Meno/Matter.lean) is presentation-indexed. All physics is already
-theorems -- `mass_pos`, `mass_isLeast`, `not_gradient`, `annihilation`,
-`rebaseEquiv_mass` -- but the *index* is a coordinate chart.
-
-**Path.**
+**The object.**
 
 ```lean
 def MatterSector (G : IncidenceGraph) := {κ : H¹(G;ℤ) // κ ≠ 0}
 ```
 
-with `mass := G.harmonicEnergy κ` (C4) and the five physics theorems
-restated over the intrinsic object. The coordinate subtype is then
-removed as a definition; `latticeQuotEquiv` supplies coordinates inside
-proofs. `rebaseEquiv` becomes the chart-change lemma of the intrinsic
-object rather than a bijection between different objects.
+— intrinsic, never coordinate-indexed; `latticeQuotEquiv` supplies
+coordinates inside proofs only.
 
-**Delivered (Phase 33, `Meno/Matter.lean` rewritten).**
+**Delivered (`Meno/Matter.lean`).**
 `MatterSector G := {κ : (G.E → ℤ) ⧸ range ∂ᵀℤ // κ ≠ 0}` with
 `mass := harmonicEnergy`, `mass_pos`, `mass_isLeast`, `not_gradient`
 (trapped paradox, intrinsic), `neg`/`annihilation` (through the
-fundamental Gram's binding algebra), `exists_matter` (`0 < b₁` forces
-matter), and **`mass_chart`**: every integral presentation's energy at
-the sector's `latticeQuotEquiv` coordinates equals the intrinsic mass
-— subsuming the Phase-23 `rebaseEquiv` transport exactly as
-prescribed. The coordinate subtype is deleted (1c). Consumers rewired:
+fundamental basis's binding algebra), `exists_matter` (`0 < b₁`
+forces matter), and **`mass_chart`**: every lattice basis's energy at
+the sector's `latticeQuotEquiv` coordinates equals the intrinsic
+mass. Consumers:
 `thetaMatter` (class of a single-edge cochain; `thetaMatter_coords =
 (1,0)`, `thetaMatter_mass = 1/3` through the chart), `wedgeMatter₁`
 (intrinsic, `wedgeMatter₁_mass = 1/n₁`), `wedgeGraph_exists_matter`
-(via `b₁ = 2`). `killed_releases_mass` ported to intrinsic classes,
-still explicitly C7's placeholder-to-delete.
+(via `b₁ = 2`).
 
 ### C7 -- Geometric binding on 2-complexes (the real Goal 7) — CLOSED (Phase 35)
 
-**Current state.** `Matter.killed_releases_mass` quantifies over an
-**arbitrary** function `φ` with `φ m = 0` assumed, and proves
-`mass − E(0) = mass`. The review's verdict is correct: this is a
-placeholder, not the binding theorem. It is scheduled for **deletion**
-when this item closes (discipline 1c); it must not be cited as binding.
+**Intent.** Binding must be geometric: attaching a face changes the
+space, and the matter that wrapped the filled cycle must die under
+the induced map — not by assumption on an arbitrary function. (The
+adoption-time placeholder that assumed its conclusion was deleted
+when this item closed; discipline 1c.)
 
 **Definitions.** `TwoComplex := (G : IncidenceGraph) ×
 (faces : ι₂ → H₁(G;ℤ))`; `H₁(X;ℤ) := H₁(G;ℤ) ⧸ Submodule.span (range faces)`.
@@ -417,8 +366,7 @@ codebase's native quotient model):
   face constraints for free) and `attach_partFn_add_le`
   (`X.partFn + exp(−m.mass) ≤ G.classPartFn` — the killed sector's
   **entire** Boltzmann weight leaves the spectrum). Nothing weaker is
-  claimed anywhere; the Phase-27 placeholder `killed_releases_mass`
-  is **deleted** (1c).
+  claimed anywhere; the adoption-time placeholder is **deleted** (1c).
 
 Theta consumer: `theta_binding_kills` (the `(1,0)` sector dies when
 its cycle is filled), `theta_attach_finrank` (`b₁ : 2 → 1`),
@@ -463,9 +411,9 @@ theorem card_sections (f : A → B) (hf : Function.Surjective f) :
 theorem log_card_sections (…) :
     Real.log (Nat.card {s // ∀ b, f (s b) = b}) = fiberInfoCost f
 
-theorem compression_section_count (Q : IntegralCyclePresentation …) (q) :
+theorem card_compression_sections (B : Module.Basis (Fin n) ℤ G.cycleLattice) (q) :
     Nat.card {sections of the mod-q compression map}
-      = Nat.card (LinearMap.range (Q.gradLinQ q)) ^ (q ^ b₁)   -- via K3 uniformity
+      = Nat.card (LinearMap.range (G.gradLin (ZMod q))) ^ (q ^ n)  -- via K3 uniformity
 ```
 
 and `descriptionCost f = Real.log (Nat.card (A → B))` proved as the
@@ -630,7 +578,7 @@ Three parts, strictly ordered:
    across `Simplicial`/`Hodge`/`Groupoid`/`Duality` versus the spine
    (known candidates: Hodge's graph partition function vs
    `QuadraticAction`; Groupoid's complexity mirrors vs `SectorAction`;
-   legacy cycle models vs `CyclePresentation` instances). Each entry
+   legacy cycle models vs the spine's concrete lattice bases). Each entry
    receives a prescribed disposition **written into this section as a
    plan amendment**, then executed. The audit's output is plan text, not
    an addendum -- deciding stays in the plan.
@@ -665,24 +613,15 @@ physical claim in it cites the theorem that proves it.
 | `HomKernelCat` / magnitude | — | **DELETED** (Phase 28) |
 | spectator wedge stack | genuine wedge | **DELETED** (Phase 32) |
 
-**Import flow — delivered with one amendment (rule 3).** The graph is
-acyclic (the build is the proof) and layered: Foundation
-(`IncidenceGraph`, `SectorAction`, `QuadraticAction`, `SiegelPoisson`)
-→ Topology (`CyclePresentation`, `PeriodLattice`,
-`FundamentalPresentation`) → Harmonic (`BasisIndependence`,
-`HarmonicClass`) → Matter/Binding → Information (`InfoRatchet`,
-`ResolutionCount`) → Realizations (`UniformAction`, instances, the
-corroborating legacy layer). Amendment: `Basic.lean` is not *moved*
-downstream — it is an upstream **pure interface** (abstract complexity
-classes and pullback combinatorics, no analytics), and the
+**`Basic.lean`'s position** (rule-3 amendment, standing): it is not
+*moved* downstream — it is an upstream **pure interface** (abstract
+complexity classes and pullback combinatorics, no analytics), and the
 "not a parallel theory" requirement is discharged by C9's realization
 theorems (`uniformAction` computes its `C`; `gravity_complexity`
-realizes its `gravity`), not by file motion. Inverting `Simplicial`'s
-dependency on the interface would churn thousands of lines for no
-mathematical content.
+realizes its `gravity`), not by file motion.
 
-**The import flow (current, Phase 41).** The layer order matches the
-import DAG with no residue and no inversions:
+**The import flow (current).** The layer order matches the import
+DAG with no residue and no inversions:
 Foundation (`IncidenceGraph` — substrate, cycle lattice, intrinsic
 `b1`) → Topology (`GraphHomology` — freeness, retraction, the derived
 data of every lattice basis, the ℤ/ℝ keystones, Euler `b1_eq`, real
@@ -710,7 +649,7 @@ physical claim cites its theorem by name.
 C1 → C2 → C3 → C4 → C5 → C6 → C8 → C7 → C9 → C12.
 
 No item begins before its predecessors close (C10, C11 already closed).
-Rationale: C2's fundamental-presentation theorem is the single blocker
+Rationale: C2's fundamental-basis theorem is the single blocker
 for C3-C6; C8 precedes C7 because the counting layer is nearly done
 while C7 is the largest single build; C7's 2-complexes want C1/C2's
 incidence layer and C6's intrinsic matter; C9 touches only
@@ -745,9 +684,9 @@ preserved in Part II; the main body carries only the present state).
 | 2 | `QuadraticAction` + Siegel-Poisson | CLOSED, exceeded (Phase 15: full generality, beyond the diagonal expectation) |
 | 3 | `LoopKernel` | CLOSED; consumed by `SectorPresentation`, `Groupoid` |
 | 4 | `Geodesic` | CLOSED (Phase 27) = C10 |
-| 5 | `HarmonicForm` for any finite graph | CLOSED via C1-C4 (Phases 29-32): the fundamental-presentation theorem covers **every** finite graph; intrinsic `harmonicEnergy` on `H¹(G;ℤ)` |
+| 5 | `HarmonicForm` for any finite graph | CLOSED via C1-C4 (Phases 29-32): the fundamental-basis theorem covers **every** finite graph; intrinsic `harmonicEnergy` on `H¹(G;ℤ)` |
 | 6 | `SectorPresentation` | CLOSED (Phase 16 transport; `end_comm` forced the cohomological turn) |
-| 7 | Matter + `binding_kills_matter` | CLOSED via C6 + C7 (Phases 33, 35): intrinsic `MatterSector`, `binding_kills_matter` proved on 2-complexes, exact spectral decomposition `partFn_add_killed`; the `killed_releases_mass` placeholder deleted |
+| 7 | Matter + `binding_kills_matter` | CLOSED via C6 + C7 (Phases 33, 35): intrinsic `MatterSector`, `binding_kills_matter` proved on 2-complexes, exact spectral decomposition `partFn_add_killed`; the adoption-time mass-release placeholder deleted |
 | 8 | `InfoRatchet` ratchet theorem | CLOSED via C8 (Phase 34, hardened Phases 38-39): section cost **derived** by counting (`card_sections`, `log_card_sections`), finite-only numerical API, extended costs with `⊤` boundaries |
 | 9 | `HomKernel` + magnitude | EXCISED (C11, Phase 28): deleted with prejudice, not delivered |
 | 10 | `Duality`/`Hodge`/`Zeta` import purity | CLOSED via C12's audit (Phase 37): retained as identified wrappers (`graphPartitionFn_eq_spine`, `gibbsMass_eq_sector`, …) |
@@ -776,8 +715,8 @@ execution-time judgment is involved.
 - **F3 (C7).** If attaching a 2-cell along a primitive cycle does not
   induce `H₁(Y;ℤ) ≃ H₁(X;ℤ)/⟨c⟩` with dual image `{φ ∣ φ(c) = 0}`, the
   binding thesis is false. Consequence: "binding" exits the thesis;
-  annihilation survives as intra-lattice algebra only;
-  `killed_releases_mass` is deleted rather than upgraded.
+  annihilation survives as intra-lattice algebra only; the
+  mass-release placeholder is deleted rather than upgraded.
 - **F4 (C8).** If the number of sections of the compression map is not
   the product of fiber sizes with log equal to `fiberInfoCost`, section
   cost cannot be derived from counting. Consequence: the
@@ -4084,3 +4023,25 @@ finding 4 closes Goal 2's deferral; finding 5 makes the thesis's
 documentation invariant. All twelve items remain CLOSED. 31 source
 files; build green end-to-end (3343 jobs), zero `sorry`, zero
 `axiom`, zero warnings.
+
+## Phase 42 addendum: sixth external review — four findings, four confirmed, four repaired (2026-07-17)
+
+Review #6 arrived against the Phase-41 state. Every claim verified
+against code before acting; all four CONFIRMED — and findings 1–3 are
+defects of Phase 41's own choices, recorded as such. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | The "common carrier" repair shared only an interface: `uniformAction` accepts any finite type at zero energy, and the complexity split related three finite carriers, none the integral `H¹` carrier with the harmonic action | **CONFIRMED** — Phase 41's bridge proved API membership, not a common carrier | **The intrinsic carrier exists**: `classSectorAction` (`Meno/BasisIndependence.lean`) — `Λ = H¹(G;ℤ)`, `E = harmonicEnergy`, vacuum/nonnegativity/summability derived. **Every basis action is its chart**: `classSectorAction_energy` (keystone equivalence transports energies), `basisGramData_partFn_eq_classSectorAction`. **The finite reduction is constructed**: `h1Res : H¹(G;ℤ) → H¹(G;ZMod q)` (coefficient reduction), surjective (`h1Res_surjective`), coordinates commuting with the keystones (`latticeQuotEquivQ_h1Res`), kernel exactly `q·H¹` (`ker_h1Res`), so `H¹(G;ℤ)⧸q·H¹(G;ℤ) ≃ H¹(G;ZMod q)` (`h1ResQuotEquiv`, `Meno/ResolutionCount.lean`). **Complexity through the reduction**: `uniformAction_h1ResQuot_complexity` (`= b₁·log q` on the carrier's mod-`q` quotient) and `uniformComplexity_split_carrier` (K2 with the residue term literally the integral carrier's reduction — the graph-level additive-complexity statement). One integral carrier; its finite reductions |
+| 2 | `GraphHomology` was not unpriced: it exported the unit-edge Gram as "the canonical pricing datum", imported `PosDef`, proved Gram positivity, and proved spanning through the Gram inverse | **CONFIRMED** — Phase 41 placed pricing mathematics in the file labeled topology | `gramOf`, `gramOf_isSymm`, `dotProduct_gramOf_mulVec`, and `gramOf_cyclesR_posDef` moved to the priced layer (`Meno/PeriodHarmonic.lean`); the `PosDef`/`Symmetric`/`Analysis.Matrix` imports removed. **Real spanning re-proved Gram-free** (rule-3 amendment: instead of a scalar-extension detour, the period-pairing operator on the finite-dimensional coefficient space is injective by `cast_independent`, hence surjective — no Gram object, no positivity, no inverse; the residual dies by the walk engine + Stokes). `GraphHomology` now exposes exactly lattice, basis, exactness, quotient, rank, and Euler results; what remains of the metric is the period pairing and Stokes |
+| 3 | PLAN Part I papered over the deleted architecture: a reinterpretation amendment told readers to translate retired names; C1/C2/C3/C8 signatures still used deleted structures; the obsolete Phase-37 import account sat beside the current one — contradicting C12's own audit criterion | **CONFIRMED** — Phase 41 chose annotation over rewriting | Every C1–C12 signature and delivered-state paragraph rewritten against the actual basis API (`cycleBasis`, `card_eq_b1`, `exists_unimodular_relating`, `basisGramData_partFn`, `card_compression_sections` at a basis, `basisOfCycles`, `classSectorAction`); the reinterpretation amendment **deleted**; the obsolete import account **deleted** (`Basic.lean`'s standing rationale kept, chronology to Part II); C5/C6/C7 rewritten as current accounts; the retired mass-release placeholder de-named in the disposition and falsification rows. Verified: no retired identifier or deleted path occurs before Part II |
+| 4 | Redundant stored symmetry proofs survived the derived-field cleanup: `Q_symm` in `QuadraticAction` (whose docstring admitted the redundancy), `gram_symm` in `HarmonicGramData`, `Q_symm` in `SectorPresentation` | **CONFIRMED** | All three fields **deleted**; `Matrix.PosDef.isSymm` added (hermitian + trivial star over ℝ); symmetry is a derived theorem with each retired field's name and statement (`QuadraticAction.Q_symm`, `HarmonicGramData.gram_symm`, `SectorPresentation.Q_symm`), so consumers are unchanged; all eleven constructor sites shed their symmetry proofs |
+
+**Discipline check.** No goal reopens: finding 1 completes what
+Phase 41's finding-5 repair only started (the carrier is now an
+object, not an interface); finding 2 completes C12's layer boundary
+in substance, not label; finding 3 is the standing documentation
+invariant enforced to the letter; finding 4 extends the
+derived-not-stored discipline to its last stored proposition. All
+twelve items remain CLOSED. Build green end-to-end (3343 jobs), zero
+`sorry`, zero `axiom`, zero warnings.

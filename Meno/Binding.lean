@@ -374,16 +374,11 @@ noncomputable def IncidenceGraph.classPartFn (G : IncidenceGraph.{u, v}) : ℝ :
   ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
     Real.exp (-G.harmonicEnergy κ)
 
-/-- The class weights are summable — transported from the fundamental
-basis's sector action along the keystone equivalence. -/
-theorem IncidenceGraph.summable_classWeight (G : IncidenceGraph.{u, v}) :
-    Summable (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
-      Real.exp (-G.harmonicEnergy κ)) := by
-  have h := (Equiv.summable_iff (G.h1QuotEquiv.toEquiv)
-    (f := fun k : Fin G.b1 → ℤ =>
-      Real.exp (-((G.basisGramData G.cycleBasis).energy k)))).mpr
-    (G.basisGramData G.cycleBasis).toQuadraticAction.toSectorAction.summable
-  exact h.congr fun κ => rfl
+/-- The class-level partition function *is* the intrinsic carrier's
+(`classSectorAction`, `Meno/BasisIndependence.lean`) — definitionally. -/
+theorem IncidenceGraph.classPartFn_eq_classSectorAction
+    (G : IncidenceGraph.{u, v}) :
+    G.classPartFn = (G.classSectorAction).partFn := rfl
 
 /-- The class-level partition function is the graph's partition
 function — the fundamental instance of

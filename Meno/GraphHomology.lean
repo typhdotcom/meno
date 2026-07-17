@@ -1,21 +1,17 @@
 import Meno.IncidenceGraph
 import Mathlib.LinearAlgebra.FreeModule.PID
-import Mathlib.LinearAlgebra.Matrix.Basis
 import Mathlib.LinearAlgebra.Matrix.DotProduct
-import Mathlib.LinearAlgebra.Matrix.PosDef
-import Mathlib.Analysis.Matrix.PosDef
 import Mathlib.LinearAlgebra.Matrix.Rank
-import Mathlib.LinearAlgebra.Matrix.Symmetric
 
 /-! # Graph Homology: the pure topology layer
 
-Everything a finite graph's first homology provides **before any
-pricing**, in one file importing only the substrate (review #5,
-finding 1 — `GraphInstances` and every other topology consumer import
-this layer, never the variational stack):
+Everything a finite graph's first homology provides — lattice, basis,
+exactness, quotient, rank, and Euler results — in one file importing
+only the substrate (review #5, finding 1; review #6, finding 2: no
+Gram object, no positive-definiteness, no matrix inversion — the
+unit-edge Gram and every priced consequence live in the
+variational layer, `Meno/PeriodHarmonic.lean`):
 
-* the **unit-edge Gram** `gramOf` of a cochain family — the canonical
-  Gram derived from topology, no stored metric (review #5, finding 3);
 * freeness of `ℤ^E ⧸ H₁`, the splitting, and the retraction of `ℤ^E`
   onto the cycle lattice;
 * **the derived data of an arbitrary lattice basis**
@@ -23,9 +19,9 @@ this layer, never the variational stack):
   the presentation *is* the basis; every former field is a theorem):
   integer cycles `cyclesZ`, real casts `cyclesR`, closedness,
   coordinates `coordMap`, real independence `cast_independent`,
-  positive-definite Gram `gramOf_cyclesR_posDef`, integer potentials,
-  period surjectivity (`ℤ` and `ℝ`), real spanning, exactness, and
-  the keystone quotient equivalences over `ℤ` and `ℝ`;
+  integer potentials, period surjectivity (`ℤ` and `ℝ`), real
+  spanning, exactness, and the keystone quotient equivalences over
+  `ℤ` and `ℝ`;
 * the **fundamental basis** `cycleBasis` (PID structure theorem):
   existence of a lattice basis for every finite graph — C2's content,
   with nothing stored;
@@ -33,7 +29,14 @@ this layer, never the variational stack):
   formula** (`b1_eq`), and the **spanning criterion**
   (`spanning_of_card_eq_b1`);
 * `basisOfCycles` — the concrete-instance bridge: closed, independent,
-  integrally spanning integer cycles assemble into a lattice basis. -/
+  integrally spanning integer cycles assemble into a lattice basis.
+
+What remains of the metric is the period *pairing* `⬝ᵥ` against the
+basis cycles and the discrete Stokes identity — periods, not a chosen
+Gram: real spanning solves the period system by
+injectivity-implies-surjectivity of the pairing operator on the
+finite-dimensional coefficient space (review #6), with no Gram
+matrix, no positivity, and no inverse. -/
 
 namespace Meno
 
@@ -41,56 +44,6 @@ open scoped BigOperators
 open Matrix
 
 universe u v
-
-/-! ## The unit-edge Gram
-
-The Gram matrix of a cochain family under the standard (unit-edge) dot
-product — the canonical pricing datum, *derived* from the family, never
-stored (review #5, finding 3). Generic in the index type; the graph
-layers consume it at `ι = G.E`. -/
-
-section Gram
-
-variable {ι : Type*} [Fintype ι] {r : ℕ}
-
-/-- Gram matrix of a family of period vectors under the standard dot
-product. -/
-noncomputable def gramOf (c : Fin r → ι → ℝ) : Matrix (Fin r) (Fin r) ℝ :=
-  fun i j => c i ⬝ᵥ c j
-
-theorem gramOf_isSymm (c : Fin r → ι → ℝ) : (gramOf c).IsSymm := by
-  ext i j
-  exact dotProduct_comm (c j) (c i)
-
-/-- The quadratic form of a Gram matrix is the squared norm of the
-combination: `xᵀ(gramOf c)x = ‖Σᵢ xᵢcᵢ‖²`. -/
-theorem dotProduct_gramOf_mulVec {r : ℕ} {ι : Type*} [Fintype ι]
-    (c : Fin r → ι → ℝ) (x : Fin r → ℝ) :
-    x ⬝ᵥ (gramOf c *ᵥ x)
-      = (fun e => ∑ i, x i * c i e) ⬝ᵥ (fun e => ∑ i, x i * c i e) := by
-  show ∑ i, x i * (∑ j, gramOf c i j * x j)
-    = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e)
-  calc ∑ i, x i * (∑ j, gramOf c i j * x j)
-      = ∑ i, ∑ j, x i * x j * (∑ e, c i e * c j e) := by
-        refine Finset.sum_congr rfl fun i _ => ?_
-        rw [Finset.mul_sum]
-        refine Finset.sum_congr rfl fun j _ => ?_
-        show x i * (gramOf c i j * x j) = x i * x j * (∑ e, c i e * c j e)
-        rw [show gramOf c i j = ∑ e, c i e * c j e from rfl]
-        ring
-    _ = ∑ i, ∑ j, ∑ e, x i * x j * (c i e * c j e) := by
-        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-        rw [Finset.mul_sum]
-    _ = ∑ i, ∑ e, ∑ j, x i * x j * (c i e * c j e) :=
-        Finset.sum_congr rfl fun i _ => Finset.sum_comm
-    _ = ∑ e, ∑ i, ∑ j, x i * x j * (c i e * c j e) := Finset.sum_comm
-    _ = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e) := by
-        refine Finset.sum_congr rfl fun e _ => ?_
-        rw [Finset.sum_mul_sum]
-        exact Finset.sum_congr rfl fun i _ =>
-          Finset.sum_congr rfl fun j _ => by ring
-
-end Gram
 
 namespace IncidenceGraph
 
@@ -286,30 +239,6 @@ theorem cast_independent (x : Fin n → ℝ)
   funext j
   exact (congrFun hlin j).symm
 
-/-- **The unit-edge Gram of a lattice basis is positive definite** —
-derived, with nothing stored (review #5, finding 3): the quadratic
-form is the squared norm of the combination, which vanishes only at
-zero by independence. -/
-theorem gramOf_cyclesR_posDef : (gramOf (G.cyclesR B)).PosDef := by
-  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
-  · ext p q'
-    show star (gramOf (G.cyclesR B) q' p) = gramOf (G.cyclesR B) p q'
-    rw [star_trivial]
-    show ∑ e, G.cyclesR B q' e * G.cyclesR B p e
-      = ∑ e, G.cyclesR B p e * G.cyclesR B q' e
-    exact Finset.sum_congr rfl fun e _ => mul_comm _ _
-  · have hsx : star x = x := funext fun i => star_trivial _
-    rw [hsx, dotProduct_gramOf_mulVec]
-    have hynn : (0 : ℝ) ≤ (fun e => ∑ i, x i * G.cyclesR B i e)
-        ⬝ᵥ (fun e => ∑ i, x i * G.cyclesR B i e) :=
-      Finset.sum_nonneg fun e _ => mul_self_nonneg _
-    have hyne : (fun e => ∑ i, x i * G.cyclesR B i e) ≠ 0 :=
-      fun h0 => hx (G.cast_independent B x h0)
-    have hne : (fun e => ∑ i, x i * G.cyclesR B i e)
-        ⬝ᵥ (fun e => ∑ i, x i * G.cyclesR B i e) ≠ 0 :=
-      fun h0 => hyne (dotProduct_self_eq_zero.mp h0)
-    exact lt_of_le_of_ne hynn (Ne.symm hne)
-
 /-- **Vanishing periods kill closed-walk sums** — over any commutative
 ring. The chain of a closed walk lies in the cycle lattice; expanding
 it in the basis reduces its pairing to the vanishing periods. -/
@@ -451,18 +380,83 @@ theorem periodsR_onto (k : Fin n → ℝ) :
         rw [Finset.sum_ite_eq' Finset.univ j k]
         simp
 
-/-- **Real spanning, derived**: a closed real cochain is a combination
-of the cast basis cycles. The Gram inverse supplies the coefficients
-(a concrete orthogonal projection); the residual has vanishing
-periods, hence — by the walk engine — is a gradient, and a closed
-gradient is zero by Stokes. -/
+/-- **Real spanning, derived** — with no Gram matrix, no positivity,
+and no inversion (review #6, finding 2): the period-pairing operator
+on the finite-dimensional coefficient space is injective by
+independence, hence surjective, so coefficients matching the cochain's
+periods exist; the residual has vanishing periods, hence — by the walk
+engine — is a gradient, and a closed gradient is zero by Stokes. -/
 theorem spanning (ω : G.E → ℝ) (hω : ∀ v, G.boundary ω v = 0) :
     ∃ a : Fin n → ℝ, ω = fun e => ∑ i, a i * G.cyclesR B i e := by
-  have hdet : IsUnit (gramOf (G.cyclesR B)).det :=
-    isUnit_iff_ne_zero.mpr (ne_of_gt (G.gramOf_cyclesR_posDef B).det_pos)
-  set p : Fin n → ℝ := fun j => ω ⬝ᵥ G.cyclesR B j with hp
-  refine ⟨(gramOf (G.cyclesR B))⁻¹ *ᵥ p, ?_⟩
-  set a : Fin n → ℝ := (gramOf (G.cyclesR B))⁻¹ *ᵥ p with ha
+  -- Pairing a cochain against a coefficient combination.
+  have hswap : ∀ (x : G.E → ℝ) (b : Fin n → ℝ),
+      x ⬝ᵥ (fun e => ∑ j, b j * G.cyclesR B j e)
+        = ∑ j, b j * (x ⬝ᵥ G.cyclesR B j) := by
+    intro x b
+    calc x ⬝ᵥ (fun e => ∑ j, b j * G.cyclesR B j e)
+        = ∑ e, x e * ∑ j, b j * G.cyclesR B j e := rfl
+      _ = ∑ e, ∑ j, b j * (x e * G.cyclesR B j e) := by
+          refine Finset.sum_congr rfl fun e _ => ?_
+          rw [Finset.mul_sum]
+          exact Finset.sum_congr rfl fun j _ => by ring
+      _ = ∑ j, ∑ e, b j * (x e * G.cyclesR B j e) := Finset.sum_comm
+      _ = ∑ j, b j * (x ⬝ᵥ G.cyclesR B j) := by
+          refine Finset.sum_congr rfl fun j _ => ?_
+          rw [← Finset.mul_sum]
+          rfl
+  -- The period-pairing operator on coefficient space.
+  set T : (Fin n → ℝ) →ₗ[ℝ] (Fin n → ℝ) :=
+    { toFun := fun b => fun j => ∑ i, b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
+      map_add' := fun b b' => by
+        funext j
+        show ∑ i, (b i + b' i) * (G.cyclesR B i ⬝ᵥ G.cyclesR B j) = _
+        rw [show (∑ i, (b i + b' i) * (G.cyclesR B i ⬝ᵥ G.cyclesR B j))
+            = ∑ i, (b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
+              + b' i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)) from
+          Finset.sum_congr rfl fun i _ => by ring]
+        rw [Finset.sum_add_distrib]
+        rfl
+      map_smul' := fun c b => by
+        funext j
+        show ∑ i, (c * b i) * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
+          = c * ∑ i, b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun i _ => by ring } with hT
+  -- The operator computes the periods of the combination.
+  have hTcomb : ∀ (b : Fin n → ℝ) (j : Fin n),
+      T b j = (fun e => ∑ i, b i * G.cyclesR B i e) ⬝ᵥ G.cyclesR B j := by
+    intro b j
+    show ∑ i, b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
+      = ∑ e, (∑ i, b i * G.cyclesR B i e) * G.cyclesR B j e
+    calc ∑ i, b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
+        = ∑ i, ∑ e, b i * (G.cyclesR B i e * G.cyclesR B j e) := by
+          refine Finset.sum_congr rfl fun i _ => ?_
+          show b i * (∑ e, G.cyclesR B i e * G.cyclesR B j e) = _
+          rw [Finset.mul_sum]
+      _ = ∑ e, ∑ i, b i * (G.cyclesR B i e * G.cyclesR B j e) :=
+          Finset.sum_comm
+      _ = ∑ e, (∑ i, b i * G.cyclesR B i e) * G.cyclesR B j e := by
+          refine Finset.sum_congr rfl fun e _ => ?_
+          rw [Finset.sum_mul]
+          exact Finset.sum_congr rfl fun i _ => by ring
+  -- Injective by independence, hence surjective on ℝⁿ.
+  have hker : ∀ b, T b = 0 → b = 0 := by
+    intro b hb
+    have hzz : (fun e => ∑ i, b i * G.cyclesR B i e)
+        ⬝ᵥ (fun e => ∑ i, b i * G.cyclesR B i e) = 0 := by
+      rw [hswap]
+      refine Finset.sum_eq_zero fun j _ => ?_
+      rw [← hTcomb b j, hb]
+      show b j * (0 : Fin n → ℝ) j = 0
+      rw [show (0 : Fin n → ℝ) j = 0 from rfl, mul_zero]
+    exact G.cast_independent B b (dotProduct_self_eq_zero.mp hzz)
+  have hTinj : Function.Injective T := by
+    rw [← LinearMap.ker_eq_bot]
+    exact LinearMap.ker_eq_bot'.mpr hker
+  have hTsurj : Function.Surjective T :=
+    (LinearMap.injective_iff_surjective).mp hTinj
+  obtain ⟨a, ha⟩ := hTsurj (fun j => ω ⬝ᵥ G.cyclesR B j)
+  refine ⟨a, ?_⟩
   set ω' : G.E → ℝ := fun e => ω e - ∑ i, a i * G.cyclesR B i e with hω'
   -- The residual is closed.
   have hcomb : ∀ v, G.boundary (fun e => ∑ i, a i * G.cyclesR B i e) v
@@ -499,48 +493,22 @@ theorem spanning (ω : G.E → ℝ) (hω : ∀ v, G.boundary ω v = 0) :
     rw [Finset.sum_eq_zero fun i _ => by
       rw [G.cyclesR_closed B i v, mul_zero]]
     ring
-  -- The residual has vanishing periods.
+  -- The residual has vanishing periods: its periods are the target
+  -- periods minus the operator's output, which `ha` matches exactly.
   have hper' : ∀ j, ω' ⬝ᵥ G.cyclesR B j = 0 := by
     intro j
-    have hsum : ω' ⬝ᵥ G.cyclesR B j
-        = p j - ∑ i, a i * gramOf (G.cyclesR B) i j := by
+    have hsub : ω' ⬝ᵥ G.cyclesR B j
+        = ω ⬝ᵥ G.cyclesR B j
+          - (fun e => ∑ i, a i * G.cyclesR B i e) ⬝ᵥ G.cyclesR B j := by
       show ∑ e, (ω e - ∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e = _
-      calc ∑ e, (ω e - ∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e
+      rw [show (∑ e, (ω e - ∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e)
           = ∑ e, (ω e * G.cyclesR B j e
-              - (∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e) := by
-            refine Finset.sum_congr rfl fun e _ => ?_
-            ring
-        _ = (∑ e, ω e * G.cyclesR B j e)
-            - ∑ e, (∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e :=
-            Finset.sum_sub_distrib _ _
-        _ = p j - ∑ i, a i * gramOf (G.cyclesR B) i j := by
-            congr 1
-            calc ∑ e, (∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e
-                = ∑ e, ∑ i, a i * (G.cyclesR B i e * G.cyclesR B j e) := by
-                  refine Finset.sum_congr rfl fun e _ => ?_
-                  rw [Finset.sum_mul]
-                  exact Finset.sum_congr rfl fun i _ => by ring
-              _ = ∑ i, ∑ e, a i * (G.cyclesR B i e * G.cyclesR B j e) :=
-                  Finset.sum_comm
-              _ = ∑ i, a i * ∑ e, G.cyclesR B i e * G.cyclesR B j e := by
-                  refine Finset.sum_congr rfl fun i _ => ?_
-                  rw [Finset.mul_sum]
-              _ = ∑ i, a i * gramOf (G.cyclesR B) i j :=
-                  Finset.sum_congr rfl fun i _ => rfl
-    have hcollapse : ∑ i, a i * gramOf (G.cyclesR B) i j = p j := by
-      have h1 : ∑ i, a i * gramOf (G.cyclesR B) i j
-          = (gramOf (G.cyclesR B) *ᵥ a) j := by
-        show _ = ∑ i, gramOf (G.cyclesR B) j i * a i
-        refine Finset.sum_congr rfl fun i _ => ?_
-        rw [show gramOf (G.cyclesR B) j i = gramOf (G.cyclesR B) i j from by
-          show ∑ e, G.cyclesR B j e * G.cyclesR B i e
-            = ∑ e, G.cyclesR B i e * G.cyclesR B j e
-          exact Finset.sum_congr rfl fun e _ => mul_comm _ _]
-        ring
-      rw [h1, ha, Matrix.mulVec_mulVec, Matrix.mul_nonsing_inv _ hdet,
-        Matrix.one_mulVec]
-    rw [hsum, hcollapse]
-    ring
+            - (∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e) from
+        Finset.sum_congr rfl fun e _ => by ring]
+      rw [Finset.sum_sub_distrib]
+      rfl
+    rw [hsub, ← hTcomb a j, congrFun ha j]
+    exact sub_self _
   -- Hence a gradient; a closed gradient is zero.
   have hcast : ∀ j, ω' ⬝ᵥ (fun e => ((G.cyclesZ B j e : ℤ) : ℝ)) = 0 :=
     fun j => hper' j

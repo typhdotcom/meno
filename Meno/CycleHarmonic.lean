@@ -53,7 +53,6 @@ noncomputable def cycleHarmonicGramData (n : ℕ) (hn : n ≥ 3) :
     HarmonicGramData (Fin n) where
   r := 1
   gram := !![1 / (n : ℝ)]
-  gram_symm := by ext i j; fin_cases i; fin_cases j; rfl
   gram_posDef := by
     refine Matrix.posDef_iff_dotProduct_mulVec.mpr ⟨?_, ?_⟩
     · ext i j; fin_cases i; fin_cases j; rfl
@@ -207,9 +206,6 @@ noncomputable def wedgeHarmonicGramData (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h
     HarmonicGramData (Fin n₁ ⊕ Fin n₂) where
   r := 2
   gram := !![1 / (n₁ : ℝ), 0; 0, 1 / (n₂ : ℝ)]
-  gram_symm := (QuadraticAction.ofDiagonal₂ (1 / (n₁ : ℝ)) (1 / (n₂ : ℝ))
-    (one_div_pos.mpr (by exact_mod_cast (show 0 < n₁ by omega)))
-    (one_div_pos.mpr (by exact_mod_cast (show 0 < n₂ by omega)))).Q_symm
   gram_posDef := (QuadraticAction.ofDiagonal₂ (1 / (n₁ : ℝ)) (1 / (n₂ : ℝ))
     (one_div_pos.mpr (by exact_mod_cast (show 0 < n₁ by omega)))
     (one_div_pos.mpr (by exact_mod_cast (show 0 < n₂ by omega)))).Q_posDef

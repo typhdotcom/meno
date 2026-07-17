@@ -980,10 +980,6 @@ construction at full (non-diagonal) generality. -/
 noncomputable def QuadraticAction.dual {r : ℕ} (A : QuadraticAction r) :
     QuadraticAction r where
   Q := Real.pi ^ 2 • A.Q⁻¹
-  Q_symm := by
-    show (Real.pi ^ 2 • A.Q⁻¹)ᵀ = Real.pi ^ 2 • A.Q⁻¹
-    rw [Matrix.transpose_smul, Matrix.transpose_nonsing_inv,
-      show A.Qᵀ = A.Q from A.Q_symm]
   Q_posDef := posDef_smul' (posDef_inv A.Q_posDef) (by positivity)
 
 @[simp] theorem QuadraticAction.dual_Q {r : ℕ} (A : QuadraticAction r) :
@@ -1093,8 +1089,8 @@ open Complex
 fields are propositions. -/
 theorem QuadraticAction.eq_of_Q_eq {r : ℕ} {A B : QuadraticAction r}
     (h : A.Q = B.Q) : A = B := by
-  obtain ⟨QA, sA, pA, mA⟩ := A
-  obtain ⟨QB, sB, pB, mB⟩ := B
+  obtain ⟨QA, pA⟩ := A
+  obtain ⟨QB, pB⟩ := B
   have h' : QA = QB := h
   subst h'
   rfl

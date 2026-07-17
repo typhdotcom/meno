@@ -28,10 +28,45 @@ section PeriodMinimization
 
 variable {ι : Type*} [Fintype ι] {r : ℕ}
 
-/- The unit-edge Gram `gramOf` and its basic lemmas (`gramOf_isSymm`,
-`dotProduct_gramOf_mulVec`) live upstream in the pure topology layer
-(`Meno/GraphHomology.lean`, review #5) — the canonical Gram is derived
-from the family, never stored; this file prices it. -/
+/-- Gram matrix of a family of period vectors under the standard
+(unit-edge) dot product — the canonical pricing datum, *derived* from
+the family, never stored (review #5, finding 3). It lives here, in the
+variational layer, not in the topology layer (review #6, finding 2):
+the Gram **is** pricing. -/
+noncomputable def gramOf (c : Fin r → ι → ℝ) : Matrix (Fin r) (Fin r) ℝ :=
+  fun i j => c i ⬝ᵥ c j
+
+theorem gramOf_isSymm (c : Fin r → ι → ℝ) : (gramOf c).IsSymm := by
+  ext i j
+  exact dotProduct_comm (c j) (c i)
+
+/-- The quadratic form of a Gram matrix is the squared norm of the
+combination: `xᵀ(gramOf c)x = ‖Σᵢ xᵢcᵢ‖²`. -/
+theorem dotProduct_gramOf_mulVec {r : ℕ} {ι : Type*} [Fintype ι]
+    (c : Fin r → ι → ℝ) (x : Fin r → ℝ) :
+    x ⬝ᵥ (gramOf c *ᵥ x)
+      = (fun e => ∑ i, x i * c i e) ⬝ᵥ (fun e => ∑ i, x i * c i e) := by
+  show ∑ i, x i * (∑ j, gramOf c i j * x j)
+    = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e)
+  calc ∑ i, x i * (∑ j, gramOf c i j * x j)
+      = ∑ i, ∑ j, x i * x j * (∑ e, c i e * c j e) := by
+        refine Finset.sum_congr rfl fun i _ => ?_
+        rw [Finset.mul_sum]
+        refine Finset.sum_congr rfl fun j _ => ?_
+        show x i * (gramOf c i j * x j) = x i * x j * (∑ e, c i e * c j e)
+        rw [show gramOf c i j = ∑ e, c i e * c j e from rfl]
+        ring
+    _ = ∑ i, ∑ j, ∑ e, x i * x j * (c i e * c j e) := by
+        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+        rw [Finset.mul_sum]
+    _ = ∑ i, ∑ e, ∑ j, x i * x j * (c i e * c j e) :=
+        Finset.sum_congr rfl fun i _ => Finset.sum_comm
+    _ = ∑ e, ∑ i, ∑ j, x i * x j * (c i e * c j e) := Finset.sum_comm
+    _ = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e) := by
+        refine Finset.sum_congr rfl fun e _ => ?_
+        rw [Finset.sum_mul_sum]
+        exact Finset.sum_congr rfl fun i _ =>
+          Finset.sum_congr rfl fun j _ => by ring
 
 /-- The minimum-norm cochain with periods `k`: the combination of the
 period vectors with coefficients `C⁻¹k`. -/
@@ -151,6 +186,43 @@ theorem isLeast_energy_periods (c : Fin r → ι → ℝ) (hC : IsUnit (gramOf c
 
 end PeriodMinimization
 
+/-! ## The priced Gram of a lattice basis -/
+
+section LatticeBasisGram
+
+universe u' v'
+
+variable (G : IncidenceGraph.{u', v'}) {n : ℕ}
+  (B : Module.Basis (Fin n) ℤ G.cycleLattice)
+
+/-- **The unit-edge Gram of a lattice basis is positive definite** —
+derived, with nothing stored (review #5, finding 3), and located in
+the priced layer where the Gram lives (review #6, finding 2): the
+quadratic form is the squared norm of the combination, which vanishes
+only at zero by independence (`cast_independent`, topology layer). -/
+theorem IncidenceGraph.gramOf_cyclesR_posDef :
+    (gramOf (G.cyclesR B)).PosDef := by
+  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
+  · ext p q'
+    show star (gramOf (G.cyclesR B) q' p) = gramOf (G.cyclesR B) p q'
+    rw [star_trivial]
+    show ∑ e, G.cyclesR B q' e * G.cyclesR B p e
+      = ∑ e, G.cyclesR B p e * G.cyclesR B q' e
+    exact Finset.sum_congr rfl fun e _ => mul_comm _ _
+  · have hsx : star x = x := funext fun i => star_trivial _
+    rw [hsx, dotProduct_gramOf_mulVec]
+    have hynn : (0 : ℝ) ≤ (fun e => ∑ i, x i * G.cyclesR B i e)
+        ⬝ᵥ (fun e => ∑ i, x i * G.cyclesR B i e) :=
+      Finset.sum_nonneg fun e _ => mul_self_nonneg _
+    have hyne : (fun e => ∑ i, x i * G.cyclesR B i e) ≠ 0 :=
+      fun h0 => hx (G.cast_independent B x h0)
+    have hne : (fun e => ∑ i, x i * G.cyclesR B i e)
+        ⬝ᵥ (fun e => ∑ i, x i * G.cyclesR B i e) ≠ 0 :=
+      fun h0 => hyne (dotProduct_self_eq_zero.mp h0)
+    exact lt_of_le_of_ne hynn (Ne.symm hne)
+
+end LatticeBasisGram
+
 /-! ## The builder: cycles to harmonic Gram data -/
 
 section Builder
@@ -184,10 +256,6 @@ noncomputable def HarmonicGramData.ofCycles (c : Fin r → ι → ℝ)
     (hC : (gramOf c).PosDef) : HarmonicGramData V where
   r := r
   gram := (gramOf c)⁻¹
-  gram_symm := by
-    show ((gramOf c)⁻¹)ᵀ = (gramOf c)⁻¹
-    rw [Matrix.transpose_nonsing_inv,
-      show (gramOf c)ᵀ = gramOf c from gramOf_isSymm c]
   gram_posDef := posDef_inv hC
 
 /-- The builder's data satisfies the variational identity: the Gram

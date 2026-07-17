@@ -8,7 +8,11 @@ faces of that minimization. The carrier of the thesis is a **sector
 lattice with a positive-definite quadratic action**: the lattice
 enumerates the discrete sectors a system can occupy, the action prices
 them, the Boltzmann sum reads the partition function, and duality,
-minimization, and counting theorems connect the faces.
+minimization, and counting theorems connect the faces. For a graph the
+carrier is one formal object — `IncidenceGraph.classSectorAction`, the
+lattice `H¹(G;ℤ)` with the intrinsic harmonic energy — of which every
+basis-coordinate quadratic action is a chart and every
+finite-resolution residue is a quotient.
 
 Everything below is a checked theorem — zero `sorry`, zero `axiom`
 declarations, ~3300 build jobs green against Lean 4.26.0 / Mathlib.
@@ -107,12 +111,20 @@ on both sides of the boundary
 free. Where fibers are infinite, the
 cardinality-free form holds: a section of a non-injective map always
 misses states (`section_not_surjective_of_not_injective`,
-`simplicial_ratchet`). And the information face genuinely inhabits
-the thesis's carrier: the compression residue, description space, and
-gauge group are uniform **sector actions**, the residue's complexity
-is exactly `b₁ · log q` (`uniformAction_quotient_complexity`), and K2
-is an identity of sector-action complexities
-(`uniformComplexity_split`, `Meno/ResolutionCount.lean`).
+`simplicial_ratchet`). And the information face inhabits the thesis's
+**one integral carrier**, not merely its API: the intrinsic sector
+action is `H¹(G;ℤ)` with the harmonic energy
+(`classSectorAction`, `Meno/BasisIndependence.lean`), every
+basis-coordinate action is a chart of it (`classSectorAction_energy`,
+`basisGramData_partFn_eq_classSectorAction`), and the resolution-`q`
+residue is exactly its quotient by `q` — coefficient reduction
+`h1Res` is surjective with kernel `q·H¹(G;ℤ)`, giving
+`H¹(G;ℤ)⧸q·H¹(G;ℤ) ≃ H¹(G;ZMod q)` (`h1ResQuotEquiv`) with
+coordinates commuting with the keystones (`latticeQuotEquivQ_h1Res`).
+The residue's uniform complexity `b₁ · log q` and the K2 split are
+derived through that reduction
+(`uniformAction_h1ResQuot_complexity`,
+`uniformComplexity_split_carrier`, `Meno/ResolutionCount.lean`).
 
 **Gravity.** A finite type is a sector lattice with zero energy:
 `Z = |A|`, `K = log|A|` (`uniformAction`, `Meno/UniformAction.lean`).
