@@ -2425,3 +2425,87 @@ recommended.)*
 - Halted/pruned: unchanged.
 
 **End of Phase 25 addendum.**
+
+---
+
+## Phase 26 addendum: K1–K3 — the keystone lands in InfoRatchet's vocabulary
+
+*(Appended after Phase 25; session date 2026-07-17.)*
+
+### What was proved
+
+**`Meno/ResolutionCount.lean`** (new, ~250 LOC), delivering the
+Phase-24 statement in full at every resolution `q ≥ 1`:
+
+- **K1** (`card_quotient`):
+  `|C_q ⧸ G_q| = q^{b₁}` — the compression residue is exactly `b₁`
+  resolution-digits, at every resolution.
+- **K2** (`log_card_split`):
+  `log |C_q| = log |G_q| + b₁ · log q` — total description cost =
+  gauge freedom + incompressible residue, via Lagrange
+  (`AddSubgroup.card_eq_card_quotient_mul_card_addSubgroup`, which
+  applies to the Submodule quotient by definitional equality).
+- **K3** (`card_fiber`): every fiber of the compression map has
+  exactly `|G_q|` descriptions (hand-built coset equivalence), and
+  **`fiberInfoCost_mk`** states it through `fiberInfoCost` itself —
+  the keystone in InfoRatchet's literal function vocabulary:
+  `fiberInfoCost (mk) = q^{b₁} · log |G_q|`, pure gauge.
+- `theta_residue_count`: at any resolution `q`, theta's incompressible
+  residue is exactly `q²` classes — two digits, one per independent
+  cycle, at every scale.
+
+### The design point: no new fields
+
+The mod-`q` layer required **no additions** to
+`IntegralCyclePresentation`. Both mod-`q` inputs derive from the
+ℤ-form's two fields:
+
+- surjectivity: reduce an integer witness (`ZMod.val` lift, cast
+  back);
+- exactness: **lift-and-correct** — lift `ω` to ℤ; its integer
+  periods are divisible by `q` (say `q·m`); subtract `q·τ` where `τ`
+  integrally realizes `m` (`periods_onto`); the corrected cochain has
+  zero integer periods, hence an integer potential
+  (`integral_potentials`); the correction vanishes mod `q`.
+
+This is the "no bad primes" fact in constructive form: the Phase-24
+statement anticipated needing total unimodularity of the incidence
+matrix; the ℤ-form made that unnecessary — divisibility arguments
+replace determinant arguments.
+
+### Engineering notes
+
+Three build iterations, all syntax/plumbing: `congrArg` beta-redexes
+blocking `rw` (fix: an applied-form cast lemma `dot_cast_eq` with
+pointwise hypotheses — the same shape-first lesson as Phase 20's
+`show`-discipline); the quotient's `Finite` instance not synthesizing
+through `HasQuotient` (fix: rewrite K1 into the Lagrange equation
+before taking logs, avoiding cardinality-positivity of the quotient
+entirely); `omit` placement before docstrings.
+
+### The keystone ledger, closed
+
+The time capsule's idea #2 — "the incompressible residue of
+neighbor-local re-description is b₁, joining InfoRatchet to
+MatterHomology" — is now:
+
+- ℝ-form: `cochainQuotEquiv` (Phase 22) — residue is an
+  `r`-dimensional space;
+- ℤ-form: `latticeQuotEquiv` (Phase 25) — residue is the period
+  lattice `ℤ^{b₁}`;
+- counting form: K1–K3 (this phase) — residue is `b₁·log q` of
+  description cost, and `fiberInfoCost` of compression is pure gauge.
+
+What was recorded in Phase 19 as "a gated design program" is closed
+as mathematics. The remaining InfoRatchet items (Landauer/Phase-10
+reconciliation) are independent of the keystone.
+
+### Board after this phase
+
+- Geometric `binding_kills_matter` (Goal 7 remainder) — needs its
+  stated connecting theorem.
+- Geodesic instance (Goal 4, plumbing): walk-length instance +
+  `n · (1/n) = 1` duality.
+- Halted/pruned: unchanged.
+
+**End of Phase 26 addendum.**
