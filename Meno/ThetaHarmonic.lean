@@ -471,4 +471,14 @@ theorem theta_residue_count (q : ℕ) [NeZero q] :
       = q ^ 2 :=
   thetaIntegralPresentation.card_quotient q
 
+/-- At any resolution `q`, the theta graph's gauge group is `q⁴` — one
+`q`-digit per non-cycle edge (`6 − 2` of them). K1's `q²` classes and
+this `q⁴` of gauge multiply to `q⁶ = |descriptions|`. -/
+theorem theta_gauge_count (q : ℕ) [NeZero q] :
+    Nat.card (LinearMap.range (thetaGraph.gradLin (ZMod q))) = q ^ 4 := by
+  have hexp : Fintype.card thetaGraph.E - thetaIntegralPresentation.r = 4 := by
+    show Fintype.card (Fin 6) - 2 = 4
+    simp
+  rw [thetaIntegralPresentation.card_gauge q, hexp]
+
 end Meno

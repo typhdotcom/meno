@@ -360,7 +360,7 @@ theorem attach_partFn_lt : partFn (attach G c) < partFn G
 **Consumer.** The theta graph with one face attached (`b₁ : 2 → 1`) as
 the concrete instance, with the released mass computed in closed form.
 
-### C8 -- The keystone as a genuine coding theorem — OPEN
+### C8 -- The keystone as a genuine coding theorem — CLOSED (Phase 34)
 
 **Current state.** The counting side is done and is *stronger than the
 review requested*: K1 `card_quotient` (`|C_q ⧸ G_q| = q^{b₁}`), K2
@@ -391,9 +391,30 @@ justifying lemma for the forward cost. The definitional `sectionCost`
 and its `ring`-proved identity are then **replaced** by these statements
 (discipline 1c).
 
-**Consumer.** `theta_residue_count` (already relocated to
-`ThetaHarmonic.lean`, Phase 28) plus the mod-q compression map of any
-fundamental presentation once C2 closes.
+**Delivered (Phase 34).** `Meno/InfoRatchet.lean`:
+`sectionsEquivPiFiber` (sections ≃ per-point preimage choices),
+`card_sections` (`#sections = ∏_b |f⁻¹{b}|`, *no* surjectivity
+hypothesis — an empty fiber makes both sides `0`), the redefined
+`sectionCost f := log(#sections)`, and **`log_card_sections`** (=
+`sectionCost_eq_fiberInfoCost`): for a surjection, `sectionCost =
+fiberInfoCost`, now a counting theorem via `Real.log_prod`. The
+definitional `sectionCost` and its `ring` identity are deleted;
+`sectionCost_eq_zero_of_injective` and `sectionCost_pos_of_not_injective`
+(surjective, non-injective) are the honest ratchet.
+`descriptionCost_eq : descriptionCost f = log(Nat.card (A → B))`
+justifies the forward cost as a genuine count.
+
+`Meno/ResolutionCount.lean`: **`card_compression_sections`**
+(`#sections of the mod-q compression map = |G_q|^{q^{b₁}}` — gauge
+choices per class), **`sectionCost_compression`** (its log =
+`q^{b₁}·log|G_q|`, tying the count to K3's `fiberInfoCost_mk`), and
+**`card_gauge`** (`|G_q| = q^{|E|−b₁}` — gauge freedom is one `q`-digit
+per non-cycle edge; K1's `q^{b₁}` classes times this is
+`q^{|E|} = |descriptions|`). Consumers: `theta_residue_count` (K1) and
+the new `theta_gauge_count` (`q⁴`, since theta has `6 − 2` non-cycle
+edges) in `ThetaHarmonic.lean`. The coding-theorem statements hold for
+**every** modulus `q ≥ 1` and every finite graph — no primality, no
+per-graph fields.
 
 ### C9 -- Gravity and the ratchet through SectorAction (TypeKernel's replacement) — OPEN
 
@@ -504,7 +525,7 @@ incidence layer and C6's intrinsic matter; C9 touches only
 | C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | **CLOSED** (Phase 32) |
 | C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | **CLOSED** (Phase 33) |
 | C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + release + strict `partFn` drop | OPEN |
-| C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | OPEN |
+| C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | **CLOSED** (Phase 34) |
 | C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; `TransitionComplexity` deleted | OPEN |
 | C10 geodesic | general simplicial instance + `n·(1/n) = 1` consumer | **CLOSED** (Phase 27) |
 | C11 magnitude/HomKernel excision | file, import, claims removed | **CLOSED** (Phase 28) |
@@ -3515,3 +3536,46 @@ Ledger: **C1–C6, C10, C11 CLOSED.** OPEN: C7 (2-complex binding), C8
 `lake build Meno`: 3341 jobs green; zero `sorry`; zero `axiom`.
 
 **End of Phase 33 addendum.**
+
+## Phase 34 addendum: the keystone becomes a coding theorem — C8 CLOSED (2026-07-17)
+
+*(Same session. Model switched to Opus 4.8 at max effort; the kernel
+said "continue.")*
+
+The last definitional soft spot the review flagged is discharged.
+Previously `sectionCost := descriptionCost + fiberInfoCost` made the
+"reverse description costs the fiber information" claim true by fiat
+(`sectionCost_sub_descriptionCost` was `by ring`). Now the sections of
+`f` are *counted*: `sectionsEquivPiFiber` exhibits a section as a
+per-point choice of preimage, so `card_sections` gives
+`#sections = ∏_b |f⁻¹{b}|` with no hypotheses, and `log_card_sections`
+(via `Real.log_prod`) proves `sectionCost = fiberInfoCost` for any
+surjection. The fiber-information cost is thereby *derived from a
+description model* — the reverse descriptions of `f` are exactly its
+sections — rather than asserted. The forward cost is likewise justified:
+`descriptionCost_eq` shows it is `log(#{functions A → B})`.
+
+The compression-map specialization ties this to the counting keystone:
+`card_compression_sections` gives `#sections = |G_q|^{q^{b₁}}` (a gauge
+choice per class), `sectionCost_compression` shows its log is exactly
+K3's `fiberInfoCost_mk` (`q^{b₁}·log|G_q|`), and `card_gauge` computes
+`|G_q| = q^{|E|−b₁}` — so K1's `q^{b₁}` classes and the gauge `q^{|E|−b₁}`
+multiply to `q^{|E|}`, the full description count. Euler's formula, read
+as a factorization of counts. `theta_gauge_count` (`q⁴`) joins
+`theta_residue_count` (`q²`) as the concrete flourish.
+
+Everything holds for **every modulus `q ≥ 1`** (no primality — the
+review's item 8 asked only for primes) and **every finite graph** (no
+per-graph fields — C2's `fundamentalPresentation` underlies it).
+
+### Status
+
+- **C8: OPEN → CLOSED.** Definitional `sectionCost` and its bookkeeping
+  identity deleted; the coding theorem and its compression consumers
+  proved.
+- Ledger: **C1–C6, C8, C10, C11 CLOSED.** OPEN: C7 (2-complex binding),
+  C9 (SectorAction gravity), C12 (architecture + public claims).
+
+`lake build Meno`: 3341 jobs green. Zero `sorry`; zero `axiom`.
+
+**End of Phase 34 addendum.**

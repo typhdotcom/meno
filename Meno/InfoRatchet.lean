@@ -13,24 +13,24 @@ a point comes from. For injective `f` every fiber has size 1, so
 `fiberInfoCost = 0`; for non-injective `f` some fiber has size ≥ 2, so
 `fiberInfoCost > 0`.
 
-The **ratchet** is then the inequality `sectionCost ≥ descriptionCost +
-fiberInfoCost`: specifying any section `s : B → A` of `f` costs at least
-the description of `f` plus the fiber-choice information.
+The **ratchet** (completion path, C8 — now *derived*): reversing `f`,
+i.e. choosing a section `s : B → A`, is not free. The sections of `f`
+are counted exactly — there are `∏_b |f⁻¹{b}|` of them
+(`card_sections`) — so the information in a reverse description,
+`sectionCost f := log (#sections)`, is *proved* to equal `fiberInfoCost f`
+(`log_card_sections`), rather than defined as `descriptionCost +
+fiberInfoCost`. An injective `f` has at most one section
+(`sectionCost = 0`); a non-injective surjection has many
+(`sectionCost_pos_of_not_injective`). The forward cost is likewise a
+genuine count: `descriptionCost f = log (#{functions A → B})`
+(`descriptionCost_eq`).
 
 This file isolates the fiber-information layer. It is independent of the
 specific cost convention used by Basic.lean's `TransitionComplexity`
 class; the Phase-10 program that was to reconcile them was falsified
-(PLAN, Phase 17) and is superseded by the completion path's C9.
-
-**Honest status of the ratchet** (completion path, C8): `sectionCost`
-below is *defined* as `descriptionCost + fiberInfoCost`, so
-`sectionCost_sub_descriptionCost` is definitional bookkeeping, not a
-coding theorem. The genuine theorems in this vocabulary are
-`fiberInfoCost_pos_of_not_injective` (strict ratchet) and the keystone
-counting results K1–K3 (`Meno/ResolutionCount.lean`), which compute
-`fiberInfoCost` of the mod-`q` compression map exactly. C8's remaining
-obligation is to *derive* section cost from a description model
-(counting sections) rather than define it. -/
+(PLAN, Phase 17) and is superseded by the completion path's C9. The
+compression-map specialization — `#sections = |G_q|^{q^{b₁}}`, tying the
+count to the keystone K1–K3 — lives in `Meno/ResolutionCount.lean`. -/
 
 namespace Meno
 
@@ -100,44 +100,92 @@ theorem fiberInfoCost_pos_of_not_injective [Fintype A] [Fintype B] [DecidableEq 
   · simp [hzero]
   · exact Real.log_nonneg (by exact_mod_cast hpos)
 
-/-- Description cost of a function: `|A| · log |B|`. The number of bits
-to specify which of `|B|^|A|` total functions `f` is. -/
+/-! ## Counting sections: the coding theorem (C8)
+
+`sectionCost` is no longer *defined* as `descriptionCost + fiberInfoCost`.
+The sections of `f` are counted (`card_sections`), and the log-count is
+*proved* equal to `fiberInfoCost` (`log_card_sections`). The
+fiber-information cost is thereby derived from a description model — the
+reverse descriptions of `f` are exactly its sections — not asserted. -/
+
+/-- Sections of `f` correspond to a choice, at each point of `B`, of a
+preimage: `{s : B → A // section of f} ≃ ((b : B) → f ⁻¹' {b})`. -/
+def sectionsEquivPiFiber (f : A → B) :
+    {s : B → A // ∀ b, f (s b) = b} ≃ ((b : B) → (f ⁻¹' {b} : Set A)) where
+  toFun s := fun b => ⟨s.1 b, s.2 b⟩
+  invFun g := ⟨fun b => (g b).1, fun b => (g b).2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- **The number of sections of `f`** is the product of the fiber sizes:
+each reverse description is a per-point choice of preimage. No
+surjectivity needed — an empty fiber contributes a `0` factor and there
+are then no sections. -/
+theorem card_sections [Fintype B] (f : A → B) :
+    Nat.card {s : B → A // ∀ b, f (s b) = b} = ∏ b : B, Nat.card (f ⁻¹' {b}) := by
+  rw [Nat.card_congr (sectionsEquivPiFiber f), Nat.card_pi]
+
+/-- **The reverse-description cost**: the log-count of `f`'s sections. -/
+noncomputable def sectionCost (f : A → B) : ℝ :=
+  Real.log (Nat.card {s : B → A // ∀ b, f (s b) = b})
+
+/-- **The coding theorem** (C8): for a surjection the reverse-description
+cost — genuinely counted — equals the fiber information cost. This is
+`card_sections` composed with `Real.log_prod`; the Phase-22 note is
+discharged, the identity `sectionCost = fiberInfoCost` is a counting
+theorem, not a definition. -/
+theorem log_card_sections [Fintype A] [Fintype B] [DecidableEq B]
+    {f : A → B} (hf : Function.Surjective f) :
+    sectionCost f = fiberInfoCost f := by
+  have hne : ∀ b : B, ((Nat.card (f ⁻¹' {b}) : ℕ) : ℝ) ≠ 0 := by
+    intro b
+    obtain ⟨a, ha⟩ := hf b
+    haveI : Nonempty ↥(f ⁻¹' {b}) := ⟨⟨a, ha⟩⟩
+    exact_mod_cast (Finite.card_pos).ne'
+  unfold sectionCost fiberInfoCost
+  rw [card_sections f, Nat.cast_prod, Real.log_prod (fun b _ => hne b)]
+
+/-- Reading `log_card_sections` as an equation of costs. -/
+theorem sectionCost_eq_fiberInfoCost [Fintype A] [Fintype B] [DecidableEq B]
+    {f : A → B} (hf : Function.Surjective f) :
+    sectionCost f = fiberInfoCost f :=
+  log_card_sections hf
+
+/-- An **injective** function has at most one section, so its reverse
+description is free. -/
+theorem sectionCost_eq_zero_of_injective
+    {f : A → B} (hf : Function.Injective f) :
+    sectionCost f = 0 := by
+  haveI : Subsingleton {s : B → A // ∀ b, f (s b) = b} :=
+    ⟨fun s t => Subtype.ext (funext fun b => hf ((s.2 b).trans (t.2 b).symm))⟩
+  haveI : Finite {s : B → A // ∀ b, f (s b) = b} := Finite.of_subsingleton
+  unfold sectionCost
+  have hle : Nat.card {s : B → A // ∀ b, f (s b) = b} ≤ 1 :=
+    Finite.card_le_one_iff_subsingleton.mpr inferInstance
+  rcases (by omega : Nat.card {s : B → A // ∀ b, f (s b) = b} = 0
+      ∨ Nat.card {s : B → A // ∀ b, f (s b) = b} = 1) with h | h <;>
+    rw [h] <;> simp
+
+/-- **The ratchet** (C8): a non-injective surjection has strictly
+positive reverse-description cost — recovering the input is genuinely
+costly. -/
+theorem sectionCost_pos_of_not_injective [Fintype A] [Fintype B] [DecidableEq B]
+    {f : A → B} (hsurj : Function.Surjective f) (hf : ¬ Function.Injective f) :
+    0 < sectionCost f := by
+  rw [sectionCost_eq_fiberInfoCost hsurj]
+  exact fiberInfoCost_pos_of_not_injective hf
+
+/-- **Forward description cost**: `|A| · log |B|` — the bits to specify
+which of `|B|^|A|` functions `f` is. -/
 noncomputable def descriptionCost [Fintype A] [Fintype B] (_f : A → B) : ℝ :=
   (Fintype.card A : ℝ) * Real.log (Fintype.card B : ℝ)
 
-/-- Section cost: the description cost of `f` plus the fiber-information
-overhead. A section `s : B → A` of `f` must specify, for each `b`, which
-preimage to use — that's `fiberInfoCost f` bits of additional information. -/
-noncomputable def sectionCost [Fintype A] [Fintype B] [DecidableEq B]
-    (f : A → B) (_s : B → A) (_hs : ∀ b, f (_s b) = b) : ℝ :=
-  descriptionCost f + fiberInfoCost f
-
-/-- The **ratchet identity**: section cost minus description cost equals
-the fiber information cost. The asymmetry between forward and reverse
-description is exactly the fiber-choice information. -/
-theorem sectionCost_sub_descriptionCost [Fintype A] [Fintype B] [DecidableEq B]
-    (f : A → B) (s : B → A) (hs : ∀ b, f (s b) = b) :
-    sectionCost f s hs - descriptionCost f = fiberInfoCost f := by
-  unfold sectionCost; ring
-
-/-- For an **injective** `f`, section cost equals description cost: no
-fiber information needed. -/
-theorem sectionCost_eq_of_injective [Fintype A] [Fintype B] [DecidableEq B]
-    {f : A → B} (s : B → A) (hs : ∀ b, f (s b) = b) (hf : Function.Injective f) :
-    sectionCost f s hs = descriptionCost f := by
-  unfold sectionCost
-  rw [fiberInfoCost_of_injective hf]; ring
-
-/-- **The ratchet inequality**: when `f` is non-injective, every section's
-description cost strictly exceeds the forward description cost. The gap
-is exactly the fiber information overhead — non-invertible computation
-forces a strictly positive penalty on any reverse description. -/
-theorem sectionCost_gt_descriptionCost_of_not_injective
-    [Fintype A] [Fintype B] [DecidableEq B]
-    {f : A → B} (s : B → A) (hs : ∀ b, f (s b) = b)
-    (hf : ¬ Function.Injective f) :
-    descriptionCost f < sectionCost f s hs := by
-  unfold sectionCost
-  linarith [fiberInfoCost_pos_of_not_injective hf]
+/-- Forward cost, justified as a genuine count: `descriptionCost f` is
+the log-number of all functions `A → B`. -/
+theorem descriptionCost_eq [Fintype A] [Fintype B] (f : A → B) :
+    descriptionCost f = Real.log (Nat.card (A → B)) := by
+  unfold descriptionCost
+  rw [Nat.card_fun, Nat.cast_pow, Real.log_pow, Nat.card_eq_fintype_card,
+    Nat.card_eq_fintype_card]
 
 end Meno

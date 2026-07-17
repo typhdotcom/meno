@@ -250,6 +250,87 @@ theorem fiberInfoCost_mk
   push_cast
   ring
 
+/-! ## C8: the section count of the compression map
+
+The keystone's counting shadows meet the coding theorem
+(`Meno/InfoRatchet.lean`): a *section* of the mod-`q` compression map is
+a gauge-fixing — a choice of description for each class. There are
+`|G_q|^{q^{b₁}}` of them, and the log of that count is exactly the fiber
+information `fiberInfoCost_mk` (K3). Reversing compression is genuinely
+costly, and the cost is now *counted*, not defined. -/
+
+/-- **The gauge group is `q^{|E|−b₁}`**: the mod-`q` local
+re-descriptions number exactly `q` per non-cycle edge. Together with K1
+(`q^{b₁}` classes) this is Euler's `|E| = (|E|−b₁) + b₁` read as a
+count. -/
+theorem card_gauge :
+    Nat.card (LinearMap.range (G.gradLin (ZMod q)))
+      = q ^ (Fintype.card G.E - Q.r) := by
+  have hLag : Nat.card (G.E → ZMod q)
+      = Nat.card ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+        * Nat.card (LinearMap.range (G.gradLin (ZMod q))) :=
+    AddSubgroup.card_eq_card_quotient_mul_card_addSubgroup
+      (LinearMap.range (G.gradLin (ZMod q))).toAddSubgroup
+  rw [Q.card_quotient q] at hLag
+  have hE : Nat.card (G.E → ZMod q) = q ^ Fintype.card G.E := by
+    rw [Nat.card_fun, Nat.card_eq_fintype_card (α := ZMod q), ZMod.card,
+      Nat.card_eq_fintype_card (α := G.E)]
+  rw [hE] at hLag
+  have hsplit := Q.toCyclePresentation.card_edges_eq_finrank_gauge_add_r
+  have hr : Q.r ≤ Fintype.card G.E := by omega
+  have hq : 0 < q := Nat.pos_of_ne_zero (NeZero.ne q)
+  have hpow : q ^ Q.r * q ^ (Fintype.card G.E - Q.r) = q ^ Fintype.card G.E := by
+    rw [← pow_add, Nat.add_sub_cancel' hr]
+  rw [← hpow] at hLag
+  exact (Nat.eq_of_mul_eq_mul_left (pow_pos hq Q.r) hLag).symm
+
+/-- **The number of gauge-fixings** (C8, closed form): a section of the
+compression map chooses a representative per class, and there are
+`|G_q|^{q^{b₁}}` of them — `|G_q|` gauge choices, independently, for each
+of the `q^{b₁}` incompressible classes. -/
+theorem card_compression_sections :
+    Nat.card {s : ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+        → (G.E → ZMod q) //
+        ∀ x, (Submodule.Quotient.mk (s x) :
+          (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) = x}
+      = Nat.card (LinearMap.range (G.gradLin (ZMod q))) ^ (q ^ Q.r) := by
+  haveI : Finite ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
+    Finite.of_surjective _ (Submodule.Quotient.mk_surjective _)
+  haveI := Fintype.ofFinite
+    ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+  have hfib : ∀ x, Nat.card ((fun y : G.E → ZMod q =>
+        (Submodule.Quotient.mk y :
+          (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))) ⁻¹' {x})
+      = Nat.card (LinearMap.range (G.gradLin (ZMod q))) :=
+    fun x => card_fiber (G := G) q x
+  rw [card_sections (fun y : G.E → ZMod q => Submodule.Quotient.mk y),
+    Finset.prod_congr rfl (fun x _ => hfib x),
+    Finset.prod_const, Finset.card_univ, ← Nat.card_eq_fintype_card,
+    Q.card_quotient q]
+
+/-- **The compression map's reverse-description cost** (C8, tying the
+section count to K1–K3): recovering which description produced a class
+costs exactly `q^{b₁} · log |G_q|` — the fiber information
+(`fiberInfoCost_mk`), now realized as the log-count of sections
+(`log_card_sections`). -/
+theorem sectionCost_compression :
+    sectionCost (fun y : G.E → ZMod q =>
+        (Submodule.Quotient.mk y :
+          (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))))
+      = (q : ℝ) ^ Q.r
+        * Real.log (Nat.card (LinearMap.range (G.gradLin (ZMod q)))) := by
+  haveI : Finite ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
+    Finite.of_surjective _ (Submodule.Quotient.mk_surjective _)
+  haveI := Fintype.ofFinite
+    ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+  haveI : DecidableEq ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
+    Classical.decEq _
+  have hsurj : Function.Surjective (fun y : G.E → ZMod q =>
+      (Submodule.Quotient.mk y :
+        (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))) :=
+    Submodule.Quotient.mk_surjective _
+  rw [log_card_sections hsurj, Q.fiberInfoCost_mk q]
+
 end IntegralCyclePresentation
 
 end Meno
