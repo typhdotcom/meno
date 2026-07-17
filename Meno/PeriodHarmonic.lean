@@ -1,5 +1,6 @@
 import Meno.SiegelPoisson
 import Meno.HarmonicForm
+import Meno.GraphHomology
 
 /-! # Period-Model Harmonic Data: the General Finite-Graph API
 
@@ -27,44 +28,10 @@ section PeriodMinimization
 
 variable {ι : Type*} [Fintype ι] {r : ℕ}
 
-/-- Gram matrix of a family of period vectors under the standard dot
-product. -/
-noncomputable def gramOf (c : Fin r → ι → ℝ) : Matrix (Fin r) (Fin r) ℝ :=
-  fun i j => c i ⬝ᵥ c j
-
-theorem gramOf_isSymm (c : Fin r → ι → ℝ) : (gramOf c).IsSymm := by
-  ext i j
-  exact dotProduct_comm (c j) (c i)
-
-/-- The quadratic form of a Gram matrix is the squared norm of the
-combination: `xᵀ(gramOf c)x = ‖Σᵢ xᵢcᵢ‖²` (moved from
-`Meno/FundamentalPresentation.lean`, review #4 — it is a pure Gram
-fact and the presentation layers consume it). -/
-theorem dotProduct_gramOf_mulVec {r : ℕ} {ι : Type*} [Fintype ι]
-    (c : Fin r → ι → ℝ) (x : Fin r → ℝ) :
-    x ⬝ᵥ (gramOf c *ᵥ x)
-      = (fun e => ∑ i, x i * c i e) ⬝ᵥ (fun e => ∑ i, x i * c i e) := by
-  show ∑ i, x i * (∑ j, gramOf c i j * x j)
-    = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e)
-  calc ∑ i, x i * (∑ j, gramOf c i j * x j)
-      = ∑ i, ∑ j, x i * x j * (∑ e, c i e * c j e) := by
-        refine Finset.sum_congr rfl fun i _ => ?_
-        rw [Finset.mul_sum]
-        refine Finset.sum_congr rfl fun j _ => ?_
-        show x i * (gramOf c i j * x j) = x i * x j * (∑ e, c i e * c j e)
-        rw [show gramOf c i j = ∑ e, c i e * c j e from rfl]
-        ring
-    _ = ∑ i, ∑ j, ∑ e, x i * x j * (c i e * c j e) := by
-        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-        rw [Finset.mul_sum]
-    _ = ∑ i, ∑ e, ∑ j, x i * x j * (c i e * c j e) :=
-        Finset.sum_congr rfl fun i _ => Finset.sum_comm
-    _ = ∑ e, ∑ i, ∑ j, x i * x j * (c i e * c j e) := Finset.sum_comm
-    _ = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e) := by
-        refine Finset.sum_congr rfl fun e _ => ?_
-        rw [Finset.sum_mul_sum]
-        exact Finset.sum_congr rfl fun i _ =>
-          Finset.sum_congr rfl fun j _ => by ring
+/- The unit-edge Gram `gramOf` and its basic lemmas (`gramOf_isSymm`,
+`dotProduct_gramOf_mulVec`) live upstream in the pure topology layer
+(`Meno/GraphHomology.lean`, review #5) — the canonical Gram is derived
+from the family, never stored; this file prices it. -/
 
 /-- The minimum-norm cochain with periods `k`: the combination of the
 period vectors with coefficients `C⁻¹k`. -/
@@ -222,7 +189,6 @@ noncomputable def HarmonicGramData.ofCycles (c : Fin r → ι → ℝ)
     rw [Matrix.transpose_nonsing_inv,
       show (gramOf c)ᵀ = gramOf c from gramOf_isSymm c]
   gram_posDef := posDef_inv hC
-  summable := summable_exp_neg_quadForm (posDef_inv hC)
 
 /-- The builder's data satisfies the variational identity: the Gram
 energy of sector `k` is the least cochain energy at periods `k`. -/
@@ -248,9 +214,9 @@ end Builder
 Edges `e : Fin n` run from vertex `e` to vertex `e + 1` (cyclically).
 One basis cycle: the all-ones cochain. Chain Gram `[[n]]`, period Gram
 `[[1/n]]` — the spine's original harmonic mass, re-derived. The
-boundary closed form and spanning lemmas live with `cycleGraph`'s
-presentation in `Meno/CyclePresentation.lean`, stated through the
-substrate's `boundary` (review #3, finding 4). -/
+boundary closed form, constancy, and the cycle graph's lattice basis
+live in the topology layer (`Meno/GraphInstances.lean`), stated
+through the substrate's `boundary` (review #3, finding 4). -/
 
 section CyclePeriods
 

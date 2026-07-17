@@ -48,7 +48,7 @@ open Matrix Simplicial
 number of `C_n`); the Gram form is `!![1/n]`, the rank-1 Hodge Gram of
 the cycle's harmonic 1-cochain `cycleHarmonicForm`. Positive-definiteness
 reduces to `1/n > 0` (so `n ≥ 3` is more than enough); summability is
-transported from `summable_partitionFn` via `Equiv.funUnique`. -/
+derived (`HarmonicGramData.summable`). -/
 noncomputable def cycleHarmonicGramData (n : ℕ) (hn : n ≥ 3) :
     HarmonicGramData (Fin n) where
   r := 1
@@ -68,20 +68,6 @@ noncomputable def cycleHarmonicGramData (n : ℕ) (hn : n ≥ 3) :
       have hα : (0 : ℝ) < 1 / n := one_div_pos.mpr hn0
       have hsq : 0 < (x 0) ^ 2 := by positivity
       exact mul_pos hα hsq
-  summable := by
-    have hsumZ : Summable (fun k : ℤ => Real.exp (-(k : ℝ) ^ 2 / n)) :=
-      summable_partitionFn n hn
-    let e : (Fin 1 → ℤ) ≃ ℤ := Equiv.funUnique (Fin 1) ℤ
-    refine Summable.congr (e.summable_iff.mpr hsumZ) ?_
-    intro k
-    show Real.exp (-((e k : ℤ) : ℝ) ^ 2 / n)
-      = Real.exp (-(∑ i : Fin 1, ∑ j : Fin 1,
-          !![(1 : ℝ) / n] i j * (k i : ℝ) * (k j : ℝ)))
-    have hek : (e k : ℤ) = k 0 := rfl
-    rw [hek]
-    congr 1
-    simp [Matrix.cons_val_fin_one]
-    ring
 
 /-- Energy of the cycle harmonic Gram data: `(1/n) · k²`. -/
 theorem cycleHarmonicGramData_energy (n : ℕ) (hn : n ≥ 3) (k : Fin 1 → ℤ) :
@@ -227,9 +213,6 @@ noncomputable def wedgeHarmonicGramData (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h
   gram_posDef := (QuadraticAction.ofDiagonal₂ (1 / (n₁ : ℝ)) (1 / (n₂ : ℝ))
     (one_div_pos.mpr (by exact_mod_cast (show 0 < n₁ by omega)))
     (one_div_pos.mpr (by exact_mod_cast (show 0 < n₂ by omega)))).Q_posDef
-  summable := (QuadraticAction.ofDiagonal₂ (1 / (n₁ : ℝ)) (1 / (n₂ : ℝ))
-    (one_div_pos.mpr (by exact_mod_cast (show 0 < n₁ by omega)))
-    (one_div_pos.mpr (by exact_mod_cast (show 0 < n₂ by omega)))).summable
 
 /-- The first-cycle basis winding `(1, 0)` has energy `1/n₁`: each
 cycle's mass spectrum survives in the wedge. -/
@@ -251,17 +234,18 @@ noncomputable def wedgeMatter₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n
       (Sum.elim (fun e => if e = 0 then 1 else 0) (fun _ => 0)), by
     intro h0
     have h := congrArg
-      (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
-        (by omega)).latticeQuotEquiv h0
+      ((wedgeGraph n₁ n₂ (by omega) (by omega)).latticeQuotEquiv
+        (wedgeLatticeBasis n₁ n₂ (by omega) (by omega))) h0
     rw [map_zero] at h
     have h1 : (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0)
           (fun _ => 0) : Fin n₁ ⊕ Fin n₂ → ℤ)
-        ⬝ᵥ (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
-          (by omega)).cyclesZ 0 = 0 := congrFun h 0
+        ⬝ᵥ (wedgeGraph n₁ n₂ (by omega) (by omega)).cyclesZ
+          (wedgeLatticeBasis n₁ n₂ (by omega) (by omega)) 0 = 0 :=
+      congrFun h 0
+    rw [cyclesZ_wedgeLatticeBasis] at h1
     rw [show ((Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0)
           (fun _ => 0) : Fin n₁ ⊕ Fin n₂ → ℤ)
-        ⬝ᵥ (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
-          (by omega)).cyclesZ 0)
+        ⬝ᵥ wedgeCyclesZ n₁ n₂ 0)
         = ∑ e : Fin n₁ ⊕ Fin n₂,
             (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0)
               (fun _ => 0)) e
@@ -381,17 +365,30 @@ theorem wedgeHarmonicGramData_energy_isLeast (n₁ n₂ : ℕ)
   exact HarmonicGramData.ofCycles_energy_isLeast (V := Fin n₁ ⊕ Fin n₂)
     (wedgeCycles n₁ n₂)
     (gramOf_wedgeCycles_posDef n₁ n₂ (by omega) (by omega)) k
-/-- The wedge matter's intrinsic coordinates are `(1, 0)`. -/
+/-- The wedge lattice basis's cast cycles are the real wedge cycles. -/
+theorem cyclesR_wedgeLatticeBasis (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
+    (wedgeGraph n₁ n₂ h₁ h₂).cyclesR (wedgeLatticeBasis n₁ n₂ h₁ h₂)
+      = wedgeCycles n₁ n₂ := by
+  funext i e
+  show (((wedgeGraph n₁ n₂ h₁ h₂).cyclesZ
+      (wedgeLatticeBasis n₁ n₂ h₁ h₂) i e : ℤ) : ℝ)
+    = wedgeCycles n₁ n₂ i e
+  rw [cyclesZ_wedgeLatticeBasis]
+  fin_cases i <;> cases e <;> simp [wedgeCyclesZ, wedgeCycles]
+
+/-- The wedge matter's keystone coordinates are `(1, 0)`. -/
 theorem wedgeMatter₁_coords (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
-    (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
-        (by omega)).latticeQuotEquiv (wedgeMatter₁ n₁ n₂ h₁ h₂).val
+    (wedgeGraph n₁ n₂ (by omega) (by omega)).latticeQuotEquiv
+        (wedgeLatticeBasis n₁ n₂ (by omega) (by omega))
+        (wedgeMatter₁ n₁ n₂ h₁ h₂).val
       = ![1, 0] := by
   haveI : NeZero n₁ := ⟨by omega⟩
   haveI : NeZero n₂ := ⟨by omega⟩
   funext j
   show (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0) (fun _ => 0))
-      ⬝ᵥ (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
-        (by omega)).cyclesZ j = ![1, 0] j
+      ⬝ᵥ (wedgeGraph n₁ n₂ (by omega) (by omega)).cyclesZ
+        (wedgeLatticeBasis n₁ n₂ (by omega) (by omega)) j = ![1, 0] j
+  rw [cyclesZ_wedgeLatticeBasis]
   fin_cases j
   · show (∑ e : Fin n₁ ⊕ Fin n₂,
         (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0) (fun _ => 0)) e
@@ -409,8 +406,14 @@ derived Gram → asserted Gram, one chain of identifications. -/
 theorem wedgeMatter₁_mass (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
     (wedgeMatter₁ n₁ n₂ h₁ h₂).mass = 1 / n₁ := by
   rw [← (wedgeMatter₁ n₁ n₂ h₁ h₂).mass_chart
-      (wedgeGraphIntegralPresentation n₁ n₂ (by omega) (by omega)),
+      (wedgeLatticeBasis n₁ n₂ (by omega) (by omega)),
     wedgeMatter₁_coords n₁ n₂ h₁ h₂]
+  show ∑ i, ∑ j,
+      (gramOf ((wedgeGraph n₁ n₂ (by omega) (by omega)).cyclesR
+        (wedgeLatticeBasis n₁ n₂ (by omega) (by omega))))⁻¹ i j
+      * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ)
+    = 1 / n₁
+  rw [cyclesR_wedgeLatticeBasis]
   show (wedgePeriodData n₁ n₂ (by omega) (by omega)).energy ![1, 0] = 1 / n₁
   rw [wedgePeriodData_energy_eq n₁ n₂ h₁ h₂,
     wedgeHarmonicGramData_energy_basis₁]

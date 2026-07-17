@@ -1,4 +1,4 @@
-import Meno.ThetaGraph
+import Meno.GraphInstances
 import Meno.Matter
 import Meno.ResolutionCount
 
@@ -12,29 +12,13 @@ topology by variational minimization and feeds it to the general
 Siegel–Poisson duality (`Meno/SiegelPoisson.lean`), giving Phase 15 its
 first genuinely non-diagonal consumer.
 
-Following the Phase 17 review:
-
-* **Sectors are cohomological.** The variational problem is posed on
-  *periods*: minimize `‖ω‖²` over 1-cochains `ω` with prescribed
-  integrals `⟨ω, cᵢ⟩ = kᵢ` against the basis cycles. The resulting
-  Gram form is the inverse `C⁻¹` of the cycle-chain Gram matrix `C` —
-  the norm on the dual (period / integral cohomology) lattice. For the
-  cycle graph this reproduces `1/n`; here it produces
-  `C = [[4,2],[2,4]]`, `Q = C⁻¹ = [[1/3,−1/6],[−1/6,1/3]]`.
-* **Concrete first.** The general least-norm lemma
-  (`isLeast_energy_periods`) is proved for an arbitrary finite edge
-  type and arbitrary period vectors — it is the seed of the general
-  finite-graph API — but the graph-level work is done concretely for
-  `K₂,₃`, not through a universal graph-Hodge framework.
-
-## The variational lemma
-
-In `ℝ^E` with the standard dot product, given period vectors
-`c₁, …, c_r` with invertible Gram matrix `C`, the minimum of `‖ω‖²`
-over `{ω | ⟨ω, cᵢ⟩ = kᵢ}` is `kᵀC⁻¹k`, attained at the combination
-`ω* = ∑ᵢ (C⁻¹k)ᵢ cᵢ`. Pythagoras: any feasible `ω` is `ω* + δ` with
-`δ ⊥ span(cᵢ) ∋ ω*`. No boundary operators, no Hodge decomposition —
-the period constraint *is* the cohomology. -/
+The presentation is the lattice basis `thetaLatticeBasis`
+(`Meno/GraphInstances.lean`, review #5) — everything priced here is
+**derived** from it: the chain Gram `!![4, 2; 2, 4]` is the unit-edge
+Gram of the basis (`basisGramData_theta_gram` ties the derived pricing
+to the literal closed form), the period Gram is its inverse
+`!![1/3, −1/6; −1/6, 1/3]`, and the sector physics (matter, mass,
+binding, resolution counts) flows through the graph-level machinery. -/
 
 namespace Meno
 
@@ -43,11 +27,7 @@ open Matrix
 
 section Theta
 
-/-! ### The priced presentations
-
-Moved from the topology layer (review #3, finding 2): Gram
-positivity, matrix inversion, and the presentations are **harmonic**
-content — `Meno/ThetaGraph.lean` keeps only incidence data. -/
+/-! ### The chain Gram and its inverse, in closed form -/
 
 /-- The cycle-chain Gram matrix of `K₂,₃`: paths have length two, and
 distinct basis cycles share (only) the third path. -/
@@ -88,62 +68,40 @@ theorem thetaChainGram_inv :
   fin_cases i <;> fin_cases j <;>
     norm_num [Matrix.mul_apply, Fin.sum_univ_two]
 
-/-- The theta graph as a **priced** cycle presentation — the Gram's
-positive-definiteness **derived** from the genuine basis
-(`CycleBasis.toPresentation`, review #4), with the closed form
-`!![4, 2; 2, 4]` and its inverse kept as separate theorems. -/
-@[reducible] noncomputable def thetaPresentation :
-    CyclePresentation thetaGraph :=
-  thetaCycleBasis.toPresentation
+/-! ### The derived pricing of the lattice basis -/
 
-/-- The theta graph as an **integral** presentation: integer basis,
-integer period realizability (single-edge cochains on the first and
-second paths), and integer integration (the Phase-19 explicit
-potential, whose entries are integer combinations of `ω`). Feeds the
-keystone `latticeQuotEquiv`. -/
-@[reducible] noncomputable def thetaIntegralPresentation :
-    IntegralCyclePresentation thetaGraph :=
-  { thetaPresentation with
-    cyclesZ := ![![1, 1, 0, 0, -1, -1], ![0, 0, 1, 1, -1, -1]]
-    cyclesZ_cast := fun i e => by
-      fin_cases i <;> fin_cases e <;> norm_num [thetaCycles]
-    periods_onto := fun k => by
-      refine ⟨![k 0, 0, k 1, 0, 0, 0], fun j => ?_⟩
-      fin_cases j <;>
-        simp +decide [dotProduct, Fin.sum_univ_six]
-    integral_potentials := fun ω h => by
-      have h0 := h 0
-      have h1 := h 1
-      simp +decide [dotProduct, Fin.sum_univ_six] at h0 h1
-      refine ⟨![0, ω 4 + ω 5, ω 0, ω 2, ω 4], ?_⟩
-      have hgrad : (fun e =>
-          (![0, ω 4 + ω 5, ω 0, ω 2, ω 4] : Fin 5 → ℤ) (thetaTgt e)
-            - (![0, ω 4 + ω 5, ω 0, ω 2, ω 4] : Fin 5 → ℤ) (thetaSrc e))
-          = ω := by
-        funext e
-        fin_cases e <;> simp +decide [thetaSrc, thetaTgt] <;> omega
-      exact hgrad }
+/-- The lattice basis's cast cycles are the theta cycles. -/
+theorem cyclesR_thetaLatticeBasis :
+    thetaGraph.cyclesR thetaLatticeBasis = thetaCycles := by
+  funext i e
+  show ((thetaGraph.cyclesZ thetaLatticeBasis i e : ℤ) : ℝ) = thetaCycles i e
+  rw [cyclesZ_thetaLatticeBasis]
+  exact (thetaCycles_eq_cast i e).symm
 
-/-- The hand-built rank-2 presentation corroborates the fundamental
-one: `r = b₁ = 2` through `r_eq_b1`. (The topology-layer proof by
-Euler is `thetaGraph_b1`, `Meno/GraphInstances.lean`.) -/
-theorem thetaGraph_b1' : thetaGraph.b1 = 2 :=
-  (thetaIntegralPresentation.r_eq_b1).symm.trans rfl
+/-- **The derived pricing equals the closed form**: the Gram form of
+the theta basis's priced Gram data — the inverse unit-edge chain Gram,
+with nothing stored (review #5, finding 3) — is the literal
+`!![1/3, −1/6; −1/6, 1/3]`. -/
+theorem basisGramData_theta_gram :
+    (thetaGraph.basisGramData thetaLatticeBasis).gram
+      = !![1/3, -(1/6); -(1/6), 1/3] := by
+  show (gramOf (thetaGraph.cyclesR thetaLatticeBasis))⁻¹ = _
+  rw [cyclesR_thetaLatticeBasis, gramOf_thetaCycles, thetaChainGram_inv]
 
-/-- C5's acceptance witness for theta: the hand-built presentation is
-a rebase-image of the fundamental one (C3's `exists_rebase_related`;
-the cycle and wedge instances live in
+/-- C5's acceptance witness for theta: the hand-built basis is a
+unimodular recombination of the fundamental one (C3's
+`exists_unimodular_relating`; the cycle and wedge instances live in
 `Meno/WedgePresentation.lean`). -/
-theorem thetaIntegralPresentation_rebase_related :
-    ∃ (U : Matrix (Fin (thetaGraph.fundamentalPresentation).r)
-        (Fin (thetaGraph.fundamentalPresentation).r) ℤ)
-      (hU : IsUnit U.det),
-      ∀ i e, thetaIntegralPresentation.cycles
-          (Fin.cast ((thetaGraph.fundamentalPresentation).r_eq_b1.trans
-            thetaIntegralPresentation.r_eq_b1.symm) i) e
-        = ((thetaGraph.fundamentalPresentation).toCyclePresentation.rebase
-            U hU).cycles i e :=
-  IntegralCyclePresentation.exists_rebase_related _ _
+theorem thetaLatticeBasis_unimodular_related :
+    ∃ U : Matrix (Fin thetaGraph.b1) (Fin thetaGraph.b1) ℤ,
+      IsUnit U.det ∧
+      ∀ j, thetaGraph.cyclesZ
+          (thetaLatticeBasis.reindex
+            (finCongr (thetaGraph.card_eq_b1 thetaLatticeBasis))) j
+        = fun e => ∑ i, U i j * thetaGraph.cyclesZ thetaGraph.cycleBasis i e :=
+  thetaGraph.exists_unimodular_relating thetaGraph.cycleBasis
+    (thetaLatticeBasis.reindex
+      (finCongr (thetaGraph.card_eq_b1 thetaLatticeBasis)))
 
 /-- The period Gram form is positive definite (inverse of a
 positive-definite matrix). -/
@@ -154,7 +112,7 @@ theorem thetaGram_posDef :
 
 /-- **The harmonic Gram data of the theta graph** — the first
 non-diagonal instance in the spine. The Gram form is derived from the
-graph (`gramOf_thetaCycles` + `thetaChainGram_inv`), not asserted. -/
+graph (`basisGramData_theta_gram`), not asserted. -/
 noncomputable def thetaHarmonicGramData : HarmonicGramData (Fin 5) where
   r := 2
   gram := !![1/3, -(1/6); -(1/6), 1/3]
@@ -162,7 +120,6 @@ noncomputable def thetaHarmonicGramData : HarmonicGramData (Fin 5) where
     ext i j
     fin_cases i <;> fin_cases j <;> rfl
   gram_posDef := thetaGram_posDef
-  summable := summable_exp_neg_quadForm thetaGram_posDef
 
 /-- The Gram matrix of the theta data, in literal form. -/
 theorem thetaHarmonicGramData_gram :
@@ -213,24 +170,25 @@ no-potential, and annihilation all come from the intrinsic
 noncomputable def thetaMatter : MatterSector thetaGraph :=
   ⟨Submodule.Quotient.mk ![1, 0, 0, 0, 0, 0], by
     intro h0
-    have h := congrArg thetaIntegralPresentation.latticeQuotEquiv h0
+    have h := congrArg (thetaGraph.latticeQuotEquiv thetaLatticeBasis) h0
     rw [map_zero] at h
     have h1 : (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ)
-        ⬝ᵥ thetaIntegralPresentation.cyclesZ 0 = 0 := congrFun h 0
-    rw [show (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ)
-        ⬝ᵥ thetaIntegralPresentation.cyclesZ 0
+        ⬝ᵥ thetaGraph.cyclesZ thetaLatticeBasis 0 = 0 := congrFun h 0
+    rw [cyclesZ_thetaLatticeBasis] at h1
+    rw [show (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ) ⬝ᵥ thetaCyclesZ 0
         = (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ) ⬝ᵥ ![1, 1, 0, 0, -1, -1]
       from rfl] at h1
     exact absurd h1 (by decide)⟩
 
-/-- The theta matter's intrinsic coordinates against the theta
-presentation are `(1, 0)`. -/
+/-- The theta matter's keystone coordinates against the theta basis
+are `(1, 0)`. -/
 theorem thetaMatter_coords :
-    thetaIntegralPresentation.latticeQuotEquiv thetaMatter.val
+    thetaGraph.latticeQuotEquiv thetaLatticeBasis thetaMatter.val
       = ![1, 0] := by
   funext j
   show (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ)
-    ⬝ᵥ thetaIntegralPresentation.cyclesZ j = ![1, 0] j
+    ⬝ᵥ thetaGraph.cyclesZ thetaLatticeBasis j = ![1, 0] j
+  rw [cyclesZ_thetaLatticeBasis]
   fin_cases j
   · show (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ) ⬝ᵥ ![1, 1, 0, 0, -1, -1] = 1
     decide
@@ -238,12 +196,12 @@ theorem thetaMatter_coords :
     decide
 
 /-- The theta matter's mass is `1/3` — the intrinsic harmonic energy,
-computed through the theta presentation's chart (C6). -/
+computed through the theta basis's chart (C6). -/
 theorem thetaMatter_mass : thetaMatter.mass = 1/3 := by
-  rw [← thetaMatter.mass_chart thetaIntegralPresentation, thetaMatter_coords]
-  show ∑ i, ∑ j, (gramOf thetaCycles)⁻¹ i j
+  rw [← thetaMatter.mass_chart thetaLatticeBasis, thetaMatter_coords]
+  show ∑ i, ∑ j, (gramOf (thetaGraph.cyclesR thetaLatticeBasis))⁻¹ i j
       * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1/3
-  rw [gramOf_thetaCycles, thetaChainGram_inv]
+  rw [cyclesR_thetaLatticeBasis, gramOf_thetaCycles, thetaChainGram_inv]
   norm_num [Fin.sum_univ_two]
 
 /-- **The first non-diagonal consumer of the general Siegel–Poisson
@@ -414,16 +372,16 @@ theorem theta_residue_count (q : ℕ) [NeZero q] :
     Nat.card ((Fin 6 → ZMod q)
         ⧸ LinearMap.range (thetaGraph.gradLin (ZMod q)))
       = q ^ 2 :=
-  thetaIntegralPresentation.card_quotient q
+  thetaGraph.card_quotient thetaLatticeBasis q
 
 /-- At any resolution `q`, the theta graph's gauge group is `q⁴` — one
 `q`-digit per non-cycle edge (`6 − 2` of them). K1's `q²` classes and
 this `q⁴` of gauge multiply to `q⁶ = |descriptions|`. -/
 theorem theta_gauge_count (q : ℕ) [NeZero q] :
     Nat.card (LinearMap.range (thetaGraph.gradLin (ZMod q))) = q ^ 4 := by
-  have hexp : Fintype.card thetaGraph.E - thetaIntegralPresentation.r = 4 := by
+  have hexp : Fintype.card thetaGraph.E - 2 = 4 := by
     show Fintype.card (Fin 6) - 2 = 4
     simp
-  rw [thetaIntegralPresentation.card_gauge q, hexp]
+  rw [thetaGraph.card_gauge thetaLatticeBasis q, hexp]
 
 end Meno

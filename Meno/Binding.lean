@@ -374,43 +374,23 @@ noncomputable def IncidenceGraph.classPartFn (G : IncidenceGraph.{u, v}) : ℝ :
   ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
     Real.exp (-G.harmonicEnergy κ)
 
-/-- Boltzmann weights of a presentation's energies are summable —
-stated for an *arbitrary* presentation, so the defeq between the
-sector action's `E` and the Gram energy stays cheap. -/
-theorem IntegralCyclePresentation.summable_exp_energy
-    (Q : IntegralCyclePresentation G) :
-    Summable (fun k : Fin Q.r → ℤ =>
-      Real.exp (-(Q.toGramData.energy k))) :=
-  Q.toGramData.toQuadraticAction.toSectorAction.summable
-
-/-- A presentation's partition function, as the Boltzmann sum of its
-Gram energies. -/
-theorem IntegralCyclePresentation.partFn_eq_tsum
-    (Q : IntegralCyclePresentation G) :
-    Q.toGramData.toQuadraticAction.toSectorAction.partFn
-      = ∑' k : Fin Q.r → ℤ, Real.exp (-(Q.toGramData.energy k)) := rfl
-
 /-- The class weights are summable — transported from the fundamental
-sector action along the keystone equivalence. -/
+basis's sector action along the keystone equivalence. -/
 theorem IncidenceGraph.summable_classWeight (G : IncidenceGraph.{u, v}) :
     Summable (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
       Real.exp (-G.harmonicEnergy κ)) := by
   have h := (Equiv.summable_iff (G.h1QuotEquiv.toEquiv)
-    (f := fun k : Fin G.fundamentalPresentation.r → ℤ =>
-      Real.exp (-(G.fundamentalPresentation.toGramData.energy k)))).mpr
-    G.fundamentalPresentation.summable_exp_energy
+    (f := fun k : Fin G.b1 → ℤ =>
+      Real.exp (-((G.basisGramData G.cycleBasis).energy k)))).mpr
+    (G.basisGramData G.cycleBasis).toQuadraticAction.toSectorAction.summable
   exact h.congr fun κ => rfl
 
 /-- The class-level partition function is the graph's partition
-function. -/
+function — the fundamental instance of
+`basisGramData_partFn_eq_tsum_classes` (C3). -/
 theorem IncidenceGraph.classPartFn_eq_partFn (G : IncidenceGraph.{u, v}) :
-    G.classPartFn = G.partFn := by
-  rw [IncidenceGraph.partFn, G.fundamentalPresentation.partFn_eq_tsum]
-  show G.classPartFn = ∑' k : Fin G.b1 → ℤ,
-    Real.exp (-(G.fundamentalPresentation.toGramData.energy k))
-  rw [← Equiv.tsum_eq G.h1QuotEquiv.toEquiv
-    (fun k => Real.exp (-(G.fundamentalPresentation.toGramData.energy k)))]
-  exact tsum_congr fun κ => rfl
+    G.classPartFn = G.partFn :=
+  (G.basisGramData_partFn_eq_tsum_classes G.cycleBasis).symm
 
 namespace TwoComplex
 
@@ -445,10 +425,10 @@ theorem energy_isLeast (κ' : X.h1) :
       ∀ i, ω ⬝ᵥ (fun e => ((X.face i e : ℤ) : ℝ)) = 0 := by
     intro ω hper i
     obtain ⟨τ, hτ⟩ := Submodule.Quotient.mk_surjective _ (X.restrict κ')
-    -- ω = τ̂ + grad f, by the presentation-free realizer characterization
-    have hiff := G.fundamentalPresentation.periods_eq_cast_iff τ ω
-    have hper' : ∀ j, ω ⬝ᵥ G.fundamentalPresentation.cycles j
-        = ((τ ⬝ᵥ G.fundamentalPresentation.cyclesZ j : ℤ) : ℝ) := by
+    -- ω = τ̂ + grad f, by the basis-free realizer characterization
+    have hiff := G.periods_eq_cast_iff G.cycleBasis τ ω
+    have hper' : ∀ j, ω ⬝ᵥ G.cyclesR G.cycleBasis j
+        = ((τ ⬝ᵥ G.cyclesZ G.cycleBasis j : ℤ) : ℝ) := by
       intro j
       have := hper j
       rw [← hτ, G.h1QuotEquiv_mk τ] at this

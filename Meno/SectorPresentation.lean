@@ -54,23 +54,14 @@ namespace SectorPresentation
 
 variable {L : LoopKernelObj.{u, v}} {r : ℕ} (P : SectorPresentation L r)
 
-/-- The quadratic action induced by a presentation. Summability is
-transported from `L.summable` via the `coord` equivalence. -/
+/-- The quadratic action induced by a presentation. Summability is a
+theorem of every quadratic action (`QuadraticAction.summable`) — the
+old transport of `L.summable` through the `coord` equivalence is no
+longer needed to build the action. -/
 noncomputable def toQuadraticAction : QuadraticAction r where
   Q := P.Q
   Q_symm := P.Q_symm
   Q_posDef := P.Q_posDef
-  summable := by
-    -- Transport L.summable through the coord equivalence and energy_eq.
-    refine (P.coord.symm.summable_iff.mpr L.summable).congr ?_
-    intro k
-    -- Energy of L at coord.symm k equals the quadratic form at k.
-    have hg : L.energy (P.coord.symm k) =
-        ∑ i, ∑ j, P.Q i j * (k i : ℝ) * (k j : ℝ) := by
-      rw [P.energy_eq (P.coord.symm k), P.coord.apply_symm_apply]
-    show Real.exp (-L.energy (P.coord.symm k))
-      = Real.exp (-(∑ i, ∑ j, P.Q i j * (k i : ℝ) * (k j : ℝ)))
-    rw [hg]
 
 /-- The partition function transports: `L.partFn` equals the partition
 function of the induced quadratic action. -/

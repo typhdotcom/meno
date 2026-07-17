@@ -1,19 +1,21 @@
-import Meno.CycleBasis
+import Meno.IncidenceGraph
 
 /-! # The Theta Graph: incidence data (topology layer)
 
 The subdivided theta graph `K₂,₃` — two junction vertices joined by
 three internal-vertex paths — as **pure incidence data**: edge maps,
-the graph, the two basis cycles sharing a path, and the topological
-facts about them (closedness, spanning, integral primitivity), all
-stated through the substrate's `IncidenceGraph.boundary` — no
-specialized boundary operator (review #3, finding 4).
+the graph, the two integral basis cycles sharing a path, and the raw
+topological facts about them (lattice membership, real spanning,
+integral spanning, independence of the casts), all stated through the
+substrate's `IncidenceGraph.boundary` — no specialized boundary
+operator (review #3, finding 4), no basis structure (review #5,
+finding 2 — the lattice basis `thetaLatticeBasis` is assembled from
+these facts in `Meno/GraphInstances.lean` via
+`IncidenceGraph.basisOfCycles`).
 
 Everything priced lives downstream: the chain Gram `!![4, 2; 2, 4]`,
-its positive-definiteness and inverse, and the cycle/integral
-presentations are **harmonic** content and live in
-`Meno/ThetaHarmonic.lean` (review #3, finding 2 — this file imports
-only the topology layer). -/
+its positive-definiteness and inverse, and the priced Gram data are
+**harmonic** content and live in `Meno/ThetaHarmonic.lean`. -/
 
 namespace Meno
 
@@ -41,18 +43,38 @@ def thetaTgt : Fin 6 → Fin 5 := ![2, 1, 3, 1, 4, 1]
     src := thetaSrc
     tgt := thetaTgt }
 
-/-- The basis cycles: `c₁ = p₁ − p₃` and `c₂ = p₂ − p₃`. -/
+/-- The integral basis cycles: `c₁ = p₁ − p₃` and `c₂ = p₂ − p₃`. -/
+def thetaCyclesZ : Fin 2 → Fin 6 → ℤ :=
+  ![![1, 1, 0, 0, -1, -1], ![0, 0, 1, 1, -1, -1]]
+
+/-- The basis cycles, cast to `ℝ` (the closed forms downstream compute
+against these literals). -/
 noncomputable def thetaCycles : Fin 2 → Fin 6 → ℝ :=
   ![![1, 1, 0, 0, -1, -1], ![0, 0, 1, 1, -1, -1]]
 
-/-- The theta graph's substrate boundary, in explicit-sum form. -/
-theorem thetaGraph_boundary_eq_sum (ω : Fin 6 → ℝ) (w : Fin 5) :
-    thetaGraph.boundary ω w
-      = ∑ e, ((if thetaTgt e = w then (1 : ℝ) else 0)
-        - (if thetaSrc e = w then (1 : ℝ) else 0)) * ω e := rfl
+/-- The real cycles are the casts of the integral ones. -/
+theorem thetaCycles_eq_cast (i : Fin 2) (e : Fin 6) :
+    thetaCycles i e = ((thetaCyclesZ i e : ℤ) : ℝ) := by
+  fin_cases i <;> fin_cases e <;> norm_num [thetaCycles, thetaCyclesZ]
 
-/-- The basis vectors are cycles: their boundary vanishes at every
-vertex. -/
+/-- The theta graph's substrate boundary, in explicit-sum form. -/
+theorem thetaGraph_boundary_eq_sum {R : Type*} [CommRing R]
+    (ω : Fin 6 → R) (w : Fin 5) :
+    thetaGraph.boundary ω w
+      = ∑ e, ((if thetaTgt e = w then (1 : R) else 0)
+        - (if thetaSrc e = w then (1 : R) else 0)) * ω e := rfl
+
+/-- The basis vectors are integral cycles: they lie in the cycle
+lattice `H₁(K₂,₃; ℤ)`. -/
+theorem thetaCyclesZ_mem (i : Fin 2) :
+    thetaCyclesZ i ∈ thetaGraph.cycleLattice := by
+  rw [IncidenceGraph.mem_cycleLattice]
+  intro w
+  rw [thetaGraph_boundary_eq_sum]
+  fin_cases i <;> fin_cases w <;> decide
+
+/-- The cast basis vectors are cycles: their real boundary vanishes at
+every vertex. -/
 theorem thetaGraph_boundary_cycles (i : Fin 2) (w : Fin 5) :
     thetaGraph.boundary (thetaCycles i) w = 0 := by
   rw [thetaGraph_boundary_eq_sum]
@@ -77,43 +99,57 @@ theorem eq_comb_of_theta_boundary_eq_zero (ω : Fin 6 → ℝ)
   funext e
   fin_cases e <;> simp +decide [thetaCycles] <;> linarith
 
-/-- **The theta graph's topological cycle basis** (`b₁ = 2`): closed,
-spanning — no Gram, no pricing. The priced presentation is
-`thetaPresentation` (`Meno/ThetaHarmonic.lean`). -/
-@[reducible] noncomputable def thetaCycleBasis : CycleBasis thetaGraph where
-  r := 2
-  cycles := thetaCycles
-  cycles_closed := fun i w => thetaGraph_boundary_cycles i w
-  spanning := fun ω hω => by
-    refine ⟨![ω 0, ω 2], ?_⟩
-    have h := eq_comb_of_theta_boundary_eq_zero ω (fun w => hω w)
-    funext e
-    rw [congrFun h e, Fin.sum_univ_two]
-    rfl
-  independent := fun x hx => by
-    have h0 := congrFun hx 0
-    have h2 := congrFun hx 2
-    simp +decide [thetaCycles, Fin.sum_univ_two] at h0 h2
-    funext i
-    fin_cases i
-    · simpa using h0
-    · simpa using h2
+/-- **Real spanning**: a closed real cochain is a combination of the
+cast basis cycles. -/
+theorem theta_spanningR (ω : Fin 6 → ℝ)
+    (h : ∀ w, thetaGraph.boundary ω w = 0) :
+    ∃ a : Fin 2 → ℝ,
+      ω = fun e => ∑ i, a i * ((thetaCyclesZ i e : ℤ) : ℝ) := by
+  refine ⟨![ω 0, ω 2], ?_⟩
+  have hc := eq_comb_of_theta_boundary_eq_zero ω h
+  funext e
+  rw [congrFun hc e, Fin.sum_univ_two]
+  show ω 0 * thetaCycles 0 e + ω 2 * thetaCycles 1 e
+    = ω 0 * ((thetaCyclesZ 0 e : ℤ) : ℝ) + ω 2 * ((thetaCyclesZ 1 e : ℤ) : ℝ)
+  rw [thetaCycles_eq_cast, thetaCycles_eq_cast]
 
-/-- The theta basis `c₁ = p₁ − p₃`, `c₂ = p₂ − p₃` is integrally
-primitive: an integer cochain with zero boundary is an *integer*
-combination of the basis. Completes the primitivity trio (cycle and
-wedge in `Meno/CyclePresentation.lean`). -/
-theorem theta_integral_spanning (ω : Fin 6 → ℤ)
-    (h : ∀ w, thetaGraph.boundary (fun e => (ω e : ℝ)) w = 0) :
-    ∃ a : Fin 2 → ℤ, ∀ e, (ω e : ℝ) = ∑ i, (a i : ℝ) * thetaCycles i e := by
-  refine ⟨![ω 0, ω 2], fun e => ?_⟩
-  have hr := eq_comb_of_theta_boundary_eq_zero (fun e => (ω e : ℝ)) h
-  calc (ω e : ℝ)
-      = (ω 0 : ℝ) * thetaCycles 0 e + (ω 2 : ℝ) * thetaCycles 1 e :=
-        congrFun hr e
-    _ = ∑ i, ((![ω 0, ω 2] : Fin 2 → ℤ) i : ℝ) * thetaCycles i e := by
-        rw [Fin.sum_univ_two]
-        rfl
+/-- **Independence of the casts**: a real dependency among the cast
+basis cycles vanishes — read off the flows on the first and second
+paths. -/
+theorem theta_cast_independent (x : Fin 2 → ℝ)
+    (hx : (fun e => ∑ i, x i * ((thetaCyclesZ i e : ℤ) : ℝ)) = 0) :
+    x = 0 := by
+  have h0 := congrFun hx 0
+  have h2 := congrFun hx 2
+  simp +decide [thetaCyclesZ, Fin.sum_univ_two] at h0 h2
+  funext i
+  fin_cases i
+  · simpa using h0
+  · simpa using h2
+
+/-- **Integral spanning**: an integral cycle is an *integer*
+combination of the basis — the period lattice is the full integral
+cycle lattice, not a finite-index sublattice. Feeds
+`IncidenceGraph.basisOfCycles` in `Meno/GraphInstances.lean`. -/
+theorem theta_integral_spanning (x : Fin 6 → ℤ)
+    (hx : x ∈ thetaGraph.cycleLattice) :
+    ∃ a : Fin 2 → ℤ, x = fun e => ∑ i, a i * thetaCyclesZ i e := by
+  have hclosed : ∀ w, thetaGraph.boundary (fun e => ((x e : ℤ) : ℝ)) w = 0 := by
+    intro w
+    rw [thetaGraph.boundary_castR,
+      (IncidenceGraph.mem_cycleLattice _ |>.mp hx) w, Int.cast_zero]
+  have hr := eq_comb_of_theta_boundary_eq_zero (fun e => ((x e : ℤ) : ℝ)) hclosed
+  refine ⟨![x 0, x 2], ?_⟩
+  funext e
+  apply Int.cast_injective (α := ℝ)
+  have he := congrFun hr e
+  rw [he]
+  push_cast
+  rw [Fin.sum_univ_two]
+  show ((x 0 : ℤ) : ℝ) * thetaCycles 0 e + ((x 2 : ℤ) : ℝ) * thetaCycles 1 e
+    = ((x 0 : ℤ) : ℝ) * ((thetaCyclesZ 0 e : ℤ) : ℝ)
+      + ((x 2 : ℤ) : ℝ) * ((thetaCyclesZ 1 e : ℤ) : ℝ)
+  rw [thetaCycles_eq_cast, thetaCycles_eq_cast]
 
 end Theta
 

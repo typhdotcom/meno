@@ -27,159 +27,20 @@ covariant) and the periodization bridge handles the *sum* side.
 
 ## Contents
 
-* `Matrix.PosDef.exists_coercivity` — eigenvalue-free coercivity: a
-  positive-definite form dominates `c · ∑ xᵢ²` for some `c > 0`,
-  by minimizing on the compact sum-of-squares sphere.
-* `summable_exp_neg_quadForm` — Boltzmann weights of a positive-definite
-  quadratic action are summable on `ℤ^d`. Retires the Session-1
-  deferral: `summable` no longer needs to be a field of
-  `QuadraticAction` (we keep the field but provide the constructor).
-* `QuadraticAction.of_posDef` — constructor deriving summability.
 * the multivariate periodization bridge and Gaussian Poisson summation.
 * `QuadraticAction.dual` (general) and `QuadraticAction.duality`.
+
+(Coercivity `Matrix.PosDef.exists_coercivity` and the summability
+theorem `summable_exp_neg_quadForm` moved **upstream** to
+`Meno/QuadraticAction.lean` in review #5: summability is derived where
+the structure is defined, and the structure carries no summability
+field.)
 -/
 
 namespace Meno
 
 open scoped BigOperators
 open Matrix
-
-/-! ## Coercivity of positive-definite forms, eigenvalue-free
-
-The plan sketched `E_Q(k) ≥ λ_min ‖k‖²` via `Matrix.PosDef.eigenvalues_pos`.
-We avoid eigenvalue bookkeeping entirely: the form attains a positive
-minimum `c` on the compact sphere `{x | ∑ xᵢ² = 1}`, and degree-2
-homogeneity scales that bound to all of `ℝ^d`. -/
-
-/-- The quadratic form of a matrix is continuous. -/
-private lemma continuous_quadForm {d : ℕ} (M : Matrix (Fin d) (Fin d) ℝ) :
-    Continuous (fun x : Fin d → ℝ => x ⬝ᵥ M.mulVec x) := by
-  unfold dotProduct Matrix.mulVec
-  fun_prop
-
-/-- **Coercivity**: a positive-definite form dominates a positive multiple
-of the sum of squares. Eigenvalue-free: minimize on the compact unit
-sphere of `∑ xᵢ²`, then scale by homogeneity. -/
-theorem _root_.Matrix.PosDef.exists_coercivity {d : ℕ}
-    {M : Matrix (Fin d) (Fin d) ℝ} (hM : M.PosDef) :
-    ∃ c : ℝ, 0 < c ∧ ∀ x : Fin d → ℝ, c * (∑ i, x i ^ 2) ≤ x ⬝ᵥ M.mulVec x := by
-  rcases Nat.eq_zero_or_pos d with hd | hd
-  · -- rank 0: both sides are empty sums
-    subst hd
-    refine ⟨1, one_pos, fun x => ?_⟩
-    simp [dotProduct]
-  · -- the sphere S = {x | ∑ xᵢ² = 1} is compact and nonempty
-    set S : Set (Fin d → ℝ) := {x | ∑ i, x i ^ 2 = 1} with hS
-    have hcont_sq : Continuous (fun x : Fin d → ℝ => ∑ i, x i ^ 2) := by fun_prop
-    have hclosed : IsClosed S := isClosed_eq hcont_sq continuous_const
-    have hbdd : Bornology.IsBounded S := by
-      rw [Metric.isBounded_iff_subset_closedBall 0]
-      refine ⟨1, fun x hx => ?_⟩
-      rw [Metric.mem_closedBall, dist_zero_right]
-      rw [pi_norm_le_iff_of_nonneg zero_le_one]
-      intro i
-      have h1 : x i ^ 2 ≤ ∑ j, x j ^ 2 :=
-        Finset.single_le_sum (fun j _ => sq_nonneg (x j)) (Finset.mem_univ i)
-      rw [hx] at h1
-      rw [Real.norm_eq_abs]
-      nlinarith [abs_nonneg (x i), sq_abs (x i)]
-    have hcompact : IsCompact S := Metric.isCompact_of_isClosed_isBounded hclosed hbdd
-    have hne : S.Nonempty := by
-      refine ⟨Pi.single ⟨0, hd⟩ 1, ?_⟩
-      simp [hS, Pi.single_apply]
-    obtain ⟨x₀, hx₀S, hx₀min⟩ :=
-      hcompact.exists_isMinOn hne (continuous_quadForm M).continuousOn
-    have hx₀ne : x₀ ≠ 0 := by
-      intro h0
-      rw [hS] at hx₀S
-      simp only [Set.mem_setOf_eq, h0, Pi.zero_apply] at hx₀S
-      simp at hx₀S
-    have hx₀pos : 0 < x₀ ⬝ᵥ M.mulVec x₀ := by
-      have h := (posDef_iff_dotProduct_mulVec.mp hM).2 hx₀ne
-      have hstar : star x₀ = x₀ := funext fun i => star_trivial _
-      rwa [hstar] at h
-    refine ⟨x₀ ⬝ᵥ M.mulVec x₀, hx₀pos, fun x => ?_⟩
-    rcases eq_or_ne x 0 with hx | hx
-    · simp [hx, Matrix.mulVec_zero, dotProduct_zero]
-    · -- scale x to the sphere
-      have hsum_pos : 0 < ∑ i, x i ^ 2 := by
-        obtain ⟨i, hi⟩ := Function.ne_iff.mp hx
-        exact Finset.sum_pos' (fun j _ => sq_nonneg (x j))
-          ⟨i, Finset.mem_univ i,
-            lt_of_le_of_ne (sq_nonneg (x i)) (Ne.symm (pow_ne_zero 2 hi))⟩
-      set t : ℝ := Real.sqrt (∑ i, x i ^ 2) with ht
-      have ht_pos : 0 < t := Real.sqrt_pos.mpr hsum_pos
-      have ht_sq : t ^ 2 = ∑ i, x i ^ 2 := Real.sq_sqrt hsum_pos.le
-      have hy : (t⁻¹ • x) ∈ S := by
-        rw [hS]
-        simp only [Set.mem_setOf_eq, Pi.smul_apply, smul_eq_mul, mul_pow]
-        rw [← Finset.mul_sum, ← ht_sq]
-        field_simp
-      have hval : (t⁻¹ • x) ⬝ᵥ M.mulVec (t⁻¹ • x) = t⁻¹ ^ 2 * (x ⬝ᵥ M.mulVec x) := by
-        rw [Matrix.mulVec_smul, dotProduct_smul, smul_dotProduct]
-        simp [smul_eq_mul, sq]
-        ring
-      have := isMinOn_iff.mp hx₀min _ hy
-      rw [hval] at this
-      have h2 : (x₀ ⬝ᵥ M.mulVec x₀) * t ^ 2 ≤ x ⬝ᵥ M.mulVec x := by
-        have htne : t ≠ 0 := ne_of_gt ht_pos
-        calc (x₀ ⬝ᵥ M.mulVec x₀) * t ^ 2
-            ≤ (t⁻¹ ^ 2 * (x ⬝ᵥ M.mulVec x)) * t ^ 2 := by
-              apply mul_le_mul_of_nonneg_right this (by positivity)
-          _ = x ⬝ᵥ M.mulVec x := by field_simp
-      calc (x₀ ⬝ᵥ M.mulVec x₀) * (∑ i, x i ^ 2)
-          = (x₀ ⬝ᵥ M.mulVec x₀) * t ^ 2 := by rw [ht_sq]
-        _ ≤ x ⬝ᵥ M.mulVec x := h2
-
-/-! ## Summability of positive-definite Boltzmann weights on `ℤ^d`
-
-`exp(-kᵀMk) ≤ ∏ᵢ exp(-c kᵢ²)` by coercivity, and the right side is
-summable by the rank-r factorization machinery already in the spine
-(`summable_finPi_prod` with the scalar Gaussian sums). This retires
-Session-1 architectural decision 1: summability of a `QuadraticAction`
-is derivable from `Q.PosDef`, not merely package-able as a field. -/
-
-/-- Boltzmann weights of a positive-definite quadratic form are summable
-over the integer lattice. -/
-theorem summable_exp_neg_quadForm {d : ℕ} {M : Matrix (Fin d) (Fin d) ℝ}
-    (hM : M.PosDef) :
-    Summable (fun k : Fin d → ℤ =>
-      Real.exp (-(∑ i, ∑ j, M i j * (k i : ℝ) * (k j : ℝ)))) := by
-  obtain ⟨c, hc, hcoer⟩ := hM.exists_coercivity
-  have hquad : ∀ k : Fin d → ℤ,
-      ∑ i, ∑ j, M i j * (k i : ℝ) * (k j : ℝ)
-        = (fun i => (k i : ℝ)) ⬝ᵥ M.mulVec (fun i => (k i : ℝ)) := by
-    intro k
-    show ∑ i, ∑ j, M i j * (k i : ℝ) * (k j : ℝ)
-      = ∑ i, (k i : ℝ) * ∑ j, M i j * (k j : ℝ)
-    refine Finset.sum_congr rfl (fun i _ => ?_)
-    rw [Finset.mul_sum]
-    refine Finset.sum_congr rfl (fun j _ => ?_)
-    ring
-  refine Summable.of_nonneg_of_le (fun k => (Real.exp_pos _).le) (fun k => ?_)
-    (QuadraticAction.summable_finPi_prod d (fun _ z => Real.exp (-c * (z : ℝ) ^ 2))
-      (fun _ z => (Real.exp_pos _).le)
-      (fun _ => QuadraticAction.summable_scalarPartFn c hc))
-  calc Real.exp (-(∑ i, ∑ j, M i j * (k i : ℝ) * (k j : ℝ)))
-      ≤ Real.exp (-(c * ∑ i, (k i : ℝ) ^ 2)) := by
-        apply Real.exp_le_exp.mpr
-        rw [neg_le_neg_iff, hquad k]
-        exact hcoer _
-    _ = ∏ i, Real.exp (-c * (k i : ℝ) ^ 2) := by
-        rw [← Real.exp_sum]
-        congr 1
-        rw [Finset.mul_sum, ← Finset.sum_neg_distrib]
-        exact Finset.sum_congr rfl (fun i _ => by ring)
-
-/-- Constructor for `QuadraticAction` deriving summability from positive
-definiteness. Retires the Session-1 deferral of this derivation. -/
-noncomputable def QuadraticAction.of_posDef {r : ℕ}
-    (Q : Matrix (Fin r) (Fin r) ℝ) (hsymm : Q.IsSymm) (hpos : Q.PosDef) :
-    QuadraticAction r where
-  Q := Q
-  Q_symm := hsymm
-  Q_posDef := hpos
-  summable := summable_exp_neg_quadForm hpos
 
 /-! ## The Gaussian family and its periodization
 
@@ -1113,17 +974,17 @@ section Duality
 open Complex
 
 /-- The **general dual** of a quadratic action: `Q ↦ π²·Q⁻¹`.
-Symmetry, positive-definiteness, and summability are all derived —
-no fields need to be supplied. This is the plan's Phase 2 target
+Symmetry and positive-definiteness are derived (and summability is a
+theorem of every quadratic action). This is the plan's Phase 2 target
 construction at full (non-diagonal) generality. -/
 noncomputable def QuadraticAction.dual {r : ℕ} (A : QuadraticAction r) :
-    QuadraticAction r :=
-  QuadraticAction.of_posDef (Real.pi ^ 2 • A.Q⁻¹)
-    (by
-      show (Real.pi ^ 2 • A.Q⁻¹)ᵀ = Real.pi ^ 2 • A.Q⁻¹
-      rw [Matrix.transpose_smul, Matrix.transpose_nonsing_inv,
-        show A.Qᵀ = A.Q from A.Q_symm])
-    (posDef_smul' (posDef_inv A.Q_posDef) (by positivity))
+    QuadraticAction r where
+  Q := Real.pi ^ 2 • A.Q⁻¹
+  Q_symm := by
+    show (Real.pi ^ 2 • A.Q⁻¹)ᵀ = Real.pi ^ 2 • A.Q⁻¹
+    rw [Matrix.transpose_smul, Matrix.transpose_nonsing_inv,
+      show A.Qᵀ = A.Q from A.Q_symm]
+  Q_posDef := posDef_smul' (posDef_inv A.Q_posDef) (by positivity)
 
 @[simp] theorem QuadraticAction.dual_Q {r : ℕ} (A : QuadraticAction r) :
     A.dual.Q = Real.pi ^ 2 • A.Q⁻¹ := rfl

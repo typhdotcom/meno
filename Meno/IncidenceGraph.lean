@@ -507,6 +507,17 @@ section CycleLattice
 
 variable (G : IncidenceGraph.{u, v})
 
+/-- Casting an integer cochain commutes with the boundary. -/
+theorem boundary_castR (ω : G.E → ℤ) (v : G.V) :
+    G.boundary (fun e => ((ω e : ℤ) : ℝ)) v = ((G.boundary ω v : ℤ) : ℝ) := by
+  rw [boundary_eq_sum, boundary_eq_sum]
+  push_cast
+  refine Finset.sum_congr rfl fun e _ => ?_
+  congr 1
+  rw [G.bcoeff_def, G.bcoeff_def]
+  push_cast [apply_ite (Int.cast : ℤ → ℝ)]
+  norm_num
+
 /-- The integral cycle lattice: `H₁(G;ℤ) = ker ∂ℤ`. -/
 def cycleLattice : Submodule ℤ (G.E → ℤ) := LinearMap.ker (G.boundaryLin ℤ)
 

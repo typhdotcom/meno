@@ -32,24 +32,28 @@ functional equation runs through the same single analytic source
 **Topology, intrinsically.** Every finite multigraph
 (`IncidenceGraph`) carries an intrinsic integral cycle lattice
 `H₁(G;ℤ) = ker ∂ℤ` and cohomology `H¹(G;ℤ) = ℤ-cochains ⧸ gradients`.
-The **fundamental-presentation theorem**
-(`IncidenceGraph.fundamentalPresentation`,
-`Meno/FundamentalPresentation.lean`) equips *every* finite graph with a
-primitive integral cycle basis — period realizability and integral
-potentials are theorems, not assumptions — via a saturation argument,
-the PID structure theorem, and a walk-integration engine. Consequences
-for every finite graph: `H¹(G;ℤ) ≃ ℤ^{b₁}` (`h1QuotEquiv`), Euler's
-formula `b₁ = |E| − |V| + c` (`b1_eq`), and the gauge theorem
-`dim(ker grad) = #components` (`finrank_gauge`) — connectivity governs
-gauge, never exactness (`period_eq_zero_iff_exists_grad` needs no
-connectivity).
+A presentation **is** a lattice basis
+`Module.Basis (Fin n) ℤ G.cycleLattice` — no presentation structure,
+no stored fields: closedness, real/integer independence, period
+realizability, integral potentials, spanning, the positive-definite
+unit-edge Gram, and the keystone equivalences are all *theorems* of
+any basis (`Meno/GraphHomology.lean`). The fundamental basis
+(`IncidenceGraph.cycleBasis`) equips *every* finite graph with one,
+via a saturation argument, the PID structure theorem, and a
+walk-integration engine. Consequences for every finite graph:
+`H¹(G;ℤ) ≃ ℤ^{b₁}` (`h1QuotEquiv`), Euler's formula
+`b₁ = |E| − |V| + c` (`b1_eq`, proved in the topology layer), and the
+gauge theorem `dim(ker grad) = #components` (`finrank_gauge`) —
+connectivity governs gauge, never exactness
+(`period_eq_zero_iff_exists_grad` needs no connectivity).
 
-**Basis independence.** Any two integral presentations of a graph are
-`GL(r,ℤ)`-related (`exists_rebase_related`,
-`Meno/BasisIndependence.lean`); primitivity is forced
-(`exists_int_coords`), and energies, masses, and the partition function
-are functions of the graph alone (`partFn_welldef`,
-`IncidenceGraph.partFn`, `MatterSector.mass_chart`).
+**Basis independence.** Every lattice basis has exactly `b₁` elements
+(`card_eq_b1`); any two are unimodularly related
+(`exists_unimodular_relating`, `Meno/BasisIndependence.lean`);
+primitivity is forced (`exists_int_coords`), and energies, masses, and
+the partition function are functions of the graph alone
+(`basisGramData_partFn`, `IncidenceGraph.partFn`,
+`MatterSector.mass_chart`).
 
 **Matter.** A matter sector is a nonzero class of `H¹(G;ℤ)`
 (`MatterSector`, `Meno/Matter.lean`). Its mass is the intrinsic
@@ -103,7 +107,12 @@ on both sides of the boundary
 free. Where fibers are infinite, the
 cardinality-free form holds: a section of a non-injective map always
 misses states (`section_not_surjective_of_not_injective`,
-`simplicial_ratchet`).
+`simplicial_ratchet`). And the information face genuinely inhabits
+the thesis's carrier: the compression residue, description space, and
+gauge group are uniform **sector actions**, the residue's complexity
+is exactly `b₁ · log q` (`uniformAction_quotient_complexity`), and K2
+is an identity of sector-action complexities
+(`uniformComplexity_split`, `Meno/ResolutionCount.lean`).
 
 **Gravity.** A finite type is a sector lattice with zero energy:
 `Z = |A|`, `K = log|A|` (`uniformAction`, `Meno/UniformAction.lean`).
@@ -144,25 +153,22 @@ Meno/
 ├── SectorPresentation.lean    MulEquiv coordinates; duality transport
 ├── Geodesic.lean              Lawvere-subadditive length class
 ├── HarmonicForm.lean          HarmonicGramData; variational builder; binding algebra
-├── IncidenceGraph.lean        THE graph substrate: ∂, grad, Stokes (any ring); walks; components; gauge
-├── CycleBasis.lean            Purely topological chosen cycle bases — no Gram, no pricing
-├── ThetaGraph.lean            The theta graph: incidence data and its topological cycle basis
+├── IncidenceGraph.lean        THE graph substrate: ∂, grad, Stokes (any ring); walks; components; gauge; H₁; b₁
+├── GraphHomology.lean         Pure graph homology: every lattice basis's derived data; keystones; Euler; basisOfCycles
+├── ThetaGraph.lean            The theta graph: incidence data and raw integral cycle facts
+├── GraphInstances.lean        Cycle, theta, genuine wedge: connectivity, Euler b₁, and the concrete lattice bases
 ├── PeriodHarmonic.lean        Least-norm-at-prescribed-periods machinery; cycle & wedge Gram forms
-├── CyclePresentation.lean     Priced presentations (CycleBasis + Gram); exactness (no connectivity); rebase (GL(r,ℤ))
-├── PeriodLattice.lean         The keystone, ℤ-form: ℤ-cochains ⧸ gradients ≃ ℤ^{b₁}
-├── FundamentalPresentation.lean  Every finite graph satisfies the keystone interface; Euler; H¹ coords
-├── BasisIndependence.lean     Primitivity forced; presentations GL(r,ℤ)-related; partFn is the graph's
-├── HarmonicClass.lean         Intrinsic harmonic energy on H¹; variational identity; per-presentation agreement
-├── GraphInstances.lean        Cycle, theta, genuine wedge: connectivity and Betti numbers by Euler
-├── WedgePresentation.lean     The n₁+n₂−1-vertex wedge as a consumer (spanning by Euler)
+├── HarmonicClass.lean         Priced Gram data of a basis; intrinsic harmonic energy on H¹; variational identity
+├── BasisIndependence.lean     Bases unimodularly related; partFn is the graph's
+├── WedgePresentation.lean     C5 acceptance witnesses: wedge matter; hand-built bases related to the fundamental one
 ├── Matter.lean                MatterSector = nonzero H¹ class; mass, positivity, trapped paradox
 ├── Binding.lean               2-complexes; the induced map; binding kills matter; exact spectral decomposition
 ├── ThetaBinding.lean          Binding at the theta graph: kill, rank drop `2 → 1`, removed weight
-├── InfoRatchet.lean           Fiber information; the coding theorem (finite-only costs, extended costs); ratchets
-├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; compression section cost
-├── UniformAction.lean         Type-level gravity realized on the uniform sector action
 ├── Basic.lean                 Abstract complexity hierarchy; pullback gravity (interface layer)
 ├── Instances.lean             Log-cardinality instance of the abstract hierarchy
+├── UniformAction.lean         Type-level gravity realized on the uniform sector action
+├── InfoRatchet.lean           Fiber information; the coding theorem (finite-only costs, extended costs); ratchets
+├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the residue on the sector-action carrier
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; groupoid complexity
 ├── CycleHarmonic.lean         Flagship bridge: walk route ≡ period route; T-duality on C_n

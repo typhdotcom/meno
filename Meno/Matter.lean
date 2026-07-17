@@ -1,4 +1,4 @@
-import Meno.HarmonicClass
+import Meno.BasisIndependence
 
 /-! # Matter: nonzero cohomology classes (C6 — intrinsic)
 
@@ -64,19 +64,12 @@ theorem mass_isLeast :
           ∧ E = ω ⬝ᵥ ω} m.mass :=
   G.harmonicEnergy_isLeast m.val
 
-/-- **Every presentation computes the mass** (the chart lemma,
-subsuming the Phase-23 `rebaseEquiv` transport): the energy any
-integral presentation assigns to the sector's coordinates is the
-intrinsic mass. -/
-theorem mass_chart (Q : IntegralCyclePresentation G) :
-    Q.toGramData.energy (Q.latticeQuotEquiv m.val) = m.mass := by
-  obtain ⟨τ, hτ⟩ := Submodule.Quotient.mk_surjective _ m.val
-  show Q.toGramData.energy (Q.latticeQuotEquiv m.val)
-    = G.harmonicEnergy m.val
-  rw [← hτ]
-  rw [show Q.latticeQuotEquiv (Submodule.Quotient.mk τ)
-      = fun j => τ ⬝ᵥ Q.cyclesZ j from rfl]
-  exact G.energy_eq_harmonicEnergy Q τ
+/-- **Every basis computes the mass** (the chart lemma, subsuming the
+Phase-23 `rebaseEquiv` transport): the energy any lattice basis
+assigns to the sector's keystone coordinates is the intrinsic mass. -/
+theorem mass_chart {n : ℕ} (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
+    (G.basisGramData B).energy (G.latticeQuotEquiv B m.val) = m.mass :=
+  G.basisGramData_energy_latticeQuot B m.val
 
 /-- **Matter is trapped paradox**: *every* real cochain realizing a
 nonzero class — not merely the least-energy representative — admits
@@ -89,9 +82,7 @@ theorem not_gradient (ω : G.E → ℝ)
   apply G.h1QuotEquiv.injective
   rw [map_zero]
   funext j
-  have hper := G.fundamentalPresentation.toCyclePresentation.grad_period f j
-  rw [show G.fundamentalPresentation.toCyclePresentation.cycles j
-      = G.fundCyclesR j from rfl] at hper
+  have hper := G.grad_period G.cycleBasis f j
   have := (hω j).symm.trans hper
   exact_mod_cast this
 
@@ -103,13 +94,13 @@ the pair's entire rest mass — twice the sector's own. Algebraic
 cancellation inside `H¹`; the geometric space-changing statement is
 C7. -/
 theorem annihilation :
-    G.fundamentalPresentation.toGramData.bindingEnergy
+    (G.basisGramData G.cycleBasis).bindingEnergy
       (G.h1QuotEquiv m.val) (G.h1QuotEquiv m.neg.val) = 2 * m.mass := by
   have hneg : G.h1QuotEquiv m.neg.val = -(G.h1QuotEquiv m.val) := by
     show G.h1QuotEquiv (-m.val) = _
     rw [map_neg]
   rw [hneg]
-  exact G.fundamentalPresentation.toGramData.bindingEnergy_neg_self
+  exact (G.basisGramData G.cycleBasis).bindingEnergy_neg_self
     (G.h1QuotEquiv m.val)
 
 end MatterSector

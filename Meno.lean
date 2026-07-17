@@ -8,35 +8,30 @@ import Meno.Geodesic
 import Meno.HarmonicForm
 import Meno.SectorPresentation
 
--- Topology: cycle bases and the concrete graphs, unpriced
-import Meno.CycleBasis
+-- Topology: graph homology, lattice bases, the concrete graphs — unpriced
+import Meno.GraphHomology
 import Meno.ThetaGraph
 import Meno.GraphInstances
 
 -- Variational machinery: least norm at prescribed periods
 import Meno.PeriodHarmonic
 
--- Priced presentations: topology + Gram; the fundamental theorem
-import Meno.CyclePresentation
-import Meno.PeriodLattice
-import Meno.FundamentalPresentation
-
--- Intrinsic harmonic theory on H¹
-import Meno.BasisIndependence
+-- Priced bases and intrinsic harmonic theory on H¹
 import Meno.HarmonicClass
+import Meno.BasisIndependence
 
 -- Matter and binding
 import Meno.Matter
 import Meno.Binding
 
--- Information: the coding theorem, resolution counting
-import Meno.InfoRatchet
-import Meno.ResolutionCount
-
 -- Abstract complexity interface and its realizations
 import Meno.Basic
 import Meno.Instances
 import Meno.UniformAction
+
+-- Information: the coding theorem, resolution counting on the carrier
+import Meno.InfoRatchet
+import Meno.ResolutionCount
 
 -- Concrete consumers of the whole stack
 import Meno.WedgePresentation

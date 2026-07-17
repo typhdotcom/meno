@@ -6,9 +6,11 @@ A `HarmonicGramData V` packages the analytic content the Hodge harmonic
 construction supplies to a finite graph on `V`:
 
 * the intended first Betti number `r`,
-* a symmetric positive-definite Gram form on `Fin r → ℝ`,
-* the witness that exp(-kᵀ Q k) is summable on the integer lattice
-  `Fin r → ℤ`.
+* a symmetric positive-definite Gram form on `Fin r → ℝ`.
+
+Summability of `exp(-kᵀ Q k)` on the integer lattice is **derived**
+from positive-definiteness (`HarmonicGramData.summable`, review #5) —
+never stored.
 
 The Gram form is the data from which a `QuadraticAction` is built.
 **The structure carries no variational field** (Phase 17 honesty
@@ -33,8 +35,8 @@ universe u
 /-- Abstract harmonic Gram data on a vertex type `V`.
 
 `r` is the intended first Betti number; `gram` is the Gram form of a
-harmonic 1-cochain basis. The structure carries explicit summability so
-the downstream `toQuadraticAction` is total.
+harmonic 1-cochain basis. Summability of the Boltzmann weight is
+derived (`HarmonicGramData.summable`), never stored (review #5).
 
 **Honesty note (Phase 17)**: this structure is positive-definite matrix
 data and nothing more — it does not carry a variational field, and
@@ -48,12 +50,17 @@ structure HarmonicGramData (V : Type u) where
   gram : Matrix (Fin r) (Fin r) ℝ
   gram_symm : gram.IsSymm
   gram_posDef : gram.PosDef
-  summable : Summable (fun k : Fin r → ℤ =>
-    Real.exp (-(∑ i, ∑ j, gram i j * (k i : ℝ) * (k j : ℝ))))
 
 namespace HarmonicGramData
 
 variable {V : Type u} (H : HarmonicGramData V)
+
+/-- Summability of the Boltzmann weight — a theorem of the
+positive-definite Gram, with the retired field's name and statement
+(review #5). -/
+theorem summable : Summable (fun k : Fin H.r → ℤ =>
+    Real.exp (-(∑ i, ∑ j, H.gram i j * (k i : ℝ) * (k j : ℝ)))) :=
+  summable_exp_neg_quadForm H.gram_posDef
 
 /-- The Gram-form energy `kᵀ Q k` on integer windings. For instances
 built from a graph, a separate per-instance theorem identifies this
@@ -67,7 +74,6 @@ noncomputable def toQuadraticAction : QuadraticAction H.r where
   Q := H.gram
   Q_symm := H.gram_symm
   Q_posDef := H.gram_posDef
-  summable := H.summable
 
 theorem toQuadraticAction_Q : H.toQuadraticAction.Q = H.gram := rfl
 

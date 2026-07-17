@@ -21,7 +21,7 @@ section Theta
 /-- The first theta basis cycle is a cycle. -/
 theorem thetaCycle₁_mem :
     (![1, 1, 0, 0, -1, -1] : Fin 6 → ℤ) ∈ thetaGraph.cycleLattice :=
-  thetaIntegralPresentation.cyclesZ_mem 0
+  thetaCyclesZ_mem 0
 
 /-- **The theta graph with its first cycle filled.** -/
 noncomputable def thetaFilled : TwoComplex.{0, 0, 0} thetaGraph :=

@@ -9,9 +9,11 @@ import Mathlib.Analysis.SpecialFunctions.Gaussian.PoissonSummation
 
 A `QuadraticAction r` is the analytic primitive whose sector lattice is
 `Fin r → ℤ` and whose energy is `kᵀ Q k` for a symmetric positive-definite
-Gram matrix `Q`. Summability of the Boltzmann weight is carried as a field
-(mirroring `GroupoidObj`); it follows from `Q.PosDef` via the eigenvalue
-lower bound, but we defer that derivation.
+Gram matrix `Q`. Summability of the Boltzmann weight is **derived** from
+`Q.PosDef` (`summable_exp_neg_quadForm`, via the eigenvalue-free
+coercivity bound `Matrix.PosDef.exists_coercivity`): it is a theorem
+(`QuadraticAction.summable`), not a stored field (review #5, retiring
+the Session-1 deferral recorded at PLAN Goal 2).
 
 The rank-1 case `ofScalar α hα` builds `QuadraticAction 1` with `Q = !![α]`;
 its partition function equals `∑' k : ℤ, exp(-α k²)`. The scalar
@@ -20,9 +22,10 @@ its partition function equals `∑' k : ℤ, exp(-α k²)`. The scalar
 `S`-transformation.
 
 The general matrix Siegel–Poisson duality
-`Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` is stated as a target but not proved
-in this layer: multidimensional Poisson summation over an integer lattice
-in `EuclideanSpace ℝ (Fin r)` is not yet in Mathlib. -/
+`Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` is proved at full generality in
+`Meno/SiegelPoisson.lean` (multidimensional Poisson summation over the
+integer lattice, Phase 15); the diagonal cases below are its elementary
+corroborating derivations. -/
 
 namespace Meno
 
@@ -31,9 +34,183 @@ open UpperHalfPlane Complex Matrix
 
 universe u
 
+/-! ## The summability engine, upstream of the structure
+
+Scalar Gaussian sums, the product factorization over `ℤ^r`, coercivity
+of positive-definite forms, and `summable_exp_neg_quadForm` — placed
+*before* `QuadraticAction` so that summability of the Boltzmann weight
+is **derived** from positive-definiteness, never stored (review #5;
+PLAN Goal 2). Coercivity and `summable_exp_neg_quadForm` are relocated
+upstream from `Meno/SiegelPoisson.lean` (Phase 15), which now consumes
+them. -/
+
+namespace QuadraticAction
+
+private lemma summable_scalarPartFn_nat (α : ℝ) (hα : 0 < α) :
+    Summable (fun i : ℕ => Real.exp (-α * (↑i : ℝ) ^ 2)) := by
+  have hle : ∀ i : ℕ, (↑i : ℝ) ≤ (↑i : ℝ) ^ 2 := by
+    intro i; rcases i with _ | i
+    · simp
+    · nlinarith [sq_nonneg ((↑(i + 1) : ℝ) - 1),
+        show (1 : ℝ) ≤ ↑(i + 1) from by exact_mod_cast Nat.succ_pos i]
+  exact (Real.summable_exp_nat_mul_of_ge (neg_neg_of_pos hα)
+    (f := fun i => (↑i : ℝ) ^ 2) hle).congr fun i => by congr 1
+
+theorem summable_scalarPartFn (α : ℝ) (hα : 0 < α) :
+    Summable (fun k : ℤ => Real.exp (-α * (k : ℝ) ^ 2)) :=
+  .of_nat_of_neg (summable_scalarPartFn_nat α hα)
+    ((summable_scalarPartFn_nat α hα).congr fun i => by push_cast; congr 1; ring)
+
+/-- Summability of a product of independent non-negative summable
+factors over `Fin r → ℤ`: the summability half of Fubini for counting
+measure on `ℤ^r`. -/
+theorem summable_finPi_prod (r : ℕ) (f : Fin r → ℤ → ℝ)
+    (hf_nn : ∀ i z, 0 ≤ f i z)
+    (hf_sum : ∀ i, Summable (f i)) :
+    Summable (fun k : Fin r → ℤ => ∏ i, f i (k i)) := by
+  induction r with
+  | zero =>
+    exact (hasSum_single default fun b hb =>
+      absurd (Subsingleton.elim b default) hb).summable
+  | succ n ih =>
+    let e := Fin.succFunEquiv ℤ n
+    set F : (Fin n → ℤ) → ℝ := fun q => ∏ i : Fin n, f (Fin.castSucc i) (q i)
+    set G : ℤ → ℝ := f (Fin.last n)
+    have hF_nn : ∀ q, 0 ≤ F q := fun q =>
+      Finset.prod_nonneg (fun i _ => hf_nn (Fin.castSucc i) (q i))
+    have hG_nn : ∀ z, 0 ≤ G z := hf_nn (Fin.last n)
+    have hF_sum : Summable F :=
+      ih (fun i => f (Fin.castSucc i))
+        (fun i z => hf_nn (Fin.castSucc i) z)
+        (fun i => hf_sum (Fin.castSucc i))
+    have hG_sum : Summable G := hf_sum (Fin.last n)
+    have hFG : Summable (fun p : (Fin n → ℤ) × ℤ => F p.1 * G p.2) :=
+      summable_mul_of_summable_norm
+        (hF_sum.congr fun q => (Real.norm_eq_abs (F q) ▸ abs_of_nonneg (hF_nn q)).symm)
+        (hG_sum.congr fun z => (Real.norm_eq_abs (G z) ▸ abs_of_nonneg (hG_nn z)).symm)
+    exact (e.summable_iff.mpr hFG).congr fun k =>
+      (Fin.prod_univ_castSucc (fun i => f i (k i))).symm
+
+end QuadraticAction
+
+/-- The quadratic form of a matrix is continuous. Public: the Gaussian
+family in `Meno/SiegelPoisson.lean` also consumes it. -/
+lemma continuous_quadForm {d : ℕ} (M : Matrix (Fin d) (Fin d) ℝ) :
+    Continuous (fun x : Fin d → ℝ => x ⬝ᵥ M.mulVec x) := by
+  unfold dotProduct Matrix.mulVec
+  fun_prop
+
+/-- **Coercivity**: a positive-definite form dominates a positive multiple
+of the sum of squares. Eigenvalue-free: minimize on the compact unit
+sphere of `∑ xᵢ²`, then scale by homogeneity. -/
+theorem _root_.Matrix.PosDef.exists_coercivity {d : ℕ}
+    {M : Matrix (Fin d) (Fin d) ℝ} (hM : M.PosDef) :
+    ∃ c : ℝ, 0 < c ∧ ∀ x : Fin d → ℝ, c * (∑ i, x i ^ 2) ≤ x ⬝ᵥ M.mulVec x := by
+  rcases Nat.eq_zero_or_pos d with hd | hd
+  · -- rank 0: both sides are empty sums
+    subst hd
+    refine ⟨1, one_pos, fun x => ?_⟩
+    simp [dotProduct]
+  · -- the sphere S = {x | ∑ xᵢ² = 1} is compact and nonempty
+    set S : Set (Fin d → ℝ) := {x | ∑ i, x i ^ 2 = 1} with hS
+    have hcont_sq : Continuous (fun x : Fin d → ℝ => ∑ i, x i ^ 2) := by fun_prop
+    have hclosed : IsClosed S := isClosed_eq hcont_sq continuous_const
+    have hbdd : Bornology.IsBounded S := by
+      rw [Metric.isBounded_iff_subset_closedBall 0]
+      refine ⟨1, fun x hx => ?_⟩
+      rw [Metric.mem_closedBall, dist_zero_right]
+      rw [pi_norm_le_iff_of_nonneg zero_le_one]
+      intro i
+      have h1 : x i ^ 2 ≤ ∑ j, x j ^ 2 :=
+        Finset.single_le_sum (fun j _ => sq_nonneg (x j)) (Finset.mem_univ i)
+      rw [hx] at h1
+      rw [Real.norm_eq_abs]
+      nlinarith [abs_nonneg (x i), sq_abs (x i)]
+    have hcompact : IsCompact S := Metric.isCompact_of_isClosed_isBounded hclosed hbdd
+    have hne : S.Nonempty := by
+      refine ⟨Pi.single ⟨0, hd⟩ 1, ?_⟩
+      simp [hS, Pi.single_apply]
+    obtain ⟨x₀, hx₀S, hx₀min⟩ :=
+      hcompact.exists_isMinOn hne (continuous_quadForm M).continuousOn
+    have hx₀ne : x₀ ≠ 0 := by
+      intro h0
+      rw [hS] at hx₀S
+      simp only [Set.mem_setOf_eq, h0, Pi.zero_apply] at hx₀S
+      simp at hx₀S
+    have hx₀pos : 0 < x₀ ⬝ᵥ M.mulVec x₀ := by
+      have h := (posDef_iff_dotProduct_mulVec.mp hM).2 hx₀ne
+      have hstar : star x₀ = x₀ := funext fun i => star_trivial _
+      rwa [hstar] at h
+    refine ⟨x₀ ⬝ᵥ M.mulVec x₀, hx₀pos, fun x => ?_⟩
+    rcases eq_or_ne x 0 with hx | hx
+    · simp [hx, Matrix.mulVec_zero, dotProduct_zero]
+    · -- scale x to the sphere
+      have hsum_pos : 0 < ∑ i, x i ^ 2 := by
+        obtain ⟨i, hi⟩ := Function.ne_iff.mp hx
+        exact Finset.sum_pos' (fun j _ => sq_nonneg (x j))
+          ⟨i, Finset.mem_univ i,
+            lt_of_le_of_ne (sq_nonneg (x i)) (Ne.symm (pow_ne_zero 2 hi))⟩
+      set t : ℝ := Real.sqrt (∑ i, x i ^ 2) with ht
+      have ht_pos : 0 < t := Real.sqrt_pos.mpr hsum_pos
+      have ht_sq : t ^ 2 = ∑ i, x i ^ 2 := Real.sq_sqrt hsum_pos.le
+      have hy : (t⁻¹ • x) ∈ S := by
+        rw [hS]
+        simp only [Set.mem_setOf_eq, Pi.smul_apply, smul_eq_mul, mul_pow]
+        rw [← Finset.mul_sum, ← ht_sq]
+        field_simp
+      have hval : (t⁻¹ • x) ⬝ᵥ M.mulVec (t⁻¹ • x) = t⁻¹ ^ 2 * (x ⬝ᵥ M.mulVec x) := by
+        rw [Matrix.mulVec_smul, dotProduct_smul, smul_dotProduct]
+        simp [smul_eq_mul, sq]
+        ring
+      have := isMinOn_iff.mp hx₀min _ hy
+      rw [hval] at this
+      have h2 : (x₀ ⬝ᵥ M.mulVec x₀) * t ^ 2 ≤ x ⬝ᵥ M.mulVec x := by
+        have htne : t ≠ 0 := ne_of_gt ht_pos
+        calc (x₀ ⬝ᵥ M.mulVec x₀) * t ^ 2
+            ≤ (t⁻¹ ^ 2 * (x ⬝ᵥ M.mulVec x)) * t ^ 2 := by
+              apply mul_le_mul_of_nonneg_right this (by positivity)
+          _ = x ⬝ᵥ M.mulVec x := by field_simp
+      calc (x₀ ⬝ᵥ M.mulVec x₀) * (∑ i, x i ^ 2)
+          = (x₀ ⬝ᵥ M.mulVec x₀) * t ^ 2 := by rw [ht_sq]
+        _ ≤ x ⬝ᵥ M.mulVec x := h2
+
+/-- Boltzmann weights of a positive-definite quadratic form are summable
+over the integer lattice: `exp(-kᵀMk) ≤ ∏ᵢ exp(-c kᵢ²)` by coercivity,
+and the right side is summable by the factorization machinery. -/
+theorem summable_exp_neg_quadForm {d : ℕ} {M : Matrix (Fin d) (Fin d) ℝ}
+    (hM : M.PosDef) :
+    Summable (fun k : Fin d → ℤ =>
+      Real.exp (-(∑ i, ∑ j, M i j * (k i : ℝ) * (k j : ℝ)))) := by
+  obtain ⟨c, hc, hcoer⟩ := hM.exists_coercivity
+  have hquad : ∀ k : Fin d → ℤ,
+      ∑ i, ∑ j, M i j * (k i : ℝ) * (k j : ℝ)
+        = (fun i => (k i : ℝ)) ⬝ᵥ M.mulVec (fun i => (k i : ℝ)) := by
+    intro k
+    show ∑ i, ∑ j, M i j * (k i : ℝ) * (k j : ℝ)
+      = ∑ i, (k i : ℝ) * ∑ j, M i j * (k j : ℝ)
+    refine Finset.sum_congr rfl (fun i _ => ?_)
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    ring
+  refine Summable.of_nonneg_of_le (fun k => (Real.exp_pos _).le) (fun k => ?_)
+    (QuadraticAction.summable_finPi_prod d (fun _ z => Real.exp (-c * (z : ℝ) ^ 2))
+      (fun _ z => (Real.exp_pos _).le)
+      (fun _ => QuadraticAction.summable_scalarPartFn c hc))
+  calc Real.exp (-(∑ i, ∑ j, M i j * (k i : ℝ) * (k j : ℝ)))
+      ≤ Real.exp (-(c * ∑ i, (k i : ℝ) ^ 2)) := by
+        apply Real.exp_le_exp.mpr
+        rw [neg_le_neg_iff, hquad k]
+        exact hcoer _
+    _ = ∏ i, Real.exp (-c * (k i : ℝ) ^ 2) := by
+        rw [← Real.exp_sum]
+        congr 1
+        rw [Finset.mul_sum, ← Finset.sum_neg_distrib]
+        exact Finset.sum_congr rfl (fun i _ => by ring)
+
 /-- A quadratic action of rank `r`: a symmetric positive-definite Gram
-form `Q : Matrix (Fin r) (Fin r) ℝ` together with summability of the
-Boltzmann weight `exp(-kᵀ Q k)` on the integer lattice `Fin r → ℤ`.
+form `Q : Matrix (Fin r) (Fin r) ℝ`. Summability of the Boltzmann
+weight `exp(-kᵀ Q k)` on `Fin r → ℤ` is **derived**
+(`QuadraticAction.summable`), never stored (review #5).
 
 `Q_symm` is redundant over ℝ (`Q_posDef.isHermitian` already gives
 symmetry) but we keep it as natural data. -/
@@ -41,12 +218,18 @@ structure QuadraticAction (r : ℕ) where
   Q : Matrix (Fin r) (Fin r) ℝ
   Q_symm : Q.IsSymm
   Q_posDef : Q.PosDef
-  summable : Summable (fun k : Fin r → ℤ =>
-    Real.exp (-(∑ i, ∑ j, Q i j * (k i : ℝ) * (k j : ℝ))))
 
 namespace QuadraticAction
 
 variable {r : ℕ} (A : QuadraticAction r)
+
+/-- **Summability is a theorem** (PLAN Goal 2, closed): the Boltzmann
+weight of a quadratic action is summable, by coercivity of its
+positive-definite Gram form. Same name and statement as the retired
+field, so consumers are unchanged. -/
+theorem summable : Summable (fun k : Fin r → ℤ =>
+    Real.exp (-(∑ i, ∑ j, A.Q i j * (k i : ℝ) * (k j : ℝ)))) :=
+  summable_exp_neg_quadForm A.Q_posDef
 
 /-- Energy at a sector: `E_Q(k) = ∑_{i,j} Q_ij · k_i · k_j`. -/
 noncomputable def energy (k : Fin r → ℤ) : ℝ :=
@@ -98,21 +281,6 @@ theorem partFn_eq_of_Q_eq {r : ℕ} (A B : QuadraticAction r) (hQ : A.Q = B.Q) :
 noncomputable def scalarPartFn (α : ℝ) : ℝ :=
   ∑' k : ℤ, Real.exp (-α * (k : ℝ) ^ 2)
 
-private lemma summable_scalarPartFn_nat (α : ℝ) (hα : 0 < α) :
-    Summable (fun i : ℕ => Real.exp (-α * (↑i : ℝ) ^ 2)) := by
-  have hle : ∀ i : ℕ, (↑i : ℝ) ≤ (↑i : ℝ) ^ 2 := by
-    intro i; rcases i with _ | i
-    · simp
-    · nlinarith [sq_nonneg ((↑(i + 1) : ℝ) - 1),
-        show (1 : ℝ) ≤ ↑(i + 1) from by exact_mod_cast Nat.succ_pos i]
-  exact (Real.summable_exp_nat_mul_of_ge (neg_neg_of_pos hα)
-    (f := fun i => (↑i : ℝ) ^ 2) hle).congr fun i => by congr 1
-
-theorem summable_scalarPartFn (α : ℝ) (hα : 0 < α) :
-    Summable (fun k : ℤ => Real.exp (-α * (k : ℝ) ^ 2)) :=
-  .of_nat_of_neg (summable_scalarPartFn_nat α hα)
-    ((summable_scalarPartFn_nat α hα).congr fun i => by push_cast; congr 1; ring)
-
 /-- Scalar quadratic action at coupling `α > 0`: rank 1 with `Q = !![α]`. -/
 noncomputable def ofScalar (α : ℝ) (hα : 0 < α) : QuadraticAction 1 where
   Q := !![α]
@@ -130,22 +298,6 @@ noncomputable def ofScalar (α : ℝ) (hα : 0 < α) : QuadraticAction 1 where
       rw [hcomp]
       have hsq : 0 < (x 0)^2 := by positivity
       exact mul_pos hα hsq
-  summable := by
-    have hsumZ := summable_scalarPartFn α hα
-    -- Need: Summable (fun k : Fin 1 → ℤ => exp (-(∑ i, ∑ j, !![α] i j * (k i) * (k j))))
-    -- That energy = α * (k 0)²
-    have heq : ∀ k : Fin 1 → ℤ,
-        Real.exp (-(∑ i : Fin 1, ∑ j : Fin 1, !![α] i j * (k i : ℝ) * (k j : ℝ)))
-        = Real.exp (-α * (k 0 : ℝ) ^ 2) := by
-      intro k
-      congr 1
-      simp [Matrix.cons_val_fin_one]
-      ring
-    let e : (Fin 1 → ℤ) ≃ ℤ := Equiv.funUnique (Fin 1) ℤ
-    refine Summable.congr (e.summable_iff.mpr hsumZ) ?_
-    intro k; rw [heq k]
-    show Real.exp (-α * (e k : ℝ) ^ 2) = Real.exp (-α * (k 0 : ℝ) ^ 2)
-    rfl
 
 /-- Partition function of the scalar quadratic action equals
 `scalarPartFn α`. -/
@@ -262,23 +414,6 @@ general (non-diagonal) case is proved in `Meno/SiegelPoisson.lean` via
 multidimensional Poisson summation (Phase 15); the diagonal route here
 survives as the elementary corroborating derivation. -/
 
-private lemma summable_diag₂ (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
-    Summable (fun k : Fin 2 → ℤ =>
-      Real.exp (-(∑ i, ∑ j, (!![α, 0; 0, β] : Matrix (Fin 2) (Fin 2) ℝ) i j
-        * (k i : ℝ) * (k j : ℝ)))) := by
-  have hprod : Summable (fun p : ℤ × ℤ =>
-      Real.exp (-α * (p.1 : ℝ) ^ 2) * Real.exp (-β * (p.2 : ℝ) ^ 2)) :=
-    (summable_scalarPartFn α hα).mul_of_nonneg (summable_scalarPartFn β hβ)
-      (fun _ => le_of_lt (Real.exp_pos _)) (fun _ => le_of_lt (Real.exp_pos _))
-  let e : (Fin 2 → ℤ) ≃ ℤ × ℤ := piFinTwoEquiv (fun _ => ℤ)
-  refine Summable.congr (e.summable_iff.mpr hprod) ?_
-  intro k
-  show Real.exp (-α * (k 0 : ℝ) ^ 2) * Real.exp (-β * (k 1 : ℝ) ^ 2) = _
-  rw [← Real.exp_add]
-  congr 1
-  simp [Fin.sum_univ_two]
-  ring
-
 /-- Diagonal rank-2 quadratic action: `Q = diag(α, β)` with `α, β > 0`. -/
 noncomputable def ofDiagonal₂ (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
     QuadraticAction 2 where
@@ -308,7 +443,6 @@ noncomputable def ofDiagonal₂ (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
         nlinarith [mul_nonneg hβ.le (sq_nonneg (x 1))]
       · have hpos : 0 < β * (x 1) ^ 2 := mul_pos hβ (by positivity)
         nlinarith [mul_nonneg hα.le (sq_nonneg (x 0))]
-  summable := summable_diag₂ α β hα hβ
 
 @[simp] theorem ofDiagonal₂_Q (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
     (ofDiagonal₂ α β hα hβ).Q = !![α, 0; 0, β] := rfl
@@ -448,36 +582,6 @@ theorem diag_quadForm_eq (r : ℕ) (α : Fin r → ℝ)
     · rw [hQ_off i j (fun heq => h heq.symm)]; ring
   simp_rw [h, Finset.sum_ite_eq', Finset.mem_univ, if_true]
 
-/-- Summability of a product of independent non-negative summable
-factors over `Fin r → ℤ`: the summability half of Fubini for counting
-measure on `ℤ^r`. -/
-theorem summable_finPi_prod (r : ℕ) (f : Fin r → ℤ → ℝ)
-    (hf_nn : ∀ i z, 0 ≤ f i z)
-    (hf_sum : ∀ i, Summable (f i)) :
-    Summable (fun k : Fin r → ℤ => ∏ i, f i (k i)) := by
-  induction r with
-  | zero =>
-    exact (hasSum_single default fun b hb =>
-      absurd (Subsingleton.elim b default) hb).summable
-  | succ n ih =>
-    let e := Fin.succFunEquiv ℤ n
-    set F : (Fin n → ℤ) → ℝ := fun q => ∏ i : Fin n, f (Fin.castSucc i) (q i)
-    set G : ℤ → ℝ := f (Fin.last n)
-    have hF_nn : ∀ q, 0 ≤ F q := fun q =>
-      Finset.prod_nonneg (fun i _ => hf_nn (Fin.castSucc i) (q i))
-    have hG_nn : ∀ z, 0 ≤ G z := hf_nn (Fin.last n)
-    have hF_sum : Summable F :=
-      ih (fun i => f (Fin.castSucc i))
-        (fun i z => hf_nn (Fin.castSucc i) z)
-        (fun i => hf_sum (Fin.castSucc i))
-    have hG_sum : Summable G := hf_sum (Fin.last n)
-    have hFG : Summable (fun p : (Fin n → ℤ) × ℤ => F p.1 * G p.2) :=
-      summable_mul_of_summable_norm
-        (hF_sum.congr fun q => (Real.norm_eq_abs (F q) ▸ abs_of_nonneg (hF_nn q)).symm)
-        (hG_sum.congr fun z => (Real.norm_eq_abs (G z) ▸ abs_of_nonneg (hG_nn z)).symm)
-    exact (e.summable_iff.mpr hFG).congr fun k =>
-      (Fin.prod_univ_castSucc (fun i => f i (k i))).symm
-
 /-- Product factorization of `tsum` over `Fin r → ℤ`: Fubini's theorem
 for counting measure on `ℤ^r` with non-negative product summands. -/
 theorem tsum_finPi_factor (r : ℕ) (f : Fin r → ℤ → ℝ)
@@ -556,12 +660,6 @@ noncomputable def ofDiagonal {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α
       have hi₀' : x i₀ ≠ 0 := hi₀
       refine Finset.sum_pos' (fun i _ => mul_nonneg (hα i).le (sq_nonneg _))
         ⟨i₀, Finset.mem_univ _, mul_pos (hα i₀) (by positivity)⟩
-  summable := by
-    refine (summable_finPi_prod r (fun i z => Real.exp (-α i * (z : ℝ) ^ 2))
-      (fun i z => le_of_lt (Real.exp_pos _))
-      (fun i => summable_scalarPartFn (α i) (hα i))).congr ?_
-    intro k
-    exact (diag_weight_eq α k).symm
 
 @[simp] theorem ofDiagonal_Q {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) :
     (ofDiagonal α hα).Q = Matrix.diagonal α := rfl
