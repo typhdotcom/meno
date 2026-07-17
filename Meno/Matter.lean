@@ -17,8 +17,11 @@ theorem through the graph-level harmonic theory (C4):
   realizing a nonzero class admits no potential.
 * `annihilation` — binding a sector against its inverse releases the
   pair's entire rest mass. Algebraic cancellation inside `H¹`; the
-  *geometric* `binding_kills_matter` (an ambient space change killing
-  a class under an induced map) is C7 and remains open.
+  *geometric* `binding_kills_matter` — an ambient space change killing
+  a class under the induced map — is proved in `Meno/Binding.lean`
+  (C7). The Phase-27 arbitrary-map placeholder `killed_releases_mass`
+  is deleted: the induced map exists now, and the theorems are about
+  it.
 * `exists_matter` — nontrivial topology (`0 < b₁`) forces matter.
 
 The Phase-22 coordinate subtype `{k : Fin P.r → ℤ // k ≠ 0}` is
@@ -122,21 +125,5 @@ theorem exists_matter (G : IncidenceGraph.{u, v}) (hb : 0 < G.b1) :
   have h1 := congrFun this ⟨0, hb⟩
   rw [Pi.single_eq_same] at h1
   exact one_ne_zero h1
-
-/-- **Lattice-level shadow of the geometric `binding_kills_matter`**
-(C7's placeholder, scheduled for replacement by the induced-map
-theorem when C7 closes — see PLAN): if a map of class lattices kills
-a matter sector, the energy released is the sector's entire mass. -/
-theorem killed_releases_mass {G' : IncidenceGraph.{u, v}}
-    (φ : ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
-      → ((G'.E → ℤ) ⧸ LinearMap.range (G'.gradLin ℤ)))
-    (m : MatterSector G) (hkill : φ m.val = 0) :
-    m.mass - G'.harmonicEnergy (φ m.val) = m.mass := by
-  rw [hkill]
-  have h0 : G'.harmonicEnergy 0 = 0 := by
-    show G'.fundamentalPresentation.toGramData.energy (G'.h1QuotEquiv 0) = 0
-    rw [map_zero]
-    exact G'.fundamentalPresentation.toGramData.energy_zero
-  rw [h0, sub_zero]
 
 end Meno

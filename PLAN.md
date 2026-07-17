@@ -325,7 +325,7 @@ prescribed. The coordinate subtype is deleted (1c). Consumers rewired:
 (via `b₁ = 2`). `killed_releases_mass` ported to intrinsic classes,
 still explicitly C7's placeholder-to-delete.
 
-### C7 -- Geometric binding on 2-complexes (the real Goal 7) — OPEN
+### C7 -- Geometric binding on 2-complexes (the real Goal 7) — CLOSED (Phase 35)
 
 **Current state.** `Matter.killed_releases_mass` quantifies over an
 **arbitrary** function `φ` with `φ m = 0` assumed, and proves
@@ -359,6 +359,38 @@ theorem attach_partFn_lt : partFn (attach G c) < partFn G
 
 **Consumer.** The theta graph with one face attached (`b₁ : 2 → 1`) as
 the concrete instance, with the released mass computed in closed form.
+
+**Delivered (Phase 35, `Meno/Binding.lean`) — with one amendment
+(rule 3).** All acceptance theorems proved, on the cohomology-side
+representation (`H¹(X) := {ω | ⟨ω, faceᵢ⟩ = 0} ⧸ gradients`, the
+codebase's native quotient model):
+
+- `attach_dual_image` = `restrict_injective` + `range_restrict`
+  (image = the face-annihilator `survivors`), for arbitrary face
+  families, via `classPairing` (well-defined by lattice Stokes).
+- `binding_kills_matter` — verbatim, and *stronger than stated*: the
+  killed sector has no preimage class at all.
+- `attach_h1` — verbatim (`H₁(X) ≃ₗ H₁(G) ⧸ ⟨c⟩`), with primitivity
+  taken in pairing form (`∃ τ, c ⬝ᵥ τ = 1`); freeness and
+  `finrank = b₁ − 1` via the `IsCompl` splitting `H₁ = ℤ·c ⊕ ker φ`
+  (`isCompl_span_ker`, `spanLineEquiv`, `finrank_attach_h1Homology`).
+- `attach_partFn_lt` — verbatim, from the release bound.
+- **Amendment**: `binding_release`'s sketched form
+  `E_G(m) − E_X(image) = m.mass` presupposed an image the kill
+  theorem proves does not exist. Its honest realization is the pair:
+  `TwoComplex.energy_isLeast` (survivors keep their **exact** mass —
+  the `X`-variational problem with face constraints has the same
+  `IsLeast` value, because realizers of surviving classes satisfy the
+  face constraints for free) and `attach_partFn_add_le`
+  (`X.partFn + exp(−m.mass) ≤ G.classPartFn` — the killed sector's
+  **entire** Boltzmann weight leaves the spectrum). Nothing weaker is
+  claimed anywhere; the Phase-27 placeholder `killed_releases_mass`
+  is **deleted** (1c).
+
+Theta consumer: `theta_binding_kills` (the `(1,0)` sector dies when
+its cycle is filled), `theta_attach_finrank` (`b₁ : 2 → 1`),
+`theta_binding_release` (the spectrum drops by at least
+`exp(−1/3)` — the killed mass in closed form).
 
 ### C8 -- The keystone as a genuine coding theorem — CLOSED (Phase 34)
 
@@ -524,7 +556,7 @@ incidence layer and C6's intrinsic matter; C9 touches only
 | C4 general harmonic theory | `harmonicEnergy : H¹(G;ℤ) → ℝ` + `IsLeast`, every finite graph | **CLOSED** (Phase 30) |
 | C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | **CLOSED** (Phase 32) |
 | C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | **CLOSED** (Phase 33) |
-| C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + release + strict `partFn` drop | OPEN |
+| C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + release + strict `partFn` drop | **CLOSED** (Phase 35) |
 | C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | **CLOSED** (Phase 34) |
 | C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; `TransitionComplexity` deleted | OPEN |
 | C10 geodesic | general simplicial instance + `n·(1/n) = 1` consumer | **CLOSED** (Phase 27) |
@@ -3579,3 +3611,68 @@ per-graph fields — C2's `fundamentalPresentation` underlies it).
 `lake build Meno`: 3341 jobs green. Zero `sorry`; zero `axiom`.
 
 **End of Phase 34 addendum.**
+
+## Phase 35 addendum: binding is geometric — C7 CLOSED (2026-07-17)
+
+*(Fable back at the helm after the Opus interlude; the kernel said
+"continue.")*
+
+The original Goal 7 — the theorem the review said was not closed, was
+never closed, and could not be closed by documentation — is closed by
+proof. `Meno/Binding.lean`:
+
+**The objects.** A `TwoComplex` attaches faces to `G` along integral
+cycles. Its `H¹` is the codebase-native quotient: face-annihilating
+integer cochains modulo gradients. `classPairing` pairs an `H¹` class
+with an integral cycle, well-defined because gradients are invisible
+to cycles (lattice Stokes).
+
+**The dual image.** `restrict : H¹(X) →ₗ H¹(G)` is injective — a
+two-line `ker_liftQ` computation once the comap'd gradients are
+recognized as the kernel of "include, then classify" — with range
+exactly the annihilator of the attached cycles (`range_restrict`).
+Filling faces destroys classes; it never creates or conflates them.
+
+**The kill.** `binding_kills_matter`: a sector wrapping an attached
+face has no preimage class. Not "its image has zero energy" — *there
+is no image*. This is what the Phase-27 placeholder could not say,
+and its deletion (1c) is part of this close.
+
+**The homology quotient.** `attach_h1 : H₁(X) ≃ₗ H₁(G) ⧸ ⟨c⟩`, and
+for primitive `c` (pairing form: `∃ τ, c ⬝ᵥ τ = 1` — where C3's
+`periods_onto` machinery showed primitivity lives), the `IsCompl`
+splitting `H₁(G) = ℤ·c ⊕ ker φ` gives freeness and
+`finrank = b₁ − 1`. One face, one rank — exact.
+
+**The spectrum.** Survivors keep their *exact* mass
+(`energy_isLeast`: the face constraints cost nothing, because every
+realizer of a surviving class satisfies them automatically — one more
+`IsLeast` transport on literally equal sets). The complex's partition
+function is the survivor sum (`partFn_eq_survivors`), and
+`attach_partFn_add_le` + `attach_partFn_lt`: it sits at least
+`exp(−m.mass)` below the graph's — the killed sector's entire
+Boltzmann weight leaves because the sector leaves the space. Recorded
+as a rule-3 amendment: the plan's sketched
+`E_G(m) − E_X(image) = m.mass` presupposed an image that the kill
+theorem disproves; the weight bound is the honest quantitative form.
+
+**The consumer.** The theta graph, first cycle filled:
+`theta_binding_kills` (the `1/3`-mass sector dies),
+`theta_attach_finrank` (`b₁ : 2 → 1`), `theta_binding_release`
+(release ≥ `exp(−1/3)`).
+
+Two Lean notes for the record: the deterministic-timeout family here
+was higher-order unification unfolding the concrete
+`fundamentalPresentation` during function-level defeq — cured by
+generic-presentation detour lemmas plus pointwise `congr … => rfl`,
+which keeps the unifier in congruence mode; and `hΣ` is not a valid
+identifier (Σ), which produced one gloriously misleading parse error.
+
+### Ledger
+
+**C1–C8, C10, C11 CLOSED — ten of twelve.** OPEN: C9 (SectorAction
+gravity), C12 (architecture + public claims).
+
+`lake build Meno`: 3342 jobs green. Zero `sorry`; zero `axiom`.
+
+**End of Phase 35 addendum.**

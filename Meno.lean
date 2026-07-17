@@ -16,6 +16,7 @@ import Meno.HarmonicClass
 import Meno.GraphInstances
 import Meno.WedgePresentation
 import Meno.Matter
+import Meno.Binding
 import Meno.InfoRatchet
 
 -- Pre-existing layers (to be migrated downstream)
