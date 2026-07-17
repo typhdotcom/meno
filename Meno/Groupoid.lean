@@ -1,4 +1,5 @@
 import Meno.Simplicial
+import Meno.Geodesic
 import Meno.SectorPresentation
 import Meno.CycleHarmonic
 import Mathlib.CategoryTheory.Groupoid
@@ -845,5 +846,98 @@ theorem cycleLoopKernel_dualVia_partFn (n : ℕ) (hn : n ≥ 3) :
   simp
 
 end CycleSpine
+
+/-! ## The Geodesic Instance (Goal 4)
+
+Minimal walk length within a homotopy class, as a Lawvere-subadditive
+length on the fundamental groupoid. The combinatorial mass `n` of the
+cycle is exhibited at the `Geodesic` layer with no analytic content —
+and meets the harmonic mass `1/n` in the duality `n · (1/n) = 1`. -/
+
+section GeodesicInstance
+
+open Meno
+
+/-- Geodesic length of a homotopy class: minimal walk length among
+representatives — well-defined by homotopy invariance. -/
+noncomputable def homotopyClassLength (C : Complex V) {u v : V} :
+    HomotopyClass₂ C u v → ℝ :=
+  Quot.lift (fun p => (geodesicLength C p : ℝ))
+    (fun _ _ h => congrArg (fun m : ℕ => (m : ℝ))
+      (geodesicLength_eq_of_homotopic C h))
+
+/-- **The simplicial walk-length `Geodesic` structure** (Goal 4): the
+fundamental groupoid of a symmetric complex carries the
+minimal-representative walk length; subadditivity holds because the
+append of minimal representatives represents the composite class. -/
+noncomputable def simplicialGeodesic (C : Complex V)
+    (hsym : C.toGraph.Symmetric) :
+    letI := simplicialGroupoid C hsym
+    Geodesic (SimplicialGroupoid C) :=
+  letI := simplicialGroupoid C hsym
+  { length := fun {x y} f => homotopyClassLength C f
+    length_nonneg := fun {x y} f => by
+      induction f using Quot.ind with | mk p =>
+      show (0 : ℝ) ≤ (geodesicLength C p : ℝ)
+      positivity
+    length_id := fun x => by
+      show ((geodesicLength C (Walk.nil x.as) : ℕ) : ℝ) = 0
+      norm_cast
+      have h := geodesicLength_le_length C (Walk.nil x.as)
+      have h0 : (Walk.nil x.as : Walk C.toGraph x.as x.as).length = 0 := rfl
+      omega
+    length_comp_le := fun {x y z} f g => by
+      induction f using Quot.ind with | mk p =>
+      induction g using Quot.ind with | mk q =>
+      show ((geodesicLength C (p.append q) : ℕ) : ℝ)
+        ≤ (geodesicLength C p : ℝ) + (geodesicLength C q : ℝ)
+      obtain ⟨p', hp', hplen⟩ := geodesicLength_achieved C p
+      obtain ⟨q', hq', hqlen⟩ := geodesicLength_achieved C q
+      have h1 : geodesicLength C (p.append q)
+          = geodesicLength C (p'.append q') :=
+        geodesicLength_eq_of_homotopic C (Homotopic₂.congr_append C hp' hq')
+      have h2 : geodesicLength C (p'.append q') ≤ (p'.append q').length :=
+        geodesicLength_le_length C _
+      rw [Walk.length_append] at h2
+      have h3 : geodesicLength C (p.append q)
+          ≤ geodesicLength C p + geodesicLength C q := by omega
+      exact_mod_cast h3 }
+
+/-- The cycle graph's canonical `Geodesic` instance. -/
+noncomputable instance cycleGeodesic (n : ℕ) (hn : n ≥ 3) :
+    Geodesic (SimplicialGroupoid (CycleGraph n hn)) :=
+  simplicialGeodesic (CycleGraph n hn) (cycleGraph_symmetric n hn)
+
+/-- The canonical winding-1 loop, as a groupoid endomorphism. -/
+noncomputable def canonicalLoop (n : ℕ) (hn : n ≥ 3) :
+    End (⟨cycleBase n hn⟩ : SimplicialGroupoid (CycleGraph n hn)) :=
+  Quot.mk _ (cycleWalk n hn)
+
+/-- **Goal 4's acceptance**: the geodesic length of the canonical
+cycle is the combinatorial mass `n`, at the `Geodesic` layer, with no
+analytic content involved. -/
+theorem cycleGeodesic_canonical (n : ℕ) (hn : n ≥ 3) :
+    Geodesic.length (canonicalLoop n hn) = n := by
+  show ((geodesicLength (CycleGraph n hn) (cycleWalk n hn) : ℕ) : ℝ) = n
+  rw [cycleGraph_geodesic_eq_n]
+
+/-- **The geodesic/harmonic duality**: combinatorial mass times
+harmonic mass is one — `n · (1/n) = 1`. The winding-1 sector's two
+independent invariants, meeting. -/
+theorem geodesic_harmonic_duality (n : ℕ) (hn : n ≥ 3) :
+    Geodesic.length (canonicalLoop n hn)
+      * (Meno.cyclePeriodData n (by omega)).energy ![1] = 1 := by
+  rw [cycleGeodesic_canonical]
+  have henergy : (Meno.cyclePeriodData n (by omega)).energy ![1] = 1 / n := by
+    show ∑ i, ∑ j, (Meno.cyclePeriodData n (by omega)).gram i j
+        * ((![1] : Fin 1 → ℤ) i : ℝ) * ((![1] : Fin 1 → ℤ) j : ℝ) = 1 / n
+    rw [Meno.cyclePeriodData_gram]
+    simp
+  rw [henergy]
+  have hn0 : (n : ℝ) ≠ 0 := by
+    exact_mod_cast (show n ≠ 0 by omega)
+  field_simp
+
+end GeodesicInstance
 
 end Simplicial

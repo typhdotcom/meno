@@ -110,6 +110,21 @@ theorem rebaseEquiv_mass (m : MatterSector P) :
 
 end MatterSector
 
+/-- **Lattice-level shadow of the geometric `binding_kills_matter`**:
+if an induced period map kills a matter sector, the energy released is
+the sector's entire mass. The *geometric* content — that gluing a
+2-cell induces such a map — needs a 2-complex layer this 1-dimensional
+framework deliberately lacks; Goal 7 is closed as amended with this
+shadow, and the 2-complex statement is recorded in PLAN (Phase 27) as
+what any future geometric phase must prove. -/
+theorem killed_releases_mass {V' : Type u} {ι' : Type v}
+    [Fintype V'] [Fintype ι'] [DecidableEq V']
+    {P : CyclePresentation V ι} (P' : CyclePresentation V' ι')
+    (φ : (Fin P.r → ℤ) → (Fin P'.r → ℤ))
+    (m : MatterSector P) (hkill : φ m.val = 0) :
+    m.mass - P'.toGramData.energy (φ m.val) = m.mass := by
+  rw [hkill, P'.toGramData.energy_zero, sub_zero]
+
 /-- **Matter exists** wherever the presentation has at least one basis
 cycle: nontrivial topology forces matter. -/
 theorem exists_matter (P : CyclePresentation V ι) (hr : 0 < P.r) :

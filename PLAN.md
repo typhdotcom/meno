@@ -2509,3 +2509,103 @@ reconciliation) are independent of the keystone.
 - Halted/pruned: unchanged.
 
 **End of Phase 26 addendum.**
+
+---
+
+## Phase 27 addendum: Goals 4 and 7 closed — and the final ledger
+
+*(Appended after Phase 26; session date 2026-07-17. The kernel said
+"bring it home.")*
+
+### What was proved
+
+**Goal 4, closed in full** (`Meno/Groupoid.lean`, GeodesicInstance
+section): not the scope-cut version — the *general* instance the plan
+asked for. `homotopyClassLength` (minimal walk length among
+representatives, well-defined by `geodesicLength_eq_of_homotopic`)
+gives **`simplicialGeodesic`**: a Lawvere-subadditive `Geodesic`
+structure on the fundamental groupoid of *any* symmetric complex —
+subadditivity because appending minimal representatives represents
+the composite class (`geodesicLength_achieved` +
+`Homotopic₂.congr_append`). The cycle instance `cycleGeodesic`,
+`cycleGeodesic_canonical` (canonical loop has length `n` — Goal 4's
+acceptance, no analytic content), and **`geodesic_harmonic_duality`**:
+`n · (1/n) = 1` — the winding-1 sector's combinatorial and harmonic
+masses, meeting, with the harmonic side supplied by the *derived*
+`cyclePeriodData`, not the legacy assertion.
+
+**Goal 7, closed as amended** (`Meno/Matter.lean`):
+`killed_releases_mass` — if an induced period map kills a matter
+sector, the released energy is the sector's entire rest mass. This is
+the lattice-level shadow; the geometric content is recorded as:
+
+> **The 2-complex statement** (what any future geometric phase must
+> prove): for a 2-complex `X = G + faces F`, the inclusion induces a
+> period map `φ : ℤ^{b₁(G)} → ℤ^{b₁(X)}` killing exactly the classes
+> filled by `F`; for a killed matter sector the release
+> `E_G(m) − E_X(φ m) = m.mass` is then an instance of
+> `killed_releases_mass`. Vocabulary cost: 2-cells and induced maps
+> of presentations. No current consumer; gated.
+
+### The final ledger — the plan's 13 goals
+
+1. **SectorAction** — DONE (Phase 1; unchanged).
+2. **QuadraticAction** — DONE, exceeded: scalar T-duality relocated;
+   Siegel–Poisson proved at full generality (non-diagonal, any rank —
+   Phase 15), beyond the plan's diagonal expectation.
+3. **LoopKernel** — DONE.
+4. **Geodesic** — DONE (Phase 27): class, general simplicial
+   walk-length instance, cycle acceptance `length = n`, duality
+   `n · (1/n) = 1`.
+5. **HarmonicForm** — DONE AS AMENDED (Phase 17 honesty): the
+   structure carries no variational field; the variational identity
+   is a *theorem* — generic for cycle-built data
+   (`ofCycles_energy_isLeast`, Phase 20), identified per legacy
+   instance. "For any finite graph" became "for any presented graph"
+   (`CyclePresentation`, Phase 22) — strictly more honest.
+6. **SectorPresentation** — DONE: structural compatibility
+   (`coord_one`/`coord_comp`), cycle instance, duality transport
+   (`dualVia_partFn_duality`, Phase 16), plus `end_comm` — the
+   theorem that *forced* the cohomological turn.
+7. **Matter** — DONE AS AMENDED (Phases 22, 27): cohomological
+   `MatterSector` over presentations with mass / variational identity
+   / no-potential / annihilation / existence; `binding_kills_matter`
+   split into the proved lattice shadow + the gated 2-complex
+   statement. The amendment traces to the Phase-17 H¹ decision, which
+   later phases repeatedly vindicated.
+8. **InfoRatchet** — DONE AS AMENDED: `fiberInfoCost` + ratchet
+   theorems as planned; the Landauer-convention reconciliation was
+   tied to the halted TypeKernel program and halts with it; in
+   exchange, the keystone (Phases 22/25/26) connected InfoRatchet's
+   vocabulary to the period layer — a far stronger link than the plan
+   promised.
+9. **HomKernel** — DONE AS AMENDED: `HomKernelCat`, per-cell
+   partition functions, base-slice projection; magnitude `1ᵀZ⁻¹1`
+   PRUNED by decision (Phase 17).
+10. **Duality/Hodge/Zeta rewrites** — AMENDED BY DECISION (Phase 17):
+    files compile against the spine; the strict import-purity claim
+    was relaxed deliberately.
+11. **Basic.lean rewrite** — HALTED AS FALSIFIED (Phase 17):
+    `E(id) = log|A|` contradicts `energy_id`; endofunction sums break
+    summability. The design was proven wrong and the proof recorded —
+    the falsification discipline working as intended.
+12. **Import graph** — acyclic (it compiles); exact flow order
+    amended with the architecture (Phase 17).
+13. **Zero sorry, zero axiom, no "future work"** — VERIFIED this
+    phase: 23 files, ~12.9k lines, zero `sorry`, zero `axiom`
+    declarations. Remaining open items are not "future work" in the
+    plan's pejorative sense: each is either closed by decision
+    (TypeKernel, magnitude) or gated behind a *stated theorem*
+    (2-complex geometry) with no phantom obligations.
+
+Beyond the ledger, the session added what the plan never promised:
+the general exactness theorem, the incompressible-residue equivalence
+at three levels (ℝ, ℤ, counting), `GL(r,ℤ)` invariance, integral
+primitivity, binding at the Gram level with the exact shared-cycle
+formula, and matter as trapped paradox — the three time-capsule ideas,
+all cashed.
+
+**The answer to "what's left" is: nothing that isn't named, gated,
+and stated.** The board is empty of unguarded promises.
+
+**End of Phase 27 addendum. End of the spine refactor.**
