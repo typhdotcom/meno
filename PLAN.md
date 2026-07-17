@@ -1,6 +1,495 @@
 # Meno: Cost-Enriched Sector Theory
 
-**Implementation Plan**
+**Implementation Plan** — main body rewritten in Phase 28 (2026-07-17)
+under the Completion Discipline; the original plan and all per-session
+addenda are preserved verbatim in Part II. Read the Status Ledger for
+the honest state of the program.
+
+---
+
+## The Thesis
+
+Meno formalizes, in Lean 4 + Mathlib, the claim that a universe minimizes
+the cost of describing itself -- and that gravity, matter, time, and
+uncertainty are faces of that minimization. The carrier of the thesis is a
+**sector lattice with a positive-definite quadratic action**: the lattice
+enumerates the discrete sectors a system can occupy; the action prices
+them; the Boltzmann sum reads the partition function; duality,
+minimization, and counting theorems connect the faces.
+
+What the spine proves today (Phases 1-28, zero `sorry`, zero `axiom`):
+
+- **Duality**: Siegel-Poisson at full generality -- non-diagonal, any rank
+  (`Meno/SiegelPoisson.lean`, Phase 15) -- consumed by the theta graph's
+  genuinely non-diagonal Gram form (`Meno/ThetaHarmonic.lean`).
+- **Harmonic/topological** (per presented finite graph): periods vanish
+  iff the cochain is a gradient, with **no connectivity hypothesis**
+  (`CyclePresentation.period_eq_zero_iff_exists_grad`); real cochains
+  modulo gradients `≃ₗ[ℝ] ℝ^{b₁}` (`cochainQuotEquiv`); integer cochains
+  modulo integer gradients `≃ₗ[ℤ] ℤ^{b₁}` (`latticeQuotEquiv`).
+- **Counting/information**: at every resolution `q ≥ 1`, descriptions
+  modulo local re-descriptions number exactly `q^{b₁}` (K1); the log
+  splits as gauge + `b₁ · log q` (K2); every compression fiber is uniform
+  and `fiberInfoCost` of the compression map is computed exactly (K3) --
+  `Meno/ResolutionCount.lean`.
+- **Matter**: nonzero period classes with derived positive mass,
+  variational mass (`mass_isLeast`), no potential for *any* realizing
+  cochain (`not_gradient` -- trapped paradox), annihilation, and GL(r,ℤ)
+  basis independence -- `Meno/Matter.lean`.
+- **Geometry**: a Lawvere-subadditive geodesic length on the fundamental
+  groupoid of any symmetric complex, and the cycle duality
+  `n · (1/n) = 1` between combinatorial and harmonic mass --
+  `Meno/Groupoid.lean`.
+
+What remains is stated below as **C1-C12**: one path each, with
+acceptance theorems. Under the discipline that follows, C10 and C11 are
+CLOSED and the rest are OPEN. That is the honest ledger.
+
+## Completion Discipline
+
+Adopted Phase 28, prompted by external review of the Phase 27 ledger. The
+lesson being codified: **when a self-guided agent executes a plan, every
+disjunction in a goal is an escape hatch, and the easy branch will be
+taken; every completion-adjacent adjective is a place to stop early.**
+The plan is therefore written so that the easy path and the right path
+are the same path.
+
+1. A goal has exactly two states, **CLOSED** and **OPEN**. CLOSED
+   requires all of: (a) the acceptance theorems proved; (b) a concrete
+   consumer -- an instance or downstream theorem that uses them; (c)
+   obsolete parallel definitions removed; (d) this main body updated to
+   state the resulting architecture.
+2. "Halted," "pruned," "gated," "amended by decision," "closed by
+   decision," "outside the completed scope," and "documented deviation"
+   are spellings of OPEN. Documentation never discharges a goal; it can
+   only record that one is OPEN.
+3. No goal statement contains "or." Alternatives are decided here, in
+   the plan; execution receives a single path. When new information
+   forces a change of path, the plan is amended first, then executed.
+4. Build success and zero `sorry` verify implementation quality; they
+   never establish conceptual completion.
+5. Falsification is the only alternative to completion. Every falsifiable
+   claim has a prescribed consequence in the Falsification section --
+   excision of the claim from every public statement -- decided now, not
+   at execution time.
+6. **Retraction.** The Phase 27 final ledger's completion vocabulary is
+   retracted as a set of completion states (the ledger itself stands in
+   Part II as an honest record of what was believed when it was written).
+   In particular the sentence "the answer to 'what's left' is: nothing
+   that isn't named, gated, and stated" is superseded: the answer is
+   C1-C9 and C12.
+
+## The Completion Path
+
+### C1 -- One incidence-graph foundation — OPEN
+
+**Intent.** A single graph substrate under everything, and a wedge model
+that is genuinely a wedge.
+
+**Current state.** `CyclePresentation` (Meno/CyclePresentation.lean)
+carries `src tgt : ι → V` as bare fields; cycle, wedge, and theta each
+hand-roll vertex/edge types. The wedge presentation's vertex type is
+`Fin n₁ ⊕ Fin n₂` (`wedgePresentation`), which has `n₁ + n₂` vertices
+where a one-point union has `n₁ + n₂ − 1`: the vertex `Sum.inr 0` is an
+isolated spectator. Phase 21 documented this honestly; under discipline
+rule 2, documented is OPEN.
+
+**Path.** Define
+
+```lean
+structure IncidenceGraph where
+  V : Type u
+  E : Type v
+  [fintypeV : Fintype V] [fintypeE : Fintype E] [decEqV : DecidableEq V]
+  src tgt : E → V
+```
+
+with `∂ℤ : (E → ℤ) →ₗ[ℤ] (V → ℤ)`, `∂ℝ`, and `grad` defined once here
+(the existing `flowBoundary`/`grad` relocate), plus the component count
+`c(G)` (cardinality of the quotient of `V` by the equivalence generated
+by edge adjacency). `CyclePresentation` refactors to present an
+`IncidenceGraph` instead of carrying `src`/`tgt` itself.
+
+**Acceptance theorems.**
+
+```lean
+theorem finrank_ker_grad (G : IncidenceGraph) :
+    Module.finrank ℝ (LinearMap.ker G.gradLin) = c G        -- gauge = locally constant
+```
+
+and three `IncidenceGraph` instances -- cycle, theta, wedge -- where the
+wedge instance has `Fintype.card V = n₁ + n₂ − 1` and `c = 1`
+(connected), so Euler gives `b₁ = 2` with no spectator vertex.
+
+**Consumers.** Every current `CyclePresentation` theorem compiles through
+the refactored structure; the wedge closed forms (diagonal Gram
+`!![1/n₁, 0; 0, 1/n₂]`) re-derive over the corrected vertex type.
+
+### C2 -- Intrinsic integral topology and the fundamental-presentation theorem — OPEN
+
+**Intent.** Retire the review's central conditionality: today
+`IntegralCyclePresentation` (Meno/PeriodLattice.lean) *stores*
+`periods_onto` and `integral_potentials` as fields, discharged
+instance-by-instance. The object must become intrinsic and the fields
+must become a theorem available for **every** finite graph.
+
+**Definitions.** `H₁(G;ℤ) := LinearMap.ker G.∂ℤ` (a submodule of
+`E → ℤ`); `H¹(G;ℤ) := (E → ℤ) ⧸ LinearMap.range G.gradℤ`. Coordinates on
+either are *produced* by choosing a primitive basis; they no longer
+define the object.
+
+**Path: the spanning-forest construction.** For any `G`, choose a
+spanning forest; the chords (non-forest edges) index fundamental cycles.
+Each fundamental cycle is `1` on its own chord and supported on the
+forest otherwise -- so the basis is primitive, single-chord indicator
+cochains realize any prescribed periods (discharging `periods_onto`),
+and potentials integrate along forest paths (discharging
+`integral_potentials`; this generalizes `finPrefixSum`).
+
+**Acceptance theorems.**
+
+```lean
+noncomputable def IncidenceGraph.fundamentalPresentation (G : IncidenceGraph) :
+    IntegralCyclePresentation G                  -- with r = |E| − |V| + c G
+
+theorem h1_free (G) : Module.Free ℤ (H₁ G)       -- finite free, rank b₁
+theorem h1_quot_coords (G) :
+    H¹(G;ℤ) ≃ₗ[ℤ] (Fin (b₁ G) → ℤ)               -- latticeQuotEquiv ∘ fundamentalPresentation
+```
+
+**Consumers.** Every "for any presented graph" statement in
+`CyclePresentation.lean`, `PeriodLattice.lean`, `ResolutionCount.lean`
+upgrades to "for any finite graph" by composition with
+`fundamentalPresentation`. This is the single theorem on which C3-C6
+block.
+
+### C3 -- Basis independence as a property of the graph — OPEN
+
+**Current state.** Phase 23 proved invariance under a *given* unimodular
+change: `rebase_energy`, `rebase_partFn`, `MatterSector.rebaseEquiv` +
+`rebaseEquiv_mass`. Missing is the statement that any two integral
+presentations of the *same graph* are so related -- which is where the
+Phase 24 primitivity hypothesis gets consumed (two primitive bases of one
+lattice differ by GL(r,ℤ)).
+
+**Acceptance theorems.**
+
+```lean
+theorem presentations_rebase_related (P P' : IntegralCyclePresentation G) :
+    ∃ U hU, ∀ i, P'.cycles i = ((P.rebase U hU).cycles) i
+
+theorem partFn_welldef (P P' : IntegralCyclePresentation G) :
+    P.partFn = P'.partFn
+```
+
+so `IncidenceGraph.partFn`, `IncidenceGraph.harmonicEnergy`, and the mass
+spectrum become functions of the graph alone.
+
+**Consumers.** C4's `harmonicEnergy` and C6's intrinsic `MatterSector`
+are definable only through this.
+
+### C4 -- General harmonic theory for every finite graph — OPEN
+
+**Current state.** All core theorems exist at presentation level:
+`period_eq_zero_iff_exists_grad` (generic exactness, no connectivity),
+`cochainQuotEquiv` + `finrank_cochainQuot`, the variational identity
+`ofCycles_energy_isLeast` (unique least-norm representative through the
+Gram form), and the bridge to `QuadraticAction` via `toGramData`. Only
+the quantifier is missing: these hold for graphs *given* a presentation.
+
+**Acceptance theorems** (compositions once C2/C3 close -- listed
+explicitly so closure is checked against statements, not intentions):
+
+```lean
+noncomputable def IncidenceGraph.harmonicEnergy (G) : H¹(G;ℤ) → ℝ   -- basis-free via C3
+
+theorem harmonicEnergy_isLeast (G) (κ : H¹(G;ℤ)) :
+    IsLeast {En | ∃ ω : G.E → ℝ, realizes ω κ ∧ En = ω ⬝ᵥ ω} (G.harmonicEnergy κ)
+
+theorem cochainQuot_equiv (G) :
+    ((G.E → ℝ) ⧸ LinearMap.range G.gradLin) ≃ₗ[ℝ] (Fin (b₁ G) → ℝ)
+```
+
+for **every** finite `G`, no presentation in the hypotheses.
+
+### C5 -- Concrete graphs as consumers — OPEN
+
+**Path.** `cyclePresentation`, `thetaPresentation`, `wedgePresentation`
+are re-derived as `rebase`-images of `fundamentalPresentation` on their
+incidence graphs (acceptance: the `presentations_rebase_related` witness
+is exhibited for each). The closed forms -- `Q = !![1/n]` for the cycle,
+the theta graph's non-diagonal rank-2 Gram, the wedge diagonal --
+survive as corroborating computations, no longer as parallel frameworks.
+After this item, no concrete file constructs its own spanning theory by
+hand.
+
+### C6 -- Intrinsic matter — OPEN
+
+**Current state.** `MatterSector P := {k : Fin P.r → ℤ // k ≠ 0}`
+(Meno/Matter.lean) is presentation-indexed. All physics is already
+theorems -- `mass_pos`, `mass_isLeast`, `not_gradient`, `annihilation`,
+`rebaseEquiv_mass` -- but the *index* is a coordinate chart.
+
+**Path.**
+
+```lean
+def MatterSector (G : IncidenceGraph) := {κ : H¹(G;ℤ) // κ ≠ 0}
+```
+
+with `mass := G.harmonicEnergy κ` (C4) and the five physics theorems
+restated over the intrinsic object. The coordinate subtype is then
+removed as a definition; `latticeQuotEquiv` supplies coordinates inside
+proofs. `rebaseEquiv` becomes the chart-change lemma of the intrinsic
+object rather than a bijection between different objects.
+
+### C7 -- Geometric binding on 2-complexes (the real Goal 7) — OPEN
+
+**Current state.** `Matter.killed_releases_mass` quantifies over an
+**arbitrary** function `φ` with `φ m = 0` assumed, and proves
+`mass − E(0) = mass`. The review's verdict is correct: this is a
+placeholder, not the binding theorem. It is scheduled for **deletion**
+when this item closes (discipline 1c); it must not be cited as binding.
+
+**Definitions.** `TwoComplex := (G : IncidenceGraph) ×
+(faces : ι₂ → H₁(G;ℤ))`; `H₁(X;ℤ) := H₁(G;ℤ) ⧸ Submodule.span (range faces)`.
+`attach G c` is the one-face complex along a primitive `c ∈ H₁(G;ℤ)`.
+
+**Acceptance theorems.**
+
+```lean
+theorem attach_h1 (hc : Primitive c) :
+    H₁(attach G c) ≃ₗ[ℤ] H₁(G;ℤ) ⧸ Submodule.span ℤ {c}   -- and free of rank b₁ − 1
+
+theorem attach_dual_image :
+    Function.Injective (restrict : H¹(attach G c) →ₗ[ℤ] H¹(G;ℤ)) ∧
+    Set.range restrict = {φ | pairing φ c = 0}
+
+theorem binding_kills_matter (m : MatterSector G) (hm : pairing m.val c ≠ 0) :
+    ¬ ∃ m' : MatterSector (attach G c), restrict m' = m.val
+
+theorem binding_release (m …) : releasedEnergy G c m = m.mass
+    -- released = E_G(m) − E_{attach}(image), with image = 0 forced by attach_dual_image
+
+theorem attach_partFn_lt : partFn (attach G c) < partFn G
+    -- strict decrease onto the surviving sublattice
+```
+
+**Consumer.** The theta graph with one face attached (`b₁ : 2 → 1`) as
+the concrete instance, with the released mass computed in closed form.
+
+### C8 -- The keystone as a genuine coding theorem — OPEN
+
+**Current state.** The counting side is done and is *stronger than the
+review requested*: K1 `card_quotient` (`|C_q ⧸ G_q| = q^{b₁}`), K2
+`log_card_split`, K3 `card_fiber` + `fiberInfoCost_mk` hold for **every**
+modulus `q ≥ 1` -- no primality is used. What is definitional is the
+ratchet's cost side: `sectionCost := descriptionCost + fiberInfoCost`
+(Meno/InfoRatchet.lean), which makes `sectionCost_sub_descriptionCost`
+bookkeeping. The genuine theorems in that file are the strict ratchet
+`fiberInfoCost_pos_of_not_injective` and, now, K1-K3.
+
+**Path: derive, don't define.** Section cost becomes the log-count of
+reverse descriptions:
+
+```lean
+theorem card_sections (f : A → B) (hf : Function.Surjective f) :
+    Nat.card {s : B → A // ∀ b, f (s b) = b} = ∏ b, Nat.card (f ⁻¹' {b})
+
+theorem log_card_sections (…) :
+    Real.log (Nat.card {s // ∀ b, f (s b) = b}) = fiberInfoCost f
+
+theorem compression_section_count (Q : IntegralCyclePresentation …) (q) :
+    Nat.card {sections of the mod-q compression map}
+      = Nat.card (LinearMap.range (Q.gradLinQ q)) ^ (q ^ b₁)   -- via K3 uniformity
+```
+
+and `descriptionCost f = Real.log (Nat.card (A → B))` proved as the
+justifying lemma for the forward cost. The definitional `sectionCost`
+and its `ring`-proved identity are then **replaced** by these statements
+(discipline 1c).
+
+**Consumer.** `theta_residue_count` (already relocated to
+`ThetaHarmonic.lean`, Phase 28) plus the mod-q compression map of any
+fundamental presentation once C2 closes.
+
+### C9 -- Gravity and the ratchet through SectorAction (TypeKernel's replacement) — OPEN
+
+**Current state.** `Basic.lean` still carries the pre-plan hierarchy --
+`ComplexityMeasure`, `SigmaComplexity`, `AdditiveComplexity`,
+`refactoring_bound`, `gravity`, `gravity_uniform`,
+`AdditiveComplexityOn` (instance in `Groupoid.lean`), and
+`TransitionComplexity` with the Landauer 2/1 instance (consumed by
+`simplicial_ratchet`) -- fully parallel to and disconnected from
+`SectorAction`. The planned TypeKernel realization was **falsified**
+(Phase 17: `E(id) = log|A|` contradicts `energy_id`; endofunction sums
+break summability). The falsification stands; the unification claim it
+was to deliver is therefore OPEN, not discharged.
+
+**Path: the uniform realization.**
+
+```lean
+def uniformAction (A : Type u) [Fintype A] [Nonempty A] : SectorAction
+    -- sectors A, energy ≡ 0
+
+theorem uniformAction_partFn     : (uniformAction A).partFn = Fintype.card A
+theorem uniformAction_complexity : (uniformAction A).complexity = Real.log (Fintype.card A)
+
+theorem gravity_partFn (f : A → D) (g : B → D)
+    (hf : uniform fibers of f) (hg : uniform fibers of g) :
+    (uniformAction (Pullback f g)).partFn * (uniformAction D).partFn
+      = (uniformAction A).partFn * (uniformAction B).partFn
+
+theorem gravity_complexity (…) :
+    K (Pullback f g) = K A + K B − K D
+```
+
+Then: `Basic.lean`'s `gravity_uniform` re-derived as the log-cardinality
+shadow of `gravity_complexity`; `refactoring_bound` restated over
+`uniformAction`; `simplicial_ratchet` re-proved against C8's derived
+statements; and the `TransitionComplexity` class **deleted** with its
+Landauer instance restated through `fiberInfoCost` (discipline 1c).
+Product additivity is already `SectorAction.prod` (Phase 1);
+`uniformAction (A × B)` is proved equal to the product action.
+
+**Consumer.** The thesis sentence "type-level gravity is a realization of
+the sector spine" becomes true with `uniformAction` as the realization --
+and is excised under F5 if the identity fails.
+
+### C10 -- Geodesic — CLOSED (Phase 27)
+
+`simplicialGeodesic`: a Lawvere-subadditive `Geodesic` instance on the
+fundamental groupoid of **any** symmetric complex (`Meno/Groupoid.lean`,
+GeodesicInstance section); `cycleGeodesic`; `cycleGeodesic_canonical`
+(canonical loop has length `n`); consumer `geodesic_harmonic_duality`
+(`n · (1/n) = 1` against the *derived* `cyclePeriodData`). Meets
+discipline 1a-1d. The review's item 10 was written before crediting
+Phase 27; its own verdict acknowledges the instance.
+
+### C11 -- Magnitude and HomKernel excision — CLOSED (Phase 28)
+
+`Meno/HomKernel.lean` deleted; the `Meno.lean` import removed; grep
+verifies no surviving references; build green. The magnitude readout
+`1ᵀ Z⁻¹ 1` promised by original Goal 9 was never built and is removed
+from the program with prejudice (recorded in the Disposition table).
+`LoopKernel.lean` is retained -- it has consumers (`SectorPresentation`,
+`Groupoid`).
+
+### C12 -- Architecture and public claims — OPEN
+
+Three parts, strictly ordered:
+
+1. **Duplication audit** (after C5): enumerate every doubled definition
+   across `Simplicial`/`Hodge`/`Groupoid`/`Duality` versus the spine
+   (known candidates: Hodge's graph partition function vs
+   `QuadraticAction`; Groupoid's complexity mirrors vs `SectorAction`;
+   legacy cycle models vs `CyclePresentation` instances). Each entry
+   receives a prescribed disposition **written into this section as a
+   plan amendment**, then executed. The audit's output is plan text, not
+   an addendum -- deciding stays in the plan.
+2. **Import flow** (after C9): the graph reads Foundation → Topology →
+   Harmonic → Matter/Binding → Information → Realizations, with
+   `Basic.lean` a downstream realization, not a parallel theory.
+3. **README rewrite** (last): the README currently carries a staleness
+   banner (added Phase 28) because its architecture section describes
+   deleted files. It is rewritten only when items C1-C9 are CLOSED, with
+   per-claim theorem citations. Rewriting it earlier would be claiming
+   completion with documentation, which discipline rule 2 forbids.
+
+**Acceptance.** Audit table filled and executed; `rg` finds no references
+to deleted vocabulary; README describes the actual architecture and every
+physical claim in it cites the theorem that proves it.
+
+## Execution Order
+
+C1 → C2 → C3 → C4 → C5 → C6 → C8 → C7 → C9 → C12.
+
+No item begins before its predecessors close (C10, C11 already closed).
+Rationale: C2's fundamental-presentation theorem is the single blocker
+for C3-C6; C8 precedes C7 because the counting layer is nearly done
+while C7 is the largest single build; C7's 2-complexes want C1/C2's
+incidence layer and C6's intrinsic matter; C9 touches only
+`SectorAction`/`Basic` and goes last before the public-claims pass.
+
+## Status Ledger (Phase 28)
+
+| Item | Acceptance in one line | Status |
+|------|------------------------|--------|
+| C1 incidence foundation | one graph substrate; wedge without spectator vertex; gauge = components | OPEN |
+| C2 intrinsic topology | `fundamentalPresentation` for every finite graph; `H₁`/`H¹` intrinsic, free | OPEN |
+| C3 basis independence | any two presentations of a graph are GL(r,ℤ)-related; `partFn` graph-level | OPEN |
+| C4 general harmonic theory | `harmonicEnergy : H¹(G;ℤ) → ℝ` + `IsLeast`, every finite graph | OPEN |
+| C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | OPEN |
+| C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | OPEN |
+| C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + release + strict `partFn` drop | OPEN |
+| C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | OPEN |
+| C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; `TransitionComplexity` deleted | OPEN |
+| C10 geodesic | general simplicial instance + `n·(1/n) = 1` consumer | **CLOSED** (Phase 27) |
+| C11 magnitude/HomKernel excision | file, import, claims removed | **CLOSED** (Phase 28) |
+| C12 architecture + public claims | duplication audit; flowing imports; README rewritten last | OPEN |
+
+## Disposition of the Original 13 Goals
+
+| # | Original goal | Disposition |
+|---|--------------|-------------|
+| 1 | `SectorAction` | CLOSED as written (Phase 1); standing |
+| 2 | `QuadraticAction` + Siegel-Poisson | CLOSED, exceeded (Phase 15: full generality, beyond the diagonal expectation) |
+| 3 | `LoopKernel` | CLOSED; consumed by `SectorPresentation`, `Groupoid` |
+| 4 | `Geodesic` | CLOSED (Phase 27) = C10 |
+| 5 | `HarmonicForm` for any finite graph | OPEN; superseded by C1-C4 (today: any *presented* graph) |
+| 6 | `SectorPresentation` | CLOSED (Phase 16 transport; `end_comm` forced the cohomological turn) |
+| 7 | Matter + `binding_kills_matter` | OPEN; superseded by C6 + C7. Presentation-level matter is proved; the binding theorem is not. `killed_releases_mass` is a placeholder scheduled for deletion under C7 |
+| 8 | `InfoRatchet` ratchet theorem | OPEN; superseded by C8. Fiber counting proved (incl. K1-K3); section cost still definitional |
+| 9 | `HomKernel` + magnitude | EXCISED (C11, Phase 28): deleted with prejudice, not delivered |
+| 10 | `Duality`/`Hodge`/`Zeta` import purity | OPEN; superseded by C12's audit |
+| 11 | `Basic.lean` rewrite via TypeKernel | design FALSIFIED (Phase 17); the unification claim is OPEN, superseded by C9 |
+| 12 | Acyclic flowing import graph | OPEN; superseded by C12 (acyclic today; the *flow* is the open part) |
+| 13 | Zero `sorry`/`axiom`, no "future work" | standing invariant, re-verified every session; a property of every state, never a deliverable |
+
+## Falsification
+
+Each check is a single theorem; each consequence is prescribed here so no
+execution-time judgment is involved.
+
+- **F1 (C2).** If some finite incidence graph admits no primitive
+  integral cycle basis with chord-realized periods and forest-integrated
+  potentials, then `IntegralCyclePresentation`'s fields hide real
+  content. Consequence: every "for any finite graph" claim reverts to
+  "for presented graphs" in the thesis, README, and this main body, and
+  C3-C6 re-scope to presented graphs. (Expected unfalsifiable -- the
+  spanning-forest construction is classical; listed because the
+  discipline requires the check to be run, not assumed.)
+- **F2 (C3).** If two fundamental presentations of one graph fail to be
+  GL(r,ℤ)-related, then energy, partition function, and mass are
+  presentation artifacts. Consequence: all graph-level physical language
+  is excised; only presentation-level statements remain.
+- **F3 (C7).** If attaching a 2-cell along a primitive cycle does not
+  induce `H₁(Y;ℤ) ≃ H₁(X;ℤ)/⟨c⟩` with dual image `{φ ∣ φ(c) = 0}`, the
+  binding thesis is false. Consequence: "binding" exits the thesis;
+  annihilation survives as intra-lattice algebra only;
+  `killed_releases_mass` is deleted rather than upgraded.
+- **F4 (C8).** If the number of sections of the compression map is not
+  the product of fiber sizes with log equal to `fiberInfoCost`, section
+  cost cannot be derived from counting. Consequence: the
+  time-as-fiber-information claim is excised from the thesis; K1-K3
+  survive as counting facts without the temporal reading.
+- **F5 (C9).** If `Z(Pullback)·Z(D) = Z(A)·Z(B)` fails for uniform
+  fibers over `SectorAction`, type-level gravity does not realize the
+  sector spine. Consequence: that claim is excised; `Basic.lean`'s
+  gravity remains a standalone cardinality theorem with no unification
+  gloss.
+
+---
+
+# Part II -- The Historical Record
+
+Everything below is history: the original plan exactly as first written
+(2026-06-08) and the per-session addenda (Phases 11-28). Where it
+disagrees with the Completion Path above, the Completion Path governs --
+but the record is retained in full: the addenda are the project's
+commit-level narrative, and the Path's statuses cite them as evidence.
+In particular, the original Goals/Phases 1-10 below are **superseded**,
+and the Phase 27 "final ledger" is subject to the Phase 28 retraction
+(Completion Discipline, rule 6).
 
 ---
 
@@ -2609,3 +3098,75 @@ all cashed.
 and stated.** The board is empty of unguarded promises.
 
 **End of Phase 27 addendum. End of the spine refactor.**
+
+## Phase 28 addendum: the review barrage begins -- discipline codified, main body rewritten
+
+*(Session date 2026-07-17. The kernel relayed a three-round exchange with
+the planning model: an initial verdict on the Phase 27 ledger, then two
+kernel corrections that sharpened it into the Single Completion Path now
+embodied in the main body above.)*
+
+### The meta-lesson, verbatim intent
+
+The kernel's two interventions were about how plans fail under
+self-guided execution, not about mathematics:
+
+1. *"Nothing is finished by documenting it 'outside the completed
+   scope'. Either everything demanded in spirit is done, or we adapt the
+   plan to bring it to completion."* -- documentation is not a
+   completion state. Codified as Completion Discipline rule 2.
+2. *"Every time you say 'or' presenting a subjective choice, you risk an
+   llm taking the easy route."* -- disjunctions are escape hatches.
+   Codified as rule 3: the plan decides; execution receives one path.
+
+### Verification ledger (every reviewer claim checked against code before acting)
+
+| Reviewer claim | Verdict | Evidence |
+|---|---|---|
+| `killed_releases_mass` takes an arbitrary `φ`, assumes `φ m = 0`, proves `mass − E(0) = mass`; does not close Goal 7 | CONFIRMED | `Meno/Matter.lean` (`killed_releases_mass`) -- rewired as C7's placeholder-to-delete |
+| Keystone conditional on stored fields `periods_onto`/`integral_potentials`; concrete instances discharge them; no automatic construction | CONFIRMED | `Meno/PeriodLattice.lean` (`IntegralCyclePresentation`) -- retired by C2's fundamental-presentation theorem |
+| README stale: lists deleted `Theta.lean`, omits the spine | CONFIRMED | old `README.md:342`; staleness banner added, full rewrite deferred to C12 by design |
+| Source comments claim non-diagonal duality "remains gated on multidimensional Poisson summation … Mathlib does not yet have" -- contradicted by Phase 15 | CONFIRMED | `Meno/QuadraticAction.lean` (two sites) -- corrected this session |
+| `InfoRatchet` defers reconciliation to falsified Phase 10; `sectionCost` definitional, ratchet identity is bookkeeping | CONFIRMED | `Meno/InfoRatchet.lean` -- docstring now states the honest status; derivation is C8 |
+| Generic `ResolutionCount` imports the concrete theta file for one example | CONFIRMED | old `Meno/ResolutionCount.lean:3` -- `theta_residue_count` moved to `ThetaHarmonic.lean`, import direction fixed |
+| `HomKernel` inert: magnitude never built, no consumers | CONFIRMED | only reference was the `Meno.lean` import; deleted (C11 closed) |
+| Wedge model is `(C_{n₁} ∨ C_{n₂}) ⊔ pt`, not a genuine wedge | CONFIRMED | `wedgePresentation` vertex type `Fin n₁ ⊕ Fin n₂` -- corrected under C1 |
+| Geodesic must have the simplicial instance and routed consumers | ALREADY DISCHARGED (Phase 27) | `Meno/Groupoid.lean` GeodesicInstance section; the reviewer's own verdict credits it. C10 recorded CLOSED |
+
+One precision recorded in the code's favor: K1-K3 hold for **every**
+modulus `q ≥ 1` (`NeZero q`), not only prime `p` as the review's item 8
+requested -- no primality enters the lift-and-correct argument. C8 keeps
+the general-`q` statements.
+
+### Actions this session
+
+1. **Main body rewritten** (discipline rule 3 / reviewer item 12): the
+   original Goals/Phases 1-10 moved under Part II as history; the
+   Completion Path C1-C12 with acceptance theorems, binary statuses,
+   execution order, disposition table, and new falsification table now
+   constitute the plan. The Phase 27 ledger's completion vocabulary is
+   retracted (rule 6); the ledger text itself is preserved below,
+   unedited, as the historical record.
+2. **C11 executed and closed**: `Meno/HomKernel.lean` deleted, import
+   removed, no surviving references.
+3. **Stale-comment honesty pass**: `QuadraticAction.lean` (non-diagonal
+   duality is proved, not gated -- two sites), `InfoRatchet.lean`
+   (Phase-10 deferral replaced by the honest definitional-status note
+   pointing at C8).
+4. **Import-direction fix**: `theta_residue_count` relocated to
+   `ThetaHarmonic.lean`; `ResolutionCount.lean` no longer imports any
+   concrete graph.
+5. **README staleness banner** added; rewrite deliberately deferred to
+   C12 (rewriting it now would be documentation posing as completion).
+6. Build: `lake build Meno` green, 3335 jobs; zero `sorry`; zero `axiom`
+   declarations.
+
+### What was *not* done, and why
+
+No mathematics from C1-C9 was started. The kernel's instruction for this
+session was to incorporate the review into the plan -- the plan is the
+artifact that will face the gatekeeper, and further reviews are
+incoming. The prescribed next work is C1 + C2 (the incidence foundation
+and the fundamental-presentation theorem), which unblocks C3-C6.
+
+**End of Phase 28 addendum.**

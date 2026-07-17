@@ -19,8 +19,18 @@ the description of `f` plus the fiber-choice information.
 
 This file isolates the fiber-information layer. It is independent of the
 specific cost convention used by Basic.lean's `TransitionComplexity`
-class. The reconciliation — showing the Landauer 2/1 convention is one
-admissible cost model — is left to Phase 10. -/
+class; the Phase-10 program that was to reconcile them was falsified
+(PLAN, Phase 17) and is superseded by the completion path's C9.
+
+**Honest status of the ratchet** (completion path, C8): `sectionCost`
+below is *defined* as `descriptionCost + fiberInfoCost`, so
+`sectionCost_sub_descriptionCost` is definitional bookkeeping, not a
+coding theorem. The genuine theorems in this vocabulary are
+`fiberInfoCost_pos_of_not_injective` (strict ratchet) and the keystone
+counting results K1–K3 (`Meno/ResolutionCount.lean`), which compute
+`fiberInfoCost` of the mod-`q` compression map exactly. C8's remaining
+obligation is to *derive* section cost from a description model
+(counting sections) rather than define it. -/
 
 namespace Meno
 

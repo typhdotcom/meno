@@ -11,7 +11,6 @@ import Meno.PeriodLattice
 import Meno.ResolutionCount
 import Meno.Matter
 import Meno.InfoRatchet
-import Meno.HomKernel
 
 -- Pre-existing layers (to be migrated downstream)
 import Meno.Basic

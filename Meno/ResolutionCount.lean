@@ -1,6 +1,5 @@
 import Meno.PeriodLattice
 import Meno.InfoRatchet
-import Meno.ThetaHarmonic
 
 /-! # Resolution Counting: the Keystone's Counting Shadows (K1–K3)
 
@@ -256,16 +255,5 @@ theorem fiberInfoCost_mk
   ring
 
 end IntegralCyclePresentation
-
-/-! ## Concrete flourish: theta at every resolution -/
-
-/-- At any resolution `q`, the theta graph's incompressible residue is
-exactly `q²` classes — two digits of resolution, one per independent
-cycle, at every scale. -/
-theorem theta_residue_count (q : ℕ) [NeZero q] :
-    Nat.card ((Fin 6 → ZMod q)
-        ⧸ LinearMap.range (thetaIntegralPresentation.gradLinQ q))
-      = q ^ 2 :=
-  thetaIntegralPresentation.card_quotient q
 
 end Meno

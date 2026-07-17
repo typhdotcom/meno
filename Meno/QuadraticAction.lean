@@ -258,8 +258,9 @@ For diagonal Gram forms the lattice sum factors, so the matrix duality
 `Z(π²·Q⁻¹) = √(det Q / π²) · Z(Q)` follows from two applications of the
 scalar duality — **no multidimensional Poisson summation needed**. This
 realizes the rank-2 matrix Siegel–Poisson target for diagonal `Q`. The
-general (non-diagonal) case remains gated on multidimensional Poisson
-summation over the integer lattice, which Mathlib does not yet have. -/
+general (non-diagonal) case is proved in `Meno/SiegelPoisson.lean` via
+multidimensional Poisson summation (Phase 15); the diagonal route here
+survives as the elementary corroborating derivation. -/
 
 private lemma summable_diag₂ (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
     Summable (fun k : Fin 2 → ℤ =>
@@ -419,8 +420,11 @@ The general diagonal case. The lattice `ℤ^r` decouples coordinate by
 coordinate (Fubini for counting measure, `tsum_finPi_factor`), each mode
 obeys the scalar duality, and the prefactors multiply into
 `√(det Q / π^r)`. This closes the matrix Siegel–Poisson target for
-**all diagonal Gram forms at every rank** — only the non-diagonal case
-remains gated on multidimensional Poisson summation in Mathlib.
+**all diagonal Gram forms at every rank** by elementary factoring; the
+non-diagonal case is proved at full generality in
+`Meno/SiegelPoisson.lean` (Phase 15, multidimensional Poisson
+summation) and consumed by the theta graph's rank-2 non-diagonal Gram
+form (`Meno/ThetaHarmonic.lean`).
 
 `summable_finPi_prod`, `tsum_finPi_factor`, `diag_quadForm_eq` were
 relocated upstream from `Hodge.lean` (where they were private); they are

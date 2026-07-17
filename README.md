@@ -4,6 +4,17 @@
 
 Meno is a universe that minimizes the complexity of its own description. Gravity, matter, and the arrow of time emerge from this single principle.
 
+> **⚠ Stale document.** This README describes the pre-spine architecture
+> (Phases 1–14) and has not tracked the spine refactor (Phases 15–27):
+> the file listing below is wrong (e.g. `Theta.lean` no longer exists),
+> and the current mathematical core — cycle presentations, the period
+> lattice, the resolution-counting keystone, cohomological matter — is
+> absent. The authoritative statement of the program, its completion
+> discipline, and per-goal status is **`PLAN.md` → "The Completion
+> Path"**. Per that plan (C12), this README is rewritten only after the
+> remaining acceptance theorems exist — a stale-but-labeled README is
+> honest; a fresh one claiming completion would not be.
+
 ---
 
 ## The core idea
