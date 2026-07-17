@@ -1,5 +1,6 @@
 import Meno.PeriodHarmonic
 import Meno.Matter
+import Meno.PeriodLattice
 
 /-! # The Theta Graph: the First Non-Diagonal Harmonic Gram Form
 
@@ -192,7 +193,7 @@ theorem thetaGramData_energy_one_zero :
 
 /-- The theta graph as a cycle presentation: `K₂,₃` with its chosen
 basis `c₁ = p₁ − p₃`, `c₂ = p₂ − p₃`. -/
-noncomputable def thetaPresentation : CyclePresentation (Fin 5) (Fin 6) where
+@[reducible] noncomputable def thetaPresentation : CyclePresentation (Fin 5) (Fin 6) where
   src := thetaSrc
   tgt := thetaTgt
   r := 2
@@ -207,6 +208,28 @@ noncomputable def thetaPresentation : CyclePresentation (Fin 5) (Fin 6) where
   gram_posDef := by
     rw [gramOf_thetaCycles]
     exact thetaChainGram_posDef
+
+/-- The theta graph as an **integral** presentation: integer basis,
+integer period realizability (single-edge cochains on the first and
+second paths), and integer integration (the Phase-19 explicit
+potential, whose entries are integer combinations of `ω`). Feeds the
+keystone `latticeQuotEquiv`. -/
+noncomputable def thetaIntegralPresentation :
+    IntegralCyclePresentation (Fin 5) (Fin 6) :=
+  { thetaPresentation with
+    cyclesZ := ![![1, 1, 0, 0, -1, -1], ![0, 0, 1, 1, -1, -1]]
+    cyclesZ_cast := fun i e => by
+      fin_cases i <;> fin_cases e <;> norm_num [thetaCycles]
+    periods_onto := fun k => by
+      refine ⟨![k 0, 0, k 1, 0, 0, 0], fun j => ?_⟩
+      fin_cases j <;>
+        simp +decide [dotProduct, Fin.sum_univ_six]
+    integral_potentials := fun ω h => by
+      have h0 := h 0
+      have h1 := h 1
+      simp +decide [dotProduct, Fin.sum_univ_six] at h0 h1
+      refine ⟨![0, ω 4 + ω 5, ω 0, ω 2, ω 4], funext fun e => ?_⟩
+      fin_cases e <;> simp +decide [thetaSrc, thetaTgt] <;> omega }
 
 /-- The theta graph has matter: the `(1, 0)` period class, anchored to
 the presentation (Phase 22). Mass, the variational identity,

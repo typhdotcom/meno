@@ -574,7 +574,7 @@ end Rebase
 
 /-- The cycle graph `C_n` as a presentation: edges `e : e → e + 1`,
 one basis cycle (all ones). -/
-noncomputable def cyclePresentation (n : ℕ) (hn : 0 < n) :
+@[reducible] noncomputable def cyclePresentation (n : ℕ) (hn : 0 < n) :
     CyclePresentation (Fin n) (Fin n) :=
   haveI : NeZero n := ⟨hn.ne'⟩
   { src := fun e => e
@@ -594,7 +594,7 @@ noncomputable def cyclePresentation (n : ℕ) (hn : 0 < n) :
 
 /-- The wedge of two cycles as a presentation: the Phase-21 graph,
 two disjoint-support basis cycles. -/
-noncomputable def wedgePresentation (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
+@[reducible] noncomputable def wedgePresentation (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
     CyclePresentation (Fin n₁ ⊕ Fin n₂) (Fin n₁ ⊕ Fin n₂) :=
   haveI : NeZero n₁ := ⟨h₁.ne'⟩
   haveI : NeZero n₂ := ⟨h₂.ne'⟩

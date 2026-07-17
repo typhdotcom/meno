@@ -7,6 +7,7 @@ import Meno.Geodesic
 import Meno.HarmonicForm
 import Meno.SectorPresentation
 import Meno.CyclePresentation
+import Meno.PeriodLattice
 import Meno.Matter
 import Meno.InfoRatchet
 import Meno.HomKernel

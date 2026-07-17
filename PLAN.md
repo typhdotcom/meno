@@ -2352,3 +2352,76 @@ Phase-15-sized. **Gated**: awaiting endorsement of this statement.
 - Halted/pruned: unchanged.
 
 **End of Phase 24 addendum.**
+
+---
+
+## Phase 25 addendum: the keystone, ℤ-form — BUILT
+
+*(Appended after Phase 24; session date 2026-07-17. The Phase-24
+statement was endorsed by the kernel; the ℤ-form route was taken as
+recommended.)*
+
+### What was proved
+
+**`Meno/PeriodLattice.lean`** (new, ~330 LOC):
+
+- **`latticeQuotEquiv : (ι → ℤ) ⧸ range gradℤ ≃ₗ[ℤ] ℤ^{b₁}`** — the
+  keystone: integer descriptions modulo integer neighbor-local
+  re-description are exactly the period lattice. The time capsule's
+  "compression residue = b₁," as a theorem about lattices, ready for
+  counting at any finite resolution.
+- `IntegralCyclePresentation` extends the presentation with an
+  integer basis and exactly two lattice-level fields, chosen by
+  working out where the general argument genuinely fails without
+  graph structure:
+  * `periods_onto` — integer period realizability. Per instance:
+    single-edge cochains.
+  * `integral_potentials` — integer integration (zero integer periods
+    ⟹ integer potential). This is where *walk* structure enters —
+    integrating a cochain along a cycle — which is why it is a field:
+    the bare presentation has no reachability vocabulary, and the
+    real-exactness rank argument cannot produce integrality.
+- Generic layer: **integer Stokes inherited from the real theorem by
+  casting** (`Int.cast_injective` + the cast-compatibility field), so
+  nothing about boundaries is re-proved; the equivalence is the first
+  isomorphism theorem over `ℤ`.
+- `finPrefixSum` + **`finPrefixSum_grad`**: discrete integration —
+  on a cycle with total sum zero, the prefix sum is an integer
+  potential, wrap-around included (val-level `Fin` case analysis;
+  handles `n = 1` self-loops).
+- Instances: `cycleIntegralPresentation` (prefix sum),
+  `wedgeIntegralPresentation` (two prefix sums; the basepoint-routing
+  lemma `g (wedgeVertex v) = prefixR v` makes the right cycle reduce
+  to the same core lemma), `thetaIntegralPresentation`
+  (`Meno/ThetaHarmonic.lean`; the Phase-19 explicit potential
+  `![0, ω4+ω5, ω0, ω2, ω4]` is already integral).
+
+### Notes
+
+- The presentation instance defs (`cyclePresentation`,
+  `wedgePresentation`, `thetaPresentation`) are now `@[reducible]`:
+  instance synthesis must see through `(… ).r` to the literal rank
+  for numerals like `(0 : Fin P.r)` — projection opacity was the one
+  genuinely new failure mode this phase (two build iterations, five
+  small fixes total, none mathematical).
+- Deliberately deferred: the finite-resolution corollaries (K1)–(K3)
+  (counting at resolution `q`) — they follow from the ℤ-form but
+  need `ZMod` vocabulary. The keystone's mathematical content is the
+  ℤ-form; the K's are its counting shadows.
+- The keystone's *information-theoretic half* now has both anchors:
+  `cochainQuotEquiv` (ℝ, dimension) and `latticeQuotEquiv` (ℤ,
+  lattice). What remains for the full keystone is the InfoRatchet
+  *interpretation layer* — connecting `descriptionCost`/
+  `fiberInfoCost` to these quotients via the (K1)–(K3) counting
+  statements.
+
+### Board after this phase
+
+- (K1)–(K3) finite-resolution counting (ZMod vocabulary) — the
+  keystone's last mile into InfoRatchet's literal vocabulary.
+- Geometric `binding_kills_matter` (Goal 7 remainder) — still needs
+  its stated connecting theorem.
+- Geodesic instance (Goal 4, plumbing).
+- Halted/pruned: unchanged.
+
+**End of Phase 25 addendum.**
