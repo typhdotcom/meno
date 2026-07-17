@@ -1,5 +1,6 @@
 import Meno.SectorAction
 import Meno.Basic
+import Meno.Instances
 
 /-! # The Uniform Sector Action: type-level gravity, realized (C9)
 
@@ -36,7 +37,7 @@ already multiplies partition functions, and
 
 namespace Meno
 
-open scoped BigOperators
+open scoped BigOperators ENNReal
 
 universe u
 
@@ -138,10 +139,32 @@ theorem gravity_partFn {A B D F G : Type u}
     uniformAction_partFn, ← Nat.cast_mul, ← Nat.cast_mul,
     card_pullback_mul_card_base f g ef eg]
 
+/-- **The bridge to the abstract hierarchy** (review #2): for finite
+nonempty types, `SGD.logCard` — the `ℝ≥0∞`-valued complexity of
+`Meno/Instances.lean`'s `AdditiveComplexity` instance — *is* the
+uniform action's complexity, lifted along `ENNReal.ofReal`. The two
+theories compute one number. -/
+theorem logCard_eq_uniformComplexity (A : Type u) [Fintype A] [Nonempty A] :
+    SGD.logCard A = ENNReal.ofReal (uniformAction A).complexity := by
+  have hpos : Nat.card A ≠ 0 := by
+    have h := Nat.card_pos (α := A)
+    omega
+  rw [uniformAction_complexity, SGD.logCard, if_neg hpos,
+    Nat.card_eq_fintype_card]
+
+/-- Gravity at the abstract instance: `SGD.gravity`, **invoked** at
+the log-cardinality `AdditiveComplexity ℝ≥0∞` instance — not
+reproved. -/
+theorem gravity_logCard {A B D F G : Type u} (f : A → D) (g : B → D)
+    (ef : ∀ d, SGD.Fiber f d ≃ F) (eg : ∀ d, SGD.Fiber g d ≃ G) :
+    SGD.logCard (SGD.Pullback f g) + SGD.logCard D
+      = SGD.logCard A + SGD.logCard B :=
+  SGD.gravity (M := ℝ≥0∞) f g ef eg
+
 /-- **Gravity in complexity form** (C9): `K(A ×_D B) + K(D) =
-K(A) + K(B)` — the exact shape of the abstract `SGD.gravity`, with
-the complexities now computed numbers. The saving from sharing a base
-is exactly `K(D)`. -/
+K(A) + K(B)` — derived by **transporting `SGD.gravity`** along the
+bridge (review #2): the uniform action's gravity is the abstract
+theorem's instance, not a lookalike. -/
 theorem gravity_complexity {A B D F G : Type u}
     [Fintype A] [Nonempty A] [Fintype B] [Nonempty B]
     [Fintype D] [Nonempty D] [Fintype F] [Fintype G] [DecidableEq D]
@@ -151,14 +174,18 @@ theorem gravity_complexity {A B D F G : Type u}
     (uniformAction (SGD.Pullback f g)).complexity
         + (uniformAction D).complexity
       = (uniformAction A).complexity + (uniformAction B).complexity := by
-  have h := gravity_partFn f g ef eg
-  have hP := (uniformAction (SGD.Pullback f g)).partFn_pos
-  have hD := (uniformAction D).partFn_pos
-  have hA := (uniformAction A).partFn_pos
-  have hB := (uniformAction B).partFn_pos
-  have hlog := congrArg Real.log h
-  rw [Real.log_mul hP.ne' hD.ne', Real.log_mul hA.ne' hB.ne'] at hlog
-  exact hlog
+  have h := gravity_logCard f g ef eg
+  rw [logCard_eq_uniformComplexity, logCard_eq_uniformComplexity,
+    logCard_eq_uniformComplexity, logCard_eq_uniformComplexity,
+    ← ENNReal.ofReal_add (uniformAction (SGD.Pullback f g)).complexity_nonneg
+      (uniformAction D).complexity_nonneg,
+    ← ENNReal.ofReal_add (uniformAction A).complexity_nonneg
+      (uniformAction B).complexity_nonneg] at h
+  exact (ENNReal.ofReal_eq_ofReal_iff
+    (add_nonneg (uniformAction (SGD.Pullback f g)).complexity_nonneg
+      (uniformAction D).complexity_nonneg)
+    (add_nonneg (uniformAction A).complexity_nonneg
+      (uniformAction B).complexity_nonneg)).mp h
 
 instance {D F G : Type u} [Nonempty D] [Nonempty F] [Nonempty G] :
     Nonempty (SGD.Pullback (fun p : D × F => p.1) (fun p : D × G => p.1)) :=
@@ -226,5 +253,16 @@ theorem uniform_refactoring_bound {A B D : Type u}
     _ = Real.log (Fintype.card D) + Real.log m := by
         rw [Nat.cast_mul,
           Real.log_mul (by exact_mod_cast hDpos.ne') (by exact_mod_cast hmpos.ne')]
+
+/-- The abstract refactoring bound at the log-cardinality instance
+(review #2): `SGD.refactoring_bound`, **invoked** — the `Finset.sup`
+form above is its concrete finite refinement. -/
+theorem refactoring_bound_logCard {A B D : Type u} (f : A → D) (g : B → D)
+    (hne : Nonempty D) :
+    SGD.logCard (SGD.Pullback f g)
+      ≤ SGD.logCard D + (⨆ d, SGD.logCard (SGD.Fiber f d))
+        + ⨆ d, SGD.logCard (SGD.Fiber g d) :=
+  SGD.refactoring_bound (M := ℝ≥0∞) f g
+    (OrderTop.bddAbove _) (OrderTop.bddAbove _) hne
 
 end Meno

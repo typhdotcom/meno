@@ -1,5 +1,5 @@
 import Meno.FundamentalPresentation
-import Meno.ThetaHarmonic
+import Meno.ThetaGraph
 
 /-! # Concrete Graph Topology: connectivity and Betti numbers (C1)
 

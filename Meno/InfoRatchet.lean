@@ -1,6 +1,7 @@
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Set.Card
+import Mathlib.Data.ENNReal.Real
 
 /-! # Fiber Information Cost and the Entropic Ratchet
 
@@ -34,7 +35,7 @@ count to the keystone K1–K3 — lives in `Meno/ResolutionCount.lean`. -/
 
 namespace Meno
 
-open scoped BigOperators
+open scoped BigOperators ENNReal
 
 universe u
 
@@ -44,6 +45,16 @@ variable {A B : Type u}
 fibers (`b ∉ image f`) contribute `log 0 = 0` by Mathlib convention. -/
 noncomputable def fiberInfoCost [Fintype B] [DecidableEq B] (f : A → B) : ℝ :=
   ∑ b : B, Real.log (Nat.card (f ⁻¹' {b}) : ℝ)
+
+/-- **Per-output recovery cost**: the information needed to pick the
+preimage of *one* output — `log |f⁻¹{b}|`. -/
+noncomputable def recoveryCost (f : A → B) (b : B) : ℝ :=
+  Real.log (Nat.card (f ⁻¹' {b}) : ℝ)
+
+/-- The fiber information cost is the aggregate of the per-output
+recovery costs. -/
+theorem fiberInfoCost_eq_sum_recoveryCost [Fintype B] [DecidableEq B]
+    (f : A → B) : fiberInfoCost f = ∑ b : B, recoveryCost f b := rfl
 
 theorem fiberInfoCost_nonneg [Fintype B] [DecidableEq B] (f : A → B) :
     0 ≤ fiberInfoCost f := by
@@ -125,7 +136,12 @@ theorem card_sections [Fintype B] (f : A → B) :
     Nat.card {s : B → A // ∀ b, f (s b) = b} = ∏ b : B, Nat.card (f ⁻¹' {b}) := by
   rw [Nat.card_congr (sectionsEquivPiFiber f), Nat.card_pi]
 
-/-- **The reverse-description cost**: the log-count of `f`'s sections. -/
+/-- **The reverse-description count-cost**: the log-count of `f`'s
+sections. Beware the boundary: when *no* section exists this is
+`log 0 = 0` by Mathlib's junk convention — an impossible inverse is
+not free, it is impossible. `sectionCostE` below is the honest
+extended cost (`⊤` when no section exists); use it for cost
+readings. -/
 noncomputable def sectionCost (f : A → B) : ℝ :=
   Real.log (Nat.card {s : B → A // ∀ b, f (s b) = b})
 
@@ -151,8 +167,11 @@ theorem sectionCost_eq_fiberInfoCost [Fintype A] [Fintype B] [DecidableEq B]
     sectionCost f = fiberInfoCost f :=
   log_card_sections hf
 
-/-- An **injective** function has at most one section, so its reverse
-description is free. -/
+/-- An injective function has *at most one* section, so its log-count
+is zero. This does **not** say reversal is free: an injective
+non-surjective `f` has *no* section, and its honest extended cost is
+`⊤` (`sectionCostE_eq_top_iff`). Zero honest cost characterizes
+bijections (`sectionCostE_eq_zero_iff`). -/
 theorem sectionCost_eq_zero_of_injective
     {f : A → B} (hf : Function.Injective f) :
     sectionCost f = 0 := by
@@ -190,6 +209,65 @@ theorem section_not_surjective_of_not_injective {f : A → B}
   obtain ⟨b₂, rfl⟩ := hsurj a₂
   have hb : b₁ = b₂ := by rw [← hr b₁, ← hr b₂, ha]
   rw [hb]
+
+/-- Sections exist exactly for surjections. -/
+theorem sections_nonempty_iff_surjective (f : A → B) :
+    Nonempty {s : B → A // ∀ b, f (s b) = b} ↔ Function.Surjective f := by
+  constructor
+  · rintro ⟨s⟩ b
+    exact ⟨s.1 b, s.2 b⟩
+  · intro hf
+    choose s hs using hf
+    exact ⟨⟨s, hs⟩⟩
+
+open Classical in
+/-- **The extended reverse-description cost**: `⊤` when no section
+exists. An impossible inverse is not free — it is impossible. -/
+noncomputable def sectionCostE (f : A → B) : ℝ≥0∞ :=
+  if Function.Surjective f then ENNReal.ofReal (sectionCost f) else ⊤
+
+/-- Infinite reverse cost characterizes non-surjectivity. -/
+theorem sectionCostE_eq_top_iff (f : A → B) :
+    sectionCostE f = ⊤ ↔ ¬ Function.Surjective f := by
+  classical
+  unfold sectionCostE
+  split_ifs with h
+  · simp [h, ENNReal.ofReal_ne_top]
+  · simp [h]
+
+/-- For surjections, the extended cost is the fiber information. -/
+theorem sectionCostE_eq_fiberInfoCost [Fintype A] [Fintype B] [DecidableEq B]
+    {f : A → B} (hf : Function.Surjective f) :
+    sectionCostE f = ENNReal.ofReal (fiberInfoCost f) := by
+  classical
+  unfold sectionCostE
+  rw [if_pos hf, log_card_sections hf]
+
+/-- **Zero reverse cost characterizes bijections** — not arbitrary
+injections. The only maps that are free to reverse are the ones that
+lose nothing and miss nothing. -/
+theorem sectionCostE_eq_zero_iff [Fintype A] [Fintype B] [DecidableEq B]
+    (f : A → B) : sectionCostE f = 0 ↔ Function.Bijective f := by
+  constructor
+  · intro h0
+    have hsurj : Function.Surjective f := by
+      by_contra hns
+      have htop := (sectionCostE_eq_top_iff f).mpr hns
+      rw [h0] at htop
+      exact (by simp : (0 : ℝ≥0∞) ≠ ⊤) htop
+    refine ⟨?_, hsurj⟩
+    by_contra hni
+    have hpos := fiberInfoCost_pos_of_not_injective hni
+    have heq := sectionCostE_eq_fiberInfoCost hsurj
+    rw [h0] at heq
+    have hle := ENNReal.ofReal_eq_zero.mp heq.symm
+    linarith
+  · intro hbij
+    classical
+    unfold sectionCostE
+    rw [if_pos hbij.surjective, log_card_sections hbij.surjective,
+      fiberInfoCost_of_injective hbij.injective]
+    simp
 
 /-- **Forward description cost**: `|A| · log |B|` — the bits to specify
 which of `|B|^|A|` functions `f` is. -/

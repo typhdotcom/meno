@@ -1,4 +1,4 @@
--- Foundational analytic primitives (new architecture)
+-- Foundation: the analytic and graph substrates
 import Meno.IncidenceGraph
 import Meno.SectorAction
 import Meno.QuadraticAction
@@ -7,33 +7,38 @@ import Meno.LoopKernel
 import Meno.Geodesic
 import Meno.HarmonicForm
 import Meno.SectorPresentation
+import Meno.PeriodHarmonic
+
+-- Topology: cycle lattices, presentations, the fundamental theorem
 import Meno.CyclePresentation
 import Meno.PeriodLattice
-import Meno.ResolutionCount
 import Meno.FundamentalPresentation
+import Meno.ThetaGraph
+import Meno.GraphInstances
+
+-- Harmonic: basis independence, the intrinsic energy
 import Meno.BasisIndependence
 import Meno.HarmonicClass
-import Meno.GraphInstances
 import Meno.WedgePresentation
+
+-- Matter and binding
 import Meno.Matter
 import Meno.Binding
-import Meno.InfoRatchet
-import Meno.UniformAction
 
--- Pre-existing layers (to be migrated downstream)
+-- Information: the coding theorem, resolution counting
+import Meno.InfoRatchet
+import Meno.ResolutionCount
+
+-- Abstract complexity interface and its realizations
 import Meno.Basic
 import Meno.Instances
+import Meno.UniformAction
+
+-- Corroborating models: the walk route, identified with the spine
 import Meno.Simplicial
 import Meno.Groupoid
+import Meno.CycleHarmonic
+import Meno.ThetaHarmonic
 import Meno.Hodge
 import Meno.Duality
 import Meno.Zeta
-
--- Flagship integration: cycle-graph harmonic data routed through the new spine
-import Meno.CycleHarmonic
-
--- Period-model machinery: least-norm variational lemma, builder, parametric C_n
-import Meno.PeriodHarmonic
-
--- The theta graph: first non-diagonal harmonic Gram form, derived from topology
-import Meno.ThetaHarmonic

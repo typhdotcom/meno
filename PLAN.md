@@ -76,8 +76,11 @@ are the same path.
    retracted as a set of completion states (the ledger itself stands in
    Part II as an honest record of what was believed when it was written).
    In particular the sentence "the answer to 'what's left' is: nothing
-   that isn't named, gated, and stated" is superseded: the answer is
-   C1-C9 and C12.
+   that isn't named, gated, and stated" is superseded: at adoption time
+   (Phase 28) the answer was C1-C9 and C12. (Amended Phase 38, review #2
+   finding 6: all twelve items closed as of Phase 37 — the phrasing
+   above is kept in the past tense so this rule no longer contradicts
+   the per-item CLOSED markers below.)
 
 ## The Completion Path
 
@@ -389,8 +392,22 @@ codebase's native quotient model):
 
 Theta consumer: `theta_binding_kills` (the `(1,0)` sector dies when
 its cycle is filled), `theta_attach_finrank` (`b₁ : 2 → 1`),
-`theta_binding_release` (the spectrum drops by at least
-`exp(−1/3)` — the killed mass in closed form).
+`theta_removed_weight` (the spectrum drops by at least
+`exp(−1/3)` — the killed sector's weight in closed form).
+
+**Sharpened (Phase 38, review #2 finding 2).** The Phase-35 amendment
+replaced an unprovable statement but its surrounding language still
+said "release"/"rest mass" of a *bound*, conflating a removed
+Boltzmann **weight** (dimensionless) with a released **energy**. Two
+repairs: (i) the exact spectral decomposition
+`TwoComplex.partFn_add_killed`
+(`X.partFn + Σ_{killed} exp(−E) = G.classPartFn` — an equality; the
+inequality `attach_partFn_add_le` is now its one-line corollary via
+`Summable.sum_le_tsum` on the killed tail); (ii) every docstring and
+the theta theorem name now say removed *weight*, and point to
+`MatterSector.annihilation` as the theorem that genuinely releases an
+energy equal to a rest mass. No goal state changes: the amendment is
+sharpened in place.
 
 ### C8 -- The keystone as a genuine coding theorem — CLOSED (Phase 34)
 
@@ -447,6 +464,27 @@ the new `theta_gauge_count` (`q⁴`, since theta has `6 − 2` non-cycle
 edges) in `ThetaHarmonic.lean`. The coding-theorem statements hold for
 **every** modulus `q ≥ 1` and every finite graph — no primality, no
 per-graph fields.
+
+**Sharpened (Phase 38, review #2 finding 1).** The Phase-34 cost model
+had a junk-value boundary: `sectionCost f = log(#sections)` reads `0`
+when **no** section exists (`log 0 = 0` in Mathlib), so an impossible
+inverse priced as free, and `sectionCost_eq_zero_of_injective` traded
+on that junk for non-surjective injections. Repairs
+(`Meno/InfoRatchet.lean`): `sectionCostE : ℝ≥0∞` extends the cost
+with `⊤` exactly when `f` has no section
+(`sectionCostE_eq_top_iff : sectionCostE f = ⊤ ↔ ¬Surjective f`);
+on surjections it agrees with the finite cost
+(`sectionCostE_eq_fiberInfoCost`); and **zero cost characterizes
+bijections** (`sectionCostE_eq_zero_iff : sectionCostE f = 0 ↔
+Bijective f`) — the honest form of "only lossless maps invert for
+free". The per-output cost is `recoveryCost f b = log |f⁻¹{b}|` with
+`fiberInfoCost = Σ recoveryCost` (`rfl`), and the decoder-table cost
+`q^{b₁}·log|G_q|` is now correctly attributed: it is the cost of
+fixing a representative for **every** class at once
+(`sectionCost_compression`), while one class costs `log|G_q|`
+(`recoveryCost_compression`). The real-valued `sectionCost` and its
+zero-of-injective lemma survive with explicit junk-value caveats in
+their docstrings; no theorem statement was weakened.
 
 ### C9 -- Gravity and the ratchet through SectorAction (TypeKernel's replacement) — CLOSED (Phase 36)
 
@@ -516,6 +554,22 @@ the walk quotient misses walks. Where fibers are finite,
 `log_card_sections` remains the quantitative form. F5's check passed:
 the identity holds; nothing is excised.
 
+**Sharpened (Phase 38, review #2 finding 3).** As delivered, Phase 36
+*re-proved* gravity over `uniformAction` but no theorem mentioned
+`SGD.logCard` or invoked `SGD.gravity` — the "realization" was a
+parallel with the same statement shape, and the audit row claiming
+"C9's theorems identify the values" was **false**. The bridge now
+exists (`Meno/UniformAction.lean`): `logCard_eq_uniformComplexity`
+(`SGD.logCard A = ENNReal.ofReal (uniformAction A).complexity` — the
+abstract `AdditiveComplexity ℝ≥0∞` instance computes the sector
+action's number), `gravity_logCard` (`SGD.gravity` **invoked** at that
+instance), `gravity_complexity` re-derived by transporting
+`gravity_logCard` along the bridge (via `ENNReal.ofReal_add` +
+injectivity on nonnegatives — not re-proved from `gravity_partFn`),
+and `refactoring_bound_logCard` (`SGD.refactoring_bound` invoked, with
+`⊤`-boundedness discharging the `BddAbove` hypotheses). The audit row
+is corrected below.
+
 ### C10 -- Geodesic — CLOSED (Phase 27)
 
 `simplicialGeodesic`: a Lawvere-subadditive `Geodesic` instance on the
@@ -571,7 +625,9 @@ physical claim in it cites the theorem that proves it.
 | `Hodge.siegelTheta` | `SiegelPoisson` layer | internal-only; identified with `graphPartitionFn` by `graphPartitionFn_eq_siegelTheta` |
 | `Simplicial`'s walk-route Hodge layer | the period route | **retained by design** as the independent corroborating derivation; identified in `CycleHarmonic` (`cyclePeriodData_energy_eq`, `harmonicEnergy_k_isLeast_periods`, `cycleHarmonicGramData_partFn_eq_partitionFn`) — two derivations, one object |
 | legacy `CycleGraph` (simplicial) vs `cycleGraph` (incidence) | — | different layers (walk model vs edge-data model); identified through `GraphInstances` (`b₁`) and `geodesic_harmonic_duality` |
-| `Instances.logCard` + `AdditiveComplexity ℝ≥0∞` | `uniformAction` (C9) | retained: abstract-instance vs numeric realization; C9's theorems identify the values |
+| `Instances.logCard` + `AdditiveComplexity ℝ≥0∞` | `uniformAction` (C9) | retained: abstract instance vs numeric realization — **identified** `logCard_eq_uniformComplexity`; `SGD.gravity`/`SGD.refactoring_bound` invoked at the instance (`gravity_logCard`, `refactoring_bound_logCard`). *Corrected Phase 38 (review #2 finding 3): the Phase-37 row claimed this identification before it existed* |
+| `Simplicial.geodesicMass` / `IsGeodesicMatter` (were `Mass`/`IsMatter`) | `MatterSector` + `.mass` (C6) | **retained, renamed** (Phase 38, review #2 finding 5): geodesic (`ℕ` walk-length) vs spectral (`ℝ` variational) mass are *not identified* in general and no longer share a physical name; flagship comparison `geodesic_harmonic_duality` (`n · (1/n) = 1` on `C_n`) |
+| `Simplicial.geodesicBindingDrop` (was `cycleBindingEnergy`) | `TwoComplex` binding (C7) | **retained, renamed** (Phase 38): both models prove exact decompositions (`geodesicBindingDrop_add_union` / `partFn_add_killed`) but no cross-model identification exists — stating one would need a simplicial↔incidence functor, which no goal names |
 | `SGD.TransitionComplexity` + Landauer instance | C8 coding theorem + cardinality-free ratchet | **DELETED** (Phase 36) |
 | `HomKernelCat` / magnitude | — | **DELETED** (Phase 28) |
 | spectator wedge stack | genuine wedge | **DELETED** (Phase 32) |
@@ -592,9 +648,22 @@ realizes its `gravity`), not by file motion. Inverting `Simplicial`'s
 dependency on the interface would churn thousands of lines for no
 mathematical content.
 
+**Corrected (Phase 38, review #2 finding 4).** Two inversions survived
+Phase 37: `FundamentalPresentation` (topology) imported
+`ResolutionCount` (information) for one lemma, and `GraphInstances`
+(topology) imported all of `ThetaHarmonic` (analytics) for raw graph
+data. Repairs: K1's `card_quotient_eq` moved into `ResolutionCount`
+(where its K-siblings live), leaving `FundamentalPresentation`
+importing only `PeriodLattice`; the theta graph's raw
+data/presentations extracted to a new topology-layer file
+`Meno/ThetaGraph.lean` (imported by `GraphInstances` and `Binding`;
+`ThetaHarmonic` keeps the Gram/duality analytics). `Meno.lean` now
+lists imports grouped by the actual layers with the stale
+"(to be migrated downstream)" comment gone.
+
 **README** rewritten (Phase 37): staleness banner removed; the
-architecture section lists the actual 30 files; every physical claim
-cites its theorem by name.
+architecture section lists the actual source files (31 as of Phase 38)
+and every physical claim cites its theorem by name.
 
 ## Execution Order
 
@@ -3851,3 +3920,25 @@ nothing. The board is clear.
 declarations. 30 files.
 
 **End of Phase 37 addendum. End of the Completion Path.**
+
+## Phase 38 addendum: second external review — six findings, six confirmed, six repaired (2026-07-17)
+
+A second external review arrived after the Phase-37 close. Per the
+review-handling mandate every claim was verified against the code
+before any fix. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | C8's cost model prices an impossible inverse as free (`log 0 = 0` junk value in `sectionCost`; `sectionCost_eq_zero_of_injective` trades on it; decoder-table cost misattributed to a single class) | **CONFIRMED** — `Real.log 0 = 0` in Mathlib; the lemma held for non-surjective injections via the junk value | `sectionCostE : ℝ≥0∞` with `⊤ ↔ ¬Surjective`, `= 0 ↔ Bijective`; `recoveryCost` per output with `fiberInfoCost = Σ recoveryCost` (`rfl`); `recoveryCost_compression` (per-class `log|G_q|`) vs `sectionCost_compression` (global decoder table); junk-value caveats on the surviving real-valued forms |
+| 2 | C7's language claims an energy release it never proves (`attach_partFn_add_le` bounds a partition-function *difference*; a removed weight is not a released energy) | **CONFIRMED** — no theorem equated any energy difference to `m.mass`; the docstrings said "release" anyway | Exact decomposition `TwoComplex.partFn_add_killed` (equality, not bound); `attach_partFn_add_le` demoted to corollary; `theta_binding_release` → `theta_removed_weight`; all weight/energy language corrected; `MatterSector.annihilation` cited as the true energy-release theorem |
+| 3 | C9 is a parallel theory, not a realization (no theorem mentions `SGD.logCard` or invokes `SGD.gravity`; the audit row asserting identification was false) | **CONFIRMED** — `rg` found zero cross-references in either direction | `logCard_eq_uniformComplexity` bridge; `gravity_logCard` and `refactoring_bound_logCard` *invoke* the abstract theorems; `gravity_complexity` re-derived by transport along the bridge; audit row corrected with the false claim recorded |
+| 4 | Import flow inverted (topology imports information; `GraphInstances` imports full analytics) | **CONFIRMED** — `FundamentalPresentation` imported `ResolutionCount`; `GraphInstances` imported `ThetaHarmonic` | `card_quotient_eq` moved to `ResolutionCount`; theta raw data extracted to `Meno/ThetaGraph.lean` (topology layer); `Meno.lean` regrouped by layer. Side effect surfaced honestly: `WedgePresentation` used `MatterSector` only transitively — it now imports `Meno.Matter` directly |
+| 5 | Audit omits `Simplicial`'s `Mass`/`IsMatter`/`cycleBindingEnergy` — shared physical names with no identification | **CONFIRMED** — none of the three appeared in the Phase-37 table | Renamed `geodesicMass`/`IsGeodesicMatter`/`geodesicBindingDrop` (with `geodesicBindingDrop_add_union`); docstrings state the non-identification and cite `geodesic_harmonic_duality` as the flagship comparison; two audit rows added |
+| 6 | Four documentation spots contradict the closed state (PLAN rule 6; `HarmonicForm` "binding still open"; `ThetaHarmonic` "keystone remains a design problem"; `Meno.lean` "awaiting migration") | **CONFIRMED** — all four verbatim as cited | All four rewritten to the actual state; rule 6 now past-tense with the amendment recorded |
+
+**Discipline check.** No goal reopens: findings 1-3 sharpen *how* C7-C9
+discharge their acceptance (repaired in place, same phase, with the
+false audit claim recorded rather than erased); findings 4-6 are
+architecture/documentation defects under C12's standing invariant.
+All twelve items remain CLOSED. Build green end-to-end
+(`lake build Meno`), zero `sorry`, zero `axiom`, zero warnings.

@@ -75,7 +75,10 @@ drops — by at least the killed sector's entire Boltzmann weight
 (`attach_partFn_add_le`, `attach_partFn_lt`). Concretely: filling the
 theta graph's first cycle kills its `1/3`-mass sector and costs the
 spectrum at least `exp(−1/3)` (`theta_binding_kills`,
-`theta_binding_release`).
+`theta_removed_weight`). The spectrum *partitions exactly* into
+survivors and casualties (`TwoComplex.partFn_add_killed`); the drop is
+a removed Boltzmann weight — the theorem that releases an *energy*
+equal to a rest mass is algebraic annihilation.
 
 **Time and information.** Descriptions at resolution `q` modulo local
 re-description number exactly `q^{b₁}` (`card_quotient` — K1, for
@@ -87,7 +90,11 @@ of counts. The ratchet is **derived, not defined**: the reverse
 descriptions of a map are its sections, counted exactly
 (`card_sections`), so reverse-description cost *equals* fiber
 information as a coding theorem (`log_card_sections`,
-`sectionCost_compression`). Where fibers are infinite, the
+`sectionCost_compression` for the global gauge-fixing,
+`recoveryCost_compression` for a single class). The extended cost is
+`⊤` when no section exists, and zero cost characterizes bijections
+(`sectionCostE_eq_top_iff`, `sectionCostE_eq_zero_iff`) — an
+impossible inverse is not free. Where fibers are infinite, the
 cardinality-free form holds: a section of a non-injective map always
 misses states (`section_not_surjective_of_not_injective`,
 `simplicial_ratchet`).
@@ -119,7 +126,8 @@ Meno/
 ├── Geodesic.lean              Lawvere-subadditive length class
 ├── HarmonicForm.lean          HarmonicGramData; variational builder; binding algebra
 ├── IncidenceGraph.lean        THE graph substrate: ∂, grad, Stokes (any ring); walks; components; gauge
-├── PeriodHarmonic.lean        Least-norm-at-prescribed-periods machinery; cycle & theta & wedge Gram forms
+├── PeriodHarmonic.lean        Least-norm-at-prescribed-periods machinery; cycle & wedge Gram forms
+├── ThetaGraph.lean            The theta graph's raw data and presentations (topology layer)
 ├── CyclePresentation.lean     Chosen cycle bases; exactness (no connectivity); rebase (GL(r,ℤ))
 ├── PeriodLattice.lean         The keystone, ℤ-form: ℤ-cochains ⧸ gradients ≃ ℤ^{b₁}
 ├── FundamentalPresentation.lean  Every finite graph satisfies the keystone interface; Euler; H¹ coords

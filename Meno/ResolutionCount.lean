@@ -1,4 +1,4 @@
-import Meno.PeriodLattice
+import Meno.FundamentalPresentation
 import Meno.InfoRatchet
 
 /-! # Resolution Counting: the Keystone's Counting Shadows (K1–K3)
@@ -308,11 +308,26 @@ theorem card_compression_sections :
     Finset.prod_const, Finset.card_univ, ← Nat.card_eq_fintype_card,
     Q.card_quotient q]
 
-/-- **The compression map's reverse-description cost** (C8, tying the
-section count to K1–K3): recovering which description produced a class
-costs exactly `q^{b₁} · log |G_q|` — the fiber information
-(`fiberInfoCost_mk`), now realized as the log-count of sections
-(`log_card_sections`). -/
+omit [NeZero q] in
+/-- **The per-class recovery cost**: recovering which description
+produced *one* class costs `log |G_q|` — the fiber ambiguity of a
+single output (K3 in `recoveryCost` form). -/
+theorem recoveryCost_compression
+    (x : (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :
+    recoveryCost (fun y : G.E → ZMod q =>
+        (Submodule.Quotient.mk y :
+          (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))) x
+      = Real.log (Nat.card (LinearMap.range (G.gradLin (ZMod q)))) := by
+  unfold recoveryCost
+  congr 2
+  exact card_fiber (G := G) q x
+
+/-- **The global gauge-fixing cost** (the decoder-*table* cost, not the
+per-class cost): a section fixes a representative for *every* class at
+once, so its log-count is the aggregate `q^{b₁} · log |G_q|` — the
+fiber information (`fiberInfoCost_mk`) realized as the log-count of
+sections (`log_card_sections`). Recovering a *single* class costs only
+`log |G_q|` (`recoveryCost_compression`). -/
 theorem sectionCost_compression :
     sectionCost (fun y : G.E → ZMod q =>
         (Submodule.Quotient.mk y :
@@ -332,5 +347,15 @@ theorem sectionCost_compression :
   rw [log_card_sections hsurj, Q.fiberInfoCost_mk q]
 
 end IntegralCyclePresentation
+
+/-- **K1 for every finite graph**: at every resolution `q ≥ 1`, the
+compression residue counts exactly `q ^ b₁` — no presentation in the
+hypotheses. (Moved here from `FundamentalPresentation` so the
+topology layer never imports the information layer.) -/
+theorem IncidenceGraph.card_quotient_eq (G : IncidenceGraph.{u, v})
+    (q : ℕ) [NeZero q] :
+    Nat.card ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+      = q ^ G.b1 :=
+  G.fundamentalPresentation.card_quotient q
 
 end Meno

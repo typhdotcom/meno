@@ -193,25 +193,38 @@ theorem cycleComplexity_pos_of_noncontractible (C : Complex V) (c : Cycle C.toGr
     | cons _ _ => simp [Walk.length] at hlen
   exact Nat.pos_of_ne_zero h
 
-/-! ## Mass and Matter -/
+/-! ## Geodesic mass and geodesic matter
 
-/-- Mass of a cycle: its geodesic length in the fixed complex. -/
-noncomputable def Mass (C : Complex V) (c : Cycle C.toGraph v) : ℕ :=
+Renamed from `Mass`/`IsMatter` (review #2, C12 audit): these are the
+**geodesic** (walk-length, `ℕ`-valued) notions of the simplicial
+model, distinct from the spine's spectral mass on `H¹` classes
+(`MatterSector.mass`, real-valued, variational). The two theories are
+*not* identified in general and must not share physical names; their
+flagship comparison on the cycle graph is
+`Meno.Simplicial.geodesic_harmonic_duality`
+(`Meno/Groupoid.lean`): geodesic mass `n`, spectral mass `1/n`,
+product `1`. -/
+
+/-- Geodesic mass of a cycle: its geodesic length in the fixed
+complex. -/
+noncomputable def geodesicMass (C : Complex V) (c : Cycle C.toGraph v) : ℕ :=
   cycleComplexity C c
 
-/-- A cycle is matter if its mass is positive. -/
-def IsMatter (C : Complex V) (c : Cycle C.toGraph v) : Prop :=
-  Mass C c > 0
+/-- A cycle is geodesic matter if its geodesic mass is positive. -/
+def IsGeodesicMatter (C : Complex V) (c : Cycle C.toGraph v) : Prop :=
+  geodesicMass C c > 0
 
-/-- Contractible cycles have zero mass (vacuum). -/
+/-- Contractible cycles have zero geodesic mass (vacuum). -/
 theorem contractible_zero_mass (C : Complex V) (c : Cycle C.toGraph v)
-    (hc : c.isContractible₂ C) : Mass C c = 0 :=
+    (hc : c.isContractible₂ C) : geodesicMass C c = 0 :=
   cycleComplexity_zero_of_contractible C c hc
 
-/-- Matter cycles are non-contractible. -/
+/-- Geodesic-matter cycles are non-contractible. -/
 theorem matter_noncontractible (C : Complex V) (c : Cycle C.toGraph v)
-    (hm : IsMatter C c) : ¬c.isContractible₂ C := by
-  intro hc; rw [IsMatter, contractible_zero_mass C c hc] at hm; exact Nat.lt_irrefl 0 hm
+    (hm : IsGeodesicMatter C c) : ¬c.isContractible₂ C := by
+  intro hc
+  rw [IsGeodesicMatter, contractible_zero_mass C c hc] at hm
+  exact Nat.lt_irrefl 0 hm
 
 /-! ## Pure 1-Skeleton (No Faces) -/
 
@@ -1020,9 +1033,16 @@ theorem geodesicLength_union_le₁ (C₁ C₂ : Complex V) (p : Walk C₁.toGrap
 def Complex.sharesFace (C₁ C₂ : Complex V) : Prop :=
   ∃ a b c, C₁.face a b c ∧ C₂.face a b c
 
-/-- Binding energy between two complexes for a specific cycle.
-    Positive when the union allows more reduction than either alone. -/
-noncomputable def cycleBindingEnergy (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) : ℕ :=
+/-- **Geodesic binding drop** (renamed from `geodesicBindingDrop`,
+review #2, C12 audit): the `ℕ`-valued drop in geodesic length when
+the union allows more reduction than either complex alone. Distinct
+from the spine's spectral binding (`HarmonicGramData.bindingEnergy`,
+real-valued; and the removed weight of `Meno/Binding.lean`); the two
+models share the structural shape "filling enables reduction" — both
+have exact decompositions (`geodesicBindingDrop_add_union` here,
+`TwoComplex.partFn_add_killed` there) — but no cross-model
+identification exists and none is claimed. -/
+noncomputable def geodesicBindingDrop (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) : ℕ :=
   cycleComplexity C₁ c - cycleComplexity (C₁.union C₂) (c.toUnion₁ C₁ C₂)
 
 /-- Union cannot increase cycle complexity: extra faces only add reduction paths. -/
@@ -1031,10 +1051,10 @@ theorem cycleComplexity_union_le (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph
   simpa [cycleComplexity, Cycle.toUnion₁] using geodesicLength_union_le₁ C₁ C₂ c.walk
 
 /-- Binding energy decomposes cycle complexity into residual + released parts. -/
-theorem cycleBindingEnergy_add_union (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) :
-    cycleBindingEnergy C₁ C₂ c + cycleComplexity (C₁.union C₂) (c.toUnion₁ C₁ C₂) =
+theorem geodesicBindingDrop_add_union (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) :
+    geodesicBindingDrop C₁ C₂ c + cycleComplexity (C₁.union C₂) (c.toUnion₁ C₁ C₂) =
       cycleComplexity C₁ c := by
-  unfold cycleBindingEnergy
+  unfold geodesicBindingDrop
   exact Nat.sub_add_cancel (cycleComplexity_union_le C₁ C₂ c)
 
 /-! ## Shared Faces Enable Binding -/
@@ -1046,8 +1066,8 @@ def Cycle.contractibleInUnion (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v)
 /-- When a cycle contracts in the union, all its mass becomes binding energy. -/
 theorem binding_releases_mass (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v)
     (hc : c.contractibleInUnion C₁ C₂) :
-    cycleBindingEnergy C₁ C₂ c = cycleComplexity C₁ c := by
-  simp only [cycleBindingEnergy]
+    geodesicBindingDrop C₁ C₂ c = cycleComplexity C₁ c := by
+  simp only [geodesicBindingDrop]
   have h := cycleComplexity_zero_of_contractible (C₁.union C₂) _ hc
   simp only [h, Nat.sub_zero]
 
@@ -1165,13 +1185,13 @@ theorem triangle_binding (C₁ C₂ : Complex V) {a b c : V}
 theorem simplicial_gravity (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v)
     (hmatter : ¬c.isContractible₂ C₁)
     (hcontracts : c.contractibleInUnion C₁ C₂) :
-    cycleBindingEnergy C₁ C₂ c > 0 := by
+    geodesicBindingDrop C₁ C₂ c > 0 := by
   rw [binding_releases_mass C₁ C₂ c hcontracts]
   exact cycleComplexity_pos_of_noncontractible C₁ c hmatter
 
 /-- The hollow triangle is an instance of simplicial gravity. -/
 theorem hollow_is_simplicial_gravity :
-    cycleBindingEnergy HollowTriangle Disk hollowCycle > 0 :=
+    geodesicBindingDrop HollowTriangle Disk hollowCycle > 0 :=
   simplicial_gravity HollowTriangle Disk hollowCycle
     hollow_not_contractible₂ hollow_contractible_in_union
 

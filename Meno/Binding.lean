@@ -1,5 +1,6 @@
 import Meno.Matter
 import Meno.GraphInstances
+import Meno.ThetaHarmonic
 
 /-! # Geometric Binding: attaching faces kills matter (C7)
 
@@ -27,17 +28,21 @@ integral cycles. On cohomology:
   `H₁(G) = ℤ·c ⊕ ker φ`.
 * Spectrally: survivors keep their exact mass
   (`TwoComplex.energy_isLeast` — same `IsLeast` set as in `G`), and
-  the partition function **strictly decreases**, by at least the
-  killed sector's full Boltzmann weight
-  (`attach_partFn_add_le`, `attach_partFn_lt`). This is the honest
-  quantitative form of "the released energy is the sector's entire
-  rest mass": the weight `exp(−m.mass)` leaves the spectrum because
-  the sector leaves the space.
+  the spectrum **partitions exactly**: the graph's partition function
+  is the complex's plus the killed classes' sum
+  (`partFn_add_killed`, an equality). Corollaries: the partition
+  function strictly decreases, by at least the killed sector's full
+  Boltzmann weight (`attach_partFn_add_le`, `attach_partFn_lt`).
+  These are statements about removed *weight* — `exp(−m.mass)` leaves
+  the spectrum because the sector leaves the space. No energy is
+  claimed to move: the killed sector has no image to carry one. The
+  theorem that genuinely releases an energy equal to a rest mass is
+  algebraic annihilation (`MatterSector.annihilation`).
 
 The concrete instance: the theta graph with its first basis cycle
 filled — `thetaMatter` dies (`theta_binding_kills`), `b₁` drops
-`2 → 1` (`theta_attach_finrank`), and the partition function drops by
-at least `exp(−1/3)` (`theta_binding_release`).
+`2 → 1` (`theta_attach_finrank`), and the removed weight is at least
+`exp(−1/3)` (`theta_removed_weight`).
 
 With this file, `killed_releases_mass` — the Phase-27 placeholder
 that accepted an arbitrary killing map — is deleted from
@@ -500,17 +505,35 @@ theorem partFn_eq_survivors :
     (fun s : ↥X.survivors => Real.exp (-G.harmonicEnergy s.val))]
   exact tsum_congr fun κ' => rfl
 
-/-- **The release bound** (C7's quantitative binding): filling a face
-that a matter sector wraps releases at least the sector's entire
-Boltzmann weight — the spectrum drops by `exp(−mass)` because the
-sector leaves the space, not because its energy moved. -/
+/-- **THE EXACT SPECTRAL DECOMPOSITION** (C7): the graph's partition
+function is the complex's partition function *plus* the killed
+classes' Boltzmann sum — an equality, not a bound. Filling faces
+partitions the spectrum into survivors and casualties. -/
+theorem partFn_add_killed :
+    X.partFn + (∑' κ : ↥((X.survivors :
+        Set ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))ᶜ,
+      Real.exp (-G.harmonicEnergy κ.val)) = G.classPartFn := by
+  have hSum := G.summable_classWeight
+  have hsplit := hSum.tsum_subtype_add_tsum_subtype_compl
+    (X.survivors : Set ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)))
+  have hX : X.partFn = ∑' s : ↥X.survivors,
+      Real.exp (-G.harmonicEnergy s.val) := X.partFn_eq_survivors
+  have hG : G.classPartFn
+      = ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
+        Real.exp (-G.harmonicEnergy κ) := rfl
+  rw [hX, hG, ← hsplit]
+  rfl
+
+/-- **The removed-weight bound** (corollary of the exact
+decomposition): filling a face that a matter sector wraps removes at
+least the sector's entire Boltzmann weight from the spectrum —
+`exp(−mass)` leaves because the sector leaves. A statement about
+weight, not a moved energy: the killed sector has no image to carry
+one. -/
 theorem attach_partFn_add_le (m : MatterSector G) (i : X.Faces)
     (hm : G.classPairing (X.face i) (X.face_mem i) m.val ≠ 0) :
     X.partFn + Real.exp (-m.mass) ≤ G.classPartFn := by
   have hSum := G.summable_classWeight
-  have hsplit := hSum.tsum_subtype_add_tsum_subtype_compl
-    (X.survivors : Set ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)))
-  -- the complement contains the killed sector, contributing exp(−mass)
   have hmem : m.val ∈ ((X.survivors :
       Set ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))ᶜ := by
     intro hmem
@@ -528,17 +551,12 @@ theorem attach_partFn_add_le (m : MatterSector G) (i : X.Faces)
           Set ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))ᶜ)
       (fun κ _ => (Real.exp_pos _).le)
     rwa [Finset.sum_singleton] at hterm
-  have hX : X.partFn = ∑' s : ↥X.survivors,
-      Real.exp (-G.harmonicEnergy s.val) := X.partFn_eq_survivors
-  have hG : G.classPartFn
-      = ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
-        Real.exp (-G.harmonicEnergy κ) := rfl
-  rw [hX, hG, ← hsplit]
+  rw [← X.partFn_add_killed]
   exact add_le_add_right hcompl _
 
-/-- **The partition function strictly decreases** (acceptance): the
-filled space weighs strictly less — the killed sector's weight is
-gone. -/
+/-- **The partition function strictly decreases** (acceptance,
+corollary of the decomposition): the filled space weighs strictly
+less — the killed sector's weight is gone. -/
 theorem attach_partFn_lt (m : MatterSector G) (i : X.Faces)
     (hm : G.classPairing (X.face i) (X.face_mem i) m.val ≠ 0) :
     X.partFn < G.classPartFn := by
@@ -588,10 +606,10 @@ theorem theta_attach_finrank :
   rw [thetaGraph_b1] at h
   exact h
 
-/-- **The theta release**: filling the cycle the `1/3`-mass sector
-wraps costs the spectrum at least `exp(−1/3)` — the sector's entire
-Boltzmann weight. -/
-theorem theta_binding_release :
+/-- **The theta removed weight**: filling the cycle the `1/3`-mass
+sector wraps removes at least `exp(−1/3)` from the spectrum — the
+sector's entire Boltzmann weight. -/
+theorem theta_removed_weight :
     thetaFilled.partFn + Real.exp (-(1/3 : ℝ))
       ≤ thetaGraph.classPartFn := by
   have h := thetaFilled.attach_partFn_add_le thetaMatter PUnit.unit (by

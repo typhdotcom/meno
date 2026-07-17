@@ -1,4 +1,4 @@
-import Meno.ResolutionCount
+import Meno.PeriodLattice
 
 /-! # The Fundamental Presentation (C2)
 
@@ -34,8 +34,10 @@ The construction:
 Consumers (the "for any presented graph → for any finite graph"
 upgrades): `h1QuotEquiv` (integer cochains modulo integer gradients
 are `ℤ^{b₁}` — intrinsic `H¹` coordinates), `b1_eq` (Euler's formula
-`b₁ = |E| − |V| + c`), and `card_quotient_eq` (K1 at every
-resolution, for every finite graph). -/
+`b₁ = |E| − |V| + c`); `card_quotient_eq` (K1 at every resolution,
+for every finite graph) lives downstream in
+`Meno/ResolutionCount.lean`, keeping this file in the topology
+layer. -/
 
 namespace Meno
 
@@ -655,14 +657,6 @@ theorem spanning_of_card_eq_b1 {r : ℕ} (hr : r = G.b1)
   have hcoe := congrArg Subtype.val ha
   rw [hsum_coe a] at hcoe
   exact hcoe.symm
-
-/-- **K1 for every finite graph**: at every resolution `q ≥ 1`, the
-compression residue counts exactly `q ^ b₁` — no presentation in the
-hypotheses. -/
-theorem card_quotient_eq (q : ℕ) [NeZero q] :
-    Nat.card ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
-      = q ^ G.b1 :=
-  G.fundamentalPresentation.card_quotient q
 
 end IncidenceGraph
 

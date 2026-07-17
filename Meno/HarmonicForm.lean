@@ -172,10 +172,12 @@ theorem bindingEnergy_eq (a b : Fin H.r → ℤ) :
 
 /-- **Annihilation**: the binding energy of a sector with its inverse
 is twice its energy — the pair's entire rest mass. This is algebraic
-cancellation inside one fixed period lattice; the *geometric*
+cancellation inside one fixed period lattice — and it is the theorem
+that genuinely releases an energy. The *geometric*
 `binding_kills_matter` (the ambient space changes and a class dies
-under an induced map) is a distinct, still-open statement — see PLAN,
-Goal 7 amendment. -/
+under the induced map) is proved in `Meno/Binding.lean` (C7); its
+spectral content is a removed Boltzmann *weight*, not a moved
+energy. -/
 theorem bindingEnergy_neg_self (k : Fin H.r → ℤ) :
     H.bindingEnergy k (-k) = 2 * H.energy k := by
   show H.energy k + H.energy (-k) - H.energy (k + -k) = _
