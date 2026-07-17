@@ -14,6 +14,7 @@ import Meno.FundamentalPresentation
 import Meno.BasisIndependence
 import Meno.HarmonicClass
 import Meno.GraphInstances
+import Meno.WedgePresentation
 import Meno.Matter
 import Meno.InfoRatchet
 

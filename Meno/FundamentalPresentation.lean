@@ -578,6 +578,84 @@ theorem b1_eq :
       + G.componentCard :=
   G.fundamentalPresentation.r_eq_card_edges_sub_card_vertices_add_components
 
+/-! ## The real cycle space and the spanning criterion -/
+
+/-- The real cycle space has dimension `b₁`: rank–nullity twice, the
+transpose rank equality, and Euler (`b1_eq`). -/
+theorem finrank_ker_boundaryLin :
+    Module.finrank ℝ (LinearMap.ker (G.boundaryLin ℝ)) = G.b1 := by
+  have h1 := LinearMap.finrank_range_add_finrank_ker (G.boundaryLin ℝ)
+  rw [Module.finrank_fintype_fun_eq_card] at h1
+  have h2 := LinearMap.finrank_range_add_finrank_ker (G.gradLin ℝ)
+  rw [Module.finrank_fintype_fun_eq_card, G.finrank_gauge] at h2
+  have hbm : G.boundaryLin ℝ = (G.boundaryMatrix ℝ).mulVecLin := by
+    apply LinearMap.ext
+    intro ω
+    funext v
+    rw [Matrix.mulVecLin_apply, G.boundaryMatrix_mulVec]
+    rfl
+  have hgm : G.gradLin ℝ = ((G.boundaryMatrix ℝ)ᵀ).mulVecLin := by
+    apply LinearMap.ext
+    intro f
+    rw [Matrix.mulVecLin_apply, G.transpose_boundaryMatrix_mulVec]
+    rfl
+  have hrank : Module.finrank ℝ (LinearMap.range (G.boundaryLin ℝ))
+      = Module.finrank ℝ (LinearMap.range (G.gradLin ℝ)) := by
+    rw [hbm, hgm]
+    show (G.boundaryMatrix ℝ).rank = ((G.boundaryMatrix ℝ)ᵀ).rank
+    exact (Matrix.rank_transpose _).symm
+  have hb := G.b1_eq
+  omega
+
+/-- **The spanning criterion** (C5's tool): a closed, linearly
+independent family of `b₁` cycle vectors spans the cycle space — by
+Euler, with no per-graph constancy argument. -/
+theorem spanning_of_card_eq_b1 {r : ℕ} (hr : r = G.b1)
+    (c : Fin r → G.E → ℝ)
+    (hclosed : ∀ i v, G.boundary (c i) v = 0)
+    (hindep : ∀ x : Fin r → ℝ,
+      (fun e => ∑ i, x i * c i e) = 0 → x = 0)
+    (ω : G.E → ℝ) (hω : ∀ v, G.boundary ω v = 0) :
+    ∃ a : Fin r → ℝ, ω = fun e => ∑ i, a i * c i e := by
+  have hmemc : ∀ i, c i ∈ LinearMap.ker (G.boundaryLin ℝ) := by
+    intro i
+    rw [LinearMap.mem_ker]
+    funext v
+    exact hclosed i v
+  set c' : Fin r → LinearMap.ker (G.boundaryLin ℝ) :=
+    fun i => ⟨c i, hmemc i⟩ with hc'
+  have hsum_coe : ∀ (g : Fin r → ℝ),
+      ((∑ i, g i • c' i : LinearMap.ker (G.boundaryLin ℝ)) : G.E → ℝ)
+        = fun e => ∑ i, g i * c i e := by
+    intro g
+    rw [AddSubmonoidClass.coe_finset_sum]
+    funext e
+    rw [Finset.sum_apply]
+    rfl
+  have hli : LinearIndependent ℝ c' := by
+    rw [Fintype.linearIndependent_iff]
+    intro g hg
+    have hcoe := congrArg Subtype.val hg
+    rw [hsum_coe g] at hcoe
+    have hgz := hindep g hcoe
+    intro i
+    exact congrFun hgz i
+  have hcard : Fintype.card (Fin r)
+      = Module.finrank ℝ (LinearMap.ker (G.boundaryLin ℝ)) := by
+    rw [Fintype.card_fin, G.finrank_ker_boundaryLin, hr]
+  have hspan : Submodule.span ℝ (Set.range c') = ⊤ := by
+    apply Submodule.eq_top_of_finrank_eq
+    rw [finrank_span_eq_card hli, hcard]
+  have hmem : (⟨ω, by rw [LinearMap.mem_ker]; funext v; exact hω v⟩ :
+      LinearMap.ker (G.boundaryLin ℝ)) ∈ Submodule.span ℝ (Set.range c') := by
+    rw [hspan]
+    trivial
+  obtain ⟨a, ha⟩ := (Submodule.mem_span_range_iff_exists_fun ℝ).mp hmem
+  refine ⟨a, ?_⟩
+  have hcoe := congrArg Subtype.val ha
+  rw [hsum_coe a] at hcoe
+  exact hcoe.symm
+
 /-- **K1 for every finite graph**: at every resolution `q ≥ 1`, the
 compression residue counts exactly `q ^ b₁` — no presentation in the
 hypotheses. -/

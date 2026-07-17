@@ -473,7 +473,7 @@ incidence layer and C6's intrinsic matter; C9 touches only
 | C2 intrinsic topology | `fundamentalPresentation` for every finite graph; `H₁`/`H¹` intrinsic, free | **CLOSED** (Phase 29) |
 | C3 basis independence | any two presentations of a graph are GL(r,ℤ)-related; `partFn` graph-level | **CLOSED** (Phase 30) |
 | C4 general harmonic theory | `harmonicEnergy : H¹(G;ℤ) → ℝ` + `IsLeast`, every finite graph | **CLOSED** (Phase 30) |
-| C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | OPEN |
+| C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | OPEN — Phase 31: genuine-wedge presentation built as a consumer (spanning by Euler); remaining: spectator-stack removal + consumer rewiring |
 | C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | OPEN |
 | C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + release + strict `partFn` drop | OPEN |
 | C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | OPEN |
@@ -3362,3 +3362,48 @@ matter inequality), C4's acceptance list is complete.
 declarations.
 
 **End of Phase 30 addendum.**
+
+## Phase 31 addendum: the genuine wedge presented — spanning by Euler (2026-07-17)
+
+*(Same session, continuing the C sprint.)*
+
+### What was built
+
+**Two C5 tools** (`Meno/FundamentalPresentation.lean`):
+`finrank_ker_boundaryLin` — the real cycle space has dimension `b₁`
+(rank–nullity twice + transpose ranks + Euler) — and
+**`spanning_of_card_eq_b1`**: a closed, linearly independent family
+of `b₁` cycle vectors spans the cycle space. Real spanning for
+concrete instances is now a *counting* consequence of C2, not a
+per-graph constancy argument.
+
+**The genuine wedge's presentations**
+(`Meno/WedgePresentation.lean`): `wedgeGraphPresentation` with
+`cycles_closed` by *shift reindexing* (summing `route (j+1)` over all
+`j` equals summing `route j` — `Fintype.sum_equiv` along `+1`; no
+vertex case analysis), `spanning` by the Euler criterion applied to
+`wedgeGraph_b1`, and the unchanged diagonal Gram
+(`gramOf wedgeCycles` never saw the vertex type).
+`wedgeGraphIntegralPresentation` reuses the vertex-free single-edge
+period witnesses and integrates by Option-routed prefix sums
+(`wedgePotential`, `wedgePotential_route₁/₂`).
+`wedgeGraph_exists_matter`: the genuine wedge has matter.
+
+The Phase-21 spanning machinery is thereby **obsoleted, not ported**
+— the general theory replaced the grind, which is C5's whole point.
+
+### Remaining for C1 + C5 (one shared step)
+
+The spectator stack (`wedgeSpectatorGraph`, old `wedgePresentation` /
+`wedgeIntegralPresentation`, `PeriodHarmonic`'s WedgePeriods section,
+`CycleHarmonic`'s wedge identifications and matter) must be removed
+with its consumers rewired to the genuine wedge, and theta/cycle
+recorded as `exists_rebase_related`-consumers. That deletion-and-rewire
+is the single step on which both C1 and C5 close.
+
+### Verification state
+
+`lake build Meno`: 3341 jobs green. Zero `sorry`; zero `axiom`
+declarations.
+
+**End of Phase 31 addendum.**
