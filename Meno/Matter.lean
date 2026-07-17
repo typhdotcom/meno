@@ -24,9 +24,11 @@ Everything the old structure stored as fields is now a theorem:
   space change killing a class under an induced map) remains open
   (PLAN, Goal 7 amendment).
 
-**Chosen basis caveat**: the meaning of `k ∈ ℤ^r` is relative to the
-presentation's cycle basis; see the `GL(r, ℤ)` gate recorded in
-`Meno/CyclePresentation.lean` and PLAN Phase 22. -/
+**Basis independence** (Phase 23): the label `k ∈ ℤ^r` is relative to
+the presentation's cycle basis, but nothing physical depends on the
+choice — `MatterSector.rebaseEquiv` bijects matter sectors across any
+unimodular change of basis preserving mass, and the partition function
+is invariant outright (`CyclePresentation.rebase_partFn`). -/
 
 namespace Meno
 
@@ -87,6 +89,24 @@ the pair's entire rest mass — twice the sector's own. -/
 theorem annihilation :
     P.toGramData.bindingEnergy m.val m.neg.val = 2 * m.mass :=
   P.toGramData.bindingEnergy_neg_self m.val
+
+/-! ### Unimodular transport: matter does not depend on the basis label -/
+
+variable (U : Matrix (Fin P.r) (Fin P.r) ℤ) (hU : IsUnit U.det)
+
+/-- **Matter is basis-independent**: a unimodular change of cycle
+basis bijects matter sectors, relabeling `k ↦ Uk`. -/
+noncomputable def rebaseEquiv :
+    MatterSector P ≃ MatterSector (P.rebase U hU) :=
+  Equiv.subtypeEquiv (mulVecEquiv U hU) fun k => not_congr (Iff.intro
+    (fun h => by rw [h]; exact Matrix.mulVec_zero U)
+    (fun h => (mulVecEquiv U hU).injective
+      (h.trans (Matrix.mulVec_zero U).symm)))
+
+/-- Transport preserves mass: the relabeled sector weighs the same. -/
+theorem rebaseEquiv_mass (m : MatterSector P) :
+    ((rebaseEquiv U hU) m).mass = m.mass :=
+  P.rebase_energy U hU m.val
 
 end MatterSector
 

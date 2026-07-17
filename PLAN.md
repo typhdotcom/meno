@@ -2210,3 +2210,67 @@ asserted Gram, one chain).
 - Geodesic instance (Goal 4, plumbing). Halted/pruned: unchanged.
 
 **End of Phase 22 addendum.**
+
+---
+
+## Phase 23 addendum: GL(r,ℤ) — the gate, closed
+
+*(Appended after Phase 22; session date 2026-07-17.)*
+
+### What was proved
+
+The Phase-22 review made unimodular change-of-basis invariance the
+design gate for any coordinate-independence claim. It is now closed,
+in `Meno/CyclePresentation.lean` (Rebase section) and `Meno/Matter.lean`:
+
+- **`mulVecEquiv`**: `U ∈ GL(r, ℤ)` (unit determinant) acts as a
+  bijection of the sector lattice `ℤʳ`, with inverse `U⁻¹` (integer
+  nonsingular inverse — `nonsing_inv` works over any commutative ring
+  with unit determinant).
+- **`CyclePresentation.rebase`**: the same graph presented with the
+  recombined basis `cᵢ' = Σⱼ Uᵢⱼ cⱼ`. Closedness is linearity of the
+  boundary; **spanning survives** via `b = a ᵥ* Uℝ⁻¹`;
+  positive-definiteness survives congruence (`C ↦ U C Uᵀ`, proved
+  with the Phase-15 workhorse, no `StarOrderedRing` needed).
+- **`rebase_energy`**: `E'(Uk) = E(k)` — the sector labeled `k` in
+  the old basis is labeled `Uk` in the new one, same energy. Matrix
+  algebra: `(UCUᵀ)⁻¹ = U⁻ᵀC⁻¹U⁻¹` (unconditional `mul_inv_rev`) and
+  two collapses of `U⁻¹U`.
+- **`rebase_partFn`**: the partition function is invariant outright —
+  re-basing permutes the lattice and the Boltzmann sum does not see
+  labels (`Equiv.tsum_eq` reindexing).
+- **`MatterSector.rebaseEquiv` + `rebaseEquiv_mass`**: matter sectors
+  biject across any unimodular re-basing, preserving mass.
+
+Docstring caveats planted in Phase 22 ("not yet formalized") now cite
+the theorems instead. The physics of the period layer — energies,
+matter content, partition function — is certified independent of the
+chosen cycle basis; only the *labels* `k` are basis-relative.
+
+### Engineering notes
+
+- One build iteration; five errors, all tactical, none mathematical:
+  beta-redexes in `Equiv` field goals (fix: `show` first), the pin's
+  `RingHom.map_det` returns the `mapMatrix` form (fix:
+  `RingHom.mapMatrix_apply`), the `posDef_iff_dotProduct_mulVec`
+  strict-implicit binder (the Phase-15 pitfall, again — pass only the
+  `≠ 0` proof), an unused-section-variable lint, and one associativity
+  mismatch in the big energy calc (fix: restructure around a `hkey`
+  helper instead of fighting `rw` orderings).
+- `Matrix.mul_inv_rev` is unconditional in Mathlib (adjugate-based
+  inverse), which keeps the inverse-of-congruence step one line.
+
+### Board after this phase
+
+- Integral primitivity per instance (state that the chosen bases
+  generate the full integer cycle lattice — the real spanning proofs
+  already contain the argument; surface it when a consumer needs it).
+- Geometric `binding_kills_matter` (Goal 7 remainder) — still gated
+  on a stated connecting theorem.
+- Keystone's information-theoretic half — connect InfoRatchet
+  description cost to `cochainQuotEquiv`. The mathematical anchor
+  exists (Phase 22); the connecting theorem must be stated before
+  vocabulary is built.
+- Geodesic instance (Goal 4, plumbing). Halted/pruned: unchanged.
+
+**End of Phase 23 addendum.**

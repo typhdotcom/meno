@@ -25,11 +25,13 @@ From this data alone:
   period map. What survives quotienting by local re-description is
   exactly the period data — the mathematical half of the keystone.
 
-**Chosen basis, not canonical**: `k ∈ ℤ^r` means periods *against this
-basis*. Rescaling or re-basing the cycles changes the meaning of `k`.
-The unimodular (`GL(r, ℤ)`) change-of-basis invariance theorem is the
-design gate for any coordinate-independence claim; it is **not yet
-formalized** (recorded in PLAN, Phase 22). -/
+**Chosen basis, invariant physics**: `k ∈ ℤ^r` means periods *against
+this basis* — the label is basis-relative. The `GL(r, ℤ)` gate for
+coordinate-independence claims is closed (Phase 23): `rebase` carries
+a presentation to any unimodularly recombined basis, `rebase_energy`
+shows energies are invariant under the relabeling `k ↦ Uk`, and
+`rebase_partFn` shows the partition function does not move at all.
+Matter transport is `MatterSector.rebaseEquiv` (`Meno/Matter.lean`). -/
 
 namespace Meno
 
@@ -64,7 +66,9 @@ structure CyclePresentation (V : Type u) (ι : Type v)
   spanning : ∀ ω : ι → ℝ, (∀ v, flowBoundary src tgt ω v = 0) →
     ∃ a : Fin r → ℝ, ω = fun e => ∑ i, a i * cycles i e
   /-- The chain Gram matrix is positive definite (in particular the
-  cycles are linearly independent). -/
+  cycles are linearly independent). The basis is *chosen*: sector
+  labels are basis-relative, physics is not (`rebase_energy`,
+  `rebase_partFn`). -/
   gram_posDef : (gramOf cycles).PosDef
 
 namespace CyclePresentation
@@ -313,6 +317,246 @@ theorem finrank_cochainQuot :
     Fintype.card_fin]
 
 end CyclePresentation
+
+/-! ## Unimodular change of basis: the gate, closed
+
+A change of cycle basis by `U ∈ GL(r, ℤ)` relabels sectors `k ↦ Uk`,
+transforms the chain Gram by congruence `C ↦ U C Uᵀ` — and changes
+nothing physical: energies are invariant under the relabeling
+(`rebase_energy`), and the partition function is invariant outright
+(`rebase_partFn`). Matter transport lives in `Meno/Matter.lean`. -/
+
+section Rebase
+
+/-- Multiplication by an integer matrix with unit determinant is a
+bijection of the sector lattice `ℤ^n`. -/
+noncomputable def mulVecEquiv {n : ℕ} (U : Matrix (Fin n) (Fin n) ℤ)
+    (hU : IsUnit U.det) : (Fin n → ℤ) ≃ (Fin n → ℤ) where
+  toFun k := U *ᵥ k
+  invFun k := U⁻¹ *ᵥ k
+  left_inv k := by
+    show U⁻¹ *ᵥ (U *ᵥ k) = k
+    rw [Matrix.mulVec_mulVec, Matrix.nonsing_inv_mul _ hU, Matrix.one_mulVec]
+  right_inv k := by
+    show U *ᵥ (U⁻¹ *ᵥ k) = k
+    rw [Matrix.mulVec_mulVec, Matrix.mul_nonsing_inv _ hU, Matrix.one_mulVec]
+
+/-- Unit determinant survives the cast to `ℝ`. -/
+private lemma isUnit_det_map {n : ℕ} (U : Matrix (Fin n) (Fin n) ℤ)
+    (hU : IsUnit U.det) : IsUnit (U.map (Int.cast : ℤ → ℝ)).det := by
+  have h := RingHom.map_det (Int.castRingHom ℝ) U
+  rw [RingHom.mapMatrix_apply] at h
+  rw [show U.map (Int.cast : ℤ → ℝ) = U.map ⇑(Int.castRingHom ℝ) from rfl, ← h]
+  exact hU.map (Int.castRingHom ℝ)
+
+/-- Casting commutes with the lattice action: the real coordinates of
+`U *ᵥ k` are `Uℝ *ᵥ kℝ`. -/
+private lemma cast_mulVec {n : ℕ} (U : Matrix (Fin n) (Fin n) ℤ)
+    (k : Fin n → ℤ) :
+    (fun i => ((U.mulVec k) i : ℝ))
+      = (U.map (Int.cast : ℤ → ℝ)).mulVec (fun j => (k j : ℝ)) := by
+  funext i
+  show ((∑ j, U i j * k j : ℤ) : ℝ) = ∑ j, (U i j : ℝ) * (k j : ℝ)
+  push_cast
+  rfl
+
+/-- Congruence preserves positive-definiteness (over `ℝ`, with
+invertible congruence matrix). -/
+private lemma posDef_mul_mul_transpose {n : ℕ}
+    (A : Matrix (Fin n) (Fin n) ℝ) (hA : A.PosDef)
+    (U : Matrix (Fin n) (Fin n) ℝ) (hU : IsUnit U.det) :
+    (U * A * Uᵀ).PosDef := by
+  have hct : ∀ (X : Matrix (Fin n) (Fin n) ℝ), Xᴴ = Xᵀ := fun X => by
+    ext p q
+    show star (X q p) = X q p
+    exact star_trivial _
+  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
+  · have hAH : Aᴴ = A := (posDef_iff_dotProduct_mulVec.mp hA).1
+    calc (U * A * Uᵀ)ᴴ
+        = (Uᵀ)ᴴ * (U * A)ᴴ := Matrix.conjTranspose_mul _ _
+      _ = (Uᵀ)ᴴ * (Aᴴ * Uᴴ) := by rw [Matrix.conjTranspose_mul]
+      _ = U * (A * Uᵀ) := by
+          rw [hAH, hct, hct, Matrix.transpose_transpose]
+      _ = U * A * Uᵀ := (Matrix.mul_assoc U A Uᵀ).symm
+  · have hUT : IsUnit Uᵀ.det := by rwa [Matrix.det_transpose]
+    have hy : Uᵀ *ᵥ x ≠ 0 := by
+      intro h0
+      apply hx
+      have hinv : (Uᵀ)⁻¹ *ᵥ (Uᵀ *ᵥ x) = x := by
+        rw [Matrix.mulVec_mulVec, Matrix.nonsing_inv_mul _ hUT,
+          Matrix.one_mulVec]
+      rw [← hinv, h0, Matrix.mulVec_zero]
+    have hpos := (posDef_iff_dotProduct_mulVec.mp hA).2 hy
+    have hsy : star (Uᵀ *ᵥ x) = Uᵀ *ᵥ x := funext fun i => star_trivial _
+    rw [hsy] at hpos
+    have hsx : star x = x := funext fun i => star_trivial _
+    rw [hsx]
+    calc x ⬝ᵥ ((U * A * Uᵀ) *ᵥ x)
+        = x ⬝ᵥ (U *ᵥ ((A * Uᵀ) *ᵥ x)) := by
+          rw [Matrix.mulVec_mulVec, Matrix.mul_assoc]
+      _ = (x ᵥ* U) ⬝ᵥ ((A * Uᵀ) *ᵥ x) := Matrix.dotProduct_mulVec x U _
+      _ = (Uᵀ *ᵥ x) ⬝ᵥ (A *ᵥ (Uᵀ *ᵥ x)) := by
+          rw [← Matrix.mulVec_transpose, Matrix.mulVec_mulVec]
+      _ > 0 := hpos
+
+/-- Gram matrix of an integer-recombined family: congruence by the
+cast of the recombination matrix. -/
+private lemma gramOf_map_mul {ι : Type v} [Fintype ι] {r : ℕ}
+    (U : Matrix (Fin r) (Fin r) ℤ)
+    (c : Fin r → ι → ℝ) :
+    gramOf (fun i e => ∑ j, (U i j : ℝ) * c j e)
+      = U.map (Int.cast : ℤ → ℝ) * gramOf c
+        * (U.map (Int.cast : ℤ → ℝ))ᵀ := by
+  ext i j
+  have hRHS : (U.map (Int.cast : ℤ → ℝ) * gramOf c
+        * (U.map (Int.cast : ℤ → ℝ))ᵀ) i j
+      = ∑ b, ∑ a, (U i a : ℝ) * gramOf c a b * (U j b : ℝ) := by
+    rw [Matrix.mul_apply]
+    refine Finset.sum_congr rfl fun b _ => ?_
+    rw [Matrix.mul_apply, Finset.sum_mul]
+    refine Finset.sum_congr rfl fun a _ => ?_
+    rw [Matrix.map_apply, Matrix.transpose_apply, Matrix.map_apply]
+  rw [hRHS]
+  show (fun e => ∑ a, (U i a : ℝ) * c a e) ⬝ᵥ (fun e => ∑ b, (U j b : ℝ) * c b e)
+    = ∑ b, ∑ a, (U i a : ℝ) * gramOf c a b * (U j b : ℝ)
+  calc (fun e => ∑ a, (U i a : ℝ) * c a e)
+        ⬝ᵥ (fun e => ∑ b, (U j b : ℝ) * c b e)
+      = ∑ e, ∑ a, ∑ b, ((U i a : ℝ) * c a e) * ((U j b : ℝ) * c b e) := by
+        refine Finset.sum_congr rfl fun e _ => ?_
+        rw [Finset.sum_mul_sum]
+    _ = ∑ a, ∑ e, ∑ b, ((U i a : ℝ) * c a e) * ((U j b : ℝ) * c b e) :=
+        Finset.sum_comm
+    _ = ∑ a, ∑ b, ∑ e, ((U i a : ℝ) * c a e) * ((U j b : ℝ) * c b e) := by
+        refine Finset.sum_congr rfl fun a _ => ?_
+        exact Finset.sum_comm
+    _ = ∑ a, ∑ b, (U i a : ℝ) * gramOf c a b * (U j b : ℝ) := by
+        refine Finset.sum_congr rfl fun a _ => Finset.sum_congr rfl fun b _ => ?_
+        show _ = (U i a : ℝ) * (∑ e, c a e * c b e) * (U j b : ℝ)
+        rw [Finset.mul_sum, Finset.sum_mul]
+        exact Finset.sum_congr rfl fun e _ => by ring
+    _ = ∑ b, ∑ a, (U i a : ℝ) * gramOf c a b * (U j b : ℝ) := Finset.sum_comm
+
+/-- The boundary of an `ℝ`-combination of cochains is the combination
+of the boundaries. -/
+private lemma flowBoundary_comb {V : Type u} {ι : Type v} [Fintype ι]
+    [DecidableEq V] {r' : ℕ} (src tgt : ι → V)
+    (a : Fin r' → ℝ) (c : Fin r' → ι → ℝ) (v : V) :
+    flowBoundary src tgt (fun e => ∑ j, a j * c j e) v
+      = ∑ j, a j * flowBoundary src tgt (c j) v := by
+  unfold flowBoundary
+  calc ∑ e, ((if tgt e = v then (1 : ℝ) else 0)
+        - (if src e = v then (1 : ℝ) else 0)) * ∑ j, a j * c j e
+      = ∑ e, ∑ j, a j * (((if tgt e = v then (1 : ℝ) else 0)
+          - (if src e = v then (1 : ℝ) else 0)) * c j e) := by
+        refine Finset.sum_congr rfl fun e _ => ?_
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun j _ => by ring
+    _ = ∑ j, ∑ e, a j * (((if tgt e = v then (1 : ℝ) else 0)
+          - (if src e = v then (1 : ℝ) else 0)) * c j e) := Finset.sum_comm
+    _ = ∑ j, a j * ∑ e, ((if tgt e = v then (1 : ℝ) else 0)
+          - (if src e = v then (1 : ℝ) else 0)) * c j e := by
+        refine Finset.sum_congr rfl fun j _ => ?_
+        rw [Finset.mul_sum]
+
+namespace CyclePresentation
+
+variable {V : Type u} {ι : Type v} [Fintype V] [Fintype ι] [DecidableEq V]
+variable (P : CyclePresentation V ι)
+variable (U : Matrix (Fin P.r) (Fin P.r) ℤ) (hU : IsUnit U.det)
+
+/-- **Re-basing**: the same graph presented with the unimodularly
+recombined cycle basis `cᵢ' = Σⱼ Uᵢⱼ cⱼ`. -/
+noncomputable def rebase : CyclePresentation V ι where
+  src := P.src
+  tgt := P.tgt
+  r := P.r
+  cycles := fun i e => ∑ j, (U i j : ℝ) * P.cycles j e
+  cycles_closed := fun i v => by
+    show flowBoundary P.src P.tgt
+      (fun e => ∑ j, (U i j : ℝ) * P.cycles j e) v = 0
+    rw [flowBoundary_comb]
+    exact Finset.sum_eq_zero fun j _ => by rw [P.cycles_closed j v, mul_zero]
+  spanning := fun ω hω => by
+    obtain ⟨a, ha⟩ := P.spanning ω hω
+    refine ⟨a ᵥ* (U.map (Int.cast : ℤ → ℝ))⁻¹, ?_⟩
+    have hb : (a ᵥ* (U.map (Int.cast : ℤ → ℝ))⁻¹)
+        ᵥ* (U.map (Int.cast : ℤ → ℝ)) = a := by
+      rw [Matrix.vecMul_vecMul,
+        Matrix.nonsing_inv_mul _ (isUnit_det_map U hU), Matrix.vecMul_one]
+    rw [ha]
+    funext e
+    calc ∑ j, a j * P.cycles j e
+        = ∑ j, ((a ᵥ* (U.map (Int.cast : ℤ → ℝ))⁻¹)
+            ᵥ* (U.map (Int.cast : ℤ → ℝ))) j * P.cycles j e := by rw [hb]
+      _ = ∑ j, (∑ i, (a ᵥ* (U.map (Int.cast : ℤ → ℝ))⁻¹) i * (U i j : ℝ))
+            * P.cycles j e := rfl
+      _ = ∑ j, ∑ i, (a ᵥ* (U.map (Int.cast : ℤ → ℝ))⁻¹) i
+            * ((U i j : ℝ) * P.cycles j e) := by
+          refine Finset.sum_congr rfl fun j _ => ?_
+          rw [Finset.sum_mul]
+          exact Finset.sum_congr rfl fun i _ => by ring
+      _ = ∑ i, ∑ j, (a ᵥ* (U.map (Int.cast : ℤ → ℝ))⁻¹) i
+            * ((U i j : ℝ) * P.cycles j e) := Finset.sum_comm
+      _ = ∑ i, (a ᵥ* (U.map (Int.cast : ℤ → ℝ))⁻¹) i
+            * ∑ j, (U i j : ℝ) * P.cycles j e := by
+          refine Finset.sum_congr rfl fun i _ => ?_
+          rw [Finset.mul_sum]
+  gram_posDef := by
+    show (gramOf (fun i e => ∑ j, (U i j : ℝ) * P.cycles j e)).PosDef
+    rw [gramOf_map_mul]
+    exact posDef_mul_mul_transpose (gramOf P.cycles) P.gram_posDef
+      (U.map (Int.cast : ℤ → ℝ)) (isUnit_det_map U hU)
+
+/-- Re-basing preserves the rank. -/
+theorem rebase_r : (P.rebase U hU).r = P.r := rfl
+
+/-- **Energy is basis-invariant**: the sector labeled `k` in the old
+basis is labeled `Uk` in the new one, and its energy is unchanged. -/
+theorem rebase_energy (k : Fin P.r → ℤ) :
+    (P.rebase U hU).toGramData.energy (U.mulVec k)
+      = P.toGramData.energy k := by
+  have hUℝ := isUnit_det_map U hU
+  show ∑ i, ∑ j, (gramOf (fun i e => ∑ j, (U i j : ℝ) * P.cycles j e))⁻¹ i j
+      * ((U.mulVec k) i : ℝ) * ((U.mulVec k) j : ℝ)
+    = ∑ i, ∑ j, (gramOf P.cycles)⁻¹ i j * (k i : ℝ) * (k j : ℝ)
+  rw [quadForm_dotProduct, quadForm_dotProduct, gramOf_map_mul, cast_mulVec]
+  have hcollapse : (U.map (Int.cast : ℤ → ℝ))⁻¹
+      *ᵥ ((U.map (Int.cast : ℤ → ℝ)) *ᵥ (fun j => (k j : ℝ)))
+      = fun j => (k j : ℝ) := by
+    rw [Matrix.mulVec_mulVec, Matrix.nonsing_inv_mul _ hUℝ,
+      Matrix.one_mulVec]
+  have hinv : (U.map (Int.cast : ℤ → ℝ) * gramOf P.cycles
+        * (U.map (Int.cast : ℤ → ℝ))ᵀ)⁻¹
+      = ((U.map (Int.cast : ℤ → ℝ))ᵀ)⁻¹
+        * ((gramOf P.cycles)⁻¹ * (U.map (Int.cast : ℤ → ℝ))⁻¹) := by
+    rw [Matrix.mul_inv_rev, Matrix.mul_inv_rev]
+  have hkey : (U.map (Int.cast : ℤ → ℝ) * gramOf P.cycles
+        * (U.map (Int.cast : ℤ → ℝ))ᵀ)⁻¹
+        *ᵥ ((U.map (Int.cast : ℤ → ℝ)) *ᵥ (fun j => (k j : ℝ)))
+      = ((U.map (Int.cast : ℤ → ℝ))ᵀ)⁻¹
+        *ᵥ ((gramOf P.cycles)⁻¹ *ᵥ (fun j => (k j : ℝ))) := by
+    rw [hinv, ← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, hcollapse]
+  rw [hkey, Matrix.dotProduct_mulVec, ← Matrix.transpose_nonsing_inv,
+    ← Matrix.mulVec_transpose, Matrix.transpose_transpose, hcollapse]
+
+/-- **The partition function is basis-invariant**: re-basing permutes
+the sector lattice, and the Boltzmann sum does not see the labels. -/
+theorem rebase_partFn :
+    (P.rebase U hU).toGramData.toQuadraticAction.toSectorAction.partFn
+      = P.toGramData.toQuadraticAction.toSectorAction.partFn := by
+  show ∑' k : Fin P.r → ℤ,
+      Real.exp (-((P.rebase U hU).toGramData.energy k))
+    = ∑' k : Fin P.r → ℤ, Real.exp (-(P.toGramData.energy k))
+  rw [← Equiv.tsum_eq (mulVecEquiv U hU)
+    (fun k => Real.exp (-((P.rebase U hU).toGramData.energy k)))]
+  refine tsum_congr fun k => ?_
+  show Real.exp (-((P.rebase U hU).toGramData.energy (U.mulVec k)))
+    = Real.exp (-(P.toGramData.energy k))
+  rw [P.rebase_energy U hU k]
+
+end CyclePresentation
+
+end Rebase
 
 /-! ## Instances: the cycle graph and the wedge -/
 
