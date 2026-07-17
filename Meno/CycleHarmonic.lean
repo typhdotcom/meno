@@ -1,5 +1,5 @@
 import Meno.HarmonicForm
-import Meno.MatterHomology
+import Meno.Matter
 import Meno.PeriodHarmonic
 import Meno.Simplicial
 
@@ -238,19 +238,21 @@ theorem wedgeHarmonicGramData_energy_basis₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥
       * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1 / n₁
   simp [Fin.sum_univ_two]
 
-/-- **Rank-2 matter exists**: the wedge carries matter sectors. First
-matter instance above rank 1 — the abstraction stack is not secretly
-rank-1. -/
+/-- **Rank-2 matter exists**: the wedge carries matter sectors — now
+anchored to the wedge presentation itself (Phase 22), not to bare Gram
+data. First matter instance above rank 1 — the abstraction stack is
+not secretly rank-1. -/
 noncomputable def wedgeMatter₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
-    MatterSector (wedgeHarmonicGramData n₁ n₂ h₁ h₂) :=
-  MatterSector.ofNonzero ![1, 0] (by
+    MatterSector (wedgePresentation n₁ n₂ (by omega) (by omega)) :=
+  ⟨![1, 0], by
     intro h
     have h0 := congrFun h 0
-    simp at h0)
+    simp at h0⟩
 
 theorem wedge_exists_matter (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
-    Nonempty (MatterSector (wedgeHarmonicGramData n₁ n₂ h₁ h₂)) :=
+    Nonempty (MatterSector (wedgePresentation n₁ n₂ (by omega) (by omega))) :=
   ⟨wedgeMatter₁ n₁ n₂ h₁ h₂⟩
+
 
 /-! ## Unification: the walk route and the period route agree
 
@@ -359,6 +361,14 @@ theorem wedgeHarmonicGramData_energy_isLeast (n₁ n₂ : ℕ)
   exact HarmonicGramData.ofCycles_energy_isLeast (V := Fin n₁ ⊕ Fin n₂)
     (wedgeCycles n₁ n₂)
     (gramOf_wedgeCycles_posDef n₁ n₂ (by omega) (by omega)) k
+/-- The wedge matter's mass is `1/n₁`: presentation → derived Gram →
+asserted Gram, one chain of identifications. -/
+theorem wedgeMatter₁_mass (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
+    (wedgeMatter₁ n₁ n₂ h₁ h₂).mass = 1 / n₁ := by
+  show (wedgePeriodData n₁ n₂ (by omega) (by omega)).energy ![1, 0] = 1 / n₁
+  rw [wedgePeriodData_energy_eq n₁ n₂ h₁ h₂,
+    wedgeHarmonicGramData_energy_basis₁]
+
 
 end PeriodUnification
 

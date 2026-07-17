@@ -335,8 +335,10 @@ directly on the abelianization `H¹` and handles it without incident.
 Vertex model: `Fin n₁ ⊕ Fin n₂`, with the right cycle's basepoint
 routed through the left basepoint `Sum.inl 0`; the vertex `Sum.inr 0`
 is left isolated, which changes neither boundaries nor cycles (it adds
-an edgeless component, so `b₁` is unaffected). This avoids a quotient
-vertex type entirely.
+an edgeless component, so `b₁` is unaffected). Strictly, the modeled
+space is `(C_{n₁} ∨ C_{n₂}) ⊔ {pt}` — same cycle/period theory as the
+wedge, different `H₀`, and a correspondingly larger kernel of the
+gradient on potentials. This avoids a quotient vertex type entirely.
 
 Edges: `Fin n₁ ⊕ Fin n₂`; left edge `e` runs `e → e + 1` in the left
 cycle, right edge `e` runs `e → e + 1` in the right cycle with `0`
@@ -594,7 +596,8 @@ theorem wedgeBoundary_cycles [NeZero n₁] [NeZero n₂] (i : Fin 2)
 /-- **`b₁(C_{n₁} ∨ C_{n₂}) = 2`**: a cochain with vanishing boundary is
 a combination of the two basis cycles. The mixed flow condition at the
 shared basepoint is automatically satisfied — consistent with the
-wedge's Euler count `E − V + 1 = 2`. -/
+model's Euler count `E − V + #components = 2` (the isolated vertex
+`inr 0` adds a component; the wedge proper has `E − V + 1 = 2`). -/
 theorem eq_comb_of_wedgeBoundary_eq_zero [NeZero n₁] [NeZero n₂]
     (ω : Fin n₁ ⊕ Fin n₂ → ℝ) (h : ∀ v, wedgeBoundary n₁ n₂ ω v = 0) :
     ω = fun e => ω (Sum.inl 0) * wedgeCycles n₁ n₂ 0 e

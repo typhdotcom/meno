@@ -1,5 +1,5 @@
 import Meno.PeriodHarmonic
-import Meno.MatterHomology
+import Meno.Matter
 
 /-! # The Theta Graph: the First Non-Diagonal Harmonic Gram Form
 
@@ -190,17 +190,41 @@ theorem thetaGramData_energy_one_zero :
       * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1/3
   norm_num [Fin.sum_univ_two]
 
-/-- The theta graph has matter: the `(1,0)` sector is nontrivial with
-positive minimum action. -/
-noncomputable def thetaMatter : MatterSector thetaHarmonicGramData where
-  k := ![1, 0]
-  nontrivial := by
+/-- The theta graph as a cycle presentation: `K₂,₃` with its chosen
+basis `c₁ = p₁ − p₃`, `c₂ = p₂ − p₃`. -/
+noncomputable def thetaPresentation : CyclePresentation (Fin 5) (Fin 6) where
+  src := thetaSrc
+  tgt := thetaTgt
+  r := 2
+  cycles := thetaCycles
+  cycles_closed := fun i w => thetaBoundary_cycles i w
+  spanning := fun ω hω => by
+    refine ⟨![ω 0, ω 2], ?_⟩
+    have h := eq_comb_of_thetaBoundary_eq_zero ω (fun w => hω w)
+    funext e
+    rw [congrFun h e, Fin.sum_univ_two]
+    rfl
+  gram_posDef := by
+    rw [gramOf_thetaCycles]
+    exact thetaChainGram_posDef
+
+/-- The theta graph has matter: the `(1, 0)` period class, anchored to
+the presentation (Phase 22). Mass, the variational identity,
+no-potential, and annihilation all come from the general
+`MatterSector` API. -/
+noncomputable def thetaMatter : MatterSector thetaPresentation :=
+  ⟨![1, 0], by
     intro hc
     have h0 := congrFun hc 0
-    norm_num at h0
-  positive_action := by
-    rw [thetaGramData_energy_one_zero]
-    norm_num
+    norm_num at h0⟩
+
+/-- The theta matter's mass is `1/3` — the same number the Gram data
+assigns, reached through the presentation-level API. -/
+theorem thetaMatter_mass : thetaMatter.mass = 1/3 := by
+  show ∑ i, ∑ j, (gramOf thetaCycles)⁻¹ i j
+      * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1/3
+  rw [gramOf_thetaCycles, thetaChainGram_inv]
+  norm_num [Fin.sum_univ_two]
 
 /-- **The first non-diagonal consumer of the general Siegel–Poisson
 duality**: the theta graph's quadratic action, with its topologically
@@ -235,57 +259,12 @@ is the leading approximation. Theta (`n₁ = n₂ = 4`, `k = 2`) gives
 
 section Binding
 
-/-- The Gram bilinear form (interaction) between two sectors. -/
-noncomputable def HarmonicGramData.interaction {V : Type u}
-    (H : HarmonicGramData V) (a b : Fin H.r → ℤ) : ℝ :=
-  ∑ i, ∑ j, H.gram i j * (a i : ℝ) * (b j : ℝ)
-
-/-- Polarization: energy of a joint sector. -/
-theorem HarmonicGramData.energy_add {V : Type u} (H : HarmonicGramData V)
-    (a b : Fin H.r → ℤ) :
-    H.energy (a + b) = H.energy a + H.energy b + 2 * H.interaction a b := by
-  have hswap : ∑ i, ∑ j, H.gram i j * (b i : ℝ) * (a j : ℝ)
-      = ∑ i, ∑ j, H.gram i j * (a i : ℝ) * (b j : ℝ) := by
-    rw [Finset.sum_comm]
-    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-    rw [show H.gram j i = H.gram i j from by
-      calc H.gram j i = H.gramᵀ i j := rfl
-        _ = H.gram i j := by rw [show H.gramᵀ = H.gram from H.gram_symm]]
-    ring
-  show ∑ i, ∑ j, H.gram i j * ((a + b) i : ℝ) * ((a + b) j : ℝ) = _
-  calc ∑ i, ∑ j, H.gram i j * ((a + b) i : ℝ) * ((a + b) j : ℝ)
-      = ∑ i, ∑ j, (H.gram i j * (a i : ℝ) * (a j : ℝ)
-          + H.gram i j * (a i : ℝ) * (b j : ℝ)
-          + (H.gram i j * (b i : ℝ) * (a j : ℝ)
-          + H.gram i j * (b i : ℝ) * (b j : ℝ))) := by
-        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-        push_cast [Pi.add_apply]
-        ring
-    _ = (∑ i, ∑ j, H.gram i j * (a i : ℝ) * (a j : ℝ))
-        + (∑ i, ∑ j, H.gram i j * (a i : ℝ) * (b j : ℝ))
-        + ((∑ i, ∑ j, H.gram i j * (b i : ℝ) * (a j : ℝ))
-        + (∑ i, ∑ j, H.gram i j * (b i : ℝ) * (b j : ℝ))) := by
-        simp only [Finset.sum_add_distrib]
-    _ = H.energy a + H.energy b + 2 * H.interaction a b := by
-        rw [hswap]
-        show _ = (∑ i, ∑ j, H.gram i j * (a i : ℝ) * (a j : ℝ))
-          + (∑ i, ∑ j, H.gram i j * (b i : ℝ) * (b j : ℝ))
-          + 2 * ∑ i, ∑ j, H.gram i j * (a i : ℝ) * (b j : ℝ)
-        ring
-
-/-- Binding energy: what joint minimization releases. -/
-noncomputable def HarmonicGramData.bindingEnergy {V : Type u}
-    (H : HarmonicGramData V) (a b : Fin H.r → ℤ) : ℝ :=
-  H.energy a + H.energy b - H.energy (a + b)
-
-/-- **Binding is minus twice the interaction**: the entire gravitational
-content of the Gram level is the off-diagonal. -/
-theorem HarmonicGramData.bindingEnergy_eq {V : Type u}
-    (H : HarmonicGramData V) (a b : Fin H.r → ℤ) :
-    H.bindingEnergy a b = -2 * H.interaction a b := by
-  show H.energy a + H.energy b - H.energy (a + b) = _
-  rw [H.energy_add]
-  ring
+/- The generic binding algebra (`HarmonicGramData.interaction`,
+`energy_add`, `bindingEnergy`, `bindingEnergy_eq`, annihilation) was
+born here in Phase 19 and moved upstream to `Meno/HarmonicForm.lean`
+in Phase 22 — it is pure Gram-data algebra with no theta dependence.
+What stays here is theta's concrete numbers and the parametric
+shared-cycle oracle. -/
 
 /-- The theta interaction of the two unit sectors is the off-diagonal
 `−1/6`. -/

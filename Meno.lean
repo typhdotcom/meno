@@ -6,7 +6,8 @@ import Meno.LoopKernel
 import Meno.Geodesic
 import Meno.HarmonicForm
 import Meno.SectorPresentation
-import Meno.MatterHomology
+import Meno.CyclePresentation
+import Meno.Matter
 import Meno.InfoRatchet
 import Meno.HomKernel
 

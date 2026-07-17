@@ -2079,3 +2079,134 @@ the binding story from both sides.
 - Halted/pruned (unchanged): TypeKernel rewrite, magnitude.
 
 **End of Phase 21 addendum.**
+
+---
+
+## Phase 22 addendum: cohomological matter — the rebuild, gated and executed
+
+*(Appended after Phase 21; session date 2026-07-17. Input: a second
+review from the planning model, relayed by the kernel; all six points
+verified against the code before acting.)*
+
+### Review verification ledger
+
+1. **Integrality / basis invariance as design gate — CORRECT.**
+   `ofCycles` accepts arbitrary real cycle vectors; `k ∈ ℤʳ` is
+   meaningful only relative to the chosen basis. **Action**: the
+   chosen-basis caveat is now documented at the structure
+   (`CyclePresentation`) and in `Matter.lean`; the unimodular
+   `GL(r,ℤ)` change-of-basis theorem (same energies, same matter
+   predicate, same partition function under `k ↦ Uk`) is recorded
+   here as **the gate** for any coordinate-independence claim. It is
+   the named next phase. Until it exists, no Meno statement may claim
+   basis independence.
+2. **Generic exactness needs no connectivity — CORRECT**, and this
+   was the review's real gift: `range(∂ᵀ) = (ker ∂)ᗮ` is linear
+   algebra; connectivity governs only uniqueness of potentials.
+   **Action**: proved, see below.
+3. **`MatterSector` must own its space — CORRECT.** **Action**:
+   rebuilt as `{k : Fin P.r → ℤ // k ≠ 0}` indexed by a
+   `CyclePresentation`; `positive_action` is no longer stored data
+   (it was always derivable — the old structure was nearly
+   content-free); the no-potential theorem covers **every** realizing
+   cochain, not only `periodRep`.
+4. **Annihilation ≠ `binding_kills_matter` — CORRECT.** **Action**:
+   the theorem is named `bindingEnergy_neg_self` / `annihilation` and
+   its docstring states explicitly that it is algebraic cancellation
+   in one period lattice. **Goal 7 is hereby amended**: its
+   cohomological content (mass, variational identity, no-potential,
+   annihilation, existence) is delivered; its *geometric* content —
+   an ambient-space change killing a class under an induced map —
+   remains open and is gated on a stated connecting theorem (same
+   discipline as the keystone), because at least two inequivalent
+   formalizations exist (induced maps of Gram data under graph
+   inclusion vs. simplicial face-gluing).
+5. **Wedge model is `(C ∨ C) ⊔ {pt}` — CORRECT.** The Phase-21
+   docstring's `E − V + 1 = 2` was the connected formula. **Action**:
+   docstrings corrected to `E − V + #components = 2`; the model's
+   `H₀` difference and larger locally-constant kernel are now stated.
+6. **Binding algebra upstream — CORRECT.** **Action**: `interaction`,
+   `energy_add`, `bindingEnergy`, `bindingEnergy_eq` moved from
+   `ThetaHarmonic.lean` to `HarmonicForm.lean`; matter no longer
+   touches the theta file.
+
+Honesty leftovers, both confirmed and fixed: the `HarmonicForm.lean`
+module docstring claimed a nonexistent variational `Prop`-field
+(Phase 17 fixed the structure docstring but missed the header); the
+matter file described homology. The file is renamed:
+`MatterHomology.lean` → `Matter.lean`.
+
+### What was built
+
+**`Meno/CyclePresentation.lean`** (new, ~360 LOC):
+- `CyclePresentation V ι`: edge data + chosen cycle basis (closed,
+  spanning, positive-definite chain Gram). Instances:
+  `cyclePresentation n`, `wedgePresentation n₁ n₂` (here) and
+  `thetaPresentation` (in `ThetaHarmonic.lean`).
+- `boundaryMatrix`, `grad`, and **discrete Stokes**
+  (`grad_dotProduct_eq`): `⟨grad f, ω⟩ = Σ_v f(v)·(∂ω)(v)` — one
+  summation by parts; `grad_period`: gradients are invisible to
+  periods.
+- **`period_eq_zero_iff_exists_grad`** — generic exactness, *no
+  connectivity*: zero periods ⟺ gradient. Proof by rank counting in
+  plain Pi types (no inner-product bundling): `range ∂ᵀ ∩ ker ∂ = 0`
+  by sum-of-squares, `rank ∂ᵀ = rank ∂` + rank–nullity fills the edge
+  space, decompose and kill the residual against the spanning basis.
+  The theta graph's Phase-19 exactness (explicit witness) survives as
+  constructive corroboration of the rank-1-connectivity-free general
+  theorem.
+- **`cochainQuotEquiv` : cochains ⧸ gradients ≃ₗ ℝ^r** and
+  `finrank_cochainQuot` — **the keystone's mathematical half**:
+  descriptions modulo local re-description are exactly the period
+  space; the incompressible residue has dimension `r`. (The
+  InfoRatchet/description-cost half remains a design problem; this
+  gives it a precise mathematical anchor to connect to.)
+
+**`Meno/Matter.lean`** (rewrite of `MatterHomology.lean`):
+`MatterSector P := {k // k ≠ 0}` with `mass`, `mass_pos` (theorem,
+not field), `mass_isLeast` (variational identity via the Phase-20
+builder), **`not_gradient`** (matter is trapped paradox — every
+realizing cochain, generic), `neg` (antimatter), `annihilation`,
+`exists_matter`.
+
+**`Meno/HarmonicForm.lean`**: docstring honesty; generic
+`energy_pos_of_ne_zero`, `energy_zero`, `energy_neg`; binding algebra
+(from theta) + `bindingEnergy_neg_self`.
+
+**Consumers**: `thetaMatter : MatterSector thetaPresentation` with
+`thetaMatter_mass = 1/3`; `wedgeMatter₁` over `wedgePresentation`
+with `wedgeMatter₁_mass = 1/n₁` (presentation → derived Gram →
+asserted Gram, one chain).
+
+### Engineering notes
+
+- The rank-counting exactness proof — a dozen Mathlib lemmas deep in
+  finite-dimensional linear algebra (`Matrix.rank_transpose`,
+  `finrank_range_add_finrank_ker`, `finrank_sup_add_finrank_inf_eq`,
+  `eq_top_of_finrank_eq`) — **compiled on the first attempt**. Total
+  phase errors: one root-vs-`Matrix`-namespace name
+  (`dotProduct_zero`), two missing `rfl`s after `Fin.sum_univ_*`
+  rewrites, one forward reference, one missing `open Matrix`. The
+  chosen route (plain Pi types, no `EuclideanSpace`/`PiLp` bridging)
+  avoided the API-risk zone entirely.
+- Deliberate scope decision: the quotient equivalence is stated over
+  `ℝ` (`≃ₗ[ℝ] ℝ^r`). The ℤ-lattice refinement (integer-period
+  cochains mod gradients ≃ `ℤʳ`) follows from the same two facts
+  (surjectivity via `periodRep`, kernel = gradients) and can be added
+  when a consumer needs the arithmetic form.
+
+### Board after this phase
+
+- **`GL(r,ℤ)` invariance** — the declared gate; next phase. Gram
+  transforms `C ↦ UCUᵀ`, energy `E'(Uk) = E(k)`, partition function
+  invariant under the lattice bijection `k ↦ Uk`.
+- Primitive-basis corollaries per instance (integral spanning is
+  already implicit in the real spanning proofs; state it when the
+  `GL(r,ℤ)` layer lands).
+- Geometric `binding_kills_matter` (Goal 7 remainder) — gated on a
+  stated connecting theorem.
+- Keystone's information-theoretic half — now anchored: connect
+  InfoRatchet description cost to `cochainQuotEquiv`.
+- Geodesic instance (Goal 4, plumbing). Halted/pruned: unchanged.
+
+**End of Phase 22 addendum.**
