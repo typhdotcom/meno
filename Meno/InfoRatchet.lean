@@ -25,10 +25,10 @@ fiberInfoCost`. An injective `f` has at most one section
 genuine count: `descriptionCost f = log (#{functions A → B})`
 (`descriptionCost_eq`).
 
-This file isolates the fiber-information layer. It is independent of the
-specific cost convention used by Basic.lean's `TransitionComplexity`
-class; the Phase-10 program that was to reconcile them was falsified
-(PLAN, Phase 17) and is superseded by the completion path's C9. The
+This file isolates the fiber-information layer. Basic.lean's old
+`TransitionComplexity` class (an axiomatized cost convention; its
+reconciliation program was falsified in Phase 17) is deleted as of C9 —
+the ratchet below is derived, and `simplicial_ratchet` consumes it. The
 compression-map specialization — `#sections = |G_q|^{q^{b₁}}`, tying the
 count to the keystone K1–K3 — lives in `Meno/ResolutionCount.lean`. -/
 

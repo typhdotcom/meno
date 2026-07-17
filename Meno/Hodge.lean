@@ -95,6 +95,16 @@ noncomputable def siegelTheta (b₁ : ℕ) (Q : Fin b₁ → Fin b₁ → ℝ)
       Real.exp (-Real.pi * ∑ i, ∑ j, Q i j * (k i : ℝ) * (k j : ℝ)))) : ℝ :=
   ∑' k : Fin b₁ → ℤ, Real.exp (-Real.pi * ∑ i, ∑ j, Q i j * (k i : ℝ) * (k j : ℝ))
 
+/-- **Audit identification (C12)**: `graphPartitionFn` *is* the
+spine's partition function — for any `QuadraticAction` packaging the
+same Gram matrix, definitionally. Retained as the graph-facing
+wrapper; the analytic source of truth is the spine. -/
+theorem graphPartitionFn_eq_spine {b₁ : ℕ}
+    (A : Meno.QuadraticAction b₁)
+    (hsum : Summable (fun k : Fin b₁ → ℤ =>
+      Real.exp (-∑ i, ∑ j, A.Q i j * (k i : ℝ) * (k j : ℝ)))) :
+    graphPartitionFn b₁ A.Q hsum = A.toSectorAction.partFn := rfl
+
 /-- The graph partition function equals the Siegel theta with rescaled Q.
     Z(Q) = Θ(Q/π) when using the physical normalization. -/
 theorem graphPartitionFn_eq_siegelTheta (b₁ : ℕ)

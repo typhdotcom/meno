@@ -156,6 +156,22 @@ noncomputable def GroupoidObj.gibbsExpect (E : GroupoidObj) (f : End E.base → 
 noncomputable def GroupoidObj.gibbsVariance (E : GroupoidObj) (f : End E.base → ℝ) : ℝ :=
   E.gibbsExpect (fun g => f g ^ 2) - (E.gibbsExpect f) ^ 2
 
+/-- **Audit identification (C12)**: the groupoid Gibbs machinery *is*
+the sector action's, through the loop-kernel bridge — definitionally.
+Retained as groupoid-facing wrappers; the analytic source of truth is
+`SectorAction`. -/
+theorem GroupoidObj.gibbsMass_eq_sector (E : GroupoidObj)
+    (h_id : E.energy (𝟙 E.base) = 0) (h_nonneg : ∀ g, 0 ≤ E.energy g)
+    (g : End E.base) :
+    E.gibbsMass g
+      = (E.toLoopKernelObj h_id h_nonneg).toSectorAction.gibbsMass g := rfl
+
+theorem GroupoidObj.gibbsExpect_eq_sector (E : GroupoidObj)
+    (h_id : E.energy (𝟙 E.base) = 0) (h_nonneg : ∀ g, 0 ≤ E.energy g)
+    (f : End E.base → ℝ) :
+    E.gibbsExpect f
+      = (E.toLoopKernelObj h_id h_nonneg).toSectorAction.gibbsExpect f := rfl
+
 /-- Partition function positivity packaged at the `GroupoidObj` level. -/
 theorem GroupoidObj.partFn_pos (E : GroupoidObj) : 0 < E.partFn :=
   groupoidPartitionFn_pos (x := E.base) (K := E.energy) (hsum := E.summable)

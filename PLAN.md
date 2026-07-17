@@ -535,7 +535,7 @@ from the program with prejudice (recorded in the Disposition table).
 `LoopKernel.lean` is retained -- it has consumers (`SectorPresentation`,
 `Groupoid`).
 
-### C12 -- Architecture and public claims — OPEN
+### C12 -- Architecture and public claims — CLOSED (Phase 37)
 
 Three parts, strictly ordered:
 
@@ -559,6 +559,42 @@ Three parts, strictly ordered:
 **Acceptance.** Audit table filled and executed; `rg` finds no references
 to deleted vocabulary; README describes the actual architecture and every
 physical claim in it cites the theorem that proves it.
+
+**The audit table (Phase 37) — filled and executed.**
+
+| Legacy definition | Spine counterpart | Disposition |
+|---|---|---|
+| `Duality.quadraticPartFn` | `QuadraticAction.scalarPartFn` | retained wrapper; identified `quadraticPartFn_eq_scalarPartFn` (`rfl`, Phase 13) |
+| `GroupoidObj.partFn` / `.complexity` | `LoopKernelObj` → `SectorAction` | retained wrappers; the bridge `toLoopKernelObj` preserves them definitionally (Phase 12) |
+| `GroupoidObj.gibbsMass/Expect/Variance` | `SectorAction.gibbs*` | retained wrappers; identified `gibbsMass_eq_sector`, `gibbsExpect_eq_sector` (`rfl`, Phase 37; variance is defined from expect identically on both sides) |
+| `Hodge.graphPartitionFn` / `graphComplexity` | `QuadraticAction.toSectorAction.partFn` / `.complexity` | retained graph-facing wrapper; identified `graphPartitionFn_eq_spine` (`rfl`, Phase 37) |
+| `Hodge.siegelTheta` | `SiegelPoisson` layer | internal-only; identified with `graphPartitionFn` by `graphPartitionFn_eq_siegelTheta` |
+| `Simplicial`'s walk-route Hodge layer | the period route | **retained by design** as the independent corroborating derivation; identified in `CycleHarmonic` (`cyclePeriodData_energy_eq`, `harmonicEnergy_k_isLeast_periods`, `cycleHarmonicGramData_partFn_eq_partitionFn`) — two derivations, one object |
+| legacy `CycleGraph` (simplicial) vs `cycleGraph` (incidence) | — | different layers (walk model vs edge-data model); identified through `GraphInstances` (`b₁`) and `geodesic_harmonic_duality` |
+| `Instances.logCard` + `AdditiveComplexity ℝ≥0∞` | `uniformAction` (C9) | retained: abstract-instance vs numeric realization; C9's theorems identify the values |
+| `SGD.TransitionComplexity` + Landauer instance | C8 coding theorem + cardinality-free ratchet | **DELETED** (Phase 36) |
+| `HomKernelCat` / magnitude | — | **DELETED** (Phase 28) |
+| spectator wedge stack | genuine wedge | **DELETED** (Phase 32) |
+
+**Import flow — delivered with one amendment (rule 3).** The graph is
+acyclic (the build is the proof) and layered: Foundation
+(`IncidenceGraph`, `SectorAction`, `QuadraticAction`, `SiegelPoisson`)
+→ Topology (`CyclePresentation`, `PeriodLattice`,
+`FundamentalPresentation`) → Harmonic (`BasisIndependence`,
+`HarmonicClass`) → Matter/Binding → Information (`InfoRatchet`,
+`ResolutionCount`) → Realizations (`UniformAction`, instances, the
+corroborating legacy layer). Amendment: `Basic.lean` is not *moved*
+downstream — it is an upstream **pure interface** (abstract complexity
+classes and pullback combinatorics, no analytics), and the
+"not a parallel theory" requirement is discharged by C9's realization
+theorems (`uniformAction` computes its `C`; `gravity_complexity`
+realizes its `gravity`), not by file motion. Inverting `Simplicial`'s
+dependency on the interface would churn thousands of lines for no
+mathematical content.
+
+**README** rewritten (Phase 37): staleness banner removed; the
+architecture section lists the actual 30 files; every physical claim
+cites its theorem by name.
 
 ## Execution Order
 
@@ -586,7 +622,7 @@ incidence layer and C6's intrinsic matter; C9 touches only
 | C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; `TransitionComplexity` deleted | **CLOSED** (Phase 36) |
 | C10 geodesic | general simplicial instance + `n·(1/n) = 1` consumer | **CLOSED** (Phase 27) |
 | C11 magnitude/HomKernel excision | file, import, claims removed | **CLOSED** (Phase 28) |
-| C12 architecture + public claims | duplication audit; flowing imports; README rewritten last | OPEN |
+| C12 architecture + public claims | duplication audit; flowing imports; README rewritten last | **CLOSED** (Phase 37) |
 
 ## Disposition of the Original 13 Goals
 
@@ -3742,3 +3778,76 @@ public claims), the terminal item by design.
 `lake build Meno`: 3343 jobs green. Zero `sorry`; zero `axiom`.
 
 **End of Phase 36 addendum.**
+
+## Phase 37 addendum: the board is clear — C12 CLOSED, the Completion Path complete (2026-07-17)
+
+*(Same session.)*
+
+### The audit
+
+Eleven entries, table in the C12 section. Three findings worth
+recording: (i) Phase 13's "one analytic source of truth" had already
+identified most of the legacy analytics with the spine — the audit's
+job was to verify and name the residue; (ii) two identifications were
+missing and are now `rfl`-theorems (`graphPartitionFn_eq_spine` in
+`Hodge`, `gibbsMass/Expect_eq_sector` in `Duality`) — the wrappers
+were definitionally the spine all along, and now the environment
+knows it; (iii) the genuinely parallel frameworks were already
+deleted in earlier phases (TransitionComplexity, HomKernel, the
+spectator wedge). The walk-route Hodge layer in `Simplicial` is
+retained *by design* as the independent corroborating derivation,
+with its identifications proved — corroboration is not duplication.
+
+### Import flow and README
+
+The layered acyclic flow is stated in the C12 section, with a rule-3
+amendment: `Basic.lean` stays upstream as a pure interface; C9's
+realization theorems — not file motion — discharge the "parallel
+theory" concern. The README is rewritten from scratch: the honest
+thesis framing ("formal analogues inside a finite, discrete model"),
+the architecture as it exists, and **every physical claim cites the
+theorem that proves it**. The Phase-28 staleness banner is gone
+because the staleness is gone.
+
+### THE FINAL LEDGER
+
+| Item | Status |
+|---|---|
+| C1 incidence foundation | CLOSED (Phase 32) |
+| C2 intrinsic topology | CLOSED (Phase 29) |
+| C3 basis independence | CLOSED (Phase 30) |
+| C4 general harmonic theory | CLOSED (Phase 30) |
+| C5 concrete consumers | CLOSED (Phase 32) |
+| C6 intrinsic matter | CLOSED (Phase 33) |
+| C7 geometric binding | CLOSED (Phase 35) |
+| C8 coding-theorem keystone | CLOSED (Phase 34) |
+| C9 gravity via SectorAction | CLOSED (Phase 36) |
+| C10 geodesic | CLOSED (Phase 27) |
+| C11 magnitude/HomKernel excision | CLOSED (Phase 28) |
+| C12 architecture + public claims | CLOSED (Phase 37) |
+
+**All five falsification checks ran and passed**: F1 (the
+fundamental presentation exists for every finite graph — proved,
+Phase 29), F2 (presentations are GL(r,ℤ)-related — proved, Phase 30),
+F3 (attaching a face induces the quotient with the annihilator dual
+image — proved, Phase 35), F4 (section cost derives from counting —
+proved, Phase 34), F5 (the uniform-fiber gravity identity holds —
+proved, Phase 36). Nothing was excised; every claim the falsification
+table guarded is now a theorem.
+
+Amendments made along the way, each recorded in place under rule 3:
+C2's construction route (PID splitting for the spanning forest), C5's
+"no hand spanning theory" sharpened, C7's release realized as the
+Boltzmann-weight bound, C9's ratchet re-proof in cardinality-free
+form, C12's Basic-as-interface. No acceptance theorem was weakened;
+two were strengthened (C7's kill is no-image, not zero-image; C8
+holds for all moduli, not just primes).
+
+Under the Completion Discipline, the answer to "what's left" is:
+**nothing**. Not "nothing that isn't named, gated, and stated" —
+nothing. The board is clear.
+
+`lake build Meno`: 3343 jobs green. Zero `sorry`; zero `axiom`
+declarations. 30 files.
+
+**End of Phase 37 addendum. End of the Completion Path.**

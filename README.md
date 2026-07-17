@@ -2,364 +2,167 @@
 
 *Structural Geometrodynamics in Lean 4*
 
-Meno is a universe that minimizes the complexity of its own description. Gravity, matter, and the arrow of time emerge from this single principle.
-
-> **⚠ Stale document.** This README describes the pre-spine architecture
-> (Phases 1–14) and has not tracked the spine refactor (Phases 15–27):
-> the file listing below is wrong (e.g. `Theta.lean` no longer exists),
-> and the current mathematical core — cycle presentations, the period
-> lattice, the resolution-counting keystone, cohomological matter — is
-> absent. The authoritative statement of the program, its completion
-> discipline, and per-goal status is **`PLAN.md` → "The Completion
-> Path"**. Per that plan (C12), this README is rewritten only after the
-> remaining acceptance theorems exist — a stale-but-labeled README is
-> honest; a fresh one claiming completion would not be.
-
----
-
-## The core idea
-
-> Assign a cost to every structure: the minimum amount of information needed to describe it.
-> The universe evolves by rewriting its state to lower that cost.
-> Structures that share sub-descriptions merge (gravity).
-> Structures that resist compression persist (matter).
-> Irreversible computation accumulates (time).
-
-This is formalized at two levels of abstraction that tell the same story with different tools. Dependency flows one way: the abstract framework (Basic.lean) defines what any valid physical model must satisfy, and the concrete model (Simplicial.lean, Groupoid.lean) instantiates it. The concrete level exists to demonstrate the abstract is non-vacuous — never the reverse.
-
----
-
-## Why these pieces
-
-### Complexity (K)
-
-The theory starts by assigning a number K to every structure - its descriptive cost. K is a function from types to an ordered monoid, subject to axioms about how it composes. If two independent things cost K(A) and K(B), their product costs at most K(A) + K(B). For dependent structures (one thing parameterized by another), the cost is bounded by the base plus the worst-case fiber.
-
-### Pullbacks (gravity)
-
-When two structures A and B both contain a shared component D, they can be refactored into a *pullback* - a combined structure that encodes D only once. The savings equal the cost of D.
-
-This is the refactoring bound. Gravity is the gradient of descriptive economy. Systems fall together because the shared state is cheaper.
-
-### The concrete model (matter and mass)
-
-So K decreases when structures share descriptions, and the pullback is the mechanism. Why doesn't everything merge into a single trivial structure?
-
-To answer this we need a concrete space where K can be computed. Meno builds one from a *simplicial complex*: points connected by edges, with some triangles filled in as *faces*. A path through this space is a sequence of adjacent steps - a walk. The complexity of a walk is its length, but length can be reduced: if you step forward and immediately back, those cancel. If three points form a filled triangle, you can shortcut across it. The *geodesic length* is the shortest length achievable after all such reductions.
-
-Here is where obstruction enters. A loop that winds around an *unfilled* triangle has no shortcut available. Every reduction leaves it just as long. Its geodesic length is positive - it carries irreducible cost.
-
-This is matter. A loop whose interior can be filled relaxes to nothing (vacuum). A loop around an absent face persists. When a loop that was stuck in one complex finds new shortcuts through a union with another, the geodesic length drops. The difference is binding energy — the simplicial version of the pullback savings above. In the extreme case, a complementary complex provides exactly the missing face: the loop contracts to nothing and all its mass converts to binding energy. This is annihilation.
-
-The same obstruction measured in different regions gives different geodesic lengths. A cycle near a high-connectivity region (many faces available) has more reduction paths and a shorter geodesic. This is redshift: the same topological charge, measured where there are more ways to relax, appears lighter.
-
-Two notions of complexity coexist. Geodesic length is combinatorial: the mass of the n-cycle is n. But the physically richer measure comes from distributing flow. A *harmonic form* on an n-vertex cycle assigns uniform flow 1/n along each edge. It is a *reproducing kernel*: its inner product with any cochain extracts the winding number. Energy decomposes orthogonally as w²/n + residual (Hodge), and the harmonic form is the unique energy minimizer in each winding class. In this measure, mass scales as 1/n — larger symmetry groups cost less to describe.
-
-### The partition function (quantum sectors)
-
-Summing Boltzmann weights exp(−k²/n) over all integer winding numbers k gives the partition function of the n-cycle. This is a Jacobi theta function ϑ₃(0, e^{−1/n}). The modular S-transformation (T-duality) then follows directly, relating the partition function at coupling 1/n to the dual coupling at π²n.
-
-The vacuum sector (k = 0) contributes weight 1. Every other sector is exponentially suppressed. Particles are rare excitations on top of an overwhelmingly dominant vacuum.
-
-The T-duality identity is the analytic shadow of a structural symmetry. For any groupoid object with quadratic energy α·k² on ℤ-endomorphisms, there is a Fourier dual with coupling π²/α — same groupoid, same topology, just the coupling flipped. Applying the duality twice returns to the original object. The analytic identity between partition functions follows from this structural involution.
-
-### The ratchet (time)
-
-A map that collapses distinct inputs into one output destroys information. Recovering which input produced a given output costs strictly more than the forward map. This asymmetry - the ratchet - is what we experience as time.
-
-Injective maps preserve all information and are freely reversible: their forward and backward costs are equal. Lossless computation is *timeless*. Only non-injective computation, the kind that increases entropy, creates an arrow.
-
-In the simplicial model, computing a geodesic length is an instance of the word problem for the fundamental group. Tangling (extending a path) is O(1) per step; untangling (finding the geodesic) requires searching over face reductions. The ratchet emerges from computational complexity, not axiom.
-
----
-
-## What's proved
-
-### Basic.lean — the constitution
-
-The constitutive laws of the Meno universe. Any concrete model (simplicial or otherwise) must satisfy these to be a valid physical realization. Two distinct parts:
-
-**Statics — structural economy (theorems):**
-
-| Level | Class | Key property |
-| :--- | :--- | :--- |
-| 1 | `ComplexityMeasure` | Subadditive: K(A × B) ≤ K(A) + K(B) |
-| 2 | `SigmaComplexity` | Sigma-subadditive: K(Σ d, P d) ≤ K(D) + sup K(P d) |
-| 3 | `AdditiveComplexity` | Exact: K(A × B) = K(A) + K(B) |
-
-| Result | Status |
-| :--- | :--- |
-| Refactoring bound: K(A ×_D B) ≤ K(D) + sup_d (K(Fiber f d) + K(Fiber g d)); coarse corollary K(D)+sup K(Fiber f)+sup K(Fiber g) | **Theorem** (from level 2) |
-| Gravity: K(Pullback f g) + K(D) = K(A) + K(B) for any f, g with uniform fibers | **Theorem** (from level 3) |
-| Log-cardinality instance: C(A) = log\|A\| satisfies all three levels (`Instances.lean`) | **Instance** (AdditiveComplexity ℝ≥0∞) |
-
-**Domain-generic additive complexity (`AdditiveComplexityOn D M`):**
-
-The algebraic core factored out of `AdditiveComplexity`: a unit, an equivalence notion (used by `congr`), a product, and the laws making C a monoid homomorphism into (M, +). The type-level hierarchy implies this class (`instAdditiveComplexityOnType`), and groupoid complexity instantiates it independently on `GroupoidObj`.
-
-| Result | Statement |
-| :--- | :--- |
-| `algebraic_gravity` | C(d·(f·g)) + C(d) = C(d·f) + C(d·g) — domain-generic gravity |
-| `prod_unit_right/left` | C(a·1) = C(a), C(1·a) = C(a) |
-| `prod_comm_C` | C(a·b) = C(b·a) |
-
-**Dynamics — the arrow of time (`TransitionComplexity` class):**
-
-| Law | Statement |
-| :--- | :--- |
-| `transitionCost` | Every map has a computational cost |
-| `transitionCost_pos` | That cost is always positive |
-| `ratchet` | Inverting a non-injective map costs strictly more than the forward map |
-| `injective_reversible` | Injective maps are losslessly reversible: equal cost in both directions |
-
-The Landauer cost model (`transitionCost f = if Injective f then 2 else 1`) provides a concrete instance. Any right-inverse of a non-injective map is injective (since f ∘ r = id implies r is injective), so the ratchet follows: cost(r) = 2 > 1 = cost(f).
-In `Simplicial.lean`, the primary quantitative ratchet is Hodge-theoretic: the harmonic term is the reversible floor and the residual term is the irreversible reconstruction premium.
-
-### Simplicial.lean — the shadow model
-
-Lean's Axiom K makes types topologically blind, so the abstract K can only see cardinality. `Simplicial.lean` works around this by modeling paths as explicit data (walks in a simplicial complex), recovering homotopy computationally. It imports and instantiates `Basic.lean`. Zero axioms.
-
-**Topology and matter:**
-
-| Result | Statement |
-| :--- | :--- |
-| `windingCount_homotopy_invariant` | Winding number is a homotopy invariant |
-| `cycleGraph_not_contractible` | The canonical cycle on C_n cannot be homotoped to nil |
-| `cycleGraph_geodesic_eq_n` | Geodesic length of the canonical cycle is n |
-| `binding_releases_mass` | When a cycle contracts in the union, binding energy = full cycle complexity |
-| `simplicial_gravity` | Corollary: non-contractible + contracts in union → binding > 0 |
-| `matter_noncontractible` | Positive mass implies non-contractibility |
-| `cycleLoop_windingCount_zero_contractible` | Any cycle-graph loop with windingCount 0 contracts to nil |
-| `cycleLoopWinding_complete` | Loop classes on `C_n` are complete for winding: same sector implies homotopic |
-
-**Hodge theory and the harmonic form:**
-
-| Result | Statement |
-| :--- | :--- |
-| `innerC1_cycleHarmonicForm` | Reproducing kernel: ⟨h, σ⟩ = winding(σ) · ‖h‖² |
-| `hodge_decomposition` | Hodge Pythagoras: energy(σ) = w²/n + energy(residual) |
-| `hodge_orthogonality` | Hodge orthogonality: ⟨h, σ − w·h⟩ = 0 |
-| `energy_eq_zero_iff` | Positive definiteness: energy(σ) = 0 iff σ = 0 |
-| `energy_ge_winding_sq` | Energy ≥ w²/n for winding w (from Hodge + non-negativity) |
-| `cycleGraph_harmonicEnergy` | Minimum energy over winding-1 cochains = 1/n |
-| `cycleGraph_harmonicEnergy_k` | Instanton spectrum: min energy in sector k = k²/n |
-| `cycleLoopClassHodgeEnergy_eq_winding_sq` | Loop-class Hodge energy is exactly winding-square over n |
-| `winding_section_energy_sum_ge` | Any section over finitely many winding classes pays at least summed harmonic floor |
-| `winding_section_energy_Icc_unbounded` | Asymptotic ratchet: section energy on `[-N,N]` is unbounded (diverges with window size) |
-| `hodge_minimizer_eq` | Instanton uniqueness: min-energy cochain = k·h (unique ground state) |
-| `cycleEC1_harmonic_eq_smul` | **b₁(C_n) = 1**: every harmonic edge-supported form is proportional to h |
-
-**Partition function:**
-
-| Result | Statement |
-| :--- | :--- |
-| `partitionFn_pos` | Z(C_n) > 0 |
-| `sector_weight_eq_min_energy` | Boltzmann weight = exp(−instanton energy) |
-| `sector_weight_lt_one_of_ne_zero` | Non-vacuum sectors exponentially suppressed |
-
-**Structure (products, intersections, dynamics):**
-
-| Result | Statement |
-| :--- | :--- |
-| `Graph.Symmetric`, `Graph.Irreflexive` | Structural predicates on graphs |
-| `cycleGraph_symmetric`, `cycleGraph_irreflexive` | The cycle graph satisfies both predicates |
-| `Complex.prod` | Product of two complexes with prism face decomposition |
-| `prod_edgeFinset_card` | \|E(C₁ × C₂)\| = \|E₁\|·\|V₂\| + \|V₁\|·\|E₂\| (irreflexivity decomposes edges) |
-| `Complex.inter` | Intersection of two complexes |
-| `Complex.union` | Union of two complexes |
-| `bettiOneZ_cycleGraph` | bettiOneZ(C_n) = 2: the Euler defect matches 2·b₁ on connected cycles |
-| `bettiOneZ_mayer_vietoris` | bettiOneZ(A ∪ B) + bettiOneZ(A ∩ B) = bettiOneZ(A) + bettiOneZ(B) (Euler inclusion-exclusion) |
-| `geodesic_computation_is_lossy` | Baseline non-injectivity statement (strictly weaker than the Hodge/section quantitative ratchet) |
-| `homotopyClass₂_unbounded_fiber` | Quantitative lossiness: arbitrarily long loops collapse to the trivial homotopy class when a bidirectional edge exists |
-| `homotopyClass₂_unbounded_fiber_at` | Uniform per-class version: any fixed homotopy class has arbitrarily long representatives |
-| `homotopyClass₂_unbounded_fiber_uniform` | Class-uniform formulation over all classes at a basepoint |
-| `cycleLoopWinding_fiber_unbounded_length` | On `C_n`, each winding sector k has arbitrarily long loop representatives |
-| `geodesicLength_unbounded_gap` | Arbitrarily long loops can have geodesic length 0 (unbounded raw-length overestimate) |
-| `simplicial_ratchet` | Any section of the quotient costs strictly more than the forward map (TransitionComplexity applied) |
-
-### Groupoid.lean — the bridge
-
-The fundamental groupoid of a symmetric 2-complex: objects = vertices, morphisms = homotopy classes of walks. This is the categorical packaging of the walk/homotopy machinery from Simplicial.lean, built as a Mathlib `CategoryTheory.Groupoid` instance.
-
-Complexity is defined on groupoid objects via the partition function over automorphisms: C(x) = log Σ exp(-K(g)), where K is the energy function on End(x). This gives an `AdditiveComplexityOn GroupoidObj ℝ` instance — the same domain-generic class that the type-level hierarchy implies via `instAdditiveComplexityOnType`. The algebraic gravity theorem from Basic.lean applies to groupoid objects through this instance.
-
-`GroupoidObj.Equiv` now requires a multiplicative equivalence `End(x) ≃* End(y)` (composition-preserving), plus energy preservation.
-
-| Basic.lean class field | Groupoid proof | Statement |
-| :--- | :--- | :--- |
-| `unit_zero` | `GroupoidObj.trivial_complexity` | Trivial Aut → C = 0 |
-| `congr` | `GroupoidObj.congr_complexity` | Aut equivalence preserving energy → equal C |
-| `prod_add` | `GroupoidObj.prod_complexity` | Factoring Z → additive C |
-| `sigma_le` (finite-index analogue; not a `SigmaComplexity` instance) | `GroupoidObj.sigmaComplexity_le_logCard_max` | `log (∑ partFn) ≤ log |D| + max fiber complexity` |
-
-| Result | Statement |
-| :--- | :--- |
-| `simplicialGroupoid` | Groupoid instance on any symmetric 2-complex |
-| `cycleLoopWindingClass` | Canonical winding-sector map on cycle loop classes: HomotopyClass₂(C_n,v,v) → ℤ |
-| `cycleLoopWinding_surjective_at` | Every integer sector is realized by an explicit loop at any vertex (`cycleTurnLoopIntAt`) |
-| `cycleLoopWinding_surjective` | Every integer sector is realized by an explicit basepoint loop (`cycleTurnLoopInt`) |
-| `cycleLoopClassEquivInt` | Unconditional classification: HomotopyClass₂(C_n,v,v) ≃ ℤ |
-| `cycleLoopClassEquivInt_base` | Basepoint specialization of `cycleLoopClassEquivInt` |
-| `groupoidPartitionFn_pos` | Z > 0 (sum of exponentials) |
-| `GroupoidObj.sigmaPartFn` | Finite-family sigma partition function `∑ d, partFn(P d)` |
-| `GroupoidObj.sigmaComplexity` | Finite-family sigma complexity `log (∑ d, partFn(P d))` (finite-index analogue) |
-| `GroupoidObj.sigmaComplexity_le_logCard_max` | Finite sigma bound: `≤ log |D| + max_d complexity(P d)` |
-| `GroupoidObj.sigmaComplexity_sigma_le_logCard_max` | Dependent sigma-style bound: `C(Σ d, P d) ≤ log|D| + max_d C(P d)` (finite-index) |
-| `GroupoidObj.sigmaComplexity_pullback_le_logCard_maxFiber` | Pullback-index finite sigma bound via `Pullback ≃ Σ d, FiberProd f g d` |
-| `GroupoidObj.sigmaComplexity_prod_family_le_logCard_max_pair` | Fiberwise product-family bound: `≤ log |D| + max_d (C(P d)+C(Q d))` |
-| `GroupoidObj.sigmaComplexity_prod_family_le_logCard_max_split` | Coarse decoupled bound: `≤ log |D| + max_d C(P d) + max_d C(Q d)` |
-| `cycleGroupoid_partitionFn_eq` | Winding classification recovers Z(C_n) |
-| `cycleCanonicalEnergy` | Canonical energy on `End(x)` defined from Hodge sector infimum on loop classes |
-| `summable_cycleCanonicalEnergy` | Summability of canonical cycle weights, derived via the canonical `End(x) ≃ ℤ` equivalence |
-| `cycleGroupoid_partitionFn_eq_canonical_energy` | Canonical partition identity with no extra hypotheses (`hK`, `hsum`) |
-| `cycleGroupoid_partitionFn_eq_base_canonical_energy` | Basepoint specialization with no extra hypotheses |
-| `GroupoidObj.sigmaComplexity_ge_sup` | Lower bound: `max_d C(P d) ≤ C_sigma(D, P)` (complement to upper bound) |
-
-### Hodge.lean — general Hodge theory
-
-Energy and partition functions for arbitrary finite graphs. Generalizes the cycle-specific Hodge theory to graphs with b₁ independent cycles via Gram matrices on ℤ^{b₁}. For diagonal Gram matrices (independent cycles), the partition function factors into a product of one-dimensional partition functions — each cycle contributes independently. The torus factorization (b₁ = 2) is a special case.
-
-| Result | Statement |
-| :--- | :--- |
-| `EC1.energy_nonneg` | Energy of edge cochains ≥ 0 |
-| `EC1.energy_eq_zero_iff` | Energy = 0 iff cochain = 0 |
-| `graphPartitionFn_rank1_eq` | Rank-1 (b₁=1) recovers Z(C_n) |
-| `graphPartitionFn_eq_siegelTheta` | Z(Q) = Θ(Q/π) (Siegel theta identification) |
-| `torus_partitionFn_factors` | Z(T²) = Z(C_m) · Z(C_n) for torus = C_m × C_n |
-| `graphPartitionFn_diagonal` | Diagonal factorization: Z(diag(α)) = ∏ᵢ ∑'_k exp(−αᵢk²) for arbitrary b₁ |
-| `graphPartitionFn_diagonal_cycles` | Cycle specialization: Z(diag(1/nᵢ)) = ∏ᵢ Z(C_{nᵢ}) |
-
-### Theta.lean — analytic number theory
-
-| Result | Statement |
-| :--- | :--- |
-| `partitionFn_eq_jacobiTheta` | Z(C_n) = ϑ₃(0, e^{−1/n}) via Mathlib |
-| `cycleTau_S_transform` | Dual coupling: S-transform maps τ = i/(πn) to iπn |
-| `cycleTau_prefactor` | Modular prefactor: −iτ = 1/(πn) (positive real) |
-| `partitionFn_T_duality` | ϑ₃(iπn) = (1/(πn))^(1/2) · Z(Cₙ) (explicit T-duality) |
-
-### Duality.lean — Fourier duality on GroupoidObj
-
-Lifts the analytic T-duality identity from Theta.lean to a structural operation on groupoid objects. A groupoid object with quadratic energy α·k² on ℤ-endomorphisms has a Fourier dual with coupling π²/α — same groupoid, same winding equivalence, dual energy. The construction is involutive: dual of dual recovers the original. Two distinguished variational facts hold at the self-dual coupling α = π: (a) among all dual pairs, the self-dual pair minimizes the product `Z(α)·Z(π²/α)` (`dual_pair_variational`); and (b) the T-duality-invariant completion `f(α) = (α/π)^{1/4}·Z(α)` attains its unique strict minimum at α = π (`completedPartFn_strictMin`). Both are proved; neither extends to a general principle that "complexity minimization forces self-duality".
-
-| Result | Statement |
-| :--- | :--- |
-| `quadraticPartFn_duality` | Z(π²/α) = (α/π)^(1/2) · Z(α) (generalized T-duality for arbitrary α > 0) |
-| `quadraticPartFn_eq_partitionFn` | Z at α = 1/n recovers the concrete Z(Cₙ) |
-| `GroupoidObj.dual` | Fourier dual construction: coupling α → π²/α |
-| `GroupoidObj.dual_partFn` | Partition function of dual = modular prefactor × original |
-| `GroupoidObj.dual_dual_equiv` | Involutivity: dual(dual(E)) ≃ E |
-| `quadraticPartFn_gt_one` | Z(α) > 1 (vacuum + first excitation); every nontrivial object has C > 0 |
-| `quadraticPartFn_lower_bound` | Z(α) ≥ √(π/α) (dual vacuum → complexity floor) |
-| `complexity_rank_bound` | log Z(α) ≥ (1/2) · log(π/α) for coupling α > 0 |
-| `GroupoidObj.complexity_ge` | C(E) ≥ (1/2) · log(π/α) for quadratic energy α·k² |
-| `cycle_complexity_ge` | C(E) ≥ (1/2) · log(πn) for cycle coupling k²/n |
-| `cycleCanonicalObj` | Canonical cycle `GroupoidObj` (basepoint + derived canonical energy + derived summability) |
-| `cycleCanonicalObj_partFn_eq_partitionFn` | Canonical cycle object has partFn = partitionFn with no external `hK`/`hsum` |
-| `cycleCanonicalObj_complexity_ge` | Canonical cycle object satisfies C ≥ (1/2)·log(πn) with no external `hK` |
-| `rank_complexity_bound` | C(E₁ × E₂) ≥ (1/2)·log(πn₁) + (1/2)·log(πn₂): each independent mode adds cost |
-| `complexity_decomposition` | C(α) = (1/2)·log(π/α) + log Z(π²/α): topology + dual residual |
-| `complexity_gap_pos` | The dual residual log Z(π²/α) > 0: the bound is never tight |
-| `GroupoidObj.self_dual` | At α = π, object ≃ its own Fourier dual (self-dual fixed point) |
-| `quadraticPartFn_self_dual_iff` | Z(π²/α) = Z(α) iff α = π: uniqueness of the self-dual coupling |
-| `quadraticPartFn_moment_self_dual` | Z(π) = 4π·∑ k²·e^{−π k²}: second-moment identity for Z at the self-dual coupling |
-| `quadraticMeanEnergy` | ⟨k²⟩_α := (∑ k²·e^{−αk²})/Z(α): Gibbs expectation of winding-squared |
-| `quadraticMeanEnergy_self_dual` | ⟨k²⟩_π = 1/(4π): exact value at the self-dual coupling |
-| `quadraticMeanEnergy_T_dual` | (π²/α²)·⟨k²⟩_{π²/α} + ⟨k²⟩_α = 1/(2α): T-duality functional equation for mean energy |
-| `quadraticMeanEnergy_T_dual_symmetric` | α·⟨k²⟩_α + (π²/α)·⟨k²⟩_{π²/α} = 1/2: symmetric form — each T-dual pair averages to 1/4 |
-| `quadraticMeanEnergy_strictAntiOn` | ⟨k²⟩_α strictly decreasing on (0, ∞): raising α suppresses the winding fluctuation |
-| `hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance` | d⟨k²⟩/dα = −Var((wind)²) on `quadraticObj α hα`: fluctuation-dissipation identity in Gibbs form |
-| `quadraticObj_gibbsVariance_pos` | Var((wind)²) > 0 on `quadraticObj α hα`: strict positivity of the Gibbs variance |
-| `quadraticMeanEnergy_lt_inv` / `_gt_inv` | Strict sandwich against 1/(4α): `⟨k²⟩_α < 1/(4α)` for α > π, `>` for α < π |
-| `quadraticMeanEnergy_self_dual_iff` | ⟨k²⟩_α = 1/(4π) iff α = π: the self-dual coupling is the unique fixed point of the Gibbs mean |
-| `quadraticMeanEnergy_mul_eq_quarter_iff` | α·⟨k²⟩_α = 1/4 iff α = π: the product α·⟨k²⟩_α pins down the self-dual coupling |
-| `log_quadraticPartFn_strictConvexOn` | log Z(α) strictly convex on (0, ∞): dual to strict anti-monotonicity of ⟨k²⟩ |
-| `GroupoidObj.gibbsMass` / `gibbsExpect` / `gibbsVariance` | Gibbs density, expectation, and variance on `End E.base`: exp(-energy)/Z, tsum against f, ⟨f²⟩−⟨f⟩² |
-| `GroupoidObj.partFn_pos` | partFn > 0 on every `GroupoidObj`: strict positivity of Z at the structural level |
-| `GroupoidObj.tsum_gibbsMass` | ∑ gibbsMass g = 1: the Gibbs density is a probability measure on `End E.base` |
-| `quadraticMeanEnergy_eq_gibbsExpect` | quadraticMeanEnergy α = gibbsExpect of (quadraticWind)² on `quadraticObj α`: mean energy **is** a Gibbs second moment |
-| `GroupoidObj.gibbsExpect_wind_sq_eq` | Structural bridge: gibbsExpect (wind)² = quadraticMeanEnergy α on any `GroupoidObj` with energy α·(wind)² |
-| `GroupoidObj.meanEnergy_T_dual` | Structural T-duality FE: (π²/α²)·gibbsExpect_{dual}(wind)² + gibbsExpect(wind)² = 1/(2α) — lifts `quadraticMeanEnergy_T_dual` to any quadratic groupoid object |
-| `quadraticObj_meanWindingSq_self_dual` | Canonical groupoid version: gibbsExpect (quadraticWind)² = 1/(4π) on `quadraticObj π`; winding is derived from the groupoid, no external data |
-| `quadraticObj_meanEnergy_self_dual` | Canonical groupoid version: gibbsExpect (energy) = 1/4 on `quadraticObj π`; winding is derived from the groupoid, no external data |
-| `dual_partFn_lt_iff` | Z(π²/α) < Z(α) iff α < π: sub-critical regime (dual is simpler) |
-| `dualityFlow` | D(α) = log Z(α) - log Z(π²/α): asymmetry between object and dual |
-| `duality_flow_eq` | D(α) = (1/2)·log(π/α): closed form from complexity decomposition |
-| `duality_flow_antisymmetric` | D(π²/α) = -D(α): the flow is antisymmetric under duality |
-| `duality_flow_pos_iff` | D(α) > 0 iff α < π: sub-critical objects outweigh their duals |
-| `duality_flow_zero_iff` | D(α) = 0 iff α = π: the self-dual point is the unique zero |
-| `dual_pair_variational` | Z(π)² ≤ Z(α)·Z(π²/α): the self-dual pair minimizes joint descriptive cost |
-| `completedPartFn` | f(α) := (α/π)^(1/4) · Z(α): named T-duality-invariant completion of the quadratic partition function |
-| `completedPartFn_at_self_dual` | f(π) = Z(π): the completion collapses to Z at the self-dual point |
-| `completedPartFn_T_dual` | f(π²/α) = f(α): T-duality invariance of the completion |
-| `completedPartFn_strictMin` | Z(π) < f(α) for every α ≠ π: α = π is the **strict** global minimum of f on (0, ∞) |
-| `completedPartFn_ge_self_dual` | Z(π) ≤ f(α) for all α > 0: non-strict form |
-| `completedPartFn_eq_self_dual_iff` | f(α) = Z(π) iff α = π: **sharp uniqueness** of the self-dual minimizer |
-| `GroupoidObj.dual_pair_variational` | Lifted to groupoid objects: self-dual pair is optimal among all dual pairs |
-| `mass_duality` | n · (1/n) = 1: geodesic mass × harmonic mass = 1 |
-| `quadraticObj` | Canonical quadratic groupoid family: `GroupoidObj` over `SingleObj (Multiplicative ℤ)` with energy `α·(winding)²` |
-| `quadraticObj_partFn` | `(quadraticObj α).partFn = quadraticPartFn α` — canonical family realizes the quadratic partition function |
-| `quadraticObj_dual_equiv` | `Equiv ((quadraticObj α).dual, quadraticObj (π²/α))` — T-duality is internal to the canonical family |
-
-### Zeta.lean — Riemann's 1859 derivation for the quadratic partition function
-
-This file gives Riemann's 1859 derivation of the functional equation for ζ from
-Jacobi's theta identity, applied to the quadratic partition function
-`Z(α) = ∑_{k∈ℤ} exp(−α·k²)`. Mellin-transforming `Z(α) − 1` against `α^(s−1)·dα`
-gives the Mellin identity `menoMellin s = 2·Γ(s)·ζ(2s)` for `s > 1/2`. Splitting
-the integral at the self-dual point `α = π` and folding the `(0, π]` head onto
-`[π, ∞)` via Jacobi's theta identity `Z(π²/α) = √(α/π)·Z(α)` yields the Riemann
-symmetry `π^(−s)·menoMellin s = π^(−(1/2−s))·menoMellinC(1/2−s)`. Specialization
-at `s = 3/2` gives `ζ(3) = (1/√π)·∫(Z−1)·√α dα`.
-
-| Result | Statement |
-| :--- | :--- |
-| `menoMellin` | Definition `menoMellin s = ∫ (Z(α) − 1)·α^(s−1) dα` on `Ioi 0` |
-| `meno_mellin` | Termwise Mellin identity: `menoMellin s = 2·Γ(s)·∑' 1/(k+1)^(2s)` for `s > 1/2` |
-| `menoMellin_cast_eq_riemannZeta_real` | Complex bridge: `(menoMellin s : ℂ) = 2·Γ(s)·ζ(2s)` — gateway to Mathlib's complex ζ |
-| `dual_partFn_sub_one_eq_residual` | Jacobi's theta identity on the Mellin integrand: `Z(π²/α) − 1 = √(α/π)·(Z(α)−1) + (√(α/π)−1)` |
-| `menoMellin_duality_representation` | Dual integrand form: `menoMellin s = π^(2s)·∫ (√(β/π)·(Z(β)−1) + (√(β/π)−1))·β^(-s-1) dβ` |
-| `menoMellinTail` | Tail Mellin `∫_{Ioi π}(Z(α)−1)·α^(s−1) dα`, convergent for every real `s` |
-| `menoMellin_split_at_pi` | **Riemann's 1859 split**: `menoMellin s = menoMellinTail(s) + π^(2s−1/2)·menoMellinTail(1/2−s) + π^s/(s·(2s−1))` for `s > 1/2` |
-| `menoMellinC` | Completed functional `menoMellinC t := menoMellinTail(t) + π^(2t−1/2)·menoMellinTail(1/2−t) + π^t/(t·(2t−1))`; converges for every real `t` |
-| `menoMellin_functional_equation` | **Functional equation (ℝ)**: `π^(−s)·menoMellin s = π^(−(1/2−s))·menoMellinC(1/2−s)` |
-| `meno_zeta_functional_equation_real` | **Functional equation (ℂ)**: `π^(−s)·(2·Γ(s)·ζ(2s)) = π^(−(1/2−s))·menoMellinC(1/2−s)` |
-| `aperyConst` | Apéry's constant `ζ(3) = ∑'_{k≥1} 1/k³` |
-| `menoSpectralIntegral` | The spectral integral `∫ (Z(α) − 1)·√α dα` |
-| `menoSpectralIntegral_eq_menoMellin_three_halves` | `menoSpectralIntegral = menoMellin(3/2)` |
-| `zeta_three_eq_meno_integral` | **ζ(3) headline**: `aperyConst = (1/√π)·menoSpectralIntegral` |
-| `menoSpectralIntegral_eq_sqrt_pi_mul_aperyConst` | Closed form: `menoSpectralIntegral = √π·ζ(3)` |
-| `riemannZeta_three_eq_meno_spectral_integral` | Complex headline: `ζ(3) = ((1/√π)·menoSpectralIntegral : ℂ)` against Mathlib's `riemannZeta` |
-
----
-
-## Why not HoTT?
-
-Standard Lean 4 uses Axiom K: all proofs of equality are identical. This collapses the topological structure SGD requires - a non-trivial loop would be squashed to reflexivity.
-
-Instead, Meno models paths as **walks** (sequences of adjacent vertices) and homotopy as an explicit equivalence relation (backtracking + face reduction). This recovers the relevant homotopy theory computationally rather than foundationally.
-
----
-
-## Structure
+Meno formalizes a speculative thesis: **a universe minimizes the cost of
+describing itself**, and gravity, matter, time, and uncertainty are
+faces of that minimization. The carrier of the thesis is a **sector
+lattice with a positive-definite quadratic action**: the lattice
+enumerates the discrete sectors a system can occupy, the action prices
+them, the Boltzmann sum reads the partition function, and duality,
+minimization, and counting theorems connect the faces.
+
+Everything below is a checked theorem — zero `sorry`, zero `axiom`
+declarations, ~3300 build jobs green against Lean 4.26.0 / Mathlib.
+The program, its completion discipline, and the per-goal ledger live in
+[`PLAN.md`](PLAN.md); all twelve goals of the Completion Path are
+closed.
+
+## What is proved
+
+**Duality.** The Siegel–Poisson duality
+`Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` at full generality — non-diagonal
+Gram forms, any rank — via multidimensional Poisson summation
+(`QuadraticAction.duality`, `Meno/SiegelPoisson.lean`), consumed by a
+genuinely non-diagonal instance, the theta graph's coupled Gram form
+(`theta_siegelPoisson_duality`). The scalar case reproduces the
+cycle-graph T-duality through the spine with no bespoke modular input
+(`partitionFn_T_duality_via_spine`), and Riemann's derivation of the
+functional equation runs through the same single analytic source
+(`Meno/Zeta.lean`).
+
+**Topology, intrinsically.** Every finite multigraph
+(`IncidenceGraph`) carries an intrinsic integral cycle lattice
+`H₁(G;ℤ) = ker ∂ℤ` and cohomology `H¹(G;ℤ) = ℤ-cochains ⧸ gradients`.
+The **fundamental-presentation theorem**
+(`IncidenceGraph.fundamentalPresentation`,
+`Meno/FundamentalPresentation.lean`) equips *every* finite graph with a
+primitive integral cycle basis — period realizability and integral
+potentials are theorems, not assumptions — via a saturation argument,
+the PID structure theorem, and a walk-integration engine. Consequences
+for every finite graph: `H¹(G;ℤ) ≃ ℤ^{b₁}` (`h1QuotEquiv`), Euler's
+formula `b₁ = |E| − |V| + c` (`b1_eq`), and the gauge theorem
+`dim(ker grad) = #components` (`finrank_gauge`) — connectivity governs
+gauge, never exactness (`period_eq_zero_iff_exists_grad` needs no
+connectivity).
+
+**Basis independence.** Any two integral presentations of a graph are
+`GL(r,ℤ)`-related (`exists_rebase_related`,
+`Meno/BasisIndependence.lean`); primitivity is forced
+(`exists_int_coords`), and energies, masses, and the partition function
+are functions of the graph alone (`partFn_welldef`,
+`IncidenceGraph.partFn`, `MatterSector.mass_chart`).
+
+**Matter.** A matter sector is a nonzero class of `H¹(G;ℤ)`
+(`MatterSector`, `Meno/Matter.lean`). Its mass is the intrinsic
+harmonic energy (`IncidenceGraph.harmonicEnergy`), positive for every
+nonzero class (`harmonicEnergy_pos`), attained as the least cochain
+energy among realizers (`harmonicEnergy_isLeast`), and computed by
+every presentation (`energy_eq_harmonicEnergy`). **Matter is trapped
+paradox**: every cochain realizing a nonzero class admits no potential
+(`not_gradient`) — locally consistent, globally unsatisfiable.
+Nontrivial topology forces matter (`exists_matter`). Annihilation
+releases the pair's full rest mass (`annihilation`).
+
+**Binding.** Attaching a 2-cell along a cycle changes the space and
+kills the matter that wrapped it (`Meno/Binding.lean`). The induced
+restriction `H¹(X) → H¹(G)` is injective with image exactly the
+classes annihilating the attached cycles (`restrict_injective`,
+`range_restrict`); a sector with nonzero period around a filled face
+has **no image at all** (`binding_kills_matter`). On homology,
+`H₁(X) = H₁(G)/⟨c⟩` (`attach_h1`), free of rank `b₁ − 1` for primitive
+`c` (`finrank_attach_h1Homology`). Survivors keep their exact mass
+(`TwoComplex.energy_isLeast`), and the partition function strictly
+drops — by at least the killed sector's entire Boltzmann weight
+(`attach_partFn_add_le`, `attach_partFn_lt`). Concretely: filling the
+theta graph's first cycle kills its `1/3`-mass sector and costs the
+spectrum at least `exp(−1/3)` (`theta_binding_kills`,
+`theta_binding_release`).
+
+**Time and information.** Descriptions at resolution `q` modulo local
+re-description number exactly `q^{b₁}` (`card_quotient` — K1, for
+every modulus and every finite graph); description cost splits as
+gauge + incompressible residue (`log_card_split` — K2); every
+compression fiber is uniform (`card_fiber` — K3), with the gauge group
+`q^{|E|−b₁}` (`card_gauge`) — Euler's formula read as a factorization
+of counts. The ratchet is **derived, not defined**: the reverse
+descriptions of a map are its sections, counted exactly
+(`card_sections`), so reverse-description cost *equals* fiber
+information as a coding theorem (`log_card_sections`,
+`sectionCost_compression`). Where fibers are infinite, the
+cardinality-free form holds: a section of a non-injective map always
+misses states (`section_not_surjective_of_not_injective`,
+`simplicial_ratchet`).
+
+**Gravity.** A finite type is a sector lattice with zero energy:
+`Z = |A|`, `K = log|A|` (`uniformAction`, `Meno/UniformAction.lean`).
+Type-level gravity is then a partition-function identity: for uniform
+fibers, `Z(A ×_D B) · Z(D) = Z(A) · Z(B)` (`gravity_partFn`) —
+sharing a base is worth exactly one copy of it — with the complexity
+form `K(P) + K(D) = K(A) + K(B)` (`gravity_complexity`) realizing the
+abstract `SGD.gravity` of `Meno/Basic.lean`, and the refactoring bound
+`K(P) ≤ K(D) + log(max fiber product)` (`uniform_refactoring_bound`).
+
+**Geometry.** Every symmetric simplicial complex's fundamental
+groupoid carries a Lawvere-subadditive geodesic length
+(`simplicialGeodesic`, `Meno/Groupoid.lean`), and on the `n`-cycle the
+combinatorial and harmonic masses meet: `n · (1/n) = 1`
+(`geodesic_harmonic_duality`).
+
+## Architecture
 
 ```
 Meno/
-├── Basic.lean        The theory: complexity hierarchy, pullback gravity, refactoring bound, ratchet
-├── Instances.lean    Log-cardinality instance (satisfies the hierarchy; topologically blind)
-├── Simplicial.lean   Shadow model: walks, cycles, geodesics, Hodge theory, partition function
-├── Groupoid.lean     Fundamental groupoid, groupoid complexity, hierarchy axioms
-├── Hodge.lean        General Hodge theory: energy, graph partition functions, Siegel theta
-├── Theta.lean        Jacobi theta identification and T-duality via Mathlib modular forms
-├── Duality.lean      Fourier duality on GroupoidObj: dual construction, involutivity, quadraticObj
-└── Zeta.lean         Riemann's 1859 derivation: FE from Jacobi's theta identity; ζ(3) at s=3/2
+├── SectorAction.lean          Analytic primitive: sectors, Boltzmann weights, partFn, complexity
+├── QuadraticAction.lean       kᵀQk actions; scalar & diagonal Siegel–Poisson duality
+├── SiegelPoisson.lean         Full-generality (non-diagonal) Siegel–Poisson via Poisson summation
+├── LoopKernel.lean            Categorical presentation: End(base) as sector lattice
+├── SectorPresentation.lean    MulEquiv coordinates; duality transport
+├── Geodesic.lean              Lawvere-subadditive length class
+├── HarmonicForm.lean          HarmonicGramData; variational builder; binding algebra
+├── IncidenceGraph.lean        THE graph substrate: ∂, grad, Stokes (any ring); walks; components; gauge
+├── PeriodHarmonic.lean        Least-norm-at-prescribed-periods machinery; cycle & theta & wedge Gram forms
+├── CyclePresentation.lean     Chosen cycle bases; exactness (no connectivity); rebase (GL(r,ℤ))
+├── PeriodLattice.lean         The keystone, ℤ-form: ℤ-cochains ⧸ gradients ≃ ℤ^{b₁}
+├── FundamentalPresentation.lean  Every finite graph satisfies the keystone interface; Euler; H¹ coords
+├── BasisIndependence.lean     Primitivity forced; presentations GL(r,ℤ)-related; partFn is the graph's
+├── HarmonicClass.lean         Intrinsic harmonic energy on H¹; variational identity; per-presentation agreement
+├── GraphInstances.lean        Cycle, theta, genuine wedge: connectivity and Betti numbers by Euler
+├── WedgePresentation.lean     The n₁+n₂−1-vertex wedge as a consumer (spanning by Euler)
+├── Matter.lean                MatterSector = nonzero H¹ class; mass, positivity, trapped paradox
+├── Binding.lean               2-complexes; the induced map; binding kills matter; spectral release
+├── InfoRatchet.lean           Fiber information; the coding theorem (sections counted); ratchets
+├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; compression section cost
+├── UniformAction.lean         Type-level gravity realized on the uniform sector action
+├── Basic.lean                 Abstract complexity hierarchy; pullback gravity (interface layer)
+├── Instances.lean             Log-cardinality instance of the abstract hierarchy
+├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
+├── Groupoid.lean              Fundamental groupoid; geodesic instance; groupoid complexity
+├── CycleHarmonic.lean         Flagship bridge: walk route ≡ period route; T-duality on C_n
+├── ThetaHarmonic.lean         The theta graph: non-diagonal Gram derived from topology
+├── Hodge.lean                 Graph partition functions (identified with the spine)
+├── Duality.lean               Groupoid-facing duality wrappers (identified with the spine)
+└── Zeta.lean                  Riemann functional equation through the spine's theta identification
 ```
 
----
+The legacy layer (`Simplicial`–`Zeta`) is retained deliberately: it is
+a second, independent derivation of the spine's first objects, with
+the identifications proved (`cyclePeriodData_energy_eq`,
+`quadraticPartFn_eq_scalarPartFn`, `graphPartitionFn_eq_spine`,
+`GroupoidObj.gibbsMass_eq_sector`, …). Two derivations, one object.
+
+## Reading the thesis honestly
+
+The words "gravity", "matter", "time" name formal analogues inside a
+finite, discrete model: gravity is a pullback complexity identity,
+matter is nontrivial cohomology with variational mass, time's arrow is
+the counted cost of reversing compression. The project's claim is that
+these analogues are *theorems of one structure* — the sector lattice
+with its action — not that the physical world has been derived. Where
+a desired statement failed, the failure is recorded in `PLAN.md`
+(falsified designs are kept as falsified, with proofs).
 
 ## Build
 
-Requires Lean 4.26.0 and Mathlib 4.26.0.
+Requires Lean 4.26.0 and the pinned Mathlib.
 
 ```bash
 lake build
