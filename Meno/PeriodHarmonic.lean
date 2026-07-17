@@ -324,4 +324,343 @@ theorem cyclePeriodData_gram (hn : 0 < n) :
 
 end CyclePeriods
 
+/-! ## The wedge of two cycles through periods
+
+`C_{n₁} ∨ C_{n₂}`: two cycles joined at a basepoint. This is the space
+that *falsified* the naive categorical route — its loop monoid is
+nonabelian (free on two generators), so no `SectorPresentation` exists
+at any rank (`SectorPresentation.end_comm`). The period machinery works
+directly on the abelianization `H¹` and handles it without incident.
+
+Vertex model: `Fin n₁ ⊕ Fin n₂`, with the right cycle's basepoint
+routed through the left basepoint `Sum.inl 0`; the vertex `Sum.inr 0`
+is left isolated, which changes neither boundaries nor cycles (it adds
+an edgeless component, so `b₁` is unaffected). This avoids a quotient
+vertex type entirely.
+
+Edges: `Fin n₁ ⊕ Fin n₂`; left edge `e` runs `e → e + 1` in the left
+cycle, right edge `e` runs `e → e + 1` in the right cycle with `0`
+read as the shared basepoint. Two disjoint-support basis cycles give
+chain Gram `diag(n₁, n₂)`, hence period Gram `diag(1/n₁, 1/n₂)` — the
+matrix `wedgeHarmonicGramData` (`Meno/CycleHarmonic.lean`) asserts,
+now derived. -/
+
+section WedgePeriods
+
+/-- A function on `Fin n` with a backward-step identity at every
+nonzero vertex is constant. The induction workhorse for spanning
+arguments: cycle constancy needs steps only away from the basepoint. -/
+theorem apply_eq_apply_zero_of_step {n : ℕ} [NeZero n] (f : Fin n → ℝ)
+    (hstep : ∀ v : Fin n, v ≠ 0 → f (v - 1) = f v) (v : Fin n) :
+    f v = f 0 := by
+  have hval : ∀ (m : ℕ) (hm : m < n), f ⟨m, hm⟩ = f 0 := by
+    intro m
+    induction m with
+    | zero =>
+      intro hm
+      have h0 : (⟨0, hm⟩ : Fin n) = 0 := Fin.ext (by simp)
+      rw [h0]
+    | succ m ih =>
+      intro hm
+      have hm' : m < n := Nat.lt_of_succ_lt hm
+      have hmk : (⟨m + 1, hm⟩ : Fin n) = ⟨m, hm'⟩ + 1 := by
+        apply Fin.ext
+        rw [Fin.val_add]
+        have h1 : (1 : Fin n).val = 1 := by
+          rw [Fin.val_one']
+          exact Nat.mod_eq_of_lt (by omega)
+        rw [h1]
+        exact (Nat.mod_eq_of_lt hm).symm
+      have hne : (⟨m + 1, hm⟩ : Fin n) ≠ 0 := by
+        intro hc
+        have hv := congrArg Fin.val hc
+        rw [Fin.val_zero] at hv
+        exact Nat.succ_ne_zero m hv
+      have hsub : (⟨m + 1, hm⟩ : Fin n) - 1 = ⟨m, hm'⟩ := by
+        rw [hmk, add_sub_cancel_right]
+      have hs := hstep ⟨m + 1, hm⟩ hne
+      rw [hsub] at hs
+      rw [← hs]
+      exact ih hm'
+  have h := hval v.val v.isLt
+  rwa [Fin.eta] at h
+
+variable (n₁ n₂ : ℕ)
+
+/-- The wedge's vertex map for the right cycle: vertex `v` of `C_{n₂}`,
+with the basepoint `0` identified with the left basepoint `Sum.inl 0`. -/
+def wedgeVertex [NeZero n₁] [NeZero n₂] (v : Fin n₂) : Fin n₁ ⊕ Fin n₂ :=
+  if v = 0 then Sum.inl 0 else Sum.inr v
+
+/-- Edge sources: left edge `e` starts at left vertex `e`; right edge
+`e` starts at the basepoint-routed right vertex `e`. -/
+def wedgeSrc [NeZero n₁] [NeZero n₂] : Fin n₁ ⊕ Fin n₂ → Fin n₁ ⊕ Fin n₂ :=
+  Sum.elim (fun e => Sum.inl e) (fun e => wedgeVertex n₁ n₂ e)
+
+/-- Edge targets: left edge `e` ends at left vertex `e + 1`; right edge
+`e` ends at the basepoint-routed right vertex `e + 1`. -/
+def wedgeTgt [NeZero n₁] [NeZero n₂] : Fin n₁ ⊕ Fin n₂ → Fin n₁ ⊕ Fin n₂ :=
+  Sum.elim (fun e => Sum.inl (e + 1)) (fun e => wedgeVertex n₁ n₂ (e + 1))
+
+/-- Boundary operator of the wedge: net flow into each vertex. -/
+noncomputable def wedgeBoundary [NeZero n₁] [NeZero n₂]
+    (ω : Fin n₁ ⊕ Fin n₂ → ℝ) (v : Fin n₁ ⊕ Fin n₂) : ℝ :=
+  ∑ e, ((if wedgeTgt n₁ n₂ e = v then (1 : ℝ) else 0)
+    - (if wedgeSrc n₁ n₂ e = v then (1 : ℝ) else 0)) * ω e
+
+/-- The two basis cycles: all-ones on the left cycle's edges, all-ones
+on the right cycle's edges. Disjoint supports. -/
+noncomputable def wedgeCycles : Fin 2 → Fin n₁ ⊕ Fin n₂ → ℝ :=
+  ![Sum.elim (fun _ => 1) (fun _ => 0), Sum.elim (fun _ => 0) (fun _ => 1)]
+
+/-! ### Indicator bookkeeping -/
+
+private lemma ite_inl_eq_inl (a b : Fin n₁) :
+    (if (Sum.inl a : Fin n₁ ⊕ Fin n₂) = Sum.inl b then (1 : ℝ) else 0)
+      = if a = b then (1 : ℝ) else 0 := by
+  by_cases h : a = b
+  · rw [if_pos (by rw [h]), if_pos h]
+  · rw [if_neg (fun hc => h (Sum.inl.inj hc)), if_neg h]
+
+lemma wedgeVertex_eq_inl_iff [NeZero n₁] [NeZero n₂] (v : Fin n₂) (w : Fin n₁) :
+    wedgeVertex n₁ n₂ v = Sum.inl w ↔ v = 0 ∧ w = 0 := by
+  unfold wedgeVertex
+  by_cases h : v = 0
+  · rw [if_pos h]
+    constructor
+    · intro hc
+      exact ⟨h, (Sum.inl.inj hc).symm⟩
+    · intro hw
+      rw [hw.2]
+  · rw [if_neg h]
+    constructor
+    · intro hc
+      exact Sum.noConfusion hc
+    · intro hw
+      exact absurd hw.1 h
+
+lemma wedgeVertex_eq_inr_iff [NeZero n₁] [NeZero n₂] (v w : Fin n₂) :
+    wedgeVertex n₁ n₂ v = Sum.inr w ↔ v = w ∧ v ≠ 0 := by
+  unfold wedgeVertex
+  by_cases h : v = 0
+  · rw [if_pos h]
+    constructor
+    · intro hc
+      exact Sum.noConfusion hc
+    · intro hw
+      exact absurd h hw.2
+  · rw [if_neg h]
+    constructor
+    · intro hc
+      exact ⟨Sum.inr.inj hc, h⟩
+    · intro hw
+      rw [hw.1]
+
+private lemma ite_wedgeVertex_inl_zero [NeZero n₁] [NeZero n₂] (v : Fin n₂) :
+    (if wedgeVertex n₁ n₂ v = Sum.inl (0 : Fin n₁) then (1 : ℝ) else 0)
+      = if v = 0 then (1 : ℝ) else 0 := by
+  by_cases h : v = 0
+  · rw [if_pos ((wedgeVertex_eq_inl_iff n₁ n₂ v 0).mpr ⟨h, rfl⟩), if_pos h]
+  · rw [if_neg (fun hc => h ((wedgeVertex_eq_inl_iff n₁ n₂ v 0).mp hc).1), if_neg h]
+
+private lemma ite_wedgeVertex_inl_ne [NeZero n₁] [NeZero n₂] (v : Fin n₂)
+    (w : Fin n₁) (hw : w ≠ 0) :
+    (if wedgeVertex n₁ n₂ v = Sum.inl w then (1 : ℝ) else 0) = 0 :=
+  if_neg (fun hc => hw ((wedgeVertex_eq_inl_iff n₁ n₂ v w).mp hc).2)
+
+private lemma ite_wedgeVertex_inr_zero [NeZero n₁] [NeZero n₂] (v : Fin n₂) :
+    (if wedgeVertex n₁ n₂ v = Sum.inr (0 : Fin n₂) then (1 : ℝ) else 0) = 0 :=
+  if_neg (fun hc => ((wedgeVertex_eq_inr_iff n₁ n₂ v 0).mp hc).2
+    ((wedgeVertex_eq_inr_iff n₁ n₂ v 0).mp hc).1)
+
+private lemma ite_wedgeVertex_inr_ne [NeZero n₁] [NeZero n₂] (v w : Fin n₂)
+    (hw : w ≠ 0) :
+    (if wedgeVertex n₁ n₂ v = Sum.inr w then (1 : ℝ) else 0)
+      = if v = w then (1 : ℝ) else 0 := by
+  by_cases h : v = w
+  · rw [if_pos ((wedgeVertex_eq_inr_iff n₁ n₂ v w).mpr
+      ⟨h, by rw [h]; exact hw⟩), if_pos h]
+  · rw [if_neg (fun hc => h ((wedgeVertex_eq_inr_iff n₁ n₂ v w).mp hc).1), if_neg h]
+
+/-! ### Boundary in closed form -/
+
+/-- Boundary at a left vertex: the left cycle's boundary, plus — at the
+shared basepoint only — the right cycle's basepoint flow. -/
+theorem wedgeBoundary_inl [NeZero n₁] [NeZero n₂]
+    (ω : Fin n₁ ⊕ Fin n₂ → ℝ) (w : Fin n₁) :
+    wedgeBoundary n₁ n₂ ω (Sum.inl w)
+      = cycleBoundary n₁ (fun e => ω (Sum.inl e)) w
+        + (if w = 0 then cycleBoundary n₂ (fun e => ω (Sum.inr e)) 0 else 0) := by
+  unfold wedgeBoundary
+  rw [Fintype.sum_sum_type]
+  show (∑ e : Fin n₁,
+        ((if (Sum.inl (e + 1) : Fin n₁ ⊕ Fin n₂) = Sum.inl w then (1 : ℝ) else 0)
+          - (if (Sum.inl e : Fin n₁ ⊕ Fin n₂) = Sum.inl w then (1 : ℝ) else 0))
+            * ω (Sum.inl e))
+      + (∑ e : Fin n₂,
+        ((if wedgeVertex n₁ n₂ (e + 1) = Sum.inl w then (1 : ℝ) else 0)
+          - (if wedgeVertex n₁ n₂ e = Sum.inl w then (1 : ℝ) else 0))
+            * ω (Sum.inr e))
+      = cycleBoundary n₁ (fun e => ω (Sum.inl e)) w
+        + (if w = 0 then cycleBoundary n₂ (fun e => ω (Sum.inr e)) 0 else 0)
+  congr 1
+  · unfold cycleBoundary
+    refine Finset.sum_congr rfl fun e _ => ?_
+    rw [ite_inl_eq_inl n₁ n₂ (e + 1) w, ite_inl_eq_inl n₁ n₂ e w]
+  · by_cases hw : w = 0
+    · subst hw
+      rw [if_pos rfl]
+      unfold cycleBoundary
+      refine Finset.sum_congr rfl fun e _ => ?_
+      rw [ite_wedgeVertex_inl_zero n₁ n₂ (e + 1), ite_wedgeVertex_inl_zero n₁ n₂ e]
+    · rw [if_neg hw]
+      refine Finset.sum_eq_zero fun e _ => ?_
+      rw [ite_wedgeVertex_inl_ne n₁ n₂ (e + 1) w hw,
+        ite_wedgeVertex_inl_ne n₁ n₂ e w hw]
+      ring
+
+/-- Boundary at a right vertex: the right cycle's boundary away from
+the basepoint; zero at the unused vertex `Sum.inr 0`. -/
+theorem wedgeBoundary_inr [NeZero n₁] [NeZero n₂]
+    (ω : Fin n₁ ⊕ Fin n₂ → ℝ) (w : Fin n₂) :
+    wedgeBoundary n₁ n₂ ω (Sum.inr w)
+      = if w = 0 then 0 else cycleBoundary n₂ (fun e => ω (Sum.inr e)) w := by
+  unfold wedgeBoundary
+  rw [Fintype.sum_sum_type]
+  show (∑ e : Fin n₁,
+        ((if (Sum.inl (e + 1) : Fin n₁ ⊕ Fin n₂) = Sum.inr w then (1 : ℝ) else 0)
+          - (if (Sum.inl e : Fin n₁ ⊕ Fin n₂) = Sum.inr w then (1 : ℝ) else 0))
+            * ω (Sum.inl e))
+      + (∑ e : Fin n₂,
+        ((if wedgeVertex n₁ n₂ (e + 1) = Sum.inr w then (1 : ℝ) else 0)
+          - (if wedgeVertex n₁ n₂ e = Sum.inr w then (1 : ℝ) else 0))
+            * ω (Sum.inr e))
+      = if w = 0 then 0 else cycleBoundary n₂ (fun e => ω (Sum.inr e)) w
+  have hleft : (∑ e : Fin n₁,
+      ((if (Sum.inl (e + 1) : Fin n₁ ⊕ Fin n₂) = Sum.inr w then (1 : ℝ) else 0)
+        - (if (Sum.inl e : Fin n₁ ⊕ Fin n₂) = Sum.inr w then (1 : ℝ) else 0))
+          * ω (Sum.inl e)) = 0 := by
+    refine Finset.sum_eq_zero fun e _ => ?_
+    rw [if_neg (fun hc => Sum.noConfusion hc), if_neg (fun hc => Sum.noConfusion hc)]
+    ring
+  rw [hleft, zero_add]
+  by_cases hw : w = 0
+  · subst hw
+    rw [if_pos rfl]
+    refine Finset.sum_eq_zero fun e _ => ?_
+    rw [ite_wedgeVertex_inr_zero n₁ n₂ (e + 1), ite_wedgeVertex_inr_zero n₁ n₂ e]
+    ring
+  · rw [if_neg hw]
+    unfold cycleBoundary
+    refine Finset.sum_congr rfl fun e _ => ?_
+    rw [ite_wedgeVertex_inr_ne n₁ n₂ (e + 1) w hw, ite_wedgeVertex_inr_ne n₁ n₂ e w hw]
+
+/-! ### The two vectors are cycles, and they span -/
+
+/-- Both basis vectors have vanishing boundary everywhere. -/
+theorem wedgeBoundary_cycles [NeZero n₁] [NeZero n₂] (i : Fin 2)
+    (v : Fin n₁ ⊕ Fin n₂) :
+    wedgeBoundary n₁ n₂ (wedgeCycles n₁ n₂ i) v = 0 := by
+  fin_cases i
+  · cases v with
+    | inl w =>
+      rw [wedgeBoundary_inl, cycleBoundary_eq, cycleBoundary_eq]
+      show ((1 : ℝ) - 1) + (if w = 0 then ((0 : ℝ) - 0) else 0) = 0
+      by_cases hw : w = 0
+      · rw [if_pos hw]; ring
+      · rw [if_neg hw]; ring
+    | inr w =>
+      rw [wedgeBoundary_inr]
+      by_cases hw : w = 0
+      · rw [if_pos hw]
+      · rw [if_neg hw, cycleBoundary_eq]
+        show (0 : ℝ) - 0 = 0
+        ring
+  · cases v with
+    | inl w =>
+      rw [wedgeBoundary_inl, cycleBoundary_eq, cycleBoundary_eq]
+      show ((0 : ℝ) - 0) + (if w = 0 then ((1 : ℝ) - 1) else 0) = 0
+      by_cases hw : w = 0
+      · rw [if_pos hw]; ring
+      · rw [if_neg hw]; ring
+    | inr w =>
+      rw [wedgeBoundary_inr]
+      by_cases hw : w = 0
+      · rw [if_pos hw]
+      · rw [if_neg hw, cycleBoundary_eq]
+        show (1 : ℝ) - 1 = 0
+        ring
+
+/-- **`b₁(C_{n₁} ∨ C_{n₂}) = 2`**: a cochain with vanishing boundary is
+a combination of the two basis cycles. The mixed flow condition at the
+shared basepoint is automatically satisfied — consistent with the
+wedge's Euler count `E − V + 1 = 2`. -/
+theorem eq_comb_of_wedgeBoundary_eq_zero [NeZero n₁] [NeZero n₂]
+    (ω : Fin n₁ ⊕ Fin n₂ → ℝ) (h : ∀ v, wedgeBoundary n₁ n₂ ω v = 0) :
+    ω = fun e => ω (Sum.inl 0) * wedgeCycles n₁ n₂ 0 e
+      + ω (Sum.inr 0) * wedgeCycles n₁ n₂ 1 e := by
+  have hL : ∀ w : Fin n₁, ω (Sum.inl w) = ω (Sum.inl 0) := by
+    intro w
+    refine apply_eq_apply_zero_of_step (fun e => ω (Sum.inl e)) (fun v hv => ?_) w
+    have hb := h (Sum.inl v)
+    rw [wedgeBoundary_inl, if_neg hv, add_zero, cycleBoundary_eq] at hb
+    linarith
+  have hR : ∀ w : Fin n₂, ω (Sum.inr w) = ω (Sum.inr 0) := by
+    intro w
+    refine apply_eq_apply_zero_of_step (fun e => ω (Sum.inr e)) (fun v hv => ?_) w
+    have hb := h (Sum.inr v)
+    rw [wedgeBoundary_inr, if_neg hv, cycleBoundary_eq] at hb
+    linarith
+  funext e
+  cases e with
+  | inl a =>
+    show ω (Sum.inl a) = ω (Sum.inl 0) * 1 + ω (Sum.inr 0) * 0
+    rw [mul_one, mul_zero, add_zero]
+    exact hL a
+  | inr b =>
+    show ω (Sum.inr b) = ω (Sum.inl 0) * 0 + ω (Sum.inr 0) * 1
+    rw [mul_one, mul_zero, zero_add]
+    exact hR b
+
+/-! ### Chain Gram, period Gram -/
+
+/-- The chain Gram of the wedge: `diag(n₁, n₂)`. Disjoint edge supports
+keep the off-diagonal at zero. -/
+theorem gramOf_wedgeCycles :
+    gramOf (wedgeCycles n₁ n₂) = !![(n₁ : ℝ), 0; 0, (n₂ : ℝ)] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [gramOf, dotProduct, wedgeCycles, Fintype.sum_sum_type]
+
+/-- The chain Gram is positive definite. -/
+theorem gramOf_wedgeCycles_posDef (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
+    (gramOf (wedgeCycles n₁ n₂)).PosDef := by
+  rw [gramOf_wedgeCycles]
+  exact (QuadraticAction.ofDiagonal₂ (n₁ : ℝ) (n₂ : ℝ)
+    (by exact_mod_cast h₁) (by exact_mod_cast h₂)).Q_posDef
+
+/-- The period-model harmonic Gram data of the wedge. -/
+noncomputable def wedgePeriodData (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
+    HarmonicGramData (Fin n₁ ⊕ Fin n₂) :=
+  HarmonicGramData.ofCycles (wedgeCycles n₁ n₂)
+    (gramOf_wedgeCycles_posDef n₁ n₂ h₁ h₂)
+
+/-- Its Gram form: `diag(1/n₁, 1/n₂)` — the direct sum of the two
+cycles' period forms. Sharing zero edges means zero off-diagonal,
+zero interaction, zero binding. -/
+theorem wedgePeriodData_gram (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
+    (wedgePeriodData n₁ n₂ h₁ h₂).gram
+      = !![1 / (n₁ : ℝ), 0; 0, 1 / (n₂ : ℝ)] := by
+  have hn₁ : (n₁ : ℝ) ≠ 0 := by exact_mod_cast h₁.ne'
+  have hn₂ : (n₂ : ℝ) ≠ 0 := by exact_mod_cast h₂.ne'
+  show (gramOf (wedgeCycles n₁ n₂))⁻¹ = _
+  rw [gramOf_wedgeCycles]
+  apply Matrix.inv_eq_right_inv
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    norm_num [Matrix.mul_apply, Fin.sum_univ_two, Matrix.one_apply] <;>
+    field_simp
+
+end WedgePeriods
+
 end Meno

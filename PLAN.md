@@ -1987,3 +1987,95 @@ debt in the harmonic layer. Then: cohomological `MatterSector`
 stated connecting theorem).
 
 **End of Phase 20 addendum.**
+
+---
+
+## Phase 21 addendum: the wedge through periods — the last assertion debt retired
+
+*(Appended after Phase 20; session date 2026-07-16.)*
+
+### What was done
+
+The board's named next concrete, executed. `Meno/PeriodHarmonic.lean`
+gains a `WedgePeriods` section (~250 LOC); `Meno/CycleHarmonic.lean`
+gains the identification.
+
+**The wedge graph, without quotients.** `C_{n₁} ∨ C_{n₂}` is modeled
+on vertices `Fin n₁ ⊕ Fin n₂` with edges `Fin n₁ ⊕ Fin n₂`: every
+edge that would touch the right cycle's basepoint `inr 0` is routed
+to the left basepoint `inl 0` instead (`wedgeVertex`). The vertex
+`inr 0` is left isolated — an edgeless extra component, invisible to
+boundaries and to `b₁`. No quotient vertex type needed.
+
+**Two closed-form boundary lemmas carry everything**
+(`wedgeBoundary_inl`, `wedgeBoundary_inr`): at a left vertex the
+boundary is the left cycle's boundary plus — at the shared basepoint
+only — the right cycle's basepoint flow; at a right vertex it is the
+right cycle's boundary away from the basepoint, and zero at the
+isolated vertex. After these, all downstream proofs are one-liners
+over the closed forms.
+
+**The theorems:**
+- `wedgeBoundary_cycles`: both disjoint-support all-ones vectors are
+  cycles.
+- `eq_comb_of_wedgeBoundary_eq_zero` — **`b₁(wedge) = 2`**: any
+  boundary-zero cochain is a combination of the two basis cycles. The
+  spanning induction needs constancy steps only at *nonzero* vertices,
+  extracted as the general helper `apply_eq_apply_zero_of_step`; the
+  mixed flow condition at the shared basepoint is then automatically
+  satisfied — the formal shadow of Euler's `E − V + 1 = 2`.
+- `gramOf_wedgeCycles = diag(n₁, n₂)`; positive definite (via
+  `ofDiagonal₂`, definitional-equality reuse); `wedgePeriodData` from
+  the Phase-20 builder; `wedgePeriodData_gram = diag(1/n₁, 1/n₂)`.
+
+**The identification (`CycleHarmonic.lean`):**
+`wedgePeriodData_gram_eq`, `wedgePeriodData_energy_eq`,
+`wedgePeriodData_partFn_eq`, and the marquee
+`wedgeHarmonicGramData_energy_isLeast`: the energy of the Gram data
+that Phase 13 wrote down by oracle is the least cochain energy at
+prescribed periods over the actual wedge graph. The docstring that
+said "the graph-level derivation is **not** formalized" now says
+where the derivation lives. That was the last documented assertion
+debt in the harmonic layer.
+
+### Why the wedge matters beyond the debt
+
+The wedge is the space that **falsified** the naive categorical route
+in Phase 14: its loop monoid is free on two generators, nonabelian,
+so `SectorPresentation.end_comm` forbids any presentation at any
+rank. The period machinery never touches `End` — it works on `H¹`,
+the abelianization — and handles the same space in ~250 lines. The
+space that broke the old formulation is the first new space the
+cohomological formulation conquers. This is the H¹ decision (Phase
+17) paying rent.
+
+Physically: sharing zero edges ⇒ chain Gram off-diagonal zero ⇒
+period Gram off-diagonal zero ⇒ zero interaction, zero binding
+(Phase 19's `bindingEnergy_eq`). The wedge is the formal model of
+two *non-interacting* matter sectors; the theta graph (shared edges,
+binding 1/3) is the interacting counterpart. Together they bracket
+the binding story from both sides.
+
+### Engineering notes
+
+- One build iteration for the whole phase, and the fix was tactic
+  strength (`field_simp` wouldn't open matrix entries; `norm_num
+  [Matrix.mul_apply, ...]` then `field_simp` does), not mathematics.
+  The Phase-20 toolkit — global `show` in reduced form after
+  `Fintype.sum_sum_type`, per-term `show` + explicit `if_pos`/`if_neg`
+  indicator lemmas — transferred to the sum-typed graph unchanged.
+- The indicator-bookkeeping layer (`ite_inl_eq_inl`,
+  `ite_wedgeVertex_*`) is where parametric graph topology actually
+  costs; everything above it is arithmetic the machinery already owns.
+
+### Board after this phase
+
+- Cohomological `MatterSector` (Goal 7 rebuild per the H¹ decision;
+  `binding_kills_matter` has its Gram-level form from Phase 19).
+- The keystone's information-theoretic half (compression residue =
+  `b₁` joined to InfoRatchet) — still gated on stating the connecting
+  theorem first.
+- Geodesic instance (Goal 4, plumbing).
+- Halted/pruned (unchanged): TypeKernel rewrite, magnitude.
+
+**End of Phase 21 addendum.**

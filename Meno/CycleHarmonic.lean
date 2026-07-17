@@ -202,13 +202,17 @@ positive-definiteness and summability are inherited from
 `QuadraticAction.ofDiagonal₂`, whose Gram matrix is definitionally the
 same.
 
-The graph-level *derivation* of this Gram form (a wedge complex in
-`Simplicial.lean` with its own Hodge decomposition) is **not**
-formalized; the wedge complex does not yet exist in the simplicial
-layer. What is formalized: the rank-2 Gram data itself, its quadratic
-action, the factorization of its partition function, its diagonal
-Siegel–Poisson duality (all in `QuadraticAction.lean`), and the rank-2
-matter sectors below. -/
+The graph-level *derivation* of this Gram form is formalized in
+`Meno/PeriodHarmonic.lean` through the period machinery: the wedge
+graph's two basis cycles have disjoint edge supports, chain Gram
+`diag(n₁, n₂)`, spanning is a theorem (`b₁ = 2`,
+`eq_comb_of_wedgeBoundary_eq_zero`), and the period Gram is the
+inverse. The identification with the data below lives in the
+`PeriodUnification` section (`wedgePeriodData_gram_eq`,
+`wedgeHarmonicGramData_energy_isLeast`). A simplicial wedge complex
+with its own Hodge decomposition still does not exist in
+`Simplicial.lean` — the derivation is cohomological (periods), not
+chain-level. -/
 
 /-- Harmonic Gram data of the wedge of two cycles: rank 2, Gram form
 `diag(1/n₁, 1/n₂)`. -/
@@ -300,6 +304,61 @@ theorem harmonicEnergy_k_isLeast_periods (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
     norm_num
   rw [← hchain]
   exact h
+
+/-! ### The wedge: assertion retired
+
+`wedgeHarmonicGramData` above was introduced (Phase 13) with its Gram
+form `diag(1/n₁, 1/n₂)` asserted on "true, unformalized ground." The
+period machinery now derives that form from the wedge graph itself
+(`Meno/PeriodHarmonic.lean`); here the derived data is identified with
+the asserted data — matrix, energies, and partition function — and the
+asserted energy is certified as the variational minimum. -/
+
+/-- The period-model Gram data of the wedge has the same Gram matrix
+as the asserted data: `diag(1/n₁, 1/n₂)` both ways. -/
+theorem wedgePeriodData_gram_eq (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
+    (wedgePeriodData n₁ n₂ (by omega) (by omega)).gram
+      = (wedgeHarmonicGramData n₁ n₂ h₁ h₂).gram :=
+  calc (wedgePeriodData n₁ n₂ (by omega) (by omega)).gram
+      = !![1 / (n₁ : ℝ), 0; 0, 1 / (n₂ : ℝ)] :=
+        wedgePeriodData_gram n₁ n₂ (by omega) (by omega)
+    _ = (wedgeHarmonicGramData n₁ n₂ h₁ h₂).gram := rfl
+
+/-- The energies agree at every sector. -/
+theorem wedgePeriodData_energy_eq (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3)
+    (k : Fin 2 → ℤ) :
+    (wedgePeriodData n₁ n₂ (by omega) (by omega)).energy k
+      = (wedgeHarmonicGramData n₁ n₂ h₁ h₂).energy k := by
+  calc (wedgePeriodData n₁ n₂ (by omega) (by omega)).energy k
+      = ∑ i, ∑ j, (!![1 / (n₁ : ℝ), 0; 0, 1 / (n₂ : ℝ)]) i j
+          * (k i : ℝ) * (k j : ℝ) := by
+        show ∑ i, ∑ j, (wedgePeriodData n₁ n₂ (by omega) (by omega)).gram i j
+            * (k i : ℝ) * (k j : ℝ) = _
+        rw [wedgePeriodData_gram]
+    _ = (wedgeHarmonicGramData n₁ n₂ h₁ h₂).energy k := rfl
+
+/-- The partition functions agree: the asserted analytic layer *is*
+the derived one. -/
+theorem wedgePeriodData_partFn_eq (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
+    (wedgePeriodData n₁ n₂ (by omega)
+        (by omega)).toQuadraticAction.toSectorAction.partFn
+      = (wedgeHarmonicGramData n₁ n₂
+          h₁ h₂).toQuadraticAction.toSectorAction.partFn :=
+  QuadraticAction.partFn_eq_of_Q_eq _ _ (wedgePeriodData_gram_eq n₁ n₂ h₁ h₂)
+
+/-- **The Phase-13 assertion, retired**: the energy of the asserted
+`diag(1/n₁, 1/n₂)` Gram data is the least cochain energy at prescribed
+periods over the actual wedge graph's cycles. The last documented
+assertion debt in the harmonic layer is now a theorem. -/
+theorem wedgeHarmonicGramData_energy_isLeast (n₁ n₂ : ℕ)
+    (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) (k : Fin 2 → ℤ) :
+    IsLeast {E : ℝ | ∃ ω : Fin n₁ ⊕ Fin n₂ → ℝ,
+        (∀ j, ω ⬝ᵥ wedgeCycles n₁ n₂ j = (k j : ℝ)) ∧ E = ω ⬝ᵥ ω}
+      ((wedgeHarmonicGramData n₁ n₂ h₁ h₂).energy k) := by
+  rw [← wedgePeriodData_energy_eq n₁ n₂ h₁ h₂ k]
+  exact HarmonicGramData.ofCycles_energy_isLeast (V := Fin n₁ ⊕ Fin n₂)
+    (wedgeCycles n₁ n₂)
+    (gramOf_wedgeCycles_posDef n₁ n₂ (by omega) (by omega)) k
 
 end PeriodUnification
 
