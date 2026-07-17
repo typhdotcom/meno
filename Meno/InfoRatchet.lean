@@ -156,8 +156,11 @@ def sectionsEquivPiFiber (f : A → B) :
 /-- **The number of sections of `f`** is the product of the fiber sizes:
 each reverse description is a per-point choice of preimage. No
 surjectivity needed — an empty fiber contributes a `0` factor and there
-are then no sections. -/
-theorem card_sections [Fintype B] (f : A → B) :
+are then no sections. Finiteness of the domain is demanded (review #4):
+on an infinite domain `Nat.card` collapses to `0` and the equation,
+while true, would not be the advertised exact count. The general-
+cardinality content is `sectionsEquivPiFiber` alone. -/
+theorem card_sections [Finite A] [Fintype B] (f : A → B) :
     Nat.card {s : B → A // ∀ b, f (s b) = b} = ∏ b : B, Nat.card (f ⁻¹' {b}) := by
   rw [Nat.card_congr (sectionsEquivPiFiber f), Nat.card_pi]
 
@@ -341,8 +344,9 @@ theorem sectionCostE_eq_sum_recoveryCostE [Fintype A] [Fintype B]
         (Finset.single_le_sum (fun c _ => zero_le _) (Finset.mem_univ b)))
     rw [(sectionCostE_eq_top_iff f).mpr hf, htop]
 
-/-- **Forward description cost**: `|A| · log |B|` — the bits to specify
-which of `|B|^|A|` functions `f` is. -/
+/-- **Forward description cost**: `|A| · log |B|` — the information
+(in nats: `Real.log` is the natural logarithm) to specify which of
+`|B|^|A|` functions `f` is. -/
 noncomputable def descriptionCost [Fintype A] [Fintype B] (_f : A → B) : ℝ :=
   (Fintype.card A : ℝ) * Real.log (Fintype.card B : ℝ)
 

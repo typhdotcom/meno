@@ -114,6 +114,19 @@ form `K(P) + K(D) = K(A) + K(B)` (`gravity_complexity`) realizing the
 abstract `SGD.gravity` of `Meno/Basic.lean`, and the refactoring bound
 `K(P) ≤ K(D) + log(max fiber product)` (`uniform_refactoring_bound`).
 
+**Uncertainty.** The Gibbs state's fluctuations are the model's
+uncertainty, and they are theorems, not vocabulary: the variance of
+any observable against the Boltzmann weights is nonnegative
+(`gibbsVariance_nonneg`, `Meno/SectorAction.lean`), and the
+**fluctuation–dissipation identity** ties response to fluctuation —
+on the canonical quadratic family, the derivative of the Gibbs mean
+of squared winding in the coupling is *minus the Gibbs variance* of
+squared winding
+(`hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance`,
+`Meno/Duality.lean`); that variance's strict positivity is exactly
+why the mean energy strictly falls
+(`quadraticMeanEnergy_strictAntiOn`).
+
 **Geometry.** Every symmetric simplicial complex's fundamental
 groupoid carries a Lawvere-subadditive geodesic length
 (`simplicialGeodesic`, `Meno/Groupoid.lean`), and on the `n`-cycle the
@@ -167,10 +180,11 @@ the identifications proved (`cyclePeriodData_energy_eq`,
 
 ## Reading the thesis honestly
 
-The words "gravity", "matter", "time" name formal analogues inside a
-finite, discrete model: gravity is a pullback complexity identity,
-matter is nontrivial cohomology with variational mass, time's arrow is
-the counted cost of reversing compression. The project's claim is that
+The words "gravity", "matter", "time", "uncertainty" name formal
+analogues inside a finite, discrete model: gravity is a pullback
+complexity identity, matter is nontrivial cohomology with variational
+mass, time's arrow is the counted cost of reversing compression, and
+uncertainty is Gibbs fluctuation with its response identity. The project's claim is that
 these analogues are *theorems of one structure* — the sector lattice
 with its action — not that the physical world has been derived. Where
 a desired statement failed, the failure is recorded in `PLAN.md`

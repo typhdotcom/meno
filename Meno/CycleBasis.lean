@@ -30,5 +30,11 @@ structure CycleBasis (G : IncidenceGraph.{u, v}) where
   /-- The basis spans the cycle space. -/
   spanning : ∀ ω : G.E → ℝ, (∀ v, G.boundary ω v = 0) →
     ∃ a : Fin r → ℝ, ω = fun e => ∑ i, a i * cycles i e
+  /-- The basis is linearly independent — a genuine basis, not merely
+  a closed spanning family (review #4: duplicated cycles and inflated
+  ranks are excluded *here*, topologically; positive-definiteness of
+  the Gram is then derived downstream, `CycleBasis.gramOf_posDef`). -/
+  independent : ∀ x : Fin r → ℝ,
+    (fun e => ∑ i, x i * cycles i e) = 0 → x = 0
 
 end Meno

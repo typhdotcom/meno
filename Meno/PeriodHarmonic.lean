@@ -36,6 +36,36 @@ theorem gramOf_isSymm (c : Fin r → ι → ℝ) : (gramOf c).IsSymm := by
   ext i j
   exact dotProduct_comm (c j) (c i)
 
+/-- The quadratic form of a Gram matrix is the squared norm of the
+combination: `xᵀ(gramOf c)x = ‖Σᵢ xᵢcᵢ‖²` (moved from
+`Meno/FundamentalPresentation.lean`, review #4 — it is a pure Gram
+fact and the presentation layers consume it). -/
+theorem dotProduct_gramOf_mulVec {r : ℕ} {ι : Type*} [Fintype ι]
+    (c : Fin r → ι → ℝ) (x : Fin r → ℝ) :
+    x ⬝ᵥ (gramOf c *ᵥ x)
+      = (fun e => ∑ i, x i * c i e) ⬝ᵥ (fun e => ∑ i, x i * c i e) := by
+  show ∑ i, x i * (∑ j, gramOf c i j * x j)
+    = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e)
+  calc ∑ i, x i * (∑ j, gramOf c i j * x j)
+      = ∑ i, ∑ j, x i * x j * (∑ e, c i e * c j e) := by
+        refine Finset.sum_congr rfl fun i _ => ?_
+        rw [Finset.mul_sum]
+        refine Finset.sum_congr rfl fun j _ => ?_
+        show x i * (gramOf c i j * x j) = x i * x j * (∑ e, c i e * c j e)
+        rw [show gramOf c i j = ∑ e, c i e * c j e from rfl]
+        ring
+    _ = ∑ i, ∑ j, ∑ e, x i * x j * (c i e * c j e) := by
+        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+        rw [Finset.mul_sum]
+    _ = ∑ i, ∑ e, ∑ j, x i * x j * (c i e * c j e) :=
+        Finset.sum_congr rfl fun i _ => Finset.sum_comm
+    _ = ∑ e, ∑ i, ∑ j, x i * x j * (c i e * c j e) := Finset.sum_comm
+    _ = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e) := by
+        refine Finset.sum_congr rfl fun e _ => ?_
+        rw [Finset.sum_mul_sum]
+        exact Finset.sum_congr rfl fun i _ =>
+          Finset.sum_congr rfl fun j _ => by ring
+
 /-- The minimum-norm cochain with periods `k`: the combination of the
 period vectors with coefficients `C⁻¹k`. -/
 noncomputable def periodRep (c : Fin r → ι → ℝ) (k : Fin r → ℝ) : ι → ℝ :=

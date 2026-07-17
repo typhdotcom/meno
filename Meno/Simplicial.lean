@@ -180,7 +180,7 @@ theorem cycleComplexity_zero_of_contractible (C : Complex V) (c : Cycle C.toGrap
     (hc : c.isContractible₂ C) : cycleComplexity C c = 0 :=
   geodesicLength_zero_of_contractible C c hc
 
-/-- Non-contractible cycles have positive complexity (they are matter). -/
+/-- Non-contractible cycles have positive complexity. -/
 theorem cycleComplexity_pos_of_noncontractible (C : Complex V) (c : Cycle C.toGraph v)
     (hc : ¬c.isContractible₂ C) : cycleComplexity C c > 0 := by
   simp only [cycleComplexity]
@@ -214,8 +214,8 @@ noncomputable def geodesicMass (C : Complex V) (c : Cycle C.toGraph v) : ℕ :=
 def IsGeodesicMatter (C : Complex V) (c : Cycle C.toGraph v) : Prop :=
   geodesicMass C c > 0
 
-/-- Contractible cycles have zero geodesic mass (vacuum). -/
-theorem contractible_zero_mass (C : Complex V) (c : Cycle C.toGraph v)
+/-- Contractible cycles have zero geodesic mass. -/
+theorem contractible_zero_geodesicMass (C : Complex V) (c : Cycle C.toGraph v)
     (hc : c.isContractible₂ C) : geodesicMass C c = 0 :=
   cycleComplexity_zero_of_contractible C c hc
 
@@ -223,7 +223,7 @@ theorem contractible_zero_mass (C : Complex V) (c : Cycle C.toGraph v)
 theorem geodesicMatter_noncontractible (C : Complex V) (c : Cycle C.toGraph v)
     (hm : IsGeodesicMatter C c) : ¬c.isContractible₂ C := by
   intro hc
-  rw [IsGeodesicMatter, contractible_zero_mass C c hc] at hm
+  rw [IsGeodesicMatter, contractible_zero_geodesicMass C c hc] at hm
   exact Nat.lt_irrefl 0 hm
 
 /-! ## Pure 1-Skeleton (No Faces) -/
@@ -1077,8 +1077,9 @@ theorem geodesicBindingDrop_eq_geodesicMass (C₁ C₂ : Complex V)
 
 /-! ## The geodesic mass defect: hollow triangle example -/
 
-/-- The hollow triangle: same edges as Disk, but NO face.
-    This represents "potential matter" - a cycle waiting to be filled. -/
+/-- The hollow triangle: same edges as Disk, but NO face — a
+noncontractible cycle waiting to be filled (geodesic matter in the
+sense of `IsGeodesicMatter`). -/
 def HollowTriangle : Complex (Fin 3) where
   edge := fun i j => i ≠ j
   face := fun _ _ _ => False
@@ -1170,9 +1171,11 @@ theorem triangle_contracts (C : Complex V) {a b c : V}
   -- a→b→c→a ~[face] a→c→a ~[backtrack] nil
   exact Homotopic₂.trans (Homotopic₂.face hface _) (Homotopic₂.backtrack hac hca _)
 
-/-- Corollary: If C₁ lacks a face that C₂ provides, binding occurs for that triangle.
-    Adding the missing face in C₂ is sufficient for contraction in the union. -/
-theorem triangle_binding (C₁ C₂ : Complex V) {a b c : V}
+/-- Corollary: if `C₁` lacks a face that `C₂` provides, the triangle
+cycle contracts in the union — the geodesic binding situation.
+Renamed from `triangle_binding` (review #4): the name states what is
+proved, contractibility in the union. -/
+theorem triangle_contractibleInUnion (C₁ C₂ : Complex V) {a b c : V}
     (hab : C₁.edge a b) (hbc : C₁.edge b c) (hca : C₁.edge c a) (hac : C₁.edge a c)
     (hyes : C₂.face a b c) :
     (triangleCycle C₁ hab hbc hca).contractibleInUnion C₁ C₂ := by

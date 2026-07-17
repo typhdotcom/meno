@@ -90,6 +90,14 @@ spanning — no Gram, no pricing. The priced presentation is
     funext e
     rw [congrFun h e, Fin.sum_univ_two]
     rfl
+  independent := fun x hx => by
+    have h0 := congrFun hx 0
+    have h2 := congrFun hx 2
+    simp +decide [thetaCycles, Fin.sum_univ_two] at h0 h2
+    funext i
+    fin_cases i
+    · simpa using h0
+    · simpa using h2
 
 /-- The theta basis `c₁ = p₁ − p₃`, `c₂ = p₂ − p₃` is integrally
 primitive: an integer cochain with zero boundary is an *integer*

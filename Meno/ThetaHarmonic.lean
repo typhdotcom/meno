@@ -88,15 +88,13 @@ theorem thetaChainGram_inv :
   fin_cases i <;> fin_cases j <;>
     norm_num [Matrix.mul_apply, Fin.sum_univ_two]
 
-/-- The theta graph as a **priced** cycle presentation: the
-topological `thetaCycleBasis` extended with the positive-definite
-chain Gram. -/
+/-- The theta graph as a **priced** cycle presentation — the Gram's
+positive-definiteness **derived** from the genuine basis
+(`CycleBasis.toPresentation`, review #4), with the closed form
+`!![4, 2; 2, 4]` and its inverse kept as separate theorems. -/
 @[reducible] noncomputable def thetaPresentation :
     CyclePresentation thetaGraph :=
-  { thetaCycleBasis with
-    gram_posDef := by
-      rw [gramOf_thetaCycles]
-      exact thetaChainGram_posDef }
+  thetaCycleBasis.toPresentation
 
 /-- The theta graph as an **integral** presentation: integer basis,
 integer period realizability (single-edge cochains on the first and

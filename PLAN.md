@@ -695,6 +695,13 @@ Concrete consumers (`WedgePresentation`, `ThetaHarmonic`,
 `GraphInstances` imports `FundamentalPresentation` because `b₁`
 itself is *defined* by the fundamental construction — computing a
 graph's Betti number legitimately consumes the fundamental theorem.
+*(Resolved Phase 40, review #4 finding 2: `b₁` is now intrinsic —
+`b1 := Module.finrank ℤ G.cycleLattice`, defined with the lattice in
+`Meno/IncidenceGraph.lean`; `FundamentalPresentation` consumes the
+invariant, proving its PID basis has exactly `b₁` elements
+(`cycleBasisSigma_fst`) and proving Euler's `b1_eq` about it.
+`GraphInstances`' import is now for Euler's theorem — a theorem about
+an upstream invariant, not the invariant's definition.)*
 
 **README** rewritten (Phase 37): staleness banner removed; the
 architecture section lists the actual source files (33 as of
@@ -730,20 +737,24 @@ incidence layer and C6's intrinsic matter; C9 touches only
 
 ## Disposition of the Original 13 Goals
 
+Current dispositions (rewritten Phase 40, review #4 finding 4 — the
+Phase-28 adoption-time snapshot of this table, with its OPEN rows, is
+preserved in Part II; the main body carries only the present state).
+
 | # | Original goal | Disposition |
 |---|--------------|-------------|
 | 1 | `SectorAction` | CLOSED as written (Phase 1); standing |
 | 2 | `QuadraticAction` + Siegel-Poisson | CLOSED, exceeded (Phase 15: full generality, beyond the diagonal expectation) |
 | 3 | `LoopKernel` | CLOSED; consumed by `SectorPresentation`, `Groupoid` |
 | 4 | `Geodesic` | CLOSED (Phase 27) = C10 |
-| 5 | `HarmonicForm` for any finite graph | OPEN; superseded by C1-C4 (today: any *presented* graph) |
+| 5 | `HarmonicForm` for any finite graph | CLOSED via C1-C4 (Phases 29-32): the fundamental-presentation theorem covers **every** finite graph; intrinsic `harmonicEnergy` on `H¹(G;ℤ)` |
 | 6 | `SectorPresentation` | CLOSED (Phase 16 transport; `end_comm` forced the cohomological turn) |
-| 7 | Matter + `binding_kills_matter` | OPEN; superseded by C6 + C7. Presentation-level matter is proved; the binding theorem is not. `killed_releases_mass` is a placeholder scheduled for deletion under C7 |
-| 8 | `InfoRatchet` ratchet theorem | OPEN; superseded by C8. Fiber counting proved (incl. K1-K3); section cost still definitional |
+| 7 | Matter + `binding_kills_matter` | CLOSED via C6 + C7 (Phases 33, 35): intrinsic `MatterSector`, `binding_kills_matter` proved on 2-complexes, exact spectral decomposition `partFn_add_killed`; the `killed_releases_mass` placeholder deleted |
+| 8 | `InfoRatchet` ratchet theorem | CLOSED via C8 (Phase 34, hardened Phases 38-39): section cost **derived** by counting (`card_sections`, `log_card_sections`), finite-only numerical API, extended costs with `⊤` boundaries |
 | 9 | `HomKernel` + magnitude | EXCISED (C11, Phase 28): deleted with prejudice, not delivered |
-| 10 | `Duality`/`Hodge`/`Zeta` import purity | OPEN; superseded by C12's audit |
-| 11 | `Basic.lean` rewrite via TypeKernel | design FALSIFIED (Phase 17); the unification claim is OPEN, superseded by C9 |
-| 12 | Acyclic flowing import graph | OPEN; superseded by C12 (acyclic today; the *flow* is the open part) |
+| 10 | `Duality`/`Hodge`/`Zeta` import purity | CLOSED via C12's audit (Phase 37): retained as identified wrappers (`graphPartitionFn_eq_spine`, `gibbsMass_eq_sector`, …) |
+| 11 | `Basic.lean` rewrite via TypeKernel | design FALSIFIED (Phase 17) — stands falsified; the unification claim it carried is CLOSED via C9's realization + the `logCard` bridge (Phases 36, 38: `SGD.gravity` invoked, not paralleled) |
+| 12 | Acyclic flowing import graph | CLOSED via C12 (Phase 37, completed Phases 39-40: `CycleBasis` split, intrinsic `b1` upstream, layered `Meno.lean` matching the DAG) |
 | 13 | Zero `sorry`/`axiom`, no "future work" | standing invariant, re-verified every session; a property of every state, never a deliverable |
 
 ## Falsification
@@ -4010,3 +4021,23 @@ the five defects (the `omit` and the self-referential docstring) were
 introduced by Phase 38 itself — recorded as such. All twelve items
 remain CLOSED. Build green end-to-end, zero `sorry`, zero `axiom`,
 zero warnings.
+
+## Phase 40 addendum: fourth external review — six findings, six confirmed, six repaired (2026-07-17)
+
+Review #4 arrived against the Phase-39 state. Every claim verified
+against code before acting; all six CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | `CycleBasis` is not a basis — closedness and spanning without independence; duplicated cycles and inflated ranks satisfy it, with the basis property disguised as `gram_posDef` downstream | **CONFIRMED** — the Phase-39 split extracted exactly the non-Gram fields, forgetting that independence is topological | `independent` field added to `CycleBasis` (a genuine basis); **`CycleBasis.gramOf_posDef` derives positive-definiteness from independence** (`xᵀGx = ‖Σxᵢcᵢ‖²`), with `CycleBasis.toPresentation` the derived pricing — `thetaPresentation` now built that way; all five construction sites supply independence (theta directly, the rest via `independent_of_gramOf_posDef`, de-privatized); `cycles_independent` is now the field, not a Gram consequence |
+| 2 | The topology boundary papered over — `b₁` was *defined* by the fundamental construction, so `GraphInstances` (topology) imported the harmonic/variational stack; the "deliberate residue" was an unfinished inversion | **CONFIRMED** | `cycleLattice` (with membership, walk-chain, and saturation lemmas) moved to `Meno/IncidenceGraph.lean`; **`b1 := Module.finrank ℤ G.cycleLattice`** defined there intrinsically; `FundamentalPresentation` consumes the invariant (`cycleBasisSigma_fst : G.cycleBasisSigma.1 = G.b1`, `cycleBasis` reindexed along it); the pure Gram identity `dotProduct_gramOf_mulVec` moved to `Meno/PeriodHarmonic.lean` where `gramOf` lives |
+| 3 | `card_sections` claims an exact count with no `[Finite A]` (for `A = ℕ` both sides collapse to `0` — true but not the advertised count); `descriptionCost` documented in "bits" while `Real.log` is nats | **CONFIRMED** | `[Finite A]` added to `card_sections` (`sectionsEquivPiFiber` alone remains at general cardinality, as prescribed); docstring says nats |
+| 4 | The main Disposition table still recorded the Phase-28 adoption state (Goal 5 presentation-restricted, binding unproved, section cost definitional, 10-12 open) as if current | **CONFIRMED** | Table rewritten to current dispositions with closing phases cited; the adoption-time snapshot remains in Part II; a header sentence states the convention |
+| 5 | Generic simplicial vocabulary still asserted physics — "(they are matter)", `contractible_zero_mass`, "potential matter", `triangle_binding` | **CONFIRMED** | `contractible_zero_geodesicMass`, `triangle_contractibleInUnion` (names state what is proved); "matter" claims removed from generic docstrings or routed through `IsGeodesicMatter` |
+| 6 | "Uncertainty" was an uncited headline claim — README line 5 lists it as a proved face; no theorem inventory entry establishes it | **CONFIRMED** | README gains an **Uncertainty** section citing `gibbsVariance_nonneg` (`Meno/SectorAction.lean`) and the fluctuation–dissipation identity `hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance` (`Meno/Duality.lean`), with the honest-reading paragraph extended to name uncertainty's analogue explicitly |
+
+**Discipline check.** No goal reopens: findings 1-2 complete C12's
+structural claims (and finding 1 repairs a defect Phase 39 itself
+introduced — recorded); findings 3-6 harden C8's boundary honesty and
+the standing documentation invariant. All twelve items remain CLOSED.
+Build green end-to-end, zero `sorry`, zero `axiom`, zero warnings.

@@ -493,6 +493,59 @@ theorem grad_integrate (ω : G.E → R)
     - (G.walkFromBase (G.src e)).sum ω = ω e
   ring
 
+/-! ## The integral cycle lattice and the first Betti number
+
+Pure topology (moved from `Meno/FundamentalPresentation.lean`,
+review #4): the lattice `H₁(G;ℤ) = ker ∂ℤ` and its rank `b₁` are
+intrinsic to the graph — defined here, in the substrate. The
+fundamental-presentation theorem downstream **consumes** this
+invariant: it constructs a basis of this lattice, proves the
+construction has exactly `b₁` elements (`cycleBasisSigma_fst`), and
+proves Euler's formula `b1_eq` about it. -/
+
+section CycleLattice
+
+variable (G : IncidenceGraph.{u, v})
+
+/-- The integral cycle lattice: `H₁(G;ℤ) = ker ∂ℤ`. -/
+def cycleLattice : Submodule ℤ (G.E → ℤ) := LinearMap.ker (G.boundaryLin ℤ)
+
+theorem mem_cycleLattice {ω : G.E → ℤ} :
+    ω ∈ G.cycleLattice ↔ ∀ v, G.boundary ω v = 0 := by
+  rw [cycleLattice, LinearMap.mem_ker]
+  constructor
+  · intro h v
+    exact congrFun h v
+  · intro h
+    funext v
+    exact h v
+
+/-- Chains of closed walks are cycles. -/
+theorem chain_mem_cycleLattice {w : G.V} (c : G.Walk w w) :
+    c.chain ℤ ∈ G.cycleLattice :=
+  G.mem_cycleLattice.mpr (Walk.boundary_chain_closed c)
+
+/-- **Saturation**: the cycle lattice is division-closed — a multiple
+of a cochain is a cycle only if the cochain is. This is where
+torsion-freeness of `ℤ^E ⧸ H₁` comes from. -/
+theorem mem_of_smul_mem {c : ℤ} (hc : c ≠ 0) {x : G.E → ℤ}
+    (h : c • x ∈ G.cycleLattice) : x ∈ G.cycleLattice := by
+  rw [mem_cycleLattice] at h ⊢
+  intro v
+  have hv := h v
+  rw [G.boundary_smul] at hv
+  rcases mul_eq_zero.mp hv with h0 | h0
+  · exact absurd h0 hc
+  · exact h0
+
+/-- **The first Betti number, intrinsically**: the rank of the
+integral cycle lattice. No presentation, no chosen basis — this is
+the invariant every presentation must meet (`r_eq_b1`,
+`Meno/FundamentalPresentation.lean`). -/
+noncomputable def b1 : ℕ := Module.finrank ℤ G.cycleLattice
+
+end CycleLattice
+
 end IncidenceGraph
 
 /-- The cycle graph `C_n`: vertices and edges `Fin n`, edge

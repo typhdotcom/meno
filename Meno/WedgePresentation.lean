@@ -31,16 +31,6 @@ namespace Meno
 open scoped BigOperators
 open Matrix
 
-private lemma independent_of_gramOf_posDef {r : ℕ} {ι : Type*} [Fintype ι]
-    (c : Fin r → ι → ℝ) (hpd : (gramOf c).PosDef)
-    (x : Fin r → ℝ) (hx : (fun e => ∑ i, x i * c i e) = 0) : x = 0 := by
-  by_contra hne
-  have hpos := (posDef_iff_dotProduct_mulVec.mp hpd).2 (show x ≠ 0 from hne)
-  have hsx : star x = x := funext fun i => star_trivial _
-  rw [hsx, IncidenceGraph.dotProduct_gramOf_mulVec] at hpos
-  rw [hx, dotProduct_zero] at hpos
-  exact lt_irrefl 0 hpos
-
 /-! ## Closedness by shift reindexing -/
 
 theorem wedgeGraph_cycles_closed (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
@@ -115,6 +105,8 @@ theorem wedgeGraph_cycles_closed (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 <
         (fun x hx => independent_of_gramOf_posDef (wedgeCycles n₁ n₂)
           (gramOf_wedgeCycles_posDef n₁ n₂ h₁ h₂) x hx)
         ω hω
+    independent := fun x hx => independent_of_gramOf_posDef (wedgeCycles n₁ n₂)
+      (gramOf_wedgeCycles_posDef n₁ n₂ h₁ h₂) x hx
     gram_posDef := gramOf_wedgeCycles_posDef n₁ n₂ h₁ h₂ }
 
 /-! ## The integral presentation: routed prefix sums -/

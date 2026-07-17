@@ -44,10 +44,46 @@ open Matrix
 
 universe u v
 
+/-- Independence from a positive-definite Gram: the standard
+contrapositive through `xᵀ(gramOf c)x = ‖Σᵢ xᵢcᵢ‖²`. -/
+theorem independent_of_gramOf_posDef {r : ℕ} {ι : Type*} [Fintype ι]
+    (c : Fin r → ι → ℝ) (hpd : (gramOf c).PosDef)
+    (x : Fin r → ℝ) (hx : (fun e => ∑ i, x i * c i e) = 0) : x = 0 := by
+  by_contra hne
+  have hpos := (posDef_iff_dotProduct_mulVec.mp hpd).2 (show x ≠ 0 from hne)
+  have hsx : star x = x := funext fun i => star_trivial _
+  rw [hsx, dotProduct_gramOf_mulVec] at hpos
+  rw [hx, dotProduct_zero] at hpos
+  exact lt_irrefl 0 hpos
+
+/-- **Positive-definiteness is derived, not stored** (review #4): the
+Gram of a genuine (independent) cycle basis is automatically positive
+definite — `xᵀ(gramOf c)x = ‖Σᵢ xᵢcᵢ‖²`, which vanishes only at
+`x = 0` by independence. -/
+theorem CycleBasis.gramOf_posDef {G : IncidenceGraph.{u, v}}
+    (B : CycleBasis G) : (gramOf B.cycles).PosDef := by
+  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
+  · ext i j
+    show star (gramOf B.cycles j i) = gramOf B.cycles i j
+    rw [star_trivial]
+    exact dotProduct_comm (B.cycles j) (B.cycles i)
+  · have hsx : star x = x := funext fun i => star_trivial _
+    rw [hsx, dotProduct_gramOf_mulVec]
+    have hnn : (0 : ℝ) ≤ (fun e => ∑ i, x i * B.cycles i e)
+        ⬝ᵥ (fun e => ∑ i, x i * B.cycles i e) :=
+      Finset.sum_nonneg fun e _ => mul_self_nonneg _
+    have hne : (fun e => ∑ i, x i * B.cycles i e) ≠ 0 :=
+      fun h0 => hx (B.independent x h0)
+    exact lt_of_le_of_ne hnn
+      (Ne.symm fun h0 => hne (dotProduct_self_eq_zero.mp h0))
+
 /-- A chosen cycle basis on the graph `G`, **priced**: the purely
 topological `CycleBasis` (`Meno/CycleBasis.lean`) extended with the
 positive-definite chain Gram — the harmonic content (review #3: the
-topological and harmonic halves are separate structures). -/
+topological and harmonic halves are separate structures; review #4:
+the Gram field is *derivable* from the basis, `CycleBasis.gramOf_posDef`
+and `CycleBasis.toPresentation` — it is stored for direct closed-form
+computation at concrete sites). -/
 structure CyclePresentation (G : IncidenceGraph.{u, v}) extends
     CycleBasis G where
   /-- The chain Gram matrix is positive definite (in particular the
@@ -55,6 +91,12 @@ structure CyclePresentation (G : IncidenceGraph.{u, v}) extends
   labels are basis-relative, physics is not (`rebase_energy`,
   `rebase_partFn`). -/
   gram_posDef : (gramOf cycles).PosDef
+
+/-- Every genuine cycle basis is automatically priced: the derived
+positive-definite Gram makes the presentation (review #4). -/
+@[reducible] noncomputable def CycleBasis.toPresentation
+    {G : IncidenceGraph.{u, v}} (B : CycleBasis G) : CyclePresentation G :=
+  { B with gram_posDef := B.gramOf_posDef }
 
 namespace CyclePresentation
 
@@ -443,6 +485,12 @@ noncomputable def rebase : CyclePresentation G where
             * ∑ j, (U i j : ℝ) * P.cycles j e := by
           refine Finset.sum_congr rfl fun i _ => ?_
           rw [Finset.mul_sum]
+  independent := fun x hx => independent_of_gramOf_posDef _
+    (by
+      show (gramOf (fun i e => ∑ j, (U i j : ℝ) * P.cycles j e)).PosDef
+      rw [gramOf_map_mul]
+      exact posDef_mul_mul_transpose (gramOf P.cycles) P.gram_posDef
+        (U.map (Int.cast : ℤ → ℝ)) (isUnit_det_map U hU)) x hx
   gram_posDef := by
     show (gramOf (fun i e => ∑ j, (U i j : ℝ) * P.cycles j e)).PosDef
     rw [gramOf_map_mul]
@@ -592,6 +640,9 @@ ones) on `cycleGraph n`. -/
       funext e
       rw [congrFun h e, Fin.sum_univ_one]
       rfl
+    independent := fun x hx => independent_of_gramOf_posDef (cycleAllOnes n)
+      (by rw [gramOf_cycleAllOnes]; exact posDef_fin_one _ (by exact_mod_cast hn))
+      x hx
     gram_posDef := by
       rw [gramOf_cycleAllOnes]
       exact posDef_fin_one _ (by exact_mod_cast hn) }

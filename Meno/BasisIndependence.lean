@@ -50,18 +50,13 @@ private lemma cast_dotProduct {ι : Type*} [Fintype ι] (x y : ι → ℤ) :
 
 /-! ## Independence and unique coordinates -/
 
-/-- A presentation's cycles are `ℝ`-linearly independent, from the
-positive-definite Gram. -/
+/-- A presentation's cycles are `ℝ`-linearly independent — the
+topological basis field itself (review #4: independence is data of
+`CycleBasis`, not a consequence of the Gram). -/
 theorem CyclePresentation.cycles_independent (P : CyclePresentation G)
     (x : Fin P.r → ℝ)
-    (hx : (fun e => ∑ i, x i * P.cycles i e) = 0) : x = 0 := by
-  by_contra hne
-  have hpos := (posDef_iff_dotProduct_mulVec.mp P.gram_posDef).2
-    (show x ≠ 0 from hne)
-  have hsx : star x = x := funext fun i => star_trivial _
-  rw [hsx, IncidenceGraph.dotProduct_gramOf_mulVec] at hpos
-  rw [hx, dotProduct_zero] at hpos
-  exact lt_irrefl 0 hpos
+    (hx : (fun e => ∑ i, x i * P.cycles i e) = 0) : x = 0 :=
+  P.independent x hx
 
 namespace IntegralCyclePresentation
 

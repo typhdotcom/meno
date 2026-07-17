@@ -50,38 +50,13 @@ namespace IncidenceGraph
 
 variable (G : IncidenceGraph.{u, v})
 
-/-! ## The integral cycle lattice `H₁(G;ℤ)` -/
+/-! ## Torsion-freeness and the splitting
 
-/-- The integral cycle lattice: `H₁(G;ℤ) = ker ∂ℤ`. -/
-def cycleLattice : Submodule ℤ (G.E → ℤ) := LinearMap.ker (G.boundaryLin ℤ)
-
-theorem mem_cycleLattice {ω : G.E → ℤ} :
-    ω ∈ G.cycleLattice ↔ ∀ v, G.boundary ω v = 0 := by
-  rw [cycleLattice, LinearMap.mem_ker]
-  constructor
-  · intro h v
-    exact congrFun h v
-  · intro h
-    funext v
-    exact h v
-
-/-- Chains of closed walks are cycles. -/
-theorem chain_mem_cycleLattice {w : G.V} (c : G.Walk w w) :
-    c.chain ℤ ∈ G.cycleLattice :=
-  G.mem_cycleLattice.mpr (Walk.boundary_chain_closed c)
-
-/-- **Saturation**: the cycle lattice is division-closed — a multiple
-of a cochain is a cycle only if the cochain is. This is where
-torsion-freeness of `ℤ^E ⧸ H₁` comes from. -/
-theorem mem_of_smul_mem {c : ℤ} (hc : c ≠ 0) {x : G.E → ℤ}
-    (h : c • x ∈ G.cycleLattice) : x ∈ G.cycleLattice := by
-  rw [mem_cycleLattice] at h ⊢
-  intro v
-  have hv := h v
-  rw [G.boundary_smul] at hv
-  rcases mul_eq_zero.mp hv with h0 | h0
-  · exact absurd h0 hc
-  · exact h0
+The lattice `cycleLattice` and the intrinsic `b1` live upstream in
+`Meno/IncidenceGraph.lean` (review #4); this file *consumes* the
+invariant — saturation (`mem_of_smul_mem`) gives the free quotient
+here, and `cycleBasisSigma_fst` below proves the constructed basis
+has exactly `b₁` elements. -/
 
 instance : NoZeroSMulDivisors ℤ ((G.E → ℤ) ⧸ G.cycleLattice) := by
   refine ⟨fun {c x} h => ?_⟩
@@ -143,12 +118,19 @@ noncomputable def cycleBasisSigma :
     (n : ℕ) × Module.Basis (Fin n) ℤ G.cycleLattice :=
   Submodule.basisOfPid (Pi.basisFun ℤ G.E) G.cycleLattice
 
-/-- The first Betti number: the rank of the integral cycle lattice. -/
-noncomputable def b1 : ℕ := G.cycleBasisSigma.1
+/-- **The construction meets the intrinsic invariant**: the PID basis
+of the cycle lattice has exactly `b₁ = finrank ℤ H₁(G;ℤ)` elements.
+(`b1` is *defined* in `Meno/IncidenceGraph.lean`, review #4 — the
+fundamental construction consumes it, not the other way around.) -/
+theorem cycleBasisSigma_fst : G.cycleBasisSigma.1 = G.b1 := by
+  have h := Module.finrank_eq_card_basis G.cycleBasisSigma.2
+  rw [Fintype.card_fin] at h
+  exact h.symm
 
-/-- The chosen fundamental cycle basis of `H₁(G;ℤ)`. -/
+/-- The chosen fundamental cycle basis of `H₁(G;ℤ)`, indexed by the
+intrinsic `b₁`. -/
 noncomputable def cycleBasis : Module.Basis (Fin G.b1) ℤ G.cycleLattice :=
-  G.cycleBasisSigma.2
+  G.cycleBasisSigma.2.reindex (finCongr G.cycleBasisSigma_fst)
 
 /-- The fundamental integer cycles, as cochains. -/
 noncomputable def fundCyclesZ : Fin G.b1 → G.E → ℤ :=
@@ -280,32 +262,6 @@ theorem fund_cast_independent (x : Fin G.b1 → ℝ)
   rw [hx, Matrix.mulVec_zero] at hlin
   funext j
   exact (congrFun hlin j).symm
-
-theorem dotProduct_gramOf_mulVec {r : ℕ} {ι : Type*} [Fintype ι]
-    (c : Fin r → ι → ℝ) (x : Fin r → ℝ) :
-    x ⬝ᵥ (gramOf c *ᵥ x)
-      = (fun e => ∑ i, x i * c i e) ⬝ᵥ (fun e => ∑ i, x i * c i e) := by
-  show ∑ i, x i * (∑ j, gramOf c i j * x j)
-    = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e)
-  calc ∑ i, x i * (∑ j, gramOf c i j * x j)
-      = ∑ i, ∑ j, x i * x j * (∑ e, c i e * c j e) := by
-        refine Finset.sum_congr rfl fun i _ => ?_
-        rw [Finset.mul_sum]
-        refine Finset.sum_congr rfl fun j _ => ?_
-        show x i * (gramOf c i j * x j) = x i * x j * (∑ e, c i e * c j e)
-        rw [show gramOf c i j = ∑ e, c i e * c j e from rfl]
-        ring
-    _ = ∑ i, ∑ j, ∑ e, x i * x j * (c i e * c j e) := by
-        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-        rw [Finset.mul_sum]
-    _ = ∑ i, ∑ e, ∑ j, x i * x j * (c i e * c j e) :=
-        Finset.sum_congr rfl fun i _ => Finset.sum_comm
-    _ = ∑ e, ∑ i, ∑ j, x i * x j * (c i e * c j e) := Finset.sum_comm
-    _ = ∑ e, (∑ i, x i * c i e) * (∑ j, x j * c j e) := by
-        refine Finset.sum_congr rfl fun e _ => ?_
-        rw [Finset.sum_mul_sum]
-        exact Finset.sum_congr rfl fun i _ =>
-          Finset.sum_congr rfl fun j _ => by ring
 
 /-- The fundamental Gram matrix is positive definite. -/
 theorem gramOf_fund_posDef : (gramOf G.fundCyclesR).PosDef := by
@@ -552,6 +508,7 @@ noncomputable def fundamentalPresentation : IntegralCyclePresentation G where
   cycles := G.fundCyclesR
   cycles_closed := G.fundCyclesR_closed
   spanning := G.fund_spanning
+  independent := fun x hx => G.fund_cast_independent x hx
   gram_posDef := G.gramOf_fund_posDef
   cyclesZ := G.fundCyclesZ
   cyclesZ_cast := fun _ _ => rfl
