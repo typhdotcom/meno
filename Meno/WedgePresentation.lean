@@ -161,7 +161,7 @@ theorem wedgePotential_route₂ (n₁ n₂ : ℕ) [NeZero n₂]
 /-- The genuine wedge as an **integral** presentation: same integer
 basis and single-edge period witnesses as ever (they never mentioned
 vertices); potentials by routed prefix sums. -/
-noncomputable def wedgeGraphIntegralPresentation (n₁ n₂ : ℕ)
+@[reducible] noncomputable def wedgeGraphIntegralPresentation (n₁ n₂ : ℕ)
     (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
     IntegralCyclePresentation (wedgeGraph n₁ n₂ h₁ h₂) :=
   haveI : NeZero n₁ := ⟨h₁.ne'⟩
@@ -215,10 +215,11 @@ noncomputable def wedgeGraphIntegralPresentation (n₁ n₂ : ℕ)
         rw [wedgePotential_route₂, wedgePotential_route₂]
         exact finPrefixSum_grad _ hR b }
 
-/-- The genuine wedge has matter: nontrivial topology forces it. -/
+/-- The genuine wedge has matter: nontrivial topology (`b₁ = 2`)
+forces it. -/
 theorem wedgeGraph_exists_matter (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
-    Nonempty (MatterSector (wedgeGraphPresentation n₁ n₂ h₁ h₂)) :=
-  exists_matter _ (by norm_num)
+    Nonempty (MatterSector (wedgeGraph n₁ n₂ h₁ h₂)) :=
+  exists_matter _ (by rw [wedgeGraph_b1 n₁ n₂ h₁ h₂]; norm_num)
 
 /-! ## C5's acceptance witnesses
 

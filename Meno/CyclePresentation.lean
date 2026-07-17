@@ -32,7 +32,9 @@ coordinate-independence claims is closed (Phase 23): `rebase` carries
 a presentation to any unimodularly recombined basis, `rebase_energy`
 shows energies are invariant under the relabeling `k ↦ Uk`, and
 `rebase_partFn` shows the partition function does not move at all.
-Matter transport is `MatterSector.rebaseEquiv` (`Meno/Matter.lean`). -/
+Matter is intrinsic since C6 (`Meno/Matter.lean`): sectors live on the
+`H¹` quotient, and `MatterSector.mass_chart` subsumes the old
+coordinate transport. -/
 
 namespace Meno
 

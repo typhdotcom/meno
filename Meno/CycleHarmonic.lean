@@ -239,19 +239,38 @@ theorem wedgeHarmonicGramData_energy_basis₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥
       * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1 / n₁
   simp [Fin.sum_univ_two]
 
-/-- **Rank-2 matter exists**: the wedge carries matter sectors —
-anchored to the **genuine** wedge's presentation (C1/C5), not to bare
-Gram data. First matter instance above rank 1 — the abstraction stack
-is not secretly rank-1. -/
+/-- **Rank-2 matter exists**: the wedge carries matter sectors — the
+intrinsic class of the single-edge cochain on the first cycle (C6).
+First matter instance above rank 1 — the abstraction stack is not
+secretly rank-1. -/
 noncomputable def wedgeMatter₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
-    MatterSector (wedgeGraphPresentation n₁ n₂ (by omega) (by omega)) :=
-  ⟨![1, 0], by
-    intro h
-    have h0 := congrFun h 0
-    simp at h0⟩
+    MatterSector (wedgeGraph n₁ n₂ (by omega) (by omega)) :=
+  haveI : NeZero n₁ := ⟨by omega⟩
+  haveI : NeZero n₂ := ⟨by omega⟩
+  ⟨Submodule.Quotient.mk
+      (Sum.elim (fun e => if e = 0 then 1 else 0) (fun _ => 0)), by
+    intro h0
+    have h := congrArg
+      (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
+        (by omega)).latticeQuotEquiv h0
+    rw [map_zero] at h
+    have h1 : (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0)
+          (fun _ => 0) : Fin n₁ ⊕ Fin n₂ → ℤ)
+        ⬝ᵥ (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
+          (by omega)).cyclesZ 0 = 0 := congrFun h 0
+    rw [show ((Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0)
+          (fun _ => 0) : Fin n₁ ⊕ Fin n₂ → ℤ)
+        ⬝ᵥ (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
+          (by omega)).cyclesZ 0)
+        = ∑ e : Fin n₁ ⊕ Fin n₂,
+            (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0)
+              (fun _ => 0)) e
+            * Sum.elim (fun _ => (1 : ℤ)) (fun _ => 0) e from rfl,
+      Fintype.sum_sum_type] at h1
+    simp at h1⟩
 
 theorem wedge_exists_matter (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
-    Nonempty (MatterSector (wedgeGraphPresentation n₁ n₂ (by omega) (by omega))) :=
+    Nonempty (MatterSector (wedgeGraph n₁ n₂ (by omega) (by omega))) :=
   ⟨wedgeMatter₁ n₁ n₂ h₁ h₂⟩
 
 
@@ -362,10 +381,36 @@ theorem wedgeHarmonicGramData_energy_isLeast (n₁ n₂ : ℕ)
   exact HarmonicGramData.ofCycles_energy_isLeast (V := Fin n₁ ⊕ Fin n₂)
     (wedgeCycles n₁ n₂)
     (gramOf_wedgeCycles_posDef n₁ n₂ (by omega) (by omega)) k
-/-- The wedge matter's mass is `1/n₁`: presentation → derived Gram →
-asserted Gram, one chain of identifications. -/
+/-- The wedge matter's intrinsic coordinates are `(1, 0)`. -/
+theorem wedgeMatter₁_coords (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
+    (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
+        (by omega)).latticeQuotEquiv (wedgeMatter₁ n₁ n₂ h₁ h₂).val
+      = ![1, 0] := by
+  haveI : NeZero n₁ := ⟨by omega⟩
+  haveI : NeZero n₂ := ⟨by omega⟩
+  funext j
+  show (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0) (fun _ => 0))
+      ⬝ᵥ (wedgeGraphIntegralPresentation n₁ n₂ (by omega)
+        (by omega)).cyclesZ j = ![1, 0] j
+  fin_cases j
+  · show (∑ e : Fin n₁ ⊕ Fin n₂,
+        (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0) (fun _ => 0)) e
+          * Sum.elim (fun _ => (1 : ℤ)) (fun _ => 0) e) = 1
+    rw [Fintype.sum_sum_type]
+    simp
+  · show (∑ e : Fin n₁ ⊕ Fin n₂,
+        (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0) (fun _ => 0)) e
+          * Sum.elim (fun _ => (0 : ℤ)) (fun _ => 1) e) = 0
+    rw [Fintype.sum_sum_type]
+    simp
+
+/-- The wedge matter's mass is `1/n₁`: intrinsic mass → chart →
+derived Gram → asserted Gram, one chain of identifications. -/
 theorem wedgeMatter₁_mass (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
     (wedgeMatter₁ n₁ n₂ h₁ h₂).mass = 1 / n₁ := by
+  rw [← (wedgeMatter₁ n₁ n₂ h₁ h₂).mass_chart
+      (wedgeGraphIntegralPresentation n₁ n₂ (by omega) (by omega)),
+    wedgeMatter₁_coords n₁ n₂ h₁ h₂]
   show (wedgePeriodData n₁ n₂ (by omega) (by omega)).energy ![1, 0] = 1 / n₁
   rw [wedgePeriodData_energy_eq n₁ n₂ h₁ h₂,
     wedgeHarmonicGramData_energy_basis₁]

@@ -1,34 +1,32 @@
-import Meno.CyclePresentation
+import Meno.HarmonicClass
 
-/-! # Matter: nonzero period classes over a cycle presentation
+/-! # Matter: nonzero cohomology classes (C6 — intrinsic)
 
-**Cohomological formulation** (the Phase 17 H¹ decision, executed in
-Phase 22; this file replaces the old homology-flavored
-`MatterHomology.lean`). A matter sector is a nonzero *integer period
-class* against the chosen cycle basis of a concrete graph presentation
-— not an abstract coordinate vector over bare matrix data.
+**A matter sector is a nonzero class of `H¹(G;ℤ)`** — the intrinsic
+quotient `(G.E → ℤ) ⧸ range ∂ᵀℤ` — with every physical attribute a
+theorem through the graph-level harmonic theory (C4):
 
-Everything the old structure stored as fields is now a theorem:
-
-* `mass_pos` — positive mass, from positive-definiteness (never stored
-  data; every nonzero class has it).
-* `mass_isLeast` — the mass is the *least* cochain energy at the
-  prescribed periods (the variational identity, via the Phase-20
-  builder).
-* `not_gradient` — **matter is trapped paradox**: *every* cochain
-  realizing a nonzero period class admits no potential. Locally
-  consistent, globally unsatisfiable. Generic, by discrete Stokes.
+* `mass` — the intrinsic harmonic energy of the class
+  (`IncidenceGraph.harmonicEnergy`); every presentation computes it
+  (`mass_chart`, via C4's `energy_eq_harmonicEnergy`).
+* `mass_pos` — positive mass from positive-definiteness
+  (`harmonicEnergy_pos`); never stored data.
+* `mass_isLeast` — the variational identity: mass is the least
+  cochain energy among realizers, attained.
+* `not_gradient` — **matter is trapped paradox**: every real cochain
+  realizing a nonzero class admits no potential.
 * `annihilation` — binding a sector against its inverse releases the
-  pair's entire rest mass. This is algebraic cancellation inside one
-  period lattice; the *geometric* `binding_kills_matter` (an ambient
-  space change killing a class under an induced map) remains open
-  (PLAN, Goal 7 amendment).
+  pair's entire rest mass. Algebraic cancellation inside `H¹`; the
+  *geometric* `binding_kills_matter` (an ambient space change killing
+  a class under an induced map) is C7 and remains open.
+* `exists_matter` — nontrivial topology (`0 < b₁`) forces matter.
 
-**Basis independence** (Phase 23): the label `k ∈ ℤ^r` is relative to
-the presentation's cycle basis, but nothing physical depends on the
-choice — `MatterSector.rebaseEquiv` bijects matter sectors across any
-unimodular change of basis preserving mass, and the partition function
-is invariant outright (`CyclePresentation.rebase_partFn`). -/
+The Phase-22 coordinate subtype `{k : Fin P.r → ℤ // k ≠ 0}` is
+removed (C6, discipline 1c): coordinates now enter only through the
+keystone equivalences, and the Phase-23 `rebaseEquiv` transport is
+subsumed by `mass_chart` — any two presentations' charts of the same
+intrinsic sector weigh the same because both equal the intrinsic
+mass. -/
 
 namespace Meno
 
@@ -38,100 +36,107 @@ universe u v
 
 variable {G : IncidenceGraph.{u, v}}
 
-/-- A matter sector over the cycle presentation `P`: a nonzero integer
-period class against `P`'s chosen cycle basis. -/
-def MatterSector (P : CyclePresentation G) :=
-  {k : Fin P.r → ℤ // k ≠ 0}
+/-- A matter sector of the graph `G`: a nonzero integer cohomology
+class. -/
+def MatterSector (G : IncidenceGraph.{u, v}) :=
+  {κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) // κ ≠ 0}
 
 namespace MatterSector
 
-variable {P : CyclePresentation G} (m : MatterSector P)
+variable (m : MatterSector G)
 
-/-- The mass of a matter sector: the Gram energy of its period class
-(equivalently, by `mass_isLeast`, the least cochain energy at these
-periods). -/
-noncomputable def mass : ℝ := P.toGramData.energy m.val
+/-- The mass of a matter sector: the intrinsic harmonic energy of its
+class. -/
+noncomputable def mass : ℝ := G.harmonicEnergy m.val
 
 /-- Matter has positive mass — a theorem from positive-definiteness,
 not stored data. -/
-theorem mass_pos : 0 < m.mass :=
-  P.toGramData.energy_pos_of_ne_zero m.val m.prop
+theorem mass_pos : 0 < m.mass := G.harmonicEnergy_pos m.prop
 
 /-- **The variational identity**: the mass is the least energy among
-real cochains with the sector's periods — attained. -/
+real cochains realizing the class's periods — attained. -/
 theorem mass_isLeast :
     IsLeast {E : ℝ | ∃ ω : G.E → ℝ,
-        (∀ j, ω ⬝ᵥ P.cycles j = (m.val j : ℝ)) ∧ E = ω ⬝ᵥ ω} m.mass :=
-  HarmonicGramData.ofCycles_energy_isLeast (V := G.V) P.cycles
-    P.gram_posDef m.val
+        (∀ j, ω ⬝ᵥ G.fundCyclesR j = ((G.h1QuotEquiv m.val) j : ℝ))
+          ∧ E = ω ⬝ᵥ ω} m.mass :=
+  G.harmonicEnergy_isLeast m.val
 
-/-- **Matter is trapped paradox**: *every* cochain realizing a nonzero
-period class — not merely the least-energy representative — admits no
-potential. The constraint pattern is locally consistent everywhere and
-globally unsatisfiable. -/
+/-- **Every presentation computes the mass** (the chart lemma,
+subsuming the Phase-23 `rebaseEquiv` transport): the energy any
+integral presentation assigns to the sector's coordinates is the
+intrinsic mass. -/
+theorem mass_chart (Q : IntegralCyclePresentation G) :
+    Q.toGramData.energy (Q.latticeQuotEquiv m.val) = m.mass := by
+  obtain ⟨τ, hτ⟩ := Submodule.Quotient.mk_surjective _ m.val
+  show Q.toGramData.energy (Q.latticeQuotEquiv m.val)
+    = G.harmonicEnergy m.val
+  rw [← hτ]
+  rw [show Q.latticeQuotEquiv (Submodule.Quotient.mk τ)
+      = fun j => τ ⬝ᵥ Q.cyclesZ j from rfl]
+  exact G.energy_eq_harmonicEnergy Q τ
+
+/-- **Matter is trapped paradox**: *every* real cochain realizing a
+nonzero class — not merely the least-energy representative — admits
+no potential. Locally consistent, globally unsatisfiable. -/
 theorem not_gradient (ω : G.E → ℝ)
-    (hω : ∀ j, ω ⬝ᵥ P.cycles j = (m.val j : ℝ)) :
+    (hω : ∀ j, ω ⬝ᵥ G.fundCyclesR j = ((G.h1QuotEquiv m.val) j : ℝ)) :
     ¬ ∃ f : G.V → ℝ, G.grad f = ω := by
-  rintro ⟨f, hf⟩
+  rintro ⟨f, rfl⟩
   apply m.prop
+  apply G.h1QuotEquiv.injective
+  rw [map_zero]
   funext j
-  show m.val j = 0
-  have h0 : ω ⬝ᵥ P.cycles j = 0 := by
-    rw [← hf]
-    exact P.grad_period f j
-  have hj := (hω j).symm.trans h0
-  exact_mod_cast hj
+  have hper := G.fundamentalPresentation.toCyclePresentation.grad_period f j
+  rw [show G.fundamentalPresentation.toCyclePresentation.cycles j
+      = G.fundCyclesR j from rfl] at hper
+  have := (hω j).symm.trans hper
+  exact_mod_cast this
 
-/-- Antimatter: the inverse period class. -/
-def neg : MatterSector P := ⟨-m.val, neg_ne_zero.mpr m.prop⟩
+/-- Antimatter: the inverse class. -/
+def neg : MatterSector G := ⟨-m.val, neg_ne_zero.mpr m.prop⟩
 
 /-- **Annihilation**: binding a sector against its antimatter releases
-the pair's entire rest mass — twice the sector's own. -/
+the pair's entire rest mass — twice the sector's own. Algebraic
+cancellation inside `H¹`; the geometric space-changing statement is
+C7. -/
 theorem annihilation :
-    P.toGramData.bindingEnergy m.val m.neg.val = 2 * m.mass :=
-  P.toGramData.bindingEnergy_neg_self m.val
-
-/-! ### Unimodular transport: matter does not depend on the basis label -/
-
-variable (U : Matrix (Fin P.r) (Fin P.r) ℤ) (hU : IsUnit U.det)
-
-/-- **Matter is basis-independent**: a unimodular change of cycle
-basis bijects matter sectors, relabeling `k ↦ Uk`. -/
-noncomputable def rebaseEquiv :
-    MatterSector P ≃ MatterSector (P.rebase U hU) :=
-  Equiv.subtypeEquiv (mulVecEquiv U hU) fun k => not_congr (Iff.intro
-    (fun h => by rw [h]; exact Matrix.mulVec_zero U)
-    (fun h => (mulVecEquiv U hU).injective
-      (h.trans (Matrix.mulVec_zero U).symm)))
-
-/-- Transport preserves mass: the relabeled sector weighs the same. -/
-theorem rebaseEquiv_mass (m : MatterSector P) :
-    ((rebaseEquiv U hU) m).mass = m.mass :=
-  P.rebase_energy U hU m.val
+    G.fundamentalPresentation.toGramData.bindingEnergy
+      (G.h1QuotEquiv m.val) (G.h1QuotEquiv m.neg.val) = 2 * m.mass := by
+  have hneg : G.h1QuotEquiv m.neg.val = -(G.h1QuotEquiv m.val) := by
+    show G.h1QuotEquiv (-m.val) = _
+    rw [map_neg]
+  rw [hneg]
+  exact G.fundamentalPresentation.toGramData.bindingEnergy_neg_self
+    (G.h1QuotEquiv m.val)
 
 end MatterSector
 
-/-- **Lattice-level shadow of the geometric `binding_kills_matter`**:
-if an induced period map kills a matter sector, the energy released is
-the sector's entire mass. The *geometric* content — that gluing a
-2-cell induces such a map — needs a 2-complex layer this 1-dimensional
-framework deliberately lacks; Goal 7 is closed as amended with this
-shadow, and the 2-complex statement is recorded in PLAN (Phase 27) as
-what any future geometric phase must prove. -/
-theorem killed_releases_mass {G' : IncidenceGraph.{u, v}}
-    {P : CyclePresentation G} (P' : CyclePresentation G')
-    (φ : (Fin P.r → ℤ) → (Fin P'.r → ℤ))
-    (m : MatterSector P) (hkill : φ m.val = 0) :
-    m.mass - P'.toGramData.energy (φ m.val) = m.mass := by
-  rw [hkill, P'.toGramData.energy_zero, sub_zero]
+/-- **Matter exists** wherever the graph has nontrivial topology:
+`0 < b₁` forces a nonzero class. -/
+theorem exists_matter (G : IncidenceGraph.{u, v}) (hb : 0 < G.b1) :
+    Nonempty (MatterSector G) := by
+  refine ⟨⟨G.h1QuotEquiv.symm (Pi.single ⟨0, hb⟩ 1), ?_⟩⟩
+  intro h0
+  have := congrArg G.h1QuotEquiv h0
+  rw [LinearEquiv.apply_symm_apply, map_zero] at this
+  have h1 := congrFun this ⟨0, hb⟩
+  rw [Pi.single_eq_same] at h1
+  exact one_ne_zero h1
 
-/-- **Matter exists** wherever the presentation has at least one basis
-cycle: nontrivial topology forces matter. -/
-theorem exists_matter (P : CyclePresentation G) (hr : 0 < P.r) :
-    Nonempty (MatterSector P) := by
-  refine ⟨⟨Pi.single ⟨0, hr⟩ 1, ?_⟩⟩
-  intro h
-  have h0 := congrFun h ⟨0, hr⟩
-  simp at h0
+/-- **Lattice-level shadow of the geometric `binding_kills_matter`**
+(C7's placeholder, scheduled for replacement by the induced-map
+theorem when C7 closes — see PLAN): if a map of class lattices kills
+a matter sector, the energy released is the sector's entire mass. -/
+theorem killed_releases_mass {G' : IncidenceGraph.{u, v}}
+    (φ : ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
+      → ((G'.E → ℤ) ⧸ LinearMap.range (G'.gradLin ℤ)))
+    (m : MatterSector G) (hkill : φ m.val = 0) :
+    m.mass - G'.harmonicEnergy (φ m.val) = m.mass := by
+  rw [hkill]
+  have h0 : G'.harmonicEnergy 0 = 0 := by
+    show G'.fundamentalPresentation.toGramData.energy (G'.h1QuotEquiv 0) = 0
+    rw [map_zero]
+    exact G'.fundamentalPresentation.toGramData.energy_zero
+  rw [h0, sub_zero]
 
 end Meno

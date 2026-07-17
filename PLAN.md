@@ -291,7 +291,7 @@ those instances downstream of `FundamentalPresentation` to route them
 through Euler would invert the import graph for zero mathematical
 gain; the general theorems already subsume them.
 
-### C6 -- Intrinsic matter — OPEN
+### C6 -- Intrinsic matter — CLOSED (Phase 33)
 
 **Current state.** `MatterSector P := {k : Fin P.r → ℤ // k ≠ 0}`
 (Meno/Matter.lean) is presentation-indexed. All physics is already
@@ -309,6 +309,21 @@ restated over the intrinsic object. The coordinate subtype is then
 removed as a definition; `latticeQuotEquiv` supplies coordinates inside
 proofs. `rebaseEquiv` becomes the chart-change lemma of the intrinsic
 object rather than a bijection between different objects.
+
+**Delivered (Phase 33, `Meno/Matter.lean` rewritten).**
+`MatterSector G := {κ : (G.E → ℤ) ⧸ range ∂ᵀℤ // κ ≠ 0}` with
+`mass := harmonicEnergy`, `mass_pos`, `mass_isLeast`, `not_gradient`
+(trapped paradox, intrinsic), `neg`/`annihilation` (through the
+fundamental Gram's binding algebra), `exists_matter` (`0 < b₁` forces
+matter), and **`mass_chart`**: every integral presentation's energy at
+the sector's `latticeQuotEquiv` coordinates equals the intrinsic mass
+— subsuming the Phase-23 `rebaseEquiv` transport exactly as
+prescribed. The coordinate subtype is deleted (1c). Consumers rewired:
+`thetaMatter` (class of a single-edge cochain; `thetaMatter_coords =
+(1,0)`, `thetaMatter_mass = 1/3` through the chart), `wedgeMatter₁`
+(intrinsic, `wedgeMatter₁_mass = 1/n₁`), `wedgeGraph_exists_matter`
+(via `b₁ = 2`). `killed_releases_mass` ported to intrinsic classes,
+still explicitly C7's placeholder-to-delete.
 
 ### C7 -- Geometric binding on 2-complexes (the real Goal 7) — OPEN
 
@@ -487,7 +502,7 @@ incidence layer and C6's intrinsic matter; C9 touches only
 | C3 basis independence | any two presentations of a graph are GL(r,ℤ)-related; `partFn` graph-level | **CLOSED** (Phase 30) |
 | C4 general harmonic theory | `harmonicEnergy : H¹(G;ℤ) → ℝ` + `IsLeast`, every finite graph | **CLOSED** (Phase 30) |
 | C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | **CLOSED** (Phase 32) |
-| C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | OPEN |
+| C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | **CLOSED** (Phase 33) |
 | C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + release + strict `partFn` drop | OPEN |
 | C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | OPEN |
 | C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; `TransitionComplexity` deleted | OPEN |
@@ -3471,3 +3486,32 @@ gravity), C12 (architecture + public claims).
 declarations; zero references to any deleted name.
 
 **End of Phase 32 addendum.**
+
+## Phase 33 addendum: matter goes intrinsic — C6 CLOSED (2026-07-17)
+
+*(Same session.)*
+
+`Meno/Matter.lean` rewritten: a matter sector is a nonzero class of
+the intrinsic quotient `(G.E → ℤ) ⧸ range ∂ᵀℤ`; every physical
+attribute is a theorem through C4's graph-level harmonic theory. The
+Phase-22 coordinate subtype is deleted; `mass_chart` — the energy any
+presentation assigns to the sector's keystone coordinates equals the
+intrinsic mass — replaces and subsumes Phase 23's `rebaseEquiv`
+transport (two presentations' charts agree because both equal the
+intrinsic mass; no `GL(r,ℤ)` matrix appears).
+
+Consumers rewired and masses preserved to the digit: `thetaMatter` is
+now the class of the single-edge cochain `![1,0,0,0,0,0]` with
+coordinates `(1,0)` and mass `1/3`; `wedgeMatter₁` the class of the
+first-cycle single-edge cochain on the **genuine** wedge, mass
+`1/n₁`; both computed through `mass_chart` + the existing closed-form
+Gram chains. `exists_matter` now reads: nontrivial topology
+(`0 < b₁`) forces matter — on any finite graph.
+
+Ledger: **C1–C6, C10, C11 CLOSED.** OPEN: C7 (2-complex binding), C8
+(coding-theorem keystone), C9 (SectorAction gravity), C12
+(architecture + public claims).
+
+`lake build Meno`: 3341 jobs green; zero `sorry`; zero `axiom`.
+
+**End of Phase 33 addendum.**

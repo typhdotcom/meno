@@ -220,7 +220,7 @@ integer period realizability (single-edge cochains on the first and
 second paths), and integer integration (the Phase-19 explicit
 potential, whose entries are integer combinations of `ω`). Feeds the
 keystone `latticeQuotEquiv`. -/
-noncomputable def thetaIntegralPresentation :
+@[reducible] noncomputable def thetaIntegralPresentation :
     IntegralCyclePresentation thetaGraph :=
   { thetaPresentation with
     cyclesZ := ![![1, 1, 0, 0, -1, -1], ![0, 0, 1, 1, -1, -1]]
@@ -243,19 +243,41 @@ noncomputable def thetaIntegralPresentation :
         fin_cases e <;> simp +decide [thetaSrc, thetaTgt] <;> omega
       exact hgrad }
 
-/-- The theta graph has matter: the `(1, 0)` period class, anchored to
-the presentation (Phase 22). Mass, the variational identity,
-no-potential, and annihilation all come from the general
+/-- The theta graph has matter: the intrinsic class of the single-edge
+cochain with periods `(1, 0)` (C6). Mass, the variational identity,
+no-potential, and annihilation all come from the intrinsic
 `MatterSector` API. -/
-noncomputable def thetaMatter : MatterSector thetaPresentation :=
-  ⟨![1, 0], by
-    intro hc
-    have h0 := congrFun hc 0
-    norm_num at h0⟩
+noncomputable def thetaMatter : MatterSector thetaGraph :=
+  ⟨Submodule.Quotient.mk ![1, 0, 0, 0, 0, 0], by
+    intro h0
+    have h := congrArg thetaIntegralPresentation.latticeQuotEquiv h0
+    rw [map_zero] at h
+    have h1 : (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ)
+        ⬝ᵥ thetaIntegralPresentation.cyclesZ 0 = 0 := congrFun h 0
+    rw [show (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ)
+        ⬝ᵥ thetaIntegralPresentation.cyclesZ 0
+        = (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ) ⬝ᵥ ![1, 1, 0, 0, -1, -1]
+      from rfl] at h1
+    exact absurd h1 (by decide)⟩
 
-/-- The theta matter's mass is `1/3` — the same number the Gram data
-assigns, reached through the presentation-level API. -/
+/-- The theta matter's intrinsic coordinates against the theta
+presentation are `(1, 0)`. -/
+theorem thetaMatter_coords :
+    thetaIntegralPresentation.latticeQuotEquiv thetaMatter.val
+      = ![1, 0] := by
+  funext j
+  show (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ)
+    ⬝ᵥ thetaIntegralPresentation.cyclesZ j = ![1, 0] j
+  fin_cases j
+  · show (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ) ⬝ᵥ ![1, 1, 0, 0, -1, -1] = 1
+    decide
+  · show (![1, 0, 0, 0, 0, 0] : Fin 6 → ℤ) ⬝ᵥ ![0, 0, 1, 1, -1, -1] = 0
+    decide
+
+/-- The theta matter's mass is `1/3` — the intrinsic harmonic energy,
+computed through the theta presentation's chart (C6). -/
 theorem thetaMatter_mass : thetaMatter.mass = 1/3 := by
+  rw [← thetaMatter.mass_chart thetaIntegralPresentation, thetaMatter_coords]
   show ∑ i, ∑ j, (gramOf thetaCycles)⁻¹ i j
       * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1/3
   rw [gramOf_thetaCycles, thetaChainGram_inv]
