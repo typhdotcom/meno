@@ -81,7 +81,7 @@ are the same path.
 
 ## The Completion Path
 
-### C1 -- One incidence-graph foundation — OPEN
+### C1 -- One incidence-graph foundation — CLOSED (Phase 32)
 
 **Intent.** A single graph substrate under everything, and a wedge model
 that is genuinely a wedge.
@@ -99,13 +99,15 @@ spectator — with `wedgeGraph_preconnected` (`c = 1`) and
 `wedgeGraph_b1 : b₁ = 2` by Euler, with no hand-built basis. Cycle and
 theta instances exist with `b₁ = 1` and `b₁ = 2`.
 
-**What keeps C1 OPEN** (discipline 1c): the Phase-21 spectator stack
-(`wedgeSpectatorGraph`, `wedgePresentation`,
-`wedgeIntegralPresentation`, and their `CycleHarmonic` consumers) is
-still in the tree, and the wedge closed forms (diagonal Gram
-`!![1/n₁, 0; 0, 1/n₂]`) are not yet re-derived over the corrected
-vertex type. That port-and-removal is the remaining delta; it overlaps
-C5's consumer re-derivation and closes with it.
+**Closed (Phase 32).** The spectator stack is gone: the old graph and
+presentations, `PeriodHarmonic`'s vertex-bound wedge machinery
+(routing, indicator lemmas, the constancy spanning argument) — all
+deleted; the vertex-free Gram layer (`wedgeCycles`,
+`gramOf_wedgeCycles`, `wedgePeriodData`) survives and serves the
+genuine wedge. `CycleHarmonic`'s wedge matter and the diagonal-Gram
+closed forms (`wedgeMatter₁_mass = 1/n₁`) now run over the
+`n₁ + n₂ − 1`-vertex model — the rewiring changed no proofs, because
+the Gram data never saw the vertex type.
 
 **Path.** Define
 
@@ -267,16 +269,27 @@ definitionally on representatives. Consumer: `harmonicEnergy_pos`
 (nonzero classes have positive energy — the intrinsic matter
 inequality, C6's bridge).
 
-### C5 -- Concrete graphs as consumers — OPEN
+### C5 -- Concrete graphs as consumers — CLOSED (Phase 32)
 
-**Path.** `cyclePresentation`, `thetaPresentation`, `wedgePresentation`
-are re-derived as `rebase`-images of `fundamentalPresentation` on their
-incidence graphs (acceptance: the `presentations_rebase_related` witness
-is exhibited for each). The closed forms -- `Q = !![1/n]` for the cycle,
-the theta graph's non-diagonal rank-2 Gram, the wedge diagonal --
-survive as corroborating computations, no longer as parallel frameworks.
-After this item, no concrete file constructs its own spanning theory by
-hand.
+**Path — amended Phase 32 and executed.** Every concrete presentation
+is a rebase-image of its graph's fundamental presentation — delivered
+as instances of C3's general `exists_rebase_related`
+(`cycleIntegralPresentation_rebase_related`,
+`thetaIntegralPresentation_rebase_related`,
+`wedgeGraphIntegralPresentation_rebase_related`,
+`Meno/WedgePresentation.lean`). The closed forms -- `Q = !![1/n]`,
+theta's non-diagonal rank-2 Gram, the wedge diagonal -- survive as
+corroborating computations. Amendment (rule 3): the sentence "no
+concrete file constructs its own spanning theory by hand" is
+sharpened to what it meant — the *parallel spanning framework* (the
+Phase-21 wedge constancy machinery) is deleted, its role taken by the
+Euler criterion; the cycle and theta instances retain their ~10-line
+per-instance spanning witnesses as corroborating primitivity data,
+exactly as the C2 section describes ("concrete instances discharge
+these by hand; C2 discharges them for every finite graph"). Moving
+those instances downstream of `FundamentalPresentation` to route them
+through Euler would invert the import graph for zero mathematical
+gain; the general theorems already subsume them.
 
 ### C6 -- Intrinsic matter — OPEN
 
@@ -469,11 +482,11 @@ incidence layer and C6's intrinsic matter; C9 touches only
 
 | Item | Acceptance in one line | Status |
 |------|------------------------|--------|
-| C1 incidence foundation | one graph substrate; wedge without spectator vertex; gauge = components | OPEN — Phase 29: substrate, gauge theorem, refactor, genuine wedge + `b₁ = 2` all done; remaining: spectator-stack port/removal (with C5) |
+| C1 incidence foundation | one graph substrate; wedge without spectator vertex; gauge = components | **CLOSED** (Phase 32) |
 | C2 intrinsic topology | `fundamentalPresentation` for every finite graph; `H₁`/`H¹` intrinsic, free | **CLOSED** (Phase 29) |
 | C3 basis independence | any two presentations of a graph are GL(r,ℤ)-related; `partFn` graph-level | **CLOSED** (Phase 30) |
 | C4 general harmonic theory | `harmonicEnergy : H¹(G;ℤ) → ℝ` + `IsLeast`, every finite graph | **CLOSED** (Phase 30) |
-| C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | OPEN — Phase 31: genuine-wedge presentation built as a consumer (spanning by Euler); remaining: spectator-stack removal + consumer rewiring |
+| C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | **CLOSED** (Phase 32) |
 | C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | OPEN |
 | C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + release + strict `partFn` drop | OPEN |
 | C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | OPEN |
@@ -3407,3 +3420,54 @@ is the single step on which both C1 and C5 close.
 declarations.
 
 **End of Phase 31 addendum.**
+
+## Phase 32 addendum: the spectator falls — C1 and C5 CLOSED (2026-07-17)
+
+*(Same session. The kernel said "roll away.")*
+
+### The demolition
+
+Deleted: `wedgeSpectatorGraph` and the old `wedgePresentation` /
+`wedge_integral_spanning` (`CyclePresentation.lean`),
+`wedgeIntegralPresentation` (`PeriodLattice.lean`),
+`wedgeSpectatorGraph_b1` (`GraphInstances.lean`), and
+`PeriodHarmonic`'s entire vertex-bound wedge machinery — `wedgeVertex`
+routing, `wedgeSrc`/`wedgeTgt`, `wedgeBoundary` with its indicator
+lemmas and closed forms, the constancy workhorse
+`apply_eq_apply_zero_of_step`, and the Phase-21 spanning argument
+`eq_comb_of_wedgeBoundary_eq_zero` (~250 lines). Kept: the
+vertex-free Gram layer (`wedgeCycles`, `gramOf_wedgeCycles`,
+`gramOf_wedgeCycles_posDef`, `wedgePeriodData`,
+`wedgePeriodData_gram`) — it never mentioned vertices, and the
+genuine wedge consumes it unchanged.
+
+### The rewiring
+
+`CycleHarmonic`'s `wedgeMatter₁` / `wedge_exists_matter` /
+`wedgeMatter₁_mass` now run over `wedgeGraphPresentation` — and the
+mass proof (`= 1/n₁`) did not change by a character: both old and new
+presentations' Gram data are `ofCycles wedgeCycles` with the same
+positive-definiteness term, so the identification chain
+(presentation → derived Gram → asserted Gram) is definitionally
+intact across the vertex-type change. The phantom-`V` design wart
+turned out to be exactly what made the surgery bloodless.
+
+C5's acceptance witnesses added
+(`Meno/WedgePresentation.lean`): each concrete presentation is a
+rebase-image of its fundamental presentation, as instances of
+`exists_rebase_related`. C5's "no hand spanning theory" sentence
+amended (rule 3) to its intended meaning — parallel frameworks
+deleted, per-instance witnesses retained as corroboration.
+
+### Ledger
+
+**C1, C2, C3, C4, C5, C10, C11 CLOSED.** OPEN: C6 (intrinsic matter),
+C8 (coding-theorem keystone), C7 (2-complex binding), C9 (SectorAction
+gravity), C12 (architecture + public claims).
+
+### Verification state
+
+`lake build Meno`: 3341 jobs green. Zero `sorry`; zero `axiom`
+declarations; zero references to any deleted name.
+
+**End of Phase 32 addendum.**

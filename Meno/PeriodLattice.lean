@@ -217,7 +217,7 @@ noncomputable def latticeQuotEquiv :
 
 end IntegralCyclePresentation
 
-/-! ## Instances: the cycle graph and the (spectator) wedge -/
+/-! ## Instances: the cycle graph -/
 
 /-- The cycle graph as an integral presentation. -/
 noncomputable def cycleIntegralPresentation (n : ℕ) (hn : 0 < n) :
@@ -242,77 +242,5 @@ noncomputable def cycleIntegralPresentation (n : ℕ) (hn : 0 < n) :
         show ∑ m, ω m = ∑ m, ω m * 1
         simp
       exact ⟨finPrefixSum ω, funext fun e => finPrefixSum_grad ω hsum e⟩ }
-
-/-- The (spectator) wedge of two cycles as an integral presentation. -/
-noncomputable def wedgeIntegralPresentation (n₁ n₂ : ℕ)
-    (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
-    IntegralCyclePresentation (wedgeSpectatorGraph n₁ n₂ h₁ h₂) :=
-  haveI : NeZero n₁ := ⟨h₁.ne'⟩
-  haveI : NeZero n₂ := ⟨h₂.ne'⟩
-  { wedgePresentation n₁ n₂ h₁ h₂ with
-    cyclesZ := ![Sum.elim (fun _ => 1) (fun _ => 0),
-      Sum.elim (fun _ => 0) (fun _ => 1)]
-    cyclesZ_cast := fun i e => by
-      fin_cases i <;> cases e <;> simp [wedgeCycles]
-    periods_onto := fun k => by
-      refine ⟨Sum.elim (fun e => if e = 0 then k 0 else 0)
-        (fun e => if e = 0 then k 1 else 0), fun j => ?_⟩
-      fin_cases j
-      · show ∑ e : Fin n₁ ⊕ Fin n₂,
-            Sum.elim (fun e => if e = 0 then k 0 else 0)
-              (fun e => if e = 0 then k 1 else 0) e
-            * Sum.elim (fun _ => (1 : ℤ)) (fun _ => 0) e = k 0
-        rw [Fintype.sum_sum_type]
-        simp
-      · show ∑ e : Fin n₁ ⊕ Fin n₂,
-            Sum.elim (fun e => if e = 0 then k 0 else 0)
-              (fun e => if e = 0 then k 1 else 0) e
-            * Sum.elim (fun _ => (0 : ℤ)) (fun _ => 1) e = k 1
-        rw [Fintype.sum_sum_type]
-        simp
-    integral_potentials := fun ω h => by
-      have hL : ∑ m, ω (Sum.inl m) = 0 := by
-        have h0 : ω ⬝ᵥ Sum.elim (fun _ => (1 : ℤ)) (fun _ => 0) = 0 := h 0
-        rw [show ω ⬝ᵥ Sum.elim (fun _ => (1 : ℤ)) (fun _ => 0)
-            = ∑ e, ω e * Sum.elim (fun _ => (1 : ℤ)) (fun _ => 0) e
-          from rfl, Fintype.sum_sum_type] at h0
-        simpa using h0
-      have hR : ∑ m, ω (Sum.inr m) = 0 := by
-        have h1 : ω ⬝ᵥ Sum.elim (fun _ => (0 : ℤ)) (fun _ => 1) = 0 := h 1
-        rw [show ω ⬝ᵥ Sum.elim (fun _ => (0 : ℤ)) (fun _ => 1)
-            = ∑ e, ω e * Sum.elim (fun _ => (0 : ℤ)) (fun _ => 1) e
-          from rfl, Fintype.sum_sum_type] at h1
-        simpa using h1
-      refine ⟨Sum.elim (finPrefixSum (fun m => ω (Sum.inl m)))
-        (finPrefixSum (fun m => ω (Sum.inr m))), ?_⟩
-      have hgv : ∀ v : Fin n₂,
-          Sum.elim (finPrefixSum (fun m => ω (Sum.inl m)))
-            (finPrefixSum (fun m => ω (Sum.inr m))) (wedgeVertex n₁ n₂ v)
-          = finPrefixSum (fun m => ω (Sum.inr m)) v := by
-        intro v
-        unfold wedgeVertex
-        by_cases hv : v = 0
-        · rw [if_pos hv, hv]
-          show finPrefixSum (fun m => ω (Sum.inl m)) 0
-            = finPrefixSum (fun m => ω (Sum.inr m)) 0
-          rw [finPrefixSum_zero, finPrefixSum_zero]
-        · rw [if_neg hv]
-          rfl
-      funext e
-      cases e with
-      | inl a =>
-        show finPrefixSum (fun m => ω (Sum.inl m)) (a + 1)
-            - finPrefixSum (fun m => ω (Sum.inl m)) a = ω (Sum.inl a)
-        exact finPrefixSum_grad _ hL a
-      | inr b =>
-        show Sum.elim (finPrefixSum (fun m => ω (Sum.inl m)))
-              (finPrefixSum (fun m => ω (Sum.inr m)))
-              (wedgeVertex n₁ n₂ (b + 1))
-            - Sum.elim (finPrefixSum (fun m => ω (Sum.inl m)))
-              (finPrefixSum (fun m => ω (Sum.inr m)))
-              (wedgeVertex n₁ n₂ b)
-          = ω (Sum.inr b)
-        rw [hgv, hgv]
-        exact finPrefixSum_grad _ hR b }
 
 end Meno

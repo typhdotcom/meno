@@ -503,7 +503,7 @@ end CyclePresentation
 
 end Rebase
 
-/-! ## Instances: the cycle graph and the (spectator) wedge -/
+/-! ## Instances: the cycle graph -/
 
 /-- The cycle graph `C_n` as a presentation: one basis cycle (all
 ones) on `cycleGraph n`. -/
@@ -523,45 +523,16 @@ ones) on `cycleGraph n`. -/
       rw [gramOf_cycleAllOnes]
       exact posDef_fin_one _ (by exact_mod_cast hn) }
 
-/-- The Phase-21 wedge model **with its spectator vertex** — the
-vertex type is `Fin n₁ ⊕ Fin n₂`, one vertex larger than a genuine
-one-point union. Named honestly: the Completion Path (C1) replaces
-this model with a wedge over `n₁ + n₂ − 1` vertices; until that item
-closes, this transitional graph keeps the Phase-21/25 wedge stack
-compiling. -/
-@[reducible] def wedgeSpectatorGraph (n₁ n₂ : ℕ)
-    (h₁ : 0 < n₁) (h₂ : 0 < n₂) : IncidenceGraph :=
-  haveI : NeZero n₁ := ⟨h₁.ne'⟩
-  haveI : NeZero n₂ := ⟨h₂.ne'⟩
-  { V := Fin n₁ ⊕ Fin n₂
-    E := Fin n₁ ⊕ Fin n₂
-    src := wedgeSrc n₁ n₂
-    tgt := wedgeTgt n₁ n₂ }
-
-/-- The wedge of two cycles as a presentation: the Phase-21 graph,
-two disjoint-support basis cycles. -/
-@[reducible] noncomputable def wedgePresentation (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
-    CyclePresentation (wedgeSpectatorGraph n₁ n₂ h₁ h₂) :=
-  haveI : NeZero n₁ := ⟨h₁.ne'⟩
-  haveI : NeZero n₂ := ⟨h₂.ne'⟩
-  { r := 2
-    cycles := wedgeCycles n₁ n₂
-    cycles_closed := fun i v => wedgeBoundary_cycles n₁ n₂ i v
-    spanning := fun ω hω => by
-      refine ⟨![ω (Sum.inl 0), ω (Sum.inr 0)], ?_⟩
-      have h := eq_comb_of_wedgeBoundary_eq_zero n₁ n₂ ω (fun v => hω v)
-      funext e
-      rw [congrFun h e, Fin.sum_univ_two]
-      rfl
-    gram_posDef := gramOf_wedgeCycles_posDef n₁ n₂ h₁ h₂ }
-
 /-! ## Integral primitivity
 
 The chosen bases are *primitive*: an integer-valued cochain with zero
 boundary is an **integer** combination of the basis cycles — the
 period lattice is the full integral cycle lattice, not a finite-index
 sublattice. This is inherited from the real spanning proofs, whose
-coefficients are evaluations of the cochain itself.
+coefficients are evaluations of the cochain itself. (The wedge's
+instance lives with its genuine graph in
+`Meno/WedgePresentation.lean`; C3's `exists_int_coords` proves
+primitivity for every integral presentation.)
 
 Primitivity is the load-bearing hypothesis of the keystone's
 finite-resolution form (see PLAN, Phase 24): it is what makes the
@@ -581,21 +552,5 @@ theorem cycle_integral_spanning (n : ℕ) [NeZero n] (ω : Fin n → ℤ)
         rw [Fin.sum_univ_one]
         rfl
 
-/-- The wedge's disjoint-support basis is integrally primitive. -/
-theorem wedge_integral_spanning (n₁ n₂ : ℕ) [NeZero n₁] [NeZero n₂]
-    (ω : Fin n₁ ⊕ Fin n₂ → ℤ)
-    (h : ∀ v, wedgeBoundary n₁ n₂ (fun e => (ω e : ℝ)) v = 0) :
-    ∃ a : Fin 2 → ℤ, ∀ e,
-      (ω e : ℝ) = ∑ i, (a i : ℝ) * wedgeCycles n₁ n₂ i e := by
-  refine ⟨![ω (Sum.inl 0), ω (Sum.inr 0)], fun e => ?_⟩
-  have hr := eq_comb_of_wedgeBoundary_eq_zero n₁ n₂
-    (fun e => (ω e : ℝ)) h
-  calc (ω e : ℝ)
-      = (ω (Sum.inl 0) : ℝ) * wedgeCycles n₁ n₂ 0 e
-        + (ω (Sum.inr 0) : ℝ) * wedgeCycles n₁ n₂ 1 e := congrFun hr e
-    _ = ∑ i, ((![ω (Sum.inl 0), ω (Sum.inr 0)] : Fin 2 → ℤ) i : ℝ)
-          * wedgeCycles n₁ n₂ i e := by
-        rw [Fin.sum_univ_two]
-        rfl
 
 end Meno

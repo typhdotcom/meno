@@ -19,11 +19,10 @@ machinery instead of hand-built cycle bases:
   `IntegralCyclePresentation.r_eq_b1`: the hand-built presentations'
   ranks (1 and 2) equal the graphs' Betti numbers.
 
-The spectator model (`wedgeSpectatorGraph`) remains in the tree until
-C5 re-derives its consumers over this wedge; its `b₁` is also `2`
-(`wedgeSpectatorGraph_b1`), which is exactly why its defect is the
-*vertex count*, not the cycle count — Euler hides the spectator by
-counting it as its own component. -/
+(The Phase-21 spectator model is gone — removed once the genuine
+wedge's presentation existed. Its `b₁` was also `2`, which is exactly
+why the defect was the *vertex count*, not the cycle count: Euler
+hides a spectator by counting it as its own component.) -/
 
 namespace Meno
 
@@ -78,13 +77,6 @@ theorem cycleGraph_b1' (n : ℕ) (hn : 0 < n) : (cycleGraph n hn).b1 = 1 :=
 presentation meets the fundamental one through `r_eq_b1`. -/
 theorem thetaGraph_b1 : thetaGraph.b1 = 2 :=
   (thetaIntegralPresentation.r_eq_b1).symm.trans rfl
-
-/-- The spectator wedge's Betti number is also `2` — Euler counts the
-spectator as its own component, which is exactly why the defect is
-the vertex count, not the cycle count. -/
-theorem wedgeSpectatorGraph_b1 (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
-    (wedgeSpectatorGraph n₁ n₂ h₁ h₂).b1 = 2 :=
-  ((wedgeIntegralPresentation n₁ n₂ h₁ h₂).r_eq_b1).symm.trans rfl
 
 /-! ## The genuine wedge -/
 

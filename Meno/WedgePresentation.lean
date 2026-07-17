@@ -21,9 +21,9 @@ citizen: a cycle presentation and an integral presentation, built as
 
 The Gram matrix is unchanged — `gramOf wedgeCycles` never saw the
 vertex type — so the diagonal closed form and the derived energies
-carry over identically. With this file the spectator stack has no
-mathematical content left that the genuine wedge lacks; its removal
-is the remaining C5 step. -/
+carry over identically. The Phase-21 spectator stack (its graph, its
+presentations, and its constancy machinery) has been removed; the
+wedge consumers in `Meno/CycleHarmonic.lean` run through this file. -/
 
 namespace Meno
 
@@ -219,5 +219,46 @@ noncomputable def wedgeGraphIntegralPresentation (n₁ n₂ : ℕ)
 theorem wedgeGraph_exists_matter (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
     Nonempty (MatterSector (wedgeGraphPresentation n₁ n₂ h₁ h₂)) :=
   exists_matter _ (by norm_num)
+
+/-! ## C5's acceptance witnesses
+
+Each concrete presentation is a rebase-image of its graph's
+fundamental presentation — instances of C3's
+`exists_rebase_related`. -/
+
+theorem cycleIntegralPresentation_rebase_related (n : ℕ) (hn : 0 < n) :
+    ∃ (U : Matrix (Fin ((cycleGraph n hn).fundamentalPresentation).r)
+        (Fin ((cycleGraph n hn).fundamentalPresentation).r) ℤ)
+      (hU : IsUnit U.det),
+      ∀ i e, (cycleIntegralPresentation n hn).cycles
+          (Fin.cast (((cycleGraph n hn).fundamentalPresentation).r_eq_b1.trans
+            (cycleIntegralPresentation n hn).r_eq_b1.symm) i) e
+        = (((cycleGraph n hn).fundamentalPresentation).toCyclePresentation.rebase
+            U hU).cycles i e :=
+  IntegralCyclePresentation.exists_rebase_related _ _
+
+theorem thetaIntegralPresentation_rebase_related :
+    ∃ (U : Matrix (Fin (thetaGraph.fundamentalPresentation).r)
+        (Fin (thetaGraph.fundamentalPresentation).r) ℤ)
+      (hU : IsUnit U.det),
+      ∀ i e, thetaIntegralPresentation.cycles
+          (Fin.cast ((thetaGraph.fundamentalPresentation).r_eq_b1.trans
+            thetaIntegralPresentation.r_eq_b1.symm) i) e
+        = ((thetaGraph.fundamentalPresentation).toCyclePresentation.rebase
+            U hU).cycles i e :=
+  IntegralCyclePresentation.exists_rebase_related _ _
+
+theorem wedgeGraphIntegralPresentation_rebase_related
+    (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
+    ∃ (U : Matrix (Fin ((wedgeGraph n₁ n₂ h₁ h₂).fundamentalPresentation).r)
+        (Fin ((wedgeGraph n₁ n₂ h₁ h₂).fundamentalPresentation).r) ℤ)
+      (hU : IsUnit U.det),
+      ∀ i e, (wedgeGraphIntegralPresentation n₁ n₂ h₁ h₂).cycles
+          (Fin.cast
+            (((wedgeGraph n₁ n₂ h₁ h₂).fundamentalPresentation).r_eq_b1.trans
+              (wedgeGraphIntegralPresentation n₁ n₂ h₁ h₂).r_eq_b1.symm) i) e
+        = (((wedgeGraph n₁ n₂ h₁ h₂).fundamentalPresentation).toCyclePresentation.rebase
+            U hU).cycles i e :=
+  IntegralCyclePresentation.exists_rebase_related _ _
 
 end Meno

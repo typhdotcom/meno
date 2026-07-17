@@ -2,6 +2,7 @@ import Meno.HarmonicForm
 import Meno.Matter
 import Meno.PeriodHarmonic
 import Meno.Simplicial
+import Meno.WedgePresentation
 
 /-! # Cycle-Graph Harmonic Bridge — the flagship spine integration
 
@@ -202,13 +203,13 @@ positive-definiteness and summability are inherited from
 `QuadraticAction.ofDiagonal₂`, whose Gram matrix is definitionally the
 same.
 
-The graph-level *derivation* of this Gram form is formalized in
-`Meno/PeriodHarmonic.lean` through the period machinery: the wedge
-graph's two basis cycles have disjoint edge supports, chain Gram
-`diag(n₁, n₂)`, spanning is a theorem (`b₁ = 2`,
-`eq_comb_of_wedgeBoundary_eq_zero`), and the period Gram is the
-inverse. The identification with the data below lives in the
-`PeriodUnification` section (`wedgePeriodData_gram_eq`,
+The graph-level *derivation* of this Gram form is now the genuine
+wedge's (`Meno/WedgePresentation.lean`, C1/C5): the two basis cycles
+have disjoint edge supports, chain Gram `diag(n₁, n₂)` (vertex-free,
+`Meno/PeriodHarmonic.lean`), spanning by the Euler criterion on the
+`n₁ + n₂ − 1`-vertex graph, and the period Gram is the inverse. The
+identification with the data below lives in the `PeriodUnification`
+section (`wedgePeriodData_gram_eq`,
 `wedgeHarmonicGramData_energy_isLeast`). A simplicial wedge complex
 with its own Hodge decomposition still does not exist in
 `Simplicial.lean` — the derivation is cohomological (periods), not
@@ -238,19 +239,19 @@ theorem wedgeHarmonicGramData_energy_basis₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥
       * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1 / n₁
   simp [Fin.sum_univ_two]
 
-/-- **Rank-2 matter exists**: the wedge carries matter sectors — now
-anchored to the wedge presentation itself (Phase 22), not to bare Gram
-data. First matter instance above rank 1 — the abstraction stack is
-not secretly rank-1. -/
+/-- **Rank-2 matter exists**: the wedge carries matter sectors —
+anchored to the **genuine** wedge's presentation (C1/C5), not to bare
+Gram data. First matter instance above rank 1 — the abstraction stack
+is not secretly rank-1. -/
 noncomputable def wedgeMatter₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
-    MatterSector (wedgePresentation n₁ n₂ (by omega) (by omega)) :=
+    MatterSector (wedgeGraphPresentation n₁ n₂ (by omega) (by omega)) :=
   ⟨![1, 0], by
     intro h
     have h0 := congrFun h 0
     simp at h0⟩
 
 theorem wedge_exists_matter (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
-    Nonempty (MatterSector (wedgePresentation n₁ n₂ (by omega) (by omega))) :=
+    Nonempty (MatterSector (wedgeGraphPresentation n₁ n₂ (by omega) (by omega))) :=
   ⟨wedgeMatter₁ n₁ n₂ h₁ h₂⟩
 
 
