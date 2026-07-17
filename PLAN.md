@@ -2274,3 +2274,81 @@ chosen cycle basis; only the *labels* `k` are basis-relative.
 - Geodesic instance (Goal 4, plumbing). Halted/pruned: unchanged.
 
 **End of Phase 23 addendum.**
+
+---
+
+## Phase 24 addendum: primitivity, the parameter split, and the keystone stated
+
+*(Appended after Phase 23; session date 2026-07-17.)*
+
+### What was proved
+
+1. **Integral primitivity, all three instances**
+   (`cycle_integral_spanning`, `wedge_integral_spanning` in
+   `Meno/CyclePresentation.lean`; `theta_integral_spanning` in
+   `Meno/ThetaHarmonic.lean`): an integer-valued cochain with zero
+   boundary is an **integer** combination of the chosen basis — the
+   period lattice is the full integral cycle lattice, not a
+   finite-index sublattice. Inherited from the real spanning proofs,
+   whose coefficients were always evaluations of the cochain itself
+   (`ω 0`; `ω (inl 0), ω (inr 0)`; `ω 0, ω 2`). This closes the
+   remainder of the Phase-22 review's point 1. All three compiled
+   first-try.
+2. **The parameter split** (`card_edges_eq_finrank_gauge_add_r`):
+   `|E| = rank ∂ + r` — describing a cochain takes `rank ∂`
+   re-describable gauge parameters plus exactly `r` incompressible
+   ones. The counting shadow of `cochainQuotEquiv`; the ℝ-dimensional
+   form of the keystone's description-cost split.
+
+### The keystone connecting theorem — STATED (gated, not built)
+
+Per the standing discipline (state the connecting theorem before
+building vocabulary), the proposed formal target joining InfoRatchet
+to the period layer:
+
+> **Keystone (finite-resolution form).** Fix a resolution `q ≥ 2`.
+> For a graph presentation with integrally primitive cycle basis, let
+> `C_q := ι → ZMod q` (descriptions at resolution `q`) and
+> `G_q ≤ C_q` the subgroup of mod-`q` gradients (neighbor-local
+> re-descriptions). Then:
+>
+> * **(K1) Residue counting**: `|C_q ⧸ G_q| = q^{b₁}` — the
+>   incompressible description cost is exactly `b₁ · log q`.
+> * **(K2) Split**: `log |C_q| = log |G_q| + b₁ · log q` — total
+>   description = gauge freedom + incompressible residue, in
+>   InfoRatchet's literal log-cardinality vocabulary.
+> * **(K3) Fiber uniformity**: every fiber of the quotient map
+>   `C_q → C_q ⧸ G_q` has cardinality `|G_q|` — the fiber information
+>   of compression is pure gauge; what a section must add back is
+>   exactly the local re-description freedom.
+
+Notes recorded with the statement:
+- **Primitivity is the load-bearing hypothesis**: it is what makes
+  the mod-`q` period map surjective onto `(ZMod q)^{b₁}` (a
+  non-primitive basis would produce a proper subgroup and a residue
+  count divisible by the index). Phase 24's trio was bookkeeping
+  until this statement; now it is a hypothesis.
+- Graph incidence matrices are totally unimodular, so
+  `rank_q ∂ = rank_ℚ ∂` for **every** `q` — no bad primes; (K1) holds
+  at all resolutions, which is what lets "b₁ digits of resolution"
+  be resolution-independent.
+- The cleaner route may be the ℤ-form first:
+  `C_ℤ ⧸ G_ℤ ≅ ℤ^{b₁}` (torsion-free, by primitivity), from which
+  every finite-resolution form follows by tensoring. Recommend
+  proving the ℤ-form and deriving (K1)–(K3).
+
+**Vocabulary cost if built**: a ZMod-`q` (or ℤ) cochain/gradient
+layer parallel to the ℝ one — a genuine phase, possibly
+Phase-15-sized. **Gated**: awaiting endorsement of this statement.
+
+### Board after this phase
+
+- **The keystone build** (statement above) — awaiting endorsement.
+- Geometric `binding_kills_matter` (Goal 7 remainder) — still needs
+  its own stated connecting theorem.
+- Geodesic instance (Goal 4, plumbing): `Geodesic` class has zero
+  instances; the cycle graph's walk-length instance plus the
+  geodesic/harmonic duality `n · (1/n) = 1` is the target.
+- Halted/pruned: unchanged.
+
+**End of Phase 24 addendum.**

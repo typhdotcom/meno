@@ -366,6 +366,22 @@ theorem thetaExactness (ω : Fin 6 → ℝ) :
   · rintro ⟨f, rfl⟩ i
     exact thetaGrad_period f i
 
+/-- The theta basis `c₁ = p₁ − p₃`, `c₂ = p₂ − p₃` is integrally
+primitive: an integer cochain with zero boundary is an *integer*
+combination of the basis. Completes the primitivity trio (cycle and
+wedge in `Meno/CyclePresentation.lean`). -/
+theorem theta_integral_spanning (ω : Fin 6 → ℤ)
+    (h : ∀ w, thetaBoundary (fun e => (ω e : ℝ)) w = 0) :
+    ∃ a : Fin 2 → ℤ, ∀ e, (ω e : ℝ) = ∑ i, (a i : ℝ) * thetaCycles i e := by
+  refine ⟨![ω 0, ω 2], fun e => ?_⟩
+  have hr := eq_comb_of_thetaBoundary_eq_zero (fun e => (ω e : ℝ)) h
+  calc (ω e : ℝ)
+      = (ω 0 : ℝ) * thetaCycles 0 e + (ω 2 : ℝ) * thetaCycles 1 e :=
+        congrFun hr e
+    _ = ∑ i, ((![ω 0, ω 2] : Fin 2 → ℤ) i : ℝ) * thetaCycles i e := by
+        rw [Fin.sum_univ_two]
+        rfl
+
 /-- **Matter admits no potential**: the minimum-energy representative
 of a nonzero sector is not a gradient. The constraint system it
 encodes is locally consistent and globally unsatisfiable. -/

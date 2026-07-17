@@ -316,6 +316,18 @@ theorem finrank_cochainQuot :
   rw [P.cochainQuotEquiv.finrank_eq, Module.finrank_fintype_fun_eq_card,
     Fintype.card_fin]
 
+/-- **The parameter split**: describing a cochain takes `rank ∂`
+re-describable (gauge) parameters plus exactly `r` incompressible
+ones. The counting shadow of the incompressible-residue equivalence —
+and the ℝ-dimensional form of the keystone's description-cost split. -/
+theorem card_edges_eq_finrank_gauge_add_r :
+    Fintype.card ι
+      = Module.finrank ℝ (LinearMap.range P.gradLin) + P.r := by
+  have h := Submodule.finrank_quotient_add_finrank
+    (LinearMap.range P.gradLin)
+  rw [P.finrank_cochainQuot, Module.finrank_fintype_fun_eq_card] at h
+  omega
+
 end CyclePresentation
 
 /-! ## Unimodular change of basis: the gate, closed
@@ -598,5 +610,48 @@ noncomputable def wedgePresentation (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 
       rw [congrFun h e, Fin.sum_univ_two]
       rfl
     gram_posDef := gramOf_wedgeCycles_posDef n₁ n₂ h₁ h₂ }
+
+/-! ## Integral primitivity
+
+The chosen bases are *primitive*: an integer-valued cochain with zero
+boundary is an **integer** combination of the basis cycles — the
+period lattice is the full integral cycle lattice, not a finite-index
+sublattice. This is inherited from the real spanning proofs, whose
+coefficients are evaluations of the cochain itself.
+
+Primitivity is the load-bearing hypothesis of the keystone's
+finite-resolution form (see PLAN, Phase 24): it is what makes the
+mod-`q` period map surjective, hence the compression residue exactly
+`b₁` resolution-digits. The theta instance lives in
+`Meno/ThetaHarmonic.lean`. -/
+
+/-- The cycle graph's all-ones basis is integrally primitive. -/
+theorem cycle_integral_spanning (n : ℕ) [NeZero n] (ω : Fin n → ℤ)
+    (h : ∀ v, cycleBoundary n (fun e => (ω e : ℝ)) v = 0) :
+    ∃ a : Fin 1 → ℤ, ∀ e, (ω e : ℝ) = ∑ i, (a i : ℝ) * cycleAllOnes n i e := by
+  refine ⟨![ω 0], fun e => ?_⟩
+  have hr := eq_smul_allOnes_of_cycleBoundary_eq_zero n
+    (fun e => (ω e : ℝ)) h
+  calc (ω e : ℝ) = (ω 0 : ℝ) * cycleAllOnes n 0 e := congrFun hr e
+    _ = ∑ i, ((![ω 0] : Fin 1 → ℤ) i : ℝ) * cycleAllOnes n i e := by
+        rw [Fin.sum_univ_one]
+        rfl
+
+/-- The wedge's disjoint-support basis is integrally primitive. -/
+theorem wedge_integral_spanning (n₁ n₂ : ℕ) [NeZero n₁] [NeZero n₂]
+    (ω : Fin n₁ ⊕ Fin n₂ → ℤ)
+    (h : ∀ v, wedgeBoundary n₁ n₂ (fun e => (ω e : ℝ)) v = 0) :
+    ∃ a : Fin 2 → ℤ, ∀ e,
+      (ω e : ℝ) = ∑ i, (a i : ℝ) * wedgeCycles n₁ n₂ i e := by
+  refine ⟨![ω (Sum.inl 0), ω (Sum.inr 0)], fun e => ?_⟩
+  have hr := eq_comb_of_wedgeBoundary_eq_zero n₁ n₂
+    (fun e => (ω e : ℝ)) h
+  calc (ω e : ℝ)
+      = (ω (Sum.inl 0) : ℝ) * wedgeCycles n₁ n₂ 0 e
+        + (ω (Sum.inr 0) : ℝ) * wedgeCycles n₁ n₂ 1 e := congrFun hr e
+    _ = ∑ i, ((![ω (Sum.inl 0), ω (Sum.inr 0)] : Fin 2 → ℤ) i : ℝ)
+          * wedgeCycles n₁ n₂ i e := by
+        rw [Fin.sum_univ_two]
+        rfl
 
 end Meno
