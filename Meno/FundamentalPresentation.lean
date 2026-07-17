@@ -588,4 +588,15 @@ theorem card_quotient_eq (q : ℕ) [NeZero q] :
 
 end IncidenceGraph
 
+/-- **Rank well-definedness** (the first C3 brick): every integral
+presentation of a graph has rank `b₁` — the chosen basis size is not
+a choice at all. Both keystone equivalences target the same quotient;
+composing them equates the ranks. -/
+theorem IntegralCyclePresentation.r_eq_b1 {G : IncidenceGraph.{u, v}}
+    (Q : IntegralCyclePresentation G) : Q.r = G.b1 := by
+  have e := Q.latticeQuotEquiv.symm.trans G.h1QuotEquiv
+  have h := e.finrank_eq
+  rwa [Module.finrank_fintype_fun_eq_card, Module.finrank_fintype_fun_eq_card,
+    Fintype.card_fin, Fintype.card_fin] at h
+
 end Meno

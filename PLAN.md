@@ -86,13 +86,26 @@ are the same path.
 **Intent.** A single graph substrate under everything, and a wedge model
 that is genuinely a wedge.
 
-**Current state.** `CyclePresentation` (Meno/CyclePresentation.lean)
-carries `src tgt : ι → V` as bare fields; cycle, wedge, and theta each
-hand-roll vertex/edge types. The wedge presentation's vertex type is
-`Fin n₁ ⊕ Fin n₂` (`wedgePresentation`), which has `n₁ + n₂` vertices
-where a one-point union has `n₁ + n₂ − 1`: the vertex `Sum.inr 0` is an
-isolated spectator. Phase 21 documented this honestly; under discipline
-rule 2, documented is OPEN.
+**Current state (Phase 29).** Substantially built: `IncidenceGraph`
+exists (`Meno/IncidenceGraph.lean`) with boundary/gradient/Stokes
+defined once over any commutative ring, the walk calculus, components,
+the gauge theorem `finrank_gauge` (acceptance ✓), and walk
+integration; `CyclePresentation`/`IntegralCyclePresentation` are
+graph-indexed and every downstream file compiles through them (the
+parallel `grad`/`gradLinZ`/`gradLinQ` definitions are deleted); the
+**genuine wedge** `wedgeGraph` exists (`Meno/GraphInstances.lean`) on
+`Option (Fin (n₁−1) ⊕ Fin (n₂−1))` — `n₁ + n₂ − 1` vertices, no
+spectator — with `wedgeGraph_preconnected` (`c = 1`) and
+`wedgeGraph_b1 : b₁ = 2` by Euler, with no hand-built basis. Cycle and
+theta instances exist with `b₁ = 1` and `b₁ = 2`.
+
+**What keeps C1 OPEN** (discipline 1c): the Phase-21 spectator stack
+(`wedgeSpectatorGraph`, `wedgePresentation`,
+`wedgeIntegralPresentation`, and their `CycleHarmonic` consumers) is
+still in the tree, and the wedge closed forms (diagonal Gram
+`!![1/n₁, 0; 0, 1/n₂]`) are not yet re-derived over the corrected
+vertex type. That port-and-removal is the remaining delta; it overlaps
+C5's consumer re-derivation and closes with it.
 
 **Path.** Define
 
@@ -125,7 +138,7 @@ wedge instance has `Fintype.card V = n₁ + n₂ − 1` and `c = 1`
 the refactored structure; the wedge closed forms (diagonal Gram
 `!![1/n₁, 0; 0, 1/n₂]`) re-derive over the corrected vertex type.
 
-### C2 -- Intrinsic integral topology and the fundamental-presentation theorem — OPEN
+### C2 -- Intrinsic integral topology and the fundamental-presentation theorem — CLOSED (Phase 29)
 
 **Intent.** Retire the review's central conditionality: today
 `IntegralCyclePresentation` (Meno/PeriodLattice.lean) *stores*
@@ -138,13 +151,22 @@ must become a theorem available for **every** finite graph.
 either are *produced* by choosing a primitive basis; they no longer
 define the object.
 
-**Path: the spanning-forest construction.** For any `G`, choose a
-spanning forest; the chords (non-forest edges) index fundamental cycles.
-Each fundamental cycle is `1` on its own chord and supported on the
-forest otherwise -- so the basis is primitive, single-chord indicator
-cochains realize any prescribed periods (discharging `periods_onto`),
-and potentials integrate along forest paths (discharging
-`integral_potentials`; this generalizes `finPrefixSum`).
+**Path — amended Phase 29 and executed** (rule 3: amendment recorded
+here, same acceptance theorems). The spanning-forest/chord sketch was
+replaced by an equivalent, cleaner construction
+(`Meno/FundamentalPresentation.lean`): `H₁(G;ℤ) := ker ∂ℤ` is
+**saturated**, so `ℤ^E ⧸ H₁` is torsion-free, hence free, hence
+projective — the quotient splits and `ℤ^E` retracts onto `H₁`; a
+`ℤ`-basis comes from the PID structure theorem
+(`Submodule.basisOfPid`), and extending its coordinates along the
+retraction yields one integer matrix `P` with `P Cᵀ = 1` that
+discharges independence (hence the positive-definite Gram) and
+`periods_onto` (`τ := Pᵀk`) at once. `integral_potentials` and real
+spanning come from walk integration (`grad_integrate`): chains of
+closed walks lie in `H₁`, so vanishing periods kill all closed-walk
+sums (`closedWalkSum_eq_zero`), and integrating along chosen walks
+from component basepoints produces the potential — the forest-path
+idea, without the forest bookkeeping.
 
 **Acceptance theorems.**
 
@@ -157,20 +179,27 @@ theorem h1_quot_coords (G) :
     H¹(G;ℤ) ≃ₗ[ℤ] (Fin (b₁ G) → ℤ)               -- latticeQuotEquiv ∘ fundamentalPresentation
 ```
 
-**Consumers.** Every "for any presented graph" statement in
-`CyclePresentation.lean`, `PeriodLattice.lean`, `ResolutionCount.lean`
-upgrades to "for any finite graph" by composition with
-`fundamentalPresentation`. This is the single theorem on which C3-C6
-block.
+**Delivered (Phase 29).** `fundamentalPresentation G :
+IntegralCyclePresentation G` for every finite graph; `Module.Free ℤ
+H₁` + `finrank_cycleLattice` (= b₁); `h1QuotEquiv` (`(G.E → ℤ) ⧸
+range ∂ᵀℤ ≃ₗ[ℤ] ℤ^{b₁}` — the intrinsic `H¹` coordinates); `b1_eq`
+(Euler `b₁ = |E| − |V| + c` for every finite graph); `card_quotient_eq`
+(K1 at every resolution, every finite graph, no presentation
+hypotheses); consumers exercised on concrete graphs
+(`wedgeGraph_b1 = 2` via Euler alone; `thetaGraph_b1 = 2` and
+`cycleGraph_b1' = 1` via `r_eq_b1`). C3-C6 are unblocked.
 
 ### C3 -- Basis independence as a property of the graph — OPEN
 
 **Current state.** Phase 23 proved invariance under a *given* unimodular
 change: `rebase_energy`, `rebase_partFn`, `MatterSector.rebaseEquiv` +
-`rebaseEquiv_mass`. Missing is the statement that any two integral
-presentations of the *same graph* are so related -- which is where the
-Phase 24 primitivity hypothesis gets consumed (two primitive bases of one
-lattice differ by GL(r,ℤ)).
+`rebaseEquiv_mass`. Phase 29 added the first brick: **rank
+well-definedness** (`IntegralCyclePresentation.r_eq_b1` — every
+presentation of `G` has rank `b₁ G`, by composing the two keystone
+equivalences). Missing is the full statement that any two integral
+presentations of the *same graph* are `GL(r,ℤ)`-related -- which is
+where the Phase 24 primitivity hypothesis gets consumed (two primitive
+bases of one lattice differ by GL(r,ℤ)).
 
 **Acceptance theorems.**
 
@@ -414,9 +443,9 @@ incidence layer and C6's intrinsic matter; C9 touches only
 
 | Item | Acceptance in one line | Status |
 |------|------------------------|--------|
-| C1 incidence foundation | one graph substrate; wedge without spectator vertex; gauge = components | OPEN |
-| C2 intrinsic topology | `fundamentalPresentation` for every finite graph; `H₁`/`H¹` intrinsic, free | OPEN |
-| C3 basis independence | any two presentations of a graph are GL(r,ℤ)-related; `partFn` graph-level | OPEN |
+| C1 incidence foundation | one graph substrate; wedge without spectator vertex; gauge = components | OPEN — Phase 29: substrate, gauge theorem, refactor, genuine wedge + `b₁ = 2` all done; remaining: spectator-stack port/removal (with C5) |
+| C2 intrinsic topology | `fundamentalPresentation` for every finite graph; `H₁`/`H¹` intrinsic, free | **CLOSED** (Phase 29) |
+| C3 basis independence | any two presentations of a graph are GL(r,ℤ)-related; `partFn` graph-level | OPEN — Phase 29: rank well-definedness (`r_eq_b1`) done |
 | C4 general harmonic theory | `harmonicEnergy : H¹(G;ℤ) → ℝ` + `IsLeast`, every finite graph | OPEN |
 | C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | OPEN |
 | C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | OPEN |
@@ -3170,3 +3199,79 @@ incoming. The prescribed next work is C1 + C2 (the incidence foundation
 and the fundamental-presentation theorem), which unblocks C3-C6.
 
 **End of Phase 28 addendum.**
+
+## Phase 29 addendum: the C sprint opens — C1 built, C2 CLOSED (2026-07-17)
+
+*(The kernel said "let the C sprint begin." Three commits: 29a the
+incidence foundation and refactor, 29b the fundamental-presentation
+theorem, 29c the genuine wedge and concrete topology.)*
+
+### What was built
+
+**Phase 29a — C1's core** (`Meno/IncidenceGraph.lean` + refactor).
+The one graph substrate: `IncidenceGraph` (bundled finite `V`/`E`,
+`src`/`tgt`), with `flowBoundary`/`boundary`/`grad`/`gradLin`/
+`boundaryLin`/`boundaryMatrix` and discrete Stokes defined **once**
+over any commutative ring — `ℝ`, `ℤ`, `ZMod q` are consumers. Two new
+engines: the **walk calculus** (walks with forward/backward
+traversal, sums, signed chains; a walk's sum is its chain pairing;
+closed walks have closed chains) and **components + gauge**
+(`finrank_gauge`: the gradient kernel's dimension is the component
+count — C1's acceptance theorem) plus **walk integration**
+(`grad_integrate`: vanishing closed-walk sums make a cochain a
+gradient — over any ring). `CyclePresentation` and
+`IntegralCyclePresentation` are now graph-indexed; the parallel
+`grad`/`gradLinZ`/`gradLinQ` are deleted, so the keystone quotients
+are manifestly graph-level (K3's `card_fiber` lost its presentation
+dependence outright). New: Euler's formula
+`r = |E| − |V| + c` for every presentation. The Phase-21 wedge is
+renamed `wedgeSpectatorGraph` pending its C5 replacement.
+
+**Phase 29b — C2 CLOSED** (`Meno/FundamentalPresentation.lean`). The
+review's central conditionality retired: `periods_onto` and
+`integral_potentials` are theorems for **every finite graph**.
+Construction: `H₁(G;ℤ) := ker ∂ℤ` is saturated ⟹ `ℤ^E ⧸ H₁`
+torsion-free ⟹ free ⟹ projective ⟹ the quotient splits and `ℤ^E`
+retracts onto `H₁`; `Submodule.basisOfPid` supplies the basis; the
+retraction-extended coordinate matrix `P` (with `P Cᵀ = 1`) yields
+independence over `ℝ` (hence the posdef Gram) and period surjectivity
+(`τ := Pᵀk`); walk integration yields integral potentials and — with
+the Gram inverse as a concrete orthogonal projection — real spanning.
+**Route amendment recorded** (rule 3): the plan's spanning-forest
+sketch was replaced by this PID-splitting construction; the
+acceptance theorems are exactly as stated. Consumers delivered:
+`h1QuotEquiv`, `Module.Free ℤ H₁` + `finrank = b₁`, `b1_eq` (Euler
+for every finite graph), `card_quotient_eq` (K1 for every finite
+graph at every resolution).
+
+**Phase 29c — the genuine wedge** (`Meno/GraphInstances.lean`).
+`wedgeGraph` on `Option (Fin (n₁−1) ⊕ Fin (n₂−1))` — `n₁ + n₂ − 1`
+vertices, both cycles sharing basepoint `none`, **no spectator** —
+connected by explicit walks (`wedgeGraph_preconnected`), and
+`wedgeGraph_b1 : b₁ = 2` **by Euler alone**: the fundamental
+presentation supplies the rank, connectivity the component count. No
+hand-built basis anywhere in the computation. Also:
+`cycleGraph_preconnected`/`cycleGraph_b1` (= 1, by Euler),
+`thetaGraph_b1` (= 2) and `wedgeSpectatorGraph_b1` (= 2) via the new
+`IntegralCyclePresentation.r_eq_b1` — **rank well-definedness**, the
+first C3 brick: every presentation's rank equals the graph's Betti
+number, by composing the two keystone equivalences.
+
+### Status changes
+
+- **C2: OPEN → CLOSED.** Acceptance theorems proved and consumed;
+  main body amended with the as-built route.
+- **C1: OPEN, one delta left.** Substrate, gauge theorem, refactor,
+  and the genuine wedge (with `b₁ = 2`) are done. Remaining: re-derive
+  the wedge closed forms (diagonal Gram) over the corrected vertex
+  type and remove the spectator stack — merged into C5's
+  consumer re-derivation.
+- **C3: OPEN, rank brick done** (`r_eq_b1`).
+
+### Verification state
+
+`lake build Meno`: 3338 jobs green. Zero `sorry`; zero `axiom`
+declarations. Commit stack: 29a `feat(C1)`, 29b `feat(C2)`,
+29c (this commit).
+
+**End of Phase 29 addendum.**

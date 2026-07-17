@@ -399,6 +399,18 @@ noncomputable instance : Fintype G.Components := Fintype.ofFinite _
 /-- The number of connected components. -/
 noncomputable def componentCard : ℕ := Nat.card G.Components
 
+/-- A walk-preconnected graph with a vertex has exactly one
+component. -/
+theorem componentCard_eq_one (hne : Nonempty G.V)
+    (h : ∀ u v : G.V, G.Reaches u v) : G.componentCard = 1 := by
+  obtain ⟨v⟩ := hne
+  haveI hsub : Subsingleton G.Components :=
+    ⟨fun a b => Quotient.inductionOn₂ a b fun u w => Quotient.sound (h u w)⟩
+  haveI : Unique G.Components :=
+    ⟨⟨Quotient.mk G.compSetoid v⟩, fun _ => Subsingleton.elim _ _⟩
+  show Nat.card G.Components = 1
+  exact Nat.card_unique
+
 /-- The gauge sector is the locally constant functions: the kernel of
 the gradient is linearly equivalent to functions on the components. -/
 noncomputable def gaugeEquiv :

@@ -11,6 +11,7 @@ import Meno.CyclePresentation
 import Meno.PeriodLattice
 import Meno.ResolutionCount
 import Meno.FundamentalPresentation
+import Meno.GraphInstances
 import Meno.Matter
 import Meno.InfoRatchet
 
