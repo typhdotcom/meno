@@ -1909,3 +1909,81 @@ formulation carried everything. Infrastructure compounding,
 measurably.
 
 **End of Phase 19 addendum.**
+
+---
+
+## Addendum: Phase 20 — API Extraction & the Two-Route Unification (2026-07-16, session C)
+
+The extraction Phase 18 promised, plus the corroboration Phase 19's
+momentum made cheap. New file `Meno/PeriodHarmonic.lean` (327 LOC);
+`ThetaHarmonic` slimmed to pure theta content; unification theorems in
+`CycleHarmonic`. Full build 3333 jobs, zero `sorry`.
+
+### The general API (`Meno/PeriodHarmonic.lean`)
+
+- The `PeriodMinimization` section (Pythagoras / least-norm-at-
+  prescribed-periods) **moved** verbatim from `ThetaHarmonic` — the
+  concrete-first extraction, on schedule.
+- **`HarmonicGramData.ofCycles`** — the builder: any family of cycle
+  vectors with positive-definite chain Gram yields harmonic Gram data
+  with the *inverse* chain Gram as period form; symmetry,
+  positive-definiteness, and summability all derived, and
+  `ofCycles_energy_isLeast` supplies the variational identity as a
+  theorem. The honesty obligation attached to `HarmonicGramData` in
+  Phase 17 is now discharged *generically* for every instance the
+  builder produces.
+
+### The parametric cycle graph
+
+`C_n` through periods, for **all** `n > 0` (not `n ≥ 3`, and fully
+parametric — no `simp +decide`, which only handles literals):
+
+- `cycleBoundary` with closed form `∂ω(v) = ω(v−1) − ω(v)`;
+  the all-ones cochain is a cycle.
+- **`b₁(C_n) = 1`**: boundary-zero cochains are constant
+  (`eq_smul_allOnes_of_cycleBoundary_eq_zero`), by strong induction on
+  the vertex index with explicit `Fin.mk` successor arithmetic.
+- Chain Gram `[[n]]`, period Gram `[[1/n]]` (`cyclePeriodData_gram`) —
+  the spine's original harmonic mass, re-derived from first principles
+  in ~100 lines against `Simplicial.lean`'s ~2500.
+
+### The unification (`Meno/CycleHarmonic.lean`)
+
+- `cyclePeriodData_gram_eq` / `cyclePeriodData_energy_eq` — the
+  period-model data and the walk-derived `cycleHarmonicGramData` are
+  the same analytic object.
+- **`harmonicEnergy_k_isLeast_periods`** — the walk-based harmonic
+  minimum `k²/n` of `Simplicial.lean` is certified as the
+  least-energy-at-period-`k` value. The spine's first mass now has two
+  independent derivations (walk/homotopy/Hodge and period/least-norm)
+  proved to agree — the same corroboration pattern as the scalar
+  duality's modular-vs-Poisson double proof (Phase 16).
+
+### Engineering notes
+
+- Parametric `Fin n` combinatorics is a different sport from literal
+  combinatorics: `simp +decide` is useless; the working tools were
+  explicit `if_pos`/`if_neg` case splits (rewriting a *proposition*
+  inside `ite` breaks the `Decidable` motive), `Finset.sum_ite_eq'`,
+  and val-level strong induction with `Fin.val_add`/`Fin.val_one'` +
+  `Nat.mod_eq_of_lt`.
+- Proof irrelevance quietly earns its keep: `cyclePeriodData n h₁` and
+  `ofCycles _ h₂` unify definitionally across different positivity
+  proofs, so `IsLeast` transports with a single `rw`.
+- Error count by phase, same machinery: Phase 18 ~6 build iterations,
+  Phase 19 zero, Phase 20 (new *parametric* territory) ~4. Literal
+  instances are now free; parametric ones cost only their genuine
+  `Fin`-arithmetic content.
+
+### Board after this phase
+
+The wedge (`C_{n₁} ∨ C_{n₂}`) through periods is now the obvious next
+concrete: two cycles sharing **zero** edges → chain Gram
+`diag(n₁,n₂)` → period Gram `diag(1/n₁,1/n₂)` — which would *derive*
+the matrix that `wedgeHarmonicGramData` (Phase 13) asserts on
+"true, unformalized ground," retiring the last documented assertion
+debt in the harmonic layer. Then: cohomological `MatterSector`
+(Goal 7), and the keystone's information-theoretic half (gated on a
+stated connecting theorem).
+
+**End of Phase 20 addendum.**

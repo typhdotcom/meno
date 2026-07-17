@@ -1,5 +1,6 @@
 import Meno.HarmonicForm
 import Meno.MatterHomology
+import Meno.PeriodHarmonic
 import Meno.Simplicial
 
 /-! # Cycle-Graph Harmonic Bridge — the flagship spine integration
@@ -246,5 +247,60 @@ noncomputable def wedgeMatter₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n
 theorem wedge_exists_matter (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
     Nonempty (MatterSector (wedgeHarmonicGramData n₁ n₂ h₁ h₂)) :=
   ⟨wedgeMatter₁ n₁ n₂ h₁ h₂⟩
+
+/-! ## Unification: the walk route and the period route agree
+
+`Simplicial.lean` derived the cycle graph's harmonic minimum
+`harmonicEnergy_k = k²/n` through ~2500 lines of walk/homotopy/Hodge
+machinery. `PeriodHarmonic.lean` re-derives the same Gram form
+`[[1/n]]` in ~100 lines through the least-norm-at-prescribed-periods
+machinery. Here the two are proved to be the *same analytic object*:
+same Gram matrix, same energies, and the legacy walk-based value is
+certified as the period-variational minimum. Two independent
+derivations of the spine's first mass. -/
+
+section PeriodUnification
+
+/-- The period-model Gram data of `C_n` has the same Gram matrix as the
+walk-derived data: `[[1/n]]` both ways. -/
+theorem cyclePeriodData_gram_eq (n : ℕ) (hn : n ≥ 3) :
+    (cyclePeriodData n (by omega)).gram = (cycleHarmonicGramData n hn).gram := by
+  rw [cyclePeriodData_gram]
+  rfl
+
+/-- The energies agree at every sector. -/
+theorem cyclePeriodData_energy_eq (n : ℕ) (hn : n ≥ 3) (k : Fin 1 → ℤ) :
+    (cyclePeriodData n (by omega)).energy k
+      = (cycleHarmonicGramData n hn).energy k := by
+  calc (cyclePeriodData n (by omega)).energy k
+      = ∑ i, ∑ j, (!![1 / (n : ℝ)] : Matrix (Fin 1) (Fin 1) ℝ) i j
+          * (k i : ℝ) * (k j : ℝ) := by
+        show ∑ i, ∑ j, (cyclePeriodData n (by omega)).gram i j
+            * (k i : ℝ) * (k j : ℝ) = _
+        rw [cyclePeriodData_gram]
+    _ = (cycleHarmonicGramData n hn).energy k := rfl
+
+/-- **Two variational stories, one number**: the walk-based harmonic
+minimum `harmonicEnergy_k n hn k` of `Simplicial.lean` — historically
+the spine's first mass, `k²/n` — is the least energy among 1-cochains
+on the period-model cycle graph with period `k`. -/
+theorem harmonicEnergy_k_isLeast_periods (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
+    IsLeast {E : ℝ | ∃ ω : Fin n → ℝ,
+        (∀ j, ω ⬝ᵥ cycleAllOnes n j = ((![k] : Fin 1 → ℤ) j : ℝ)) ∧ E = ω ⬝ᵥ ω}
+      (harmonicEnergy_k n hn k) := by
+  have h := HarmonicGramData.ofCycles_energy_isLeast (V := Fin n)
+    (cycleAllOnes n)
+    (by
+      rw [gramOf_cycleAllOnes]
+      exact posDef_fin_one _ (by exact_mod_cast (show 0 < n by omega))) ![k]
+  have hchain : (cyclePeriodData n (by omega)).energy ![k]
+      = harmonicEnergy_k n hn k := by
+    rw [cyclePeriodData_energy_eq n hn,
+      cycleHarmonicGramData_energy_eq_harmonicEnergy_k n hn]
+    norm_num
+  rw [← hchain]
+  exact h
+
+end PeriodUnification
 
 end Meno

@@ -22,5 +22,8 @@ import Meno.Zeta
 -- Flagship integration: cycle-graph harmonic data routed through the new spine
 import Meno.CycleHarmonic
 
+-- Period-model machinery: least-norm variational lemma, builder, parametric C_n
+import Meno.PeriodHarmonic
+
 -- The theta graph: first non-diagonal harmonic Gram form, derived from topology
 import Meno.ThetaHarmonic

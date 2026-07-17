@@ -1469,8 +1469,9 @@ theorem exists_dualityFlow_eq_zero_not_selfDual :
     simp [Matrix.diagonal_apply_eq, Matrix.smul_apply] at h00
     nlinarith [Real.pi_pos, h00]
 
-/-- Rank-1 matrix inverse. -/
-private lemma inv_fin_one (α : ℝ) (hα : α ≠ 0) :
+/-- Rank-1 matrix inverse. Public: also used by the period-model
+graph instances (`Meno/PeriodHarmonic.lean`). -/
+lemma inv_fin_one (α : ℝ) (hα : α ≠ 0) :
     (!![α] : Matrix (Fin 1) (Fin 1) ℝ)⁻¹ = !![α⁻¹] := by
   apply Matrix.inv_eq_right_inv
   ext i j
