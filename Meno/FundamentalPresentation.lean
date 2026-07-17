@@ -203,7 +203,7 @@ private lemma cast_mulVec_apply {α : Type*} (M : Matrix α G.E ℤ)
   push_cast
   rfl
 
-private lemma cast_single {α : Type*} [DecidableEq α] (a j : α) :
+theorem cast_single {α : Type*} [DecidableEq α] (a j : α) :
     (((Pi.single a (1 : ℤ) : α → ℤ) j : ℤ) : ℝ)
       = (Pi.single a (1 : ℝ) : α → ℝ) j := by
   rcases eq_or_ne j a with h | h
@@ -213,7 +213,7 @@ private lemma cast_single {α : Type*} [DecidableEq α] (a j : α) :
   · rw [Pi.single_eq_of_ne h, Pi.single_eq_of_ne h]
     norm_num
 
-private lemma boundary_castR (ω : G.E → ℤ) (v : G.V) :
+theorem boundary_castR (ω : G.E → ℤ) (v : G.V) :
     G.boundary (fun e => ((ω e : ℤ) : ℝ)) v = ((G.boundary ω v : ℤ) : ℝ) := by
   rw [boundary_eq_sum, boundary_eq_sum]
   push_cast
@@ -279,7 +279,7 @@ theorem fund_cast_independent (x : Fin G.b1 → ℝ)
   funext j
   exact (congrFun hlin j).symm
 
-private lemma dotProduct_gramOf_mulVec {r : ℕ} {ι : Type*} [Fintype ι]
+theorem dotProduct_gramOf_mulVec {r : ℕ} {ι : Type*} [Fintype ι]
     (c : Fin r → ι → ℝ) (x : Fin r → ℝ) :
     x ⬝ᵥ (gramOf c *ᵥ x)
       = (fun e => ∑ i, x i * c i e) ⬝ᵥ (fun e => ∑ i, x i * c i e) := by

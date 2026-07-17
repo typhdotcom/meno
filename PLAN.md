@@ -189,7 +189,7 @@ hypotheses); consumers exercised on concrete graphs
 (`wedgeGraph_b1 = 2` via Euler alone; `thetaGraph_b1 = 2` and
 `cycleGraph_b1' = 1` via `r_eq_b1`). C3-C6 are unblocked.
 
-### C3 -- Basis independence as a property of the graph — OPEN
+### C3 -- Basis independence as a property of the graph — CLOSED (Phase 30)
 
 **Current state.** Phase 23 proved invariance under a *given* unimodular
 change: `rebase_energy`, `rebase_partFn`, `MatterSector.rebaseEquiv` +
@@ -214,10 +214,20 @@ theorem partFn_welldef (P P' : IntegralCyclePresentation G) :
 so `IncidenceGraph.partFn`, `IncidenceGraph.harmonicEnergy`, and the mass
 spectrum become functions of the graph alone.
 
-**Consumers.** C4's `harmonicEnergy` and C6's intrinsic `MatterSector`
-are definable only through this.
+**Delivered (Phase 30, `Meno/BasisIndependence.lean`).**
+`exists_rebase_related` (the acceptance's `presentations_rebase_related`,
+with the `Fin`-cast along `r = r' = b₁` made explicit): any two integral
+presentations are `GL(r,ℤ)`-related. The load-bearing new theorem is
+`exists_int_coords` — **primitivity is forced**: every integral cycle
+is an integer combination of any presentation's basis, because
+`periods_onto` supplies unit-period realizers `τ⁽ⁱ⁾` and the real
+coordinates are the integers `⟨τ⁽ⁱ⁾, x⟩`. Energy transports
+*variationally* (`energy_reindex` via `IsLeast.unique` — no
+matrix-inverse reindexing), giving `partFn_welldef` and the
+graph-level `IncidenceGraph.partFn` with `partFn_eq`: the partition
+function is a function of the graph alone. Consumed by C4.
 
-### C4 -- General harmonic theory for every finite graph — OPEN
+### C4 -- General harmonic theory for every finite graph — CLOSED (Phase 30)
 
 **Current state.** All core theorems exist at presentation level:
 `period_eq_zero_iff_exists_grad` (generic exactness, no connectivity),
@@ -240,6 +250,22 @@ theorem cochainQuot_equiv (G) :
 ```
 
 for **every** finite `G`, no presentation in the hypotheses.
+
+**Delivered (Phase 30, `Meno/HarmonicClass.lean`).**
+`IncidenceGraph.harmonicEnergy` on the intrinsic quotient
+`(G.E → ℤ) ⧸ range ∂ᵀℤ`; `harmonicEnergy_isLeast` (the variational
+identity, with "realizes" concretized as prescribed periods);
+`cochainQuotEquivR` + `finrank_cochainQuotR` (real cochains modulo
+gradients ≃ `ℝ^{b₁}`, every finite graph). Basis-freeness is
+`energy_eq_harmonicEnergy`: **every** presentation's energy at the
+periods of `τ` equals the harmonic energy of `τ`'s class — proved
+through `periods_eq_cast_iff` (realizing a class means `τ̂ + grad f`,
+a presentation-free condition), so the variational sets coincide and
+`IsLeast.unique` finishes; no coordinate transport appears in the
+proof. `h1QuotEquiv_mk` is `rfl` — the keystone equivalence computes
+definitionally on representatives. Consumer: `harmonicEnergy_pos`
+(nonzero classes have positive energy — the intrinsic matter
+inequality, C6's bridge).
 
 ### C5 -- Concrete graphs as consumers — OPEN
 
@@ -445,8 +471,8 @@ incidence layer and C6's intrinsic matter; C9 touches only
 |------|------------------------|--------|
 | C1 incidence foundation | one graph substrate; wedge without spectator vertex; gauge = components | OPEN — Phase 29: substrate, gauge theorem, refactor, genuine wedge + `b₁ = 2` all done; remaining: spectator-stack port/removal (with C5) |
 | C2 intrinsic topology | `fundamentalPresentation` for every finite graph; `H₁`/`H¹` intrinsic, free | **CLOSED** (Phase 29) |
-| C3 basis independence | any two presentations of a graph are GL(r,ℤ)-related; `partFn` graph-level | OPEN — Phase 29: rank well-definedness (`r_eq_b1`) done |
-| C4 general harmonic theory | `harmonicEnergy : H¹(G;ℤ) → ℝ` + `IsLeast`, every finite graph | OPEN |
+| C3 basis independence | any two presentations of a graph are GL(r,ℤ)-related; `partFn` graph-level | **CLOSED** (Phase 30) |
+| C4 general harmonic theory | `harmonicEnergy : H¹(G;ℤ) → ℝ` + `IsLeast`, every finite graph | **CLOSED** (Phase 30) |
 | C5 concrete consumers | cycle/theta/wedge re-derived from the fundamental construction | OPEN |
 | C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | OPEN |
 | C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + release + strict `partFn` drop | OPEN |
@@ -3275,3 +3301,64 @@ declarations. Commit stack: 29a `feat(C1)`, 29b `feat(C2)`,
 29c (this commit).
 
 **End of Phase 29 addendum.**
+
+## Phase 30 addendum: C3 and C4 CLOSED — the physics belongs to the graph (2026-07-17)
+
+*(Same session as Phase 29; the kernel said "carry forth.")*
+
+### C3 (`Meno/BasisIndependence.lean`)
+
+The chain: `cycles_independent` (posdef Gram ⟹ real independence) →
+`coords_unique` → **`exists_int_coords`** — primitivity as a theorem.
+The proof is the session's sharpest move: for `x` in the cycle
+lattice with real expansion `x = Σ aᵢĉᵢ`, pair `x` with the
+unit-period realizers `τ⁽ⁱ⁾` that `periods_onto` provides; then
+`aᵢ = ⟨τ⁽ⁱ⁾, x⟩`, an integer. The Phase-24 observation that
+primitivity is the load-bearing hypothesis is now literal:
+`periods_onto` *is* primitivity. From there: each basis expands in
+the other with integer matrices `U, W`; coordinate uniqueness gives
+`U·W = 1`; so `U ∈ GL(r,ℤ)` and `exists_rebase_related` holds — any
+two integral presentations of a graph are rebase-related (up to the
+`Fin`-cast along `r = r' = b₁` from Phase 29's `r_eq_b1`).
+
+Energy transports **variationally**: both presentations' energies are
+the least element of the same realizer-energy set, so
+`IsLeast.unique` equates them (`energy_reindex`) — the
+matrix-inverse-reindexing grind the plan anticipated never happens.
+`partFn_welldef` then chains the tsum reindexing with Phase 23's
+`rebase_partFn`, and `IncidenceGraph.partFn` + `partFn_eq` make the
+partition function a function of the graph alone.
+
+### C4 (`Meno/HarmonicClass.lean`)
+
+`periods_eq_cast_iff`: a real cochain realizes the periods of an
+integer cochain `τ` against *any* presentation's basis iff it is
+`τ̂ + grad f` — realizing a class is presentation-free. Hence every
+presentation's variational set at `τ`'s periods is the same set
+(`isLeast_gradShift`), and `energy_eq_harmonicEnergy` follows by
+`IsLeast.unique`. The intrinsic `harmonicEnergy` lives on
+`(G.E → ℤ) ⧸ range ∂ᵀℤ` via `h1QuotEquiv` — whose applied form on
+representatives is **`rfl`** (`h1QuotEquiv_mk`): the keystone
+equivalence computes definitionally. With `harmonicEnergy_isLeast`,
+`cochainQuotEquivR`/`finrank_cochainQuotR`, and the consumer
+`harmonicEnergy_pos` (nonzero classes weigh something — the intrinsic
+matter inequality), C4's acceptance list is complete.
+
+### Status changes
+
+- **C3: OPEN → CLOSED.** Acceptance delivered as
+  `exists_rebase_related` + `partFn_welldef`; consumers `G.partFn`,
+  `partFn_eq`, and C4.
+- **C4: OPEN → CLOSED.** Acceptance delivered as `harmonicEnergy` +
+  `harmonicEnergy_isLeast` + `cochainQuotEquivR`, with
+  `energy_eq_harmonicEnergy` as the basis-freeness substance and
+  `harmonicEnergy_pos` as consumer.
+- Ledger: **C2, C3, C4, C10, C11 CLOSED**; OPEN: C1 (one delta,
+  merged into C5), C5, C6, C7, C8, C9, C12.
+
+### Verification state
+
+`lake build Meno`: 3340 jobs green. Zero `sorry`; zero `axiom`
+declarations.
+
+**End of Phase 30 addendum.**

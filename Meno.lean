@@ -11,6 +11,8 @@ import Meno.CyclePresentation
 import Meno.PeriodLattice
 import Meno.ResolutionCount
 import Meno.FundamentalPresentation
+import Meno.BasisIndependence
+import Meno.HarmonicClass
 import Meno.GraphInstances
 import Meno.Matter
 import Meno.InfoRatchet
