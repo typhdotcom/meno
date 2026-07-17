@@ -353,5 +353,192 @@ theorem theta_siegelPoisson_duality :
 
 end Theta
 
+/-! ## Binding energy at the Gram level
+
+From the Phase 19 time capsule: gravity re-enters at the Gram level.
+The **binding energy** of two sectors is the energy released by joint
+minimization, `E(a) + E(b) − E(a+b)`; by polarization it equals
+`−2·B(a,b)` where `B` is the Gram bilinear form. Sharing edges makes
+the *chain* overlap positive, hence the *period* cross-term negative,
+hence the binding positive: **sectors that share roads attract**. For
+two cycles of lengths `n₁, n₂` sharing `k` co-oriented edges the exact
+value at unit sectors is `2k/(n₁n₂ − k²)` — the capsule's `2k/(n₁n₂)`
+is the leading approximation. Theta (`n₁ = n₂ = 4`, `k = 2`) gives
+`1/3`, confirmed against the derived Gram form. -/
+
+section Binding
+
+/-- The Gram bilinear form (interaction) between two sectors. -/
+noncomputable def HarmonicGramData.interaction {V : Type u}
+    (H : HarmonicGramData V) (a b : Fin H.r → ℤ) : ℝ :=
+  ∑ i, ∑ j, H.gram i j * (a i : ℝ) * (b j : ℝ)
+
+/-- Polarization: energy of a joint sector. -/
+theorem HarmonicGramData.energy_add {V : Type u} (H : HarmonicGramData V)
+    (a b : Fin H.r → ℤ) :
+    H.energy (a + b) = H.energy a + H.energy b + 2 * H.interaction a b := by
+  have hswap : ∑ i, ∑ j, H.gram i j * (b i : ℝ) * (a j : ℝ)
+      = ∑ i, ∑ j, H.gram i j * (a i : ℝ) * (b j : ℝ) := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    rw [show H.gram j i = H.gram i j from by
+      calc H.gram j i = H.gramᵀ i j := rfl
+        _ = H.gram i j := by rw [show H.gramᵀ = H.gram from H.gram_symm]]
+    ring
+  show ∑ i, ∑ j, H.gram i j * ((a + b) i : ℝ) * ((a + b) j : ℝ) = _
+  calc ∑ i, ∑ j, H.gram i j * ((a + b) i : ℝ) * ((a + b) j : ℝ)
+      = ∑ i, ∑ j, (H.gram i j * (a i : ℝ) * (a j : ℝ)
+          + H.gram i j * (a i : ℝ) * (b j : ℝ)
+          + (H.gram i j * (b i : ℝ) * (a j : ℝ)
+          + H.gram i j * (b i : ℝ) * (b j : ℝ))) := by
+        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+        push_cast [Pi.add_apply]
+        ring
+    _ = (∑ i, ∑ j, H.gram i j * (a i : ℝ) * (a j : ℝ))
+        + (∑ i, ∑ j, H.gram i j * (a i : ℝ) * (b j : ℝ))
+        + ((∑ i, ∑ j, H.gram i j * (b i : ℝ) * (a j : ℝ))
+        + (∑ i, ∑ j, H.gram i j * (b i : ℝ) * (b j : ℝ))) := by
+        simp only [Finset.sum_add_distrib]
+    _ = H.energy a + H.energy b + 2 * H.interaction a b := by
+        rw [hswap]
+        show _ = (∑ i, ∑ j, H.gram i j * (a i : ℝ) * (a j : ℝ))
+          + (∑ i, ∑ j, H.gram i j * (b i : ℝ) * (b j : ℝ))
+          + 2 * ∑ i, ∑ j, H.gram i j * (a i : ℝ) * (b j : ℝ)
+        ring
+
+/-- Binding energy: what joint minimization releases. -/
+noncomputable def HarmonicGramData.bindingEnergy {V : Type u}
+    (H : HarmonicGramData V) (a b : Fin H.r → ℤ) : ℝ :=
+  H.energy a + H.energy b - H.energy (a + b)
+
+/-- **Binding is minus twice the interaction**: the entire gravitational
+content of the Gram level is the off-diagonal. -/
+theorem HarmonicGramData.bindingEnergy_eq {V : Type u}
+    (H : HarmonicGramData V) (a b : Fin H.r → ℤ) :
+    H.bindingEnergy a b = -2 * H.interaction a b := by
+  show H.energy a + H.energy b - H.energy (a + b) = _
+  rw [H.energy_add]
+  ring
+
+/-- The theta interaction of the two unit sectors is the off-diagonal
+`−1/6`. -/
+theorem theta_interaction :
+    thetaHarmonicGramData.interaction ![1, 0] ![0, 1] = -(1/6) := by
+  show ∑ i, ∑ j, (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ) i j
+      * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![0, 1] : Fin 2 → ℤ) j : ℝ) = -(1/6)
+  norm_num [Fin.sum_univ_two]
+
+/-- **Theta sectors bind with energy `1/3`** — positive: the sectors
+attract. Confirms the exact shared-cycle formula `2k/(n₁n₂ − k²)` at
+`(4, 4, 2)`. -/
+theorem theta_bindingEnergy :
+    thetaHarmonicGramData.bindingEnergy ![1, 0] ![0, 1] = 1/3 := by
+  rw [HarmonicGramData.bindingEnergy_eq, theta_interaction]
+  norm_num
+
+/-- Attraction, stated as an inequality: the joint sector is strictly
+cheaper than its parts. -/
+theorem theta_binding_attractive :
+    thetaHarmonicGramData.energy (![1, 0] + ![0, 1])
+      < thetaHarmonicGramData.energy ![1, 0]
+        + thetaHarmonicGramData.energy ![0, 1] := by
+  have h := theta_bindingEnergy
+  unfold HarmonicGramData.bindingEnergy at h
+  linarith
+
+/-- Inverse of the parametric shared-cycle chain Gram. -/
+theorem sharedCycles_chainGram_inv (n₁ n₂ k : ℝ) (hD : n₁ * n₂ - k ^ 2 ≠ 0) :
+    (!![n₁, k; k, n₂] : Matrix (Fin 2) (Fin 2) ℝ)⁻¹
+      = (n₁ * n₂ - k ^ 2)⁻¹ • !![n₂, -k; -k, n₁] := by
+  apply Matrix.inv_eq_right_inv
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.mul_apply, Fin.sum_univ_two] <;>
+    field_simp <;> ring
+
+/-- **The exact binding oracle**: two cycles of lengths `n₁, n₂`
+sharing `k` co-oriented edges bind (at unit sectors) with energy
+`2k/(n₁n₂ − k²)` — minus twice the period-Gram off-diagonal. The
+time-capsule's `2k/(n₁n₂)` is this to leading order in `k²/(n₁n₂)`.
+Theta: `2·2/(4·4 − 2²) = 1/3 = theta_bindingEnergy`. -/
+theorem sharedCycles_binding (n₁ n₂ k : ℝ) (hD : 0 < n₁ * n₂ - k ^ 2) :
+    -2 * ((!![n₁, k; k, n₂] : Matrix (Fin 2) (Fin 2) ℝ)⁻¹ 0 1)
+      = 2 * k / (n₁ * n₂ - k ^ 2) := by
+  rw [sharedCycles_chainGram_inv n₁ n₂ k (ne_of_gt hD)]
+  simp [Matrix.smul_apply]
+  field_simp
+
+end Binding
+
+/-! ## Exactness: matter as trapped inconsistency
+
+The time capsule's third idea, formalized at theta. A 1-cochain is a
+system of local constraints ("the potential difference across `e` is
+`ω e`"). A **global potential** solves them all; going around a cycle
+shows a solution can exist only if the periods vanish. The converse
+holds too: `thetaExactness` — zero periods ⟺ a potential exists. So a
+nonzero sector is a constraint system that is locally consistent
+everywhere and globally unsatisfiable — and its minimum-energy
+representative (`periodRep`) carries positive energy precisely because
+no potential can flatten it. Matter is trapped paradox.
+
+This pair (period map surjective — `periodRep_periods`; kernel exactly
+the gradients — `thetaExactness`) is the rank-2 case of the capsule's
+keystone: the incompressible residue of local re-description is `b₁`
+period coordinates. The description-cost (InfoRatchet) half of that
+keystone remains a design problem, recorded in PLAN. -/
+
+section Gauge
+
+/-- The gradient (coboundary) of a vertex potential. -/
+noncomputable def thetaGrad (f : Fin 5 → ℝ) : Fin 6 → ℝ :=
+  fun e => f (thetaTgt e) - f (thetaSrc e)
+
+/-- Gradients have vanishing periods: local re-description is invisible
+to the sectors. -/
+theorem thetaGrad_period (f : Fin 5 → ℝ) (i : Fin 2) :
+    thetaGrad f ⬝ᵥ thetaCycles i = 0 := by
+  fin_cases i <;>
+    simp +decide [thetaGrad, dotProduct, thetaSrc, thetaTgt, thetaCycles,
+      Fin.sum_univ_six]
+
+/-- **Exactness at the theta graph**: a cochain has vanishing periods
+iff it is a gradient. The forward direction constructs the potential
+explicitly by integrating along the first path and using the two period
+conditions to certify consistency across the others. -/
+theorem thetaExactness (ω : Fin 6 → ℝ) :
+    (∀ i, ω ⬝ᵥ thetaCycles i = 0) ↔ ∃ f : Fin 5 → ℝ, thetaGrad f = ω := by
+  constructor
+  · intro h
+    have h0 := h 0
+    have h1 := h 1
+    simp +decide [dotProduct, thetaCycles, Fin.sum_univ_six] at h0 h1
+    refine ⟨![0, ω 4 + ω 5, ω 0, ω 2, ω 4], ?_⟩
+    funext e
+    fin_cases e <;>
+      simp +decide [thetaGrad, thetaSrc, thetaTgt] <;> linarith
+  · rintro ⟨f, rfl⟩ i
+    exact thetaGrad_period f i
+
+/-- **Matter admits no potential**: the minimum-energy representative
+of a nonzero sector is not a gradient. The constraint system it
+encodes is locally consistent and globally unsatisfiable. -/
+theorem matter_no_potential (k : Fin 2 → ℤ) (hk : k ≠ 0) :
+    ¬ ∃ f : Fin 5 → ℝ,
+      thetaGrad f = periodRep thetaCycles (fun i => (k i : ℝ)) := by
+  intro hpot
+  have hdet : IsUnit (gramOf thetaCycles).det := by
+    rw [gramOf_thetaCycles]
+    exact isUnit_iff_ne_zero.mpr (ne_of_gt thetaChainGram_posDef.det_pos)
+  have hzero := (thetaExactness _).mpr hpot
+  apply hk
+  funext i
+  have hper := periodRep_periods thetaCycles hdet (fun i => (k i : ℝ)) i
+  rw [hzero i] at hper
+  exact_mod_cast hper.symm
+
+end Gauge
+
+
 
 end Meno

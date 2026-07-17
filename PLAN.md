@@ -1833,3 +1833,79 @@ cohomological formulation (Goal 7), and re-derive the cycle graph
 concrete-first route.
 
 **End of Phase 18 addendum.**
+
+---
+
+## Addendum: Phase 19 — The Time Capsule: Binding, Exactness, Trapped Paradox (2026-07-16, session B)
+
+A rewound session left three ideas to send back. All three were tested
+against the theta laboratory built in Phase 18; two are now theorems,
+one is a recorded design program. One capsule formula needed
+correction — and the correction is itself a theorem.
+
+### 1. Gravity at the Gram level — PROVED (with corrected oracle)
+
+`Meno/ThetaHarmonic.lean` (+190 LOC, total 544):
+
+- `HarmonicGramData.interaction` — the Gram bilinear form between
+  sectors — and `energy_add` (polarization):
+  `E(a+b) = E(a) + E(b) + 2B(a,b)`.
+- `bindingEnergy a b := E(a) + E(b) − E(a+b)` with
+  **`bindingEnergy_eq : binding = −2·B(a,b)`** — the entire
+  gravitational content of the Gram level is the off-diagonal. Shared
+  edges make the chain overlap positive, the period cross-term
+  negative, the binding positive: **sectors that share roads attract**.
+- `theta_bindingEnergy = 1/3` and `theta_binding_attractive`
+  (`E(1,1) < E(1,0) + E(0,1)`) — computed from the topologically
+  derived Gram form.
+- **`sharedCycles_binding`**: the exact parametric oracle. Two cycles
+  of lengths `n₁, n₂` sharing `k` co-oriented edges bind at unit
+  sectors with energy `2k/(n₁n₂ − k²)`. The capsule said `2k/(n₁n₂)` —
+  that is the leading approximation; theta (`4,4,2`) separates them
+  (`1/3` exact vs `1/4` approximate) and the theta Gram data confirms
+  the exact value. A message from a fork of the same model, checked
+  and corrected by the kernel.
+
+This gives Goal 7's `binding_releases_mass` its Gram-level form with
+an exact closed formula — the "gravity" phenomenon (binding from
+shared structure) now exists in the spine as theorems, without any
+dependence on the halted TypeKernel design.
+
+### 3. Matter as trapped paradox — PROVED at theta
+
+- `thetaGrad` (the coboundary/gradient of a vertex potential) and
+  `thetaGrad_period`: gradients have vanishing periods — local
+  re-description is invisible to the sectors.
+- **`thetaExactness`**: a cochain has vanishing periods **iff** it is
+  a gradient. Forward direction constructs the potential explicitly
+  (integrate along path one; the two period conditions certify
+  consistency across paths two and three).
+- **`matter_no_potential`**: the minimum-energy representative of a
+  nonzero sector is not a gradient. A sector is a constraint system —
+  "the potential difference across `e` is `ω e`" — that is locally
+  consistent everywhere and globally unsatisfiable. Matter is trapped
+  inconsistency; its positive energy is the cost of the paradox.
+
+### 2. The keystone — RECORDED as the next design program
+
+"Incompressible residue of neighbor-local re-description = b₁." The
+rank-2 mathematical core now exists: the period map is surjective
+(`periodRep_periods`) with kernel exactly the gradients
+(`thetaExactness`) — cochains modulo local moves ≅ b₁ period
+coordinates. What remains is the **information-theoretic half**: a
+description-length model of local re-description (InfoRatchet
+vocabulary) in which this quotient is the provable lower bound on
+compression. That is a design problem of TypeKernel's kind — the
+definitions must deserve their names before Lean gets a vote — and it
+is the thesis's actual junction of information and topology. Do not
+build vocabulary for it until the connecting theorem is stated.
+
+### Engineering note
+
+The entire block — polarization, binding, parametric oracle,
+exactness, no-potential — built on the **first attempt**, zero errors
+(two lint warnings). Phase 18's `simp +decide` recipe and the period
+formulation carried everything. Infrastructure compounding,
+measurably.
+
+**End of Phase 19 addendum.**

@@ -144,7 +144,7 @@ noncomputable def dualPresentation (P : SectorPresentation L r) :
   Q := P.toQuadraticAction.dual.Q
   Q_symm := P.toQuadraticAction.dual.Q_symm
   Q_posDef := P.toQuadraticAction.dual.Q_posDef
-  energy_eq g := rfl
+  energy_eq _ := rfl
 
 /-- The dual object's partition function is the dual action's. -/
 theorem dualVia_partFn (P : SectorPresentation L r) :
