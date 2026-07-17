@@ -175,6 +175,22 @@ theorem sectionCost_pos_of_not_injective [Fintype A] [Fintype B] [DecidableEq B]
   rw [sectionCost_eq_fiberInfoCost hsurj]
   exact fiberInfoCost_pos_of_not_injective hf
 
+/-- **The cardinality-free ratchet**: a section of a non-injective map
+is never surjective — every reverse description misses states,
+finite or not. (Where cardinalities exist, `log_card_sections`
+quantifies the miss; this is the form that survives infinite
+fibers.) -/
+theorem section_not_surjective_of_not_injective {f : A → B}
+    (hf : ¬ Function.Injective f) (r : B → A) (hr : ∀ b, f (r b) = b) :
+    ¬ Function.Surjective r := by
+  intro hsurj
+  apply hf
+  intro a₁ a₂ ha
+  obtain ⟨b₁, rfl⟩ := hsurj a₁
+  obtain ⟨b₂, rfl⟩ := hsurj a₂
+  have hb : b₁ = b₂ := by rw [← hr b₁, ← hr b₂, ha]
+  rw [hb]
+
 /-- **Forward description cost**: `|A| · log |B|` — the bits to specify
 which of `|B|^|A|` functions `f` is. -/
 noncomputable def descriptionCost [Fintype A] [Fintype B] (_f : A → B) : ℝ :=

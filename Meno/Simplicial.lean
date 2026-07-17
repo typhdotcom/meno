@@ -2,6 +2,7 @@ import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Algebra.Order.Chebyshev
 import Mathlib.Tactic
 import Meno.Basic
+import Meno.InfoRatchet
 
 /-! # The Simplicial Model -/
 
@@ -2504,18 +2505,20 @@ theorem geodesic_computation_is_lossy (C : Complex V)
   have ⟨_, _, heq, hne⟩ := homotopyClass₂_non_injective C h_edge h_back
   exact hne (hinj heq)
 
-/-- **The simplicial ratchet**: any section of the homotopy quotient map
-    costs strictly more than the forward map. This is the formal bridge
-    between the abstract arrow of time (TransitionComplexity) and the
-    concrete simplicial model — non-injectivity of the quotient implies
-    the cost asymmetry. -/
-theorem simplicial_ratchet [inst : SGD.TransitionComplexity]
+/-- **The simplicial ratchet**: any section of the homotopy quotient
+    map misses walks — reversing the quotient loses reachability. The
+    abstract cost-class form (`TransitionComplexity`, Phase 10's
+    vocabulary) is deleted (C9); this is the cardinality-free ratchet
+    of `Meno/InfoRatchet.lean`, which is the form that survives the
+    quotient's infinite fibers. Where fibers are finite the coding
+    theorem (`log_card_sections`) quantifies the loss. -/
+theorem simplicial_ratchet
     (C : Complex V) {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v)
     (r : HomotopyClass₂ C v v → Walk C.toGraph v v)
     (hr : ∀ x, Walk.toHomotopyClass₂ C (r x) = x) :
-    inst.transitionCost r >
-    inst.transitionCost (Walk.toHomotopyClass₂ C (u := v) (v := v)) :=
-  inst.ratchet _ r hr (geodesic_computation_is_lossy C h_edge h_back)
+    ¬ Function.Surjective r :=
+  Meno.section_not_surjective_of_not_injective
+    (geodesic_computation_is_lossy C h_edge h_back) r hr
 
 end Dynamics
 

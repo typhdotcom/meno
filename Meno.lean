@@ -18,6 +18,7 @@ import Meno.WedgePresentation
 import Meno.Matter
 import Meno.Binding
 import Meno.InfoRatchet
+import Meno.UniformAction
 
 -- Pre-existing layers (to be migrated downstream)
 import Meno.Basic

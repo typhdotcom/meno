@@ -244,46 +244,14 @@ end AdditiveComplexityOn
 
 def Contractible (A : Type u) : Prop := Nonempty (A ≃ PUnit.{u+1})
 
-/-! ## The Directed Loop: Time
+/-! ## The arrow of time — moved
 
-The thermodynamic laws of computation. Any concrete model claiming to be physical
-must instantiate this class, proving that non-injective maps are irreversible
-and injective maps are free. -/
-
-class TransitionComplexity where
-  /-- Transition cost for a map. Concrete meaning is model-dependent. -/
-  transitionCost : {A B : Type u} → (A → B) → ℕ
-  /-- Every transition costs at least 1. -/
-  transitionCost_pos : ∀ {A B : Type u} (f : A → B), transitionCost f > 0
-  /-- **The Entropic Ratchet.** Non-injective maps collapse fibers; recovering
-      which preimage was used costs strictly more than the forward map. -/
-  ratchet : ∀ {A B : Type u} (f : A → B) (r : B → A),
-    (∀ b, f (r b) = b) → ¬Function.Injective f →
-    transitionCost r > transitionCost f
-  /-- Injective maps are losslessly reversible: forward and backward cost the same.
-      Injective computation is timeless. -/
-  injective_reversible : ∀ {A B : Type u} (f : A → B) (r : B → A),
-    (∀ b, f (r b) = b) → Function.Injective f →
-    transitionCost r = transitionCost f
-
-/-! ## Landauer Instance: The Minimal Ratchet -/
-
-open Classical in
-/-- The Landauer cost model: injective maps cost 2, non-injective cost 1.
-    Any right-inverse of a non-injective map is injective (f ∘ r = id → r injective),
-    so the ratchet and reversibility axioms are satisfied. -/
-noncomputable instance : TransitionComplexity where
-  transitionCost f := if Function.Injective f then 2 else 1
-  transitionCost_pos f := by split <;> omega
-  ratchet f r hfr hni := by
-    have hr_inj : Function.Injective r := fun _ _ h => by
-      have := congr_arg f h; rwa [hfr, hfr] at this
-    show (if Function.Injective r then 2 else 1) > (if Function.Injective f then 2 else 1)
-    rw [if_pos hr_inj, if_neg hni]; norm_num
-  injective_reversible f r hfr hfi := by
-    have hr_inj : Function.Injective r := fun _ _ h => by
-      have := congr_arg f h; rwa [hfr, hfr] at this
-    show (if Function.Injective r then 2 else 1) = (if Function.Injective f then 2 else 1)
-    rw [if_pos hr_inj, if_pos hfi]
+The `TransitionComplexity` class and its Landauer 2/1 instance
+(Phase 10's abstract cost vocabulary) are deleted (Completion Path
+C9). The ratchet is now *derived*, not axiomatized:
+`Meno/InfoRatchet.lean` counts the reverse descriptions
+(`log_card_sections` — the coding theorem) and proves the
+cardinality-free form (`section_not_surjective_of_not_injective`);
+`Meno/Simplicial.lean`'s `simplicial_ratchet` consumes the latter. -/
 
 end SGD

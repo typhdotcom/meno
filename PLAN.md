@@ -448,7 +448,7 @@ edges) in `ThetaHarmonic.lean`. The coding-theorem statements hold for
 **every** modulus `q ≥ 1` and every finite graph — no primality, no
 per-graph fields.
 
-### C9 -- Gravity and the ratchet through SectorAction (TypeKernel's replacement) — OPEN
+### C9 -- Gravity and the ratchet through SectorAction (TypeKernel's replacement) — CLOSED (Phase 36)
 
 **Current state.** `Basic.lean` still carries the pre-plan hierarchy --
 `ComplexityMeasure`, `SigmaComplexity`, `AdditiveComplexity`,
@@ -490,6 +490,31 @@ Product additivity is already `SectorAction.prod` (Phase 1);
 **Consumer.** The thesis sentence "type-level gravity is a realization of
 the sector spine" becomes true with `uniformAction` as the realization --
 and is excised under F5 if the identity fails.
+
+**Delivered (Phase 36, `Meno/UniformAction.lean`) — with one
+amendment (rule 3).** `uniformAction A` (zero energy on a finite
+nonempty type), `uniformAction_partFn` (`Z = |A|`),
+`uniformAction_complexity` (`K = log|A|`) — `Basic.lean`'s
+log-cardinality complexity, realized as a sector action.
+`gravity_partFn`: `Z(A ×_D B)·Z(D) = Z(A)·Z(B)` for uniform fibers
+(equiv form, matching `SGD.gravity`'s hypotheses);
+`gravity_complexity`: `K(P) + K(D) = K(A) + K(B)` (the sketched
+`K(P) = K(A)+K(B)−K(D)`, in subtraction-free form);
+`gravity_uniform_complexity` — the numeric shadow of
+`SGD.gravity_uniform` at product projections;
+`uniform_refactoring_bound` — `K(P) ≤ K(D) + log(max_d |fiber
+product|)`, the concrete `refactoring_bound`. Product additivity via
+`SectorAction.prod` + `uniformAction_prod_partFn`.
+`TransitionComplexity` and its Landauer 2/1 instance are **deleted**
+from `Basic.lean` (1c). **Amendment**: `simplicial_ratchet` could not
+be literally re-proved against the *finite* coding theorem — the
+homotopy quotient's fibers are infinite — so it is re-proved against
+the **cardinality-free ratchet**
+(`section_not_surjective_of_not_injective`, added to
+`Meno/InfoRatchet.lean` beside the coding theorem): every section of
+the walk quotient misses walks. Where fibers are finite,
+`log_card_sections` remains the quantitative form. F5's check passed:
+the identity holds; nothing is excised.
 
 ### C10 -- Geodesic — CLOSED (Phase 27)
 
@@ -558,7 +583,7 @@ incidence layer and C6's intrinsic matter; C9 touches only
 | C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | **CLOSED** (Phase 33) |
 | C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + release + strict `partFn` drop | **CLOSED** (Phase 35) |
 | C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | **CLOSED** (Phase 34) |
-| C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; `TransitionComplexity` deleted | OPEN |
+| C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; `TransitionComplexity` deleted | **CLOSED** (Phase 36) |
 | C10 geodesic | general simplicial instance + `n·(1/n) = 1` consumer | **CLOSED** (Phase 27) |
 | C11 magnitude/HomKernel excision | file, import, claims removed | **CLOSED** (Phase 28) |
 | C12 architecture + public claims | duplication audit; flowing imports; README rewritten last | OPEN |
@@ -3676,3 +3701,44 @@ gravity), C12 (architecture + public claims).
 `lake build Meno`: 3342 jobs green. Zero `sorry`; zero `axiom`.
 
 **End of Phase 35 addendum.**
+
+## Phase 36 addendum: gravity through the sector action — C9 CLOSED (2026-07-17)
+
+*(Same session.)*
+
+The unification claim that Phase 17's falsification left unrealized
+is realized. `Meno/UniformAction.lean`: a finite nonempty type is a
+sector lattice with zero energy everywhere, so its partition function
+*counts* (`Z = |A|`) and its complexity is `log|A|` — `Basic.lean`'s
+complexity measure was a sector action all along. On this
+realization:
+
+- **Gravity is a partition-function identity**:
+  `Z(A ×_D B)·Z(D) = Z(A)·Z(B)` for uniform fibers, by the same
+  fiber-equivalence composites `SGD.gravity` uses, now at the
+  cardinality level; its log is `K(P) + K(D) = K(A) + K(B)` — the
+  abstract theorem's exact shape with computed numbers. Sharing a
+  base is worth exactly one copy of `Z(D)`.
+- **The refactoring bound concretizes**:
+  `K(P) ≤ K(D) + log(max_d |fiber product|)`.
+- **The axiomatized arrow of time is deleted**: `TransitionComplexity`
+  and its Landauer 2/1 instance are gone from `Basic.lean` (1c). The
+  ratchet is *derived*: finite fibers get the coding theorem (C8);
+  infinite fibers get the new cardinality-free form — a section of a
+  non-injective map is never surjective — and `simplicial_ratchet`
+  now states exactly that about the homotopy quotient (rule-3
+  amendment recorded: the quotient's fibers are infinite, so the
+  finite coding theorem cannot be its literal form).
+
+F5's falsification check passed — the identity holds; the thesis
+sentence "type-level gravity realizes the sector spine" stands with
+`uniformAction` as the realization.
+
+### Ledger
+
+**C1–C11 CLOSED — eleven of twelve.** OPEN: C12 (architecture +
+public claims), the terminal item by design.
+
+`lake build Meno`: 3343 jobs green. Zero `sorry`; zero `axiom`.
+
+**End of Phase 36 addendum.**
