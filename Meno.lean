@@ -1,4 +1,5 @@
 -- Foundational analytic primitives (new architecture)
+import Meno.IncidenceGraph
 import Meno.SectorAction
 import Meno.QuadraticAction
 import Meno.SiegelPoisson

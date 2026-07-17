@@ -36,16 +36,16 @@ open scoped BigOperators
 
 universe u v
 
-variable {V : Type u} {ι : Type v} [Fintype V] [Fintype ι] [DecidableEq V]
+variable {G : IncidenceGraph.{u, v}}
 
 /-- A matter sector over the cycle presentation `P`: a nonzero integer
 period class against `P`'s chosen cycle basis. -/
-def MatterSector (P : CyclePresentation V ι) :=
+def MatterSector (P : CyclePresentation G) :=
   {k : Fin P.r → ℤ // k ≠ 0}
 
 namespace MatterSector
 
-variable {P : CyclePresentation V ι} (m : MatterSector P)
+variable {P : CyclePresentation G} (m : MatterSector P)
 
 /-- The mass of a matter sector: the Gram energy of its period class
 (equivalently, by `mass_isLeast`, the least cochain energy at these
@@ -60,17 +60,18 @@ theorem mass_pos : 0 < m.mass :=
 /-- **The variational identity**: the mass is the least energy among
 real cochains with the sector's periods — attained. -/
 theorem mass_isLeast :
-    IsLeast {E : ℝ | ∃ ω : ι → ℝ,
+    IsLeast {E : ℝ | ∃ ω : G.E → ℝ,
         (∀ j, ω ⬝ᵥ P.cycles j = (m.val j : ℝ)) ∧ E = ω ⬝ᵥ ω} m.mass :=
-  HarmonicGramData.ofCycles_energy_isLeast (V := V) P.cycles P.gram_posDef m.val
+  HarmonicGramData.ofCycles_energy_isLeast (V := G.V) P.cycles
+    P.gram_posDef m.val
 
 /-- **Matter is trapped paradox**: *every* cochain realizing a nonzero
 period class — not merely the least-energy representative — admits no
 potential. The constraint pattern is locally consistent everywhere and
 globally unsatisfiable. -/
-theorem not_gradient (ω : ι → ℝ)
+theorem not_gradient (ω : G.E → ℝ)
     (hω : ∀ j, ω ⬝ᵥ P.cycles j = (m.val j : ℝ)) :
-    ¬ ∃ f : V → ℝ, P.grad f = ω := by
+    ¬ ∃ f : G.V → ℝ, G.grad f = ω := by
   rintro ⟨f, hf⟩
   apply m.prop
   funext j
@@ -117,9 +118,8 @@ the sector's entire mass. The *geometric* content — that gluing a
 framework deliberately lacks; Goal 7 is closed as amended with this
 shadow, and the 2-complex statement is recorded in PLAN (Phase 27) as
 what any future geometric phase must prove. -/
-theorem killed_releases_mass {V' : Type u} {ι' : Type v}
-    [Fintype V'] [Fintype ι'] [DecidableEq V']
-    {P : CyclePresentation V ι} (P' : CyclePresentation V' ι')
+theorem killed_releases_mass {G' : IncidenceGraph.{u, v}}
+    {P : CyclePresentation G} (P' : CyclePresentation G')
     (φ : (Fin P.r → ℤ) → (Fin P'.r → ℤ))
     (m : MatterSector P) (hkill : φ m.val = 0) :
     m.mass - P'.toGramData.energy (φ m.val) = m.mass := by
@@ -127,7 +127,7 @@ theorem killed_releases_mass {V' : Type u} {ι' : Type v}
 
 /-- **Matter exists** wherever the presentation has at least one basis
 cycle: nontrivial topology forces matter. -/
-theorem exists_matter (P : CyclePresentation V ι) (hr : 0 < P.r) :
+theorem exists_matter (P : CyclePresentation G) (hr : 0 < P.r) :
     Nonempty (MatterSector P) := by
   refine ⟨⟨Pi.single ⟨0, hr⟩ 1, ?_⟩⟩
   intro h

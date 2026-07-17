@@ -7,27 +7,24 @@ The connecting theorem stated in PLAN (Phase 24), endorsed and built:
 the period lattice `ℤ^{b₁}`** (`latticeQuotEquiv`). This is the
 keystone's mathematical content — the incompressible residue of
 neighbor-local re-description, now as a *lattice* (counting-ready)
-statement rather than a real vector space.
+statement rather than a real vector space. Note the quotient
+`(G.E → ℤ) ⧸ range (G.gradLin ℤ)` depends only on the graph — this is
+the working model of `H¹(G;ℤ)`; the presentation supplies coordinates.
 
 An `IntegralCyclePresentation` extends a `CyclePresentation` with an
 integer form of the cycle basis and two lattice-level fields:
 
 * `periods_onto` — every integer period vector is realized by an
-  integer cochain (per instance: single-edge cochains suffice);
+  integer cochain;
 * `integral_potentials` — an integer cochain with zero integer
-  periods has an **integer** potential (per instance: prefix-sum
-  integration around each cycle; this is where walk structure enters,
-  which is why it is a field and not a general theorem — the bare
-  presentation has no reachability vocabulary).
+  periods has an **integer** potential.
 
-Everything else is generic: integer Stokes is inherited from the real
-theorem by casting, and the quotient equivalence is the first
-isomorphism theorem over `ℤ`.
-
-The finite-resolution corollaries (K1)–(K3) of the PLAN statement
-(counting at resolution `q`) follow from this ℤ-form and are deferred
-to their own phase — they need `ZMod` vocabulary this file does not
-introduce. -/
+Concrete instances discharge these by hand (prefix sums, single-edge
+cochains); the Completion Path's C2 (`fundamentalPresentation`)
+discharges them for **every** finite graph via the walk-integration
+engine of `Meno/IncidenceGraph.lean`. Everything else is generic:
+integer Stokes is inherited from the real theorem by casting, and the
+quotient equivalence is the first isomorphism theorem over `ℤ`. -/
 
 namespace Meno
 
@@ -142,26 +139,24 @@ theorem finPrefixSum_grad {n : ℕ} [NeZero n] (ω : Fin n → ℤ)
 
 /-- A cycle presentation with an integer form of its basis and the
 two lattice-level integrality facts. -/
-structure IntegralCyclePresentation (V : Type u) (ι : Type v)
-    [Fintype V] [Fintype ι] [DecidableEq V]
-    extends CyclePresentation V ι where
+structure IntegralCyclePresentation (G : IncidenceGraph.{u, v})
+    extends CyclePresentation G where
   /-- The integer form of the cycle basis. -/
-  cyclesZ : Fin r → ι → ℤ
+  cyclesZ : Fin r → G.E → ℤ
   /-- The integer basis casts to the real one. -/
   cyclesZ_cast : ∀ i e, ((cyclesZ i e : ℤ) : ℝ) = cycles i e
   /-- Every integer period vector is realized by an integer cochain. -/
-  periods_onto : ∀ k : Fin r → ℤ, ∃ ω : ι → ℤ, ∀ j, ω ⬝ᵥ cyclesZ j = k j
+  periods_onto : ∀ k : Fin r → ℤ, ∃ ω : G.E → ℤ, ∀ j, ω ⬝ᵥ cyclesZ j = k j
   /-- Integer integration: an integer cochain with zero integer
   periods has an integer potential. -/
-  integral_potentials : ∀ ω : ι → ℤ, (∀ j, ω ⬝ᵥ cyclesZ j = 0) →
-    ∃ g : V → ℤ, (fun e => g (tgt e) - g (src e)) = ω
+  integral_potentials : ∀ ω : G.E → ℤ, (∀ j, ω ⬝ᵥ cyclesZ j = 0) →
+    ∃ g : G.V → ℤ, G.grad g = ω
 
 namespace IntegralCyclePresentation
 
-variable {V : Type u} {ι : Type v} [Fintype V] [Fintype ι] [DecidableEq V]
-variable (Q : IntegralCyclePresentation V ι)
+variable {G : IncidenceGraph.{u, v}} (Q : IntegralCyclePresentation G)
 
-private lemma cast_dotProduct (x y : ι → ℤ) :
+private lemma cast_dotProduct {ι : Type v} [Fintype ι] (x y : ι → ℤ) :
     ((x ⬝ᵥ y : ℤ) : ℝ) = (fun e => (x e : ℝ)) ⬝ᵥ (fun e => (y e : ℝ)) := by
   show ((∑ e, x e * y e : ℤ) : ℝ) = ∑ e, (x e : ℝ) * (y e : ℝ)
   push_cast
@@ -169,13 +164,15 @@ private lemma cast_dotProduct (x y : ι → ℤ) :
 
 /-- **Integer Stokes**, inherited from the real theorem by casting:
 integer gradients have zero integer periods. -/
-theorem gradZ_period (g : V → ℤ) (j : Fin Q.r) :
-    (fun e => g (Q.tgt e) - g (Q.src e)) ⬝ᵥ Q.cyclesZ j = 0 := by
+theorem gradZ_period (g : G.V → ℤ) (j : Fin Q.r) :
+    G.grad g ⬝ᵥ Q.cyclesZ j = 0 := by
   apply Int.cast_injective (α := ℝ)
   rw [Int.cast_zero, cast_dotProduct]
-  have h1 : (fun e => ((g (Q.tgt e) - g (Q.src e) : ℤ) : ℝ))
-      = Q.toCyclePresentation.grad (fun v => (g v : ℝ)) := by
+  have h1 : (fun e => ((G.grad g e : ℤ) : ℝ))
+      = G.grad (fun v => (g v : ℝ)) := by
     funext e
+    show ((g (G.tgt e) - g (G.src e) : ℤ) : ℝ)
+      = (g (G.tgt e) : ℝ) - (g (G.src e) : ℝ)
     push_cast
     rfl
   have h2 : (fun e => (Q.cyclesZ j e : ℝ)) = Q.cycles j :=
@@ -183,22 +180,8 @@ theorem gradZ_period (g : V → ℤ) (j : Fin Q.r) :
   rw [h1, h2]
   exact Q.toCyclePresentation.grad_period _ j
 
-/-- The integer gradient as a `ℤ`-linear map. -/
-noncomputable def gradLinZ : (V → ℤ) →ₗ[ℤ] (ι → ℤ) where
-  toFun g := fun e => g (Q.tgt e) - g (Q.src e)
-  map_add' f g := funext fun e => by
-    show (f + g) (Q.tgt e) - (f + g) (Q.src e)
-      = (f (Q.tgt e) - f (Q.src e)) + (g (Q.tgt e) - g (Q.src e))
-    simp only [Pi.add_apply]
-    ring
-  map_smul' c f := funext fun e => by
-    show (c • f) (Q.tgt e) - (c • f) (Q.src e)
-      = c * (f (Q.tgt e) - f (Q.src e))
-    simp only [Pi.smul_apply, smul_eq_mul]
-    ring
-
 /-- The integer period map as a `ℤ`-linear map. -/
-noncomputable def periodLinZ : (ι → ℤ) →ₗ[ℤ] (Fin Q.r → ℤ) where
+noncomputable def periodLinZ : (G.E → ℤ) →ₗ[ℤ] (Fin Q.r → ℤ) where
   toFun ω := fun j => ω ⬝ᵥ Q.cyclesZ j
   map_add' ω η := funext fun j => add_dotProduct ω η (Q.cyclesZ j)
   map_smul' c ω := funext fun j => smul_dotProduct c ω (Q.cyclesZ j)
@@ -206,7 +189,7 @@ noncomputable def periodLinZ : (ι → ℤ) →ₗ[ℤ] (Fin Q.r → ℤ) where
 /-- Lattice exactness: the kernel of the integer period map is exactly
 the image of the integer gradient. -/
 theorem range_gradLinZ_eq_ker_periodLinZ :
-    LinearMap.range Q.gradLinZ = LinearMap.ker Q.periodLinZ := by
+    LinearMap.range (G.gradLin ℤ) = LinearMap.ker Q.periodLinZ := by
   ext ω
   simp only [LinearMap.mem_range, LinearMap.mem_ker]
   constructor
@@ -226,19 +209,19 @@ theorem periodLinZ_surjective : Function.Surjective Q.periodLinZ := by
 local re-description are exactly the period lattice `ℤ^{b₁}`. The
 incompressible residue of neighbor-local re-description is `b₁`
 integer degrees of freedom — as a lattice, ready for counting at any
-finite resolution. -/
+finite resolution. The quotient depends only on the graph. -/
 noncomputable def latticeQuotEquiv :
-    ((ι → ℤ) ⧸ LinearMap.range Q.gradLinZ) ≃ₗ[ℤ] (Fin Q.r → ℤ) :=
+    ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) ≃ₗ[ℤ] (Fin Q.r → ℤ) :=
   (Submodule.quotEquivOfEq _ _ Q.range_gradLinZ_eq_ker_periodLinZ).trans
     (Q.periodLinZ.quotKerEquivOfSurjective Q.periodLinZ_surjective)
 
 end IntegralCyclePresentation
 
-/-! ## Instances: the cycle graph and the wedge -/
+/-! ## Instances: the cycle graph and the (spectator) wedge -/
 
 /-- The cycle graph as an integral presentation. -/
 noncomputable def cycleIntegralPresentation (n : ℕ) (hn : 0 < n) :
-    IntegralCyclePresentation (Fin n) (Fin n) :=
+    IntegralCyclePresentation (cycleGraph n hn) :=
   haveI : NeZero n := ⟨hn.ne'⟩
   { cyclePresentation n hn with
     cyclesZ := fun _ _ => 1
@@ -260,10 +243,10 @@ noncomputable def cycleIntegralPresentation (n : ℕ) (hn : 0 < n) :
         simp
       exact ⟨finPrefixSum ω, funext fun e => finPrefixSum_grad ω hsum e⟩ }
 
-/-- The wedge of two cycles as an integral presentation. -/
+/-- The (spectator) wedge of two cycles as an integral presentation. -/
 noncomputable def wedgeIntegralPresentation (n₁ n₂ : ℕ)
     (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
-    IntegralCyclePresentation (Fin n₁ ⊕ Fin n₂) (Fin n₁ ⊕ Fin n₂) :=
+    IntegralCyclePresentation (wedgeSpectatorGraph n₁ n₂ h₁ h₂) :=
   haveI : NeZero n₁ := ⟨h₁.ne'⟩
   haveI : NeZero n₂ := ⟨h₂.ne'⟩
   { wedgePresentation n₁ n₂ h₁ h₂ with

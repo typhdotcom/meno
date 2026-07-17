@@ -192,11 +192,16 @@ theorem thetaGramData_energy_one_zero :
       * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1/3
   norm_num [Fin.sum_univ_two]
 
+/-- The theta graph `K₂,₃` as an incidence graph. -/
+@[reducible] def thetaGraph : IncidenceGraph :=
+  { V := Fin 5
+    E := Fin 6
+    src := thetaSrc
+    tgt := thetaTgt }
+
 /-- The theta graph as a cycle presentation: `K₂,₃` with its chosen
 basis `c₁ = p₁ − p₃`, `c₂ = p₂ − p₃`. -/
-@[reducible] noncomputable def thetaPresentation : CyclePresentation (Fin 5) (Fin 6) where
-  src := thetaSrc
-  tgt := thetaTgt
+@[reducible] noncomputable def thetaPresentation : CyclePresentation thetaGraph where
   r := 2
   cycles := thetaCycles
   cycles_closed := fun i w => thetaBoundary_cycles i w
@@ -216,7 +221,7 @@ second paths), and integer integration (the Phase-19 explicit
 potential, whose entries are integer combinations of `ω`). Feeds the
 keystone `latticeQuotEquiv`. -/
 noncomputable def thetaIntegralPresentation :
-    IntegralCyclePresentation (Fin 5) (Fin 6) :=
+    IntegralCyclePresentation thetaGraph :=
   { thetaPresentation with
     cyclesZ := ![![1, 1, 0, 0, -1, -1], ![0, 0, 1, 1, -1, -1]]
     cyclesZ_cast := fun i e => by
@@ -229,8 +234,14 @@ noncomputable def thetaIntegralPresentation :
       have h0 := h 0
       have h1 := h 1
       simp +decide [dotProduct, Fin.sum_univ_six] at h0 h1
-      refine ⟨![0, ω 4 + ω 5, ω 0, ω 2, ω 4], funext fun e => ?_⟩
-      fin_cases e <;> simp +decide [thetaSrc, thetaTgt] <;> omega }
+      refine ⟨![0, ω 4 + ω 5, ω 0, ω 2, ω 4], ?_⟩
+      have hgrad : (fun e =>
+          (![0, ω 4 + ω 5, ω 0, ω 2, ω 4] : Fin 5 → ℤ) (thetaTgt e)
+            - (![0, ω 4 + ω 5, ω 0, ω 2, ω 4] : Fin 5 → ℤ) (thetaSrc e))
+          = ω := by
+        funext e
+        fin_cases e <;> simp +decide [thetaSrc, thetaTgt] <;> omega
+      exact hgrad }
 
 /-- The theta graph has matter: the `(1, 0)` period class, anchored to
 the presentation (Phase 22). Mass, the variational identity,
@@ -434,7 +445,7 @@ count `card_quotient` (K1); lives here, not in `ResolutionCount.lean`,
 so the generic layer never imports a concrete graph. -/
 theorem theta_residue_count (q : ℕ) [NeZero q] :
     Nat.card ((Fin 6 → ZMod q)
-        ⧸ LinearMap.range (thetaIntegralPresentation.gradLinQ q))
+        ⧸ LinearMap.range (thetaGraph.gradLin (ZMod q)))
       = q ^ 2 :=
   thetaIntegralPresentation.card_quotient q
 
