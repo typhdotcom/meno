@@ -1,3 +1,4 @@
+import Meno.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Set.Card
@@ -450,5 +451,285 @@ theorem shannonEntropy_uniform (X : Type u) [Fintype X] [Nonempty X] :
   unfold shannonEntropy
   rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, Real.log_inv]
   field_simp
+
+/-- A map with constant fiber count `m` multiplies cardinalities. -/
+theorem card_eq_card_mul_of_fiber {X D : Type u} [Fintype X] [Fintype D]
+    [DecidableEq D] (f : X → D) {m : ℕ}
+    (hfib : ∀ d, Nat.card {x : X // f x = d} = m) :
+    Fintype.card X = Fintype.card D * m := by
+  rw [← Finset.card_univ (α := X),
+    Finset.card_eq_sum_card_fiberwise (fun x _ => Finset.mem_univ (f x))]
+  rw [Finset.sum_congr rfl fun d _ =>
+    (show (Finset.univ.filter fun x : X => f x = d).card = m by
+      rw [← Fintype.card_subtype, ← Nat.card_eq_fintype_card]
+      exact hfib d)]
+  rw [Finset.sum_const, Finset.card_univ, smul_eq_mul]
+
+/-! ## Finite distributions (review #10)
+
+The distribution semantics of the gravity face, as one abstraction: a
+`FinDist` carries nonnegativity and normalization; `map` is the
+pushforward, `uniformLift` the uniform fiber lift, `coupling` the
+shared-base coupling on the pullback. The lift pushforward law
+(`map_uniformLift`), both coupling marginals (`coupling_fst`,
+`coupling_snd`), and **the entropy gravity identity**
+(`entropy_gravity` — `H(coupling) + H(base) = H(lift) + H(lift)`) are
+proved once, here. The graph instantiations — the Gibbs residue
+distribution and the uniform distribution — live in
+`Meno/ResolutionCount.lean`. -/
+
+/-- A **finite probability distribution**: a nonnegative, normalized
+mass function on a finite type. -/
+structure FinDist (X : Type u) [Fintype X] where
+  /-- The mass function. -/
+  mass : X → ℝ
+  nonneg : ∀ x, 0 ≤ mass x
+  sum_one : ∑ x, mass x = 1
+
+namespace FinDist
+
+variable {X Y D : Type u} [Fintype X] [Fintype Y] [Fintype D]
+
+theorem ext {P P' : FinDist X} (h : P.mass = P'.mass) : P = P' := by
+  cases P
+  cases P'
+  simpa using h
+
+/-- The Shannon entropy of a finite distribution. -/
+noncomputable def entropy (P : FinDist X) : ℝ := shannonEntropy P.mass
+
+/-- **Pushforward** along a map: fiber sums. -/
+noncomputable def map [DecidableEq D] (f : X → D) (P : FinDist X) :
+    FinDist D where
+  mass d := ∑ x ∈ Finset.univ.filter (fun x => f x = d), P.mass x
+  nonneg d := Finset.sum_nonneg fun x _ => P.nonneg x
+  sum_one := by
+    rw [Finset.sum_fiberwise Finset.univ f P.mass]
+    exact P.sum_one
+
+/-- **The uniform fiber lift**: pull a base distribution back along a
+constant-fiber map, dividing each mass evenly across the fiber. -/
+noncomputable def uniformLift [DecidableEq D] (f : X → D) {m : ℕ}
+    (hm : 0 < m) (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
+    (P : FinDist D) : FinDist X where
+  mass x := P.mass (f x) / m
+  nonneg x := div_nonneg (P.nonneg _) (by positivity)
+  sum_one := by
+    have hm' : (m : ℝ) ≠ 0 := by exact_mod_cast hm.ne'
+    rw [sum_comp_card_fiber f hfib (fun d => P.mass d / m),
+      ← Finset.sum_div, P.sum_one]
+    field_simp
+
+/-- The lift's entropy: base entropy plus the fiber log — the chain
+rule, in distribution form. -/
+theorem entropy_uniformLift [DecidableEq D] (f : X → D) {m : ℕ}
+    (hm : 0 < m) (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
+    (P : FinDist D) :
+    (P.uniformLift f hm hfib).entropy = P.entropy + Real.log m :=
+  shannonEntropy_comp_div f P.mass hm hfib P.sum_one P.nonneg
+
+/-- **The lift pushforward law** (review #10): pushing the uniform
+lift forward recovers the base distribution. -/
+theorem map_uniformLift [DecidableEq D] (f : X → D) {m : ℕ}
+    (hm : 0 < m) (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
+    (P : FinDist D) :
+    (P.uniformLift f hm hfib).map f = P := by
+  have hm' : (m : ℝ) ≠ 0 := by exact_mod_cast hm.ne'
+  apply ext
+  funext d
+  show ∑ x ∈ Finset.univ.filter (fun x => f x = d), P.mass (f x) / m
+    = P.mass d
+  rw [Finset.sum_congr rfl fun x hx => by
+    rw [(Finset.mem_filter.mp hx).2]]
+  rw [Finset.sum_const,
+    show (Finset.univ.filter fun x : X => f x = d).card = m by
+      rw [← Fintype.card_subtype, ← Nat.card_eq_fintype_card]
+      exact hfib d,
+    nsmul_eq_mul]
+  field_simp
+
+/-- The uniform distribution on a finite nonempty type. -/
+noncomputable def uniform (X : Type u) [Fintype X] [Nonempty X] :
+    FinDist X where
+  mass _ := (Fintype.card X : ℝ)⁻¹
+  nonneg _ := by positivity
+  sum_one := by
+    rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul,
+      mul_inv_cancel₀
+        (Nat.cast_ne_zero.mpr Fintype.card_pos.ne' : (Fintype.card X : ℝ) ≠ 0)]
+
+theorem entropy_uniform (X : Type u) [Fintype X] [Nonempty X] :
+    (uniform X).entropy = Real.log (Fintype.card X) :=
+  shannonEntropy_uniform X
+
+/-- Lifting the uniform distribution uniformly is uniform. -/
+theorem uniformLift_uniform [DecidableEq D] [Nonempty D] [Nonempty X]
+    (f : X → D) {m : ℕ} (hm : 0 < m)
+    (hfib : ∀ d, Nat.card {x : X // f x = d} = m) :
+    (uniform D).uniformLift f hm hfib = uniform X := by
+  apply ext
+  funext x
+  show (Fintype.card D : ℝ)⁻¹ / m = (Fintype.card X : ℝ)⁻¹
+  rw [card_eq_card_mul_of_fiber f hfib]
+  have hD : (0 : ℝ) < Fintype.card D := by exact_mod_cast Fintype.card_pos
+  have hm' : (0 : ℝ) < m := by exact_mod_cast hm
+  push_cast
+  rw [mul_inv]
+  field_simp
+
+/-- **The shared-base coupling** of two uniform lifts: on the
+pullback, each base mass split evenly across the `m · m'` pairs above
+it. -/
+noncomputable def coupling [DecidableEq D] (f : X → D) (g : Y → D)
+    [Fintype (SGD.Pullback f g)] {m m' : ℕ}
+    (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m')
+    (P : FinDist D) : FinDist (SGD.Pullback f g) where
+  mass p := P.mass (SGD.Pullback.base p) / ((m * m' : ℕ) : ℝ)
+  nonneg p := div_nonneg (P.nonneg _) (by positivity)
+  sum_one := by
+    have hfib : ∀ d,
+        Nat.card {p : SGD.Pullback f g // SGD.Pullback.base p = d}
+          = m * m' := fun d => by
+      rw [Nat.card_congr (SGD.Pullback.baseFiberEquiv f g d),
+        Nat.card_prod, hf d, hg d]
+    have hmm : ((m * m' : ℕ) : ℝ) ≠ 0 := by
+      exact_mod_cast (Nat.mul_pos hm hm').ne'
+    rw [sum_comp_card_fiber
+        (fun p : SGD.Pullback f g => SGD.Pullback.base p) hfib
+        (fun d => P.mass d / ((m * m' : ℕ) : ℝ)),
+      ← Finset.sum_div, P.sum_one]
+    field_simp
+
+omit [Fintype X] [Fintype Y] [Fintype D] in
+/-- The constant fiber count of the pullback's base map. -/
+theorem card_base_fiber (f : X → D) (g : Y → D) {m m' : ℕ}
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') (d : D) :
+    Nat.card {p : SGD.Pullback f g // SGD.Pullback.base p = d}
+      = m * m' := by
+  rw [Nat.card_congr (SGD.Pullback.baseFiberEquiv f g d),
+    Nat.card_prod, hf d, hg d]
+
+omit [Fintype X] [Fintype Y] in
+/-- The coupling's entropy: base entropy plus both fiber logs. -/
+theorem entropy_coupling [DecidableEq D] (f : X → D) (g : Y → D)
+    [Fintype (SGD.Pullback f g)] {m m' : ℕ}
+    (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') (P : FinDist D) :
+    (P.coupling f g hm hm' hf hg).entropy
+      = P.entropy + Real.log ((m * m' : ℕ) : ℝ) :=
+  shannonEntropy_comp_div
+    (fun p : SGD.Pullback f g => SGD.Pullback.base p) P.mass
+    (Nat.mul_pos hm hm') (card_base_fiber f g hf hg) P.sum_one P.nonneg
+
+omit [Fintype Y] in
+/-- **The first coupling marginal is the first uniform lift**
+(review #10). -/
+theorem coupling_fst [DecidableEq D] [DecidableEq X] (f : X → D)
+    (g : Y → D) [Fintype (SGD.Pullback f g)] {m m' : ℕ}
+    (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') (P : FinDist D) :
+    (P.coupling f g hm hm' hf hg).map (fun p => p.val.1)
+      = P.uniformLift f hm hf := by
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
+  have hmR' : (0 : ℝ) < m' := by exact_mod_cast hm'
+  apply ext
+  funext x
+  show ∑ p ∈ Finset.univ.filter
+      (fun p : SGD.Pullback f g => p.val.1 = x),
+      P.mass (SGD.Pullback.base p) / ((m * m' : ℕ) : ℝ)
+    = P.mass (f x) / m
+  rw [Finset.sum_congr rfl fun p hp => by
+    rw [show SGD.Pullback.base p = f x from
+      congrArg f (Finset.mem_filter.mp hp).2]]
+  rw [Finset.sum_const,
+    show (Finset.univ.filter
+        fun p : SGD.Pullback f g => p.val.1 = x).card = m' by
+      rw [← Fintype.card_subtype, ← Nat.card_eq_fintype_card,
+        Nat.card_congr (SGD.Pullback.fstFiberEquiv f g x)]
+      exact hg (f x),
+    nsmul_eq_mul]
+  push_cast
+  field_simp
+
+omit [Fintype X] in
+/-- **The second coupling marginal is the second uniform lift**
+(review #10). -/
+theorem coupling_snd [DecidableEq D] [DecidableEq Y] (f : X → D)
+    (g : Y → D) [Fintype (SGD.Pullback f g)] {m m' : ℕ}
+    (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') (P : FinDist D) :
+    (P.coupling f g hm hm' hf hg).map (fun p => p.val.2)
+      = P.uniformLift g hm' hg := by
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
+  have hmR' : (0 : ℝ) < m' := by exact_mod_cast hm'
+  apply ext
+  funext y
+  show ∑ p ∈ Finset.univ.filter
+      (fun p : SGD.Pullback f g => p.val.2 = y),
+      P.mass (SGD.Pullback.base p) / ((m * m' : ℕ) : ℝ)
+    = P.mass (g y) / m'
+  rw [Finset.sum_congr rfl fun p hp => by
+    rw [show SGD.Pullback.base p = g y from
+      p.prop.trans (congrArg g (Finset.mem_filter.mp hp).2)]]
+  rw [Finset.sum_const,
+    show (Finset.univ.filter
+        fun p : SGD.Pullback f g => p.val.2 = y).card = m by
+      rw [← Fintype.card_subtype, ← Nat.card_eq_fintype_card,
+        Nat.card_congr (SGD.Pullback.sndFiberEquiv f g y)]
+      exact hf (g y),
+    nsmul_eq_mul]
+  push_cast
+  field_simp
+
+omit [Fintype X] [Fintype Y] in
+/-- Coupling the uniform distribution is uniform on the pullback. -/
+theorem coupling_uniform [DecidableEq D] [Nonempty D] (f : X → D)
+    (g : Y → D) [Fintype (SGD.Pullback f g)]
+    [Nonempty (SGD.Pullback f g)] {m m' : ℕ}
+    (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') :
+    (uniform D).coupling f g hm hm' hf hg
+      = uniform (SGD.Pullback f g) := by
+  apply ext
+  funext p
+  show (Fintype.card D : ℝ)⁻¹ / ((m * m' : ℕ) : ℝ)
+    = (Fintype.card (SGD.Pullback f g) : ℝ)⁻¹
+  rw [card_eq_card_mul_of_fiber
+    (fun p : SGD.Pullback f g => SGD.Pullback.base p)
+    (card_base_fiber f g hf hg)]
+  have hD : (0 : ℝ) < Fintype.card D := by exact_mod_cast Fintype.card_pos
+  have hmm : (0 : ℝ) < ((m * m' : ℕ) : ℝ) := by
+    exact_mod_cast Nat.mul_pos hm hm'
+  push_cast
+  rw [mul_inv]
+  field_simp
+
+/-- **THE ENTROPY GRAVITY IDENTITY, generically** (review #10): for
+any base distribution uniformly lifted along two constant-fiber maps,
+the shared-base coupling's entropy plus the base's entropy equals the
+two lifts' entropies — sharing the base saves exactly one copy of its
+entropy. Proved once; every instance is an instantiation. -/
+theorem entropy_gravity [DecidableEq D] (f : X → D) (g : Y → D)
+    [Fintype (SGD.Pullback f g)] {m m' : ℕ}
+    (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') (P : FinDist D) :
+    (P.coupling f g hm hm' hf hg).entropy + P.entropy
+      = (P.uniformLift f hm hf).entropy
+        + (P.uniformLift g hm' hg).entropy := by
+  rw [entropy_coupling f g hm hm' hf hg,
+    entropy_uniformLift f hm hf, entropy_uniformLift g hm' hg,
+    Nat.cast_mul,
+    Real.log_mul (by exact_mod_cast hm.ne') (by exact_mod_cast hm'.ne')]
+  ring
+
+end FinDist
 
 end Meno

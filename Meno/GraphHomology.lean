@@ -2,6 +2,7 @@ import Meno.IncidenceGraph
 import Mathlib.LinearAlgebra.FreeModule.PID
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.LinearAlgebra.Matrix.Rank
+import Mathlib.LinearAlgebra.Dual.Basis
 
 /-! # Graph Homology: the pure topology layer
 
@@ -1183,6 +1184,125 @@ theorem exists_int_coords {r : ℕ} (c : Fin r → G.E → ℤ)
   push_cast
   refine Finset.sum_congr rfl fun i _ => ?_
   rw [← key i]
+
+/-! ### The homology–cohomology pairing (review #10)
+
+`H₁(G;ℤ)` is canonically the dual of `H¹(G;ℤ)`: a cohomology class
+evaluates on an integral cycle through any representative — Stokes
+makes the evaluation well-defined, the keystone makes the pairing
+perfect. Unpriced: no Gram, no analysis. The priced transport — the
+carrier's dual action lands on `π²` times the unit-edge chain
+pairing — is `Meno/BasisIndependence.lean`. -/
+
+/-- The cycle lattice is a finite `ℤ`-module — through the fundamental
+basis. -/
+instance : Module.Finite ℤ G.cycleLattice :=
+  Module.Finite.of_basis G.cycleBasis
+
+/-- The `H¹` basis a cycle-lattice basis induces: the standard basis
+of `ℤⁿ` pulled back along the keystone equivalence. (Moved here from
+the priced layer, review #10 — the basis is unpriced.) -/
+noncomputable def h1Basis {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
+    Module.Basis (Fin n) ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :=
+  (Pi.basisFun ℤ (Fin n)).map (G.latticeQuotEquiv B).symm
+
+theorem latticeQuotEquiv_h1Basis {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (i : Fin n) :
+    G.latticeQuotEquiv B (G.h1Basis B i) = Pi.single i 1 := by
+  rw [h1Basis, Module.Basis.map_apply, LinearEquiv.apply_symm_apply,
+    Pi.basisFun_apply]
+
+/-- The induced basis reads coordinates through the keystone. -/
+theorem h1Basis_repr {n : ℕ} (B : Module.Basis (Fin n) ℤ G.cycleLattice)
+    (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) (j : Fin n) :
+    (G.h1Basis B).repr κ j = G.latticeQuotEquiv B κ j := by
+  rw [h1Basis, Module.Basis.map_repr, LinearEquiv.trans_apply,
+    LinearEquiv.symm_symm, Pi.basisFun_repr]
+
+/-- **Period evaluation**: a cohomology class evaluates on an integral
+cycle — well-defined by Stokes (gradients pair to zero against
+cycles), `ℤ`-bilinear, basis-free. -/
+noncomputable def cyclePairing :
+    ↥G.cycleLattice →ₗ[ℤ]
+      Module.Dual ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) where
+  toFun c := Submodule.liftQ _
+    { toFun := fun τ => τ ⬝ᵥ (c : G.E → ℤ)
+      map_add' := fun τ σ => add_dotProduct τ σ _
+      map_smul' := fun r τ => smul_dotProduct r τ _ }
+    (by
+      rintro τ ⟨g, rfl⟩
+      rw [LinearMap.mem_ker]
+      show G.grad g ⬝ᵥ (c : G.E → ℤ) = 0
+      rw [G.grad_dotProduct_eq,
+        show G.boundary (c : G.E → ℤ) = (0 : G.V → ℤ) from
+          LinearMap.mem_ker.mp c.prop]
+      simp)
+  map_add' c c' := by
+    refine LinearMap.ext fun κ => ?_
+    obtain ⟨τ, rfl⟩ := Submodule.Quotient.mk_surjective _ κ
+    show τ ⬝ᵥ ((c + c' : ↥G.cycleLattice) : G.E → ℤ)
+      = τ ⬝ᵥ (c : G.E → ℤ) + τ ⬝ᵥ (c' : G.E → ℤ)
+    rw [Submodule.coe_add, dotProduct_add]
+  map_smul' r c := by
+    refine LinearMap.ext fun κ => ?_
+    obtain ⟨τ, rfl⟩ := Submodule.Quotient.mk_surjective _ κ
+    show τ ⬝ᵥ ((r • c : ↥G.cycleLattice) : G.E → ℤ)
+      = r • (τ ⬝ᵥ (c : G.E → ℤ))
+    rw [Submodule.coe_smul, dotProduct_smul]
+
+@[simp] theorem cyclePairing_mk (c : ↥G.cycleLattice) (τ : G.E → ℤ) :
+    G.cyclePairing c (Submodule.Quotient.mk τ) = τ ⬝ᵥ (c : G.E → ℤ) := rfl
+
+/-- The fundamental cycles pair with the induced `H¹` basis as its
+dual basis — the keystone, in pairing form. -/
+theorem cyclePairing_cycleBasis (j : Fin G.b1) :
+    G.cyclePairing (G.cycleBasis j)
+      = (G.h1Basis G.cycleBasis).dualBasis j := by
+  refine LinearMap.ext fun κ => ?_
+  obtain ⟨τ, rfl⟩ := Submodule.Quotient.mk_surjective _ κ
+  rw [cyclePairing_mk, Module.Basis.dualBasis_apply, h1Basis_repr,
+    latticeQuotEquiv_mk]
+  rfl
+
+/-- **THE HOMOLOGY–COHOMOLOGY PERFECT PAIRING** (review #10): period
+evaluation identifies the integral cycle lattice with the dual of
+`H¹(G;ℤ)`. The map is basis-free; bijectivity is the keystone — the
+fundamental cycles are carried to a dual basis. -/
+noncomputable def cyclesDualEquiv :
+    ↥G.cycleLattice ≃ₗ[ℤ]
+      Module.Dual ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :=
+  LinearEquiv.ofBijective G.cyclePairing (by
+    have heq : G.cyclePairing
+        = (G.cycleBasis.equiv (G.h1Basis G.cycleBasis).dualBasis
+            (_root_.Equiv.refl _)).toLinearMap :=
+      G.cycleBasis.ext fun j => by
+        rw [G.cyclePairing_cycleBasis j]
+        exact (G.cycleBasis.equiv_apply j _ (_root_.Equiv.refl _)).symm
+    rw [heq]
+    exact (G.cycleBasis.equiv (G.h1Basis G.cycleBasis).dualBasis
+      (_root_.Equiv.refl _)).bijective)
+
+@[simp] theorem cyclesDualEquiv_apply (c : ↥G.cycleLattice) :
+    G.cyclesDualEquiv c = G.cyclePairing c := rfl
+
+theorem cyclesDualEquiv_cycleBasis (j : Fin G.b1) :
+    G.cyclesDualEquiv (G.cycleBasis j)
+      = (G.h1Basis G.cycleBasis).dualBasis j :=
+  G.cyclePairing_cycleBasis j
+
+/-- Coordinates transport across the pairing: the dual-basis
+coordinates of a paired cycle are its fundamental coordinates. -/
+theorem cyclesDualEquiv_repr (c : ↥G.cycleLattice) (i : Fin G.b1) :
+    (G.h1Basis G.cycleBasis).dualBasis.repr (G.cyclesDualEquiv c) i
+      = G.cycleBasis.repr c i := by
+  have h : G.cyclesDualEquiv c
+      = ∑ j, G.cycleBasis.repr c j • (G.h1Basis G.cycleBasis).dualBasis j := by
+    conv_lhs => rw [← G.cycleBasis.sum_repr c]
+    rw [map_sum]
+    exact Finset.sum_congr rfl fun j _ => by
+      rw [LinearEquiv.map_smul, G.cyclesDualEquiv_cycleBasis j]
+  rw [h, Module.Basis.repr_sum_self]
 
 end IncidenceGraph
 

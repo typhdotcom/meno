@@ -185,19 +185,6 @@ theorem classForm_chart {n : ℕ} (B : Module.Basis (Fin n) ℤ G.cycleLattice)
   rw [h1, h2, h3]
   rfl
 
-/-- The `H¹` basis a cycle-lattice basis induces: the standard basis
-of `ℤⁿ` pulled back along the keystone equivalence. -/
-noncomputable def h1Basis {n : ℕ}
-    (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
-    Module.Basis (Fin n) ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :=
-  (Pi.basisFun ℤ (Fin n)).map (G.latticeQuotEquiv B).symm
-
-theorem latticeQuotEquiv_h1Basis {n : ℕ}
-    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (i : Fin n) :
-    G.latticeQuotEquiv B (G.h1Basis B i) = Pi.single i 1 := by
-  rw [h1Basis, Module.Basis.map_apply, LinearEquiv.apply_symm_apply,
-    Pi.basisFun_apply]
-
 private lemma interaction_single {W : Type*} (H : HarmonicGramData W)
     (i j : Fin H.r) :
     H.interaction (Pi.single i 1) (Pi.single j 1) = H.gram i j := by
@@ -366,6 +353,127 @@ theorem classSectorAction_gibbsVariance_nonneg
     (hf : Summable (fun κ => f κ * (G.classSectorAction).gibbsMass κ)) :
     0 ≤ (G.classSectorAction).gibbsVariance f :=
   (G.classSectorAction).gibbsVariance_nonneg f hsq hf
+
+/-! ## The intrinsic dual identified with graph homology (review #10)
+
+The abstract dual lattice `Module.Dual ℤ H¹(G;ℤ)` *is* the cycle
+lattice `H₁(G;ℤ)`, through the period-evaluation pairing
+(`cyclesDualEquiv`, `Meno/GraphHomology.lean`). Transported across it,
+the dual action's form is `π²` times the **unit-edge chain pairing**
+of cycles (`dualForm_cyclesDualEquiv`), the priced cycle lattice is a
+`QuadLatticeAction` in its own right (`cycleAction`), the pairing is a
+form-preserving equivalence (`cycleActionEquivDual`), and the
+Siegel–Poisson duality holds **directly between harmonic `H¹` sectors
+and priced `H₁` cycles** (`cycle_harmonic_duality`) — the topological
+meaning of the intrinsic dual. -/
+
+/-- The Gram data of a basis is the inverse chain Gram —
+definitionally. -/
+theorem basisGramData_gram {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
+    (G.basisGramData B).gram = (gramOf (G.cyclesR B))⁻¹ := rfl
+
+/-- The carrier's Gram at the induced `H¹` basis is the basis's Gram
+data, in matrix form. -/
+theorem classQuadAction_gram_h1Basis {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
+    (G.classQuadAction).gram (G.h1Basis B) = (G.basisGramData B).gram := by
+  ext i j
+  exact G.classForm_h1Basis B i j
+
+private lemma cast_dot_cycles (i j : Fin G.b1) :
+    ((G.cyclesZ G.cycleBasis i ⬝ᵥ G.cyclesZ G.cycleBasis j : ℤ) : ℝ)
+      = gramOf (G.cyclesR G.cycleBasis) i j :=
+  (G.cast_periods G.cycleBasis (G.cyclesZ G.cycleBasis i) j).symm
+
+/-- **The priced cycle lattice**: `H₁(G;ℤ)` with `π²` times the
+unit-edge chain pairing — the topological carrier of the intrinsic
+dual (review #10). Real positivity discharges from the chain Gram of
+the fundamental cycles. -/
+noncomputable def cycleAction : QuadLatticeAction.{v} where
+  Λ := ↥G.cycleLattice
+  form := fun c c' =>
+    Real.pi ^ 2 * (((c : G.E → ℤ) ⬝ᵥ (c' : G.E → ℤ) : ℤ) : ℝ)
+  form_comm := fun c c' => by rw [dotProduct_comm]
+  form_add_left := fun c₁ c₂ c' => by
+    rw [Submodule.coe_add, add_dotProduct]
+    push_cast
+    ring
+  posDef_baseChange := by
+    refine bilinBaseChange_posDef_of_gram _ _ _ G.cycleBasis ?_
+    have hmat : (Matrix.of fun i j => Real.pi ^ 2
+          * (((G.cycleBasis i : G.E → ℤ) ⬝ᵥ (G.cycleBasis j : G.E → ℤ)
+              : ℤ) : ℝ))
+        = Real.pi ^ 2 • gramOf (G.cyclesR G.cycleBasis) := by
+      ext i j
+      rw [Matrix.of_apply, Matrix.smul_apply, smul_eq_mul]
+      congr 1
+      exact G.cast_dot_cycles i j
+    rw [hmat]
+    exact posDef_smul' (G.gramOf_cyclesR_posDef G.cycleBasis) (by positivity)
+
+private lemma dualForm_dualBasis_cycles (i j : Fin G.b1) :
+    (G.classQuadAction).dualForm ((G.h1Basis G.cycleBasis).dualBasis i)
+        ((G.h1Basis G.cycleBasis).dualBasis j)
+      = Real.pi ^ 2 * gramOf (G.cyclesR G.cycleBasis) i j := by
+  have hunit : IsUnit (gramOf (G.cyclesR G.cycleBasis)).det :=
+    isUnit_iff_ne_zero.mpr
+      (ne_of_gt (G.gramOf_cyclesR_posDef G.cycleBasis).det_pos)
+  refine ((G.classQuadAction).dualForm_dualBasis
+    (G.h1Basis G.cycleBasis) i j).trans ?_
+  congr 1
+  rw [G.classQuadAction_gram_h1Basis, G.basisGramData_gram,
+    Matrix.nonsing_inv_nonsing_inv _ hunit]
+
+/-- **The dual's form on cycles is `π²` times the unit-edge chain
+pairing** (review #10): transporting the intrinsic dual across
+period evaluation lands on the priced cycle lattice. -/
+theorem dualForm_cyclesDualEquiv (c c' : ↥G.cycleLattice) :
+    (G.classQuadAction).dualForm (G.cyclesDualEquiv c) (G.cyclesDualEquiv c')
+      = Real.pi ^ 2 * (((c : G.E → ℤ) ⬝ᵥ (c' : G.E → ℤ) : ℤ) : ℝ) := by
+  have hL := (G.classQuadAction).dual.form_repr
+    (G.h1Basis G.cycleBasis).dualBasis
+    (G.cyclesDualEquiv c) (G.cyclesDualEquiv c')
+  have hR := (G.cycleAction).form_repr G.cycleBasis c c'
+  show (G.classQuadAction).dual.form (G.cyclesDualEquiv c)
+      (G.cyclesDualEquiv c')
+    = (G.cycleAction).form c c'
+  rw [hL, hR]
+  refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+  congr 1
+  · congr 1
+    · exact congrArg _ (G.cyclesDualEquiv_repr c i)
+    · exact congrArg _ (G.cyclesDualEquiv_repr c' j)
+  · show (G.classQuadAction).dualForm ((G.h1Basis G.cycleBasis).dualBasis i)
+        ((G.h1Basis G.cycleBasis).dualBasis j)
+      = (G.cycleAction).form (G.cycleBasis i) (G.cycleBasis j)
+    rw [G.dualForm_dualBasis_cycles i j]
+    show Real.pi ^ 2 * gramOf (G.cyclesR G.cycleBasis) i j
+      = Real.pi ^ 2
+        * (((G.cycleBasis i : G.E → ℤ) ⬝ᵥ (G.cycleBasis j : G.E → ℤ)
+            : ℤ) : ℝ)
+    congr 1
+    exact (G.cast_dot_cycles i j).symm
+
+/-- **The intrinsic dual IS priced graph homology** (review #10): the
+period-evaluation equivalence is form-preserving from the priced cycle
+lattice onto the carrier's dual action. -/
+noncomputable def cycleActionEquivDual :
+    (G.cycleAction).Equiv (G.classQuadAction).dual where
+  toLinearEquiv := G.cyclesDualEquiv
+  form_eq := fun c c' => G.dualForm_cyclesDualEquiv c c'
+
+/-- **SIEGEL–POISSON BETWEEN HOMOLOGY AND COHOMOLOGY** (review #10):
+the Boltzmann sum of the priced cycles — `H₁(G;ℤ)` with `π²` times
+the unit-edge chain pairing — against the harmonic classes, with the
+basis-independent prefactor. Cycles are the dual sectors of harmonic
+cohomology: the topological meaning of the intrinsic dual. -/
+theorem cycle_harmonic_duality :
+    (↑((G.cycleAction).toSectorAction.partFn) : ℂ)
+      = ↑((G.classQuadAction).disc / Real.pi ^ G.b1 : ℝ) ^ ((1 : ℂ) / 2)
+        * ↑((G.classQuadAction).toSectorAction.partFn) := by
+  rw [← (G.cycleActionEquivDual).partFn_eq]
+  exact G.classQuadAction_duality
 
 end IncidenceGraph
 

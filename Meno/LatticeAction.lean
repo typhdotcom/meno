@@ -724,6 +724,120 @@ theorem dual_rank : Q.dual.rank = Q.rank := by
   rw [Module.finrank_eq_card_basis (Module.finBasis ℤ Q.Λ).dualBasis,
     Fintype.card_fin]
 
+/-! ## Form-preserving equivalences and the dual involution (review #10) -/
+
+/-- A **form-preserving equivalence** of quadratic-lattice actions
+(review #10): a `ℤ`-linear equivalence of the lattices that carries
+one form to the other. Rank, energy, partition function, and
+discriminant are invariants (`Equiv.rank_eq`, `Equiv.form_eq`,
+`Equiv.partFn_eq`, `Equiv.disc_eq`). -/
+structure Equiv (Q Q' : QuadLatticeAction.{u}) where
+  /-- The underlying linear equivalence of sector lattices. -/
+  toLinearEquiv : Q.Λ ≃ₗ[ℤ] Q'.Λ
+  form_eq : ∀ a b : Q.Λ,
+    Q'.form (toLinearEquiv a) (toLinearEquiv b) = Q.form a b
+
+namespace Equiv
+
+variable {Q Q' : QuadLatticeAction.{u}}
+
+/-- Form-preserving equivalences invert. -/
+def symm (e : Q.Equiv Q') : Q'.Equiv Q where
+  toLinearEquiv := e.toLinearEquiv.symm
+  form_eq a b := by
+    have h := e.form_eq (e.toLinearEquiv.symm a) (e.toLinearEquiv.symm b)
+    rw [LinearEquiv.apply_symm_apply, LinearEquiv.apply_symm_apply] at h
+    exact h.symm
+
+/-- **Rank invariance.** -/
+theorem rank_eq (e : Q.Equiv Q') : Q.rank = Q'.rank := by
+  show Module.finrank ℤ Q.Λ = Module.finrank ℤ Q'.Λ
+  exact e.toLinearEquiv.finrank_eq
+
+/-- **Energy invariance** — the diagonal of `form_eq`. -/
+theorem energy_eq (e : Q.Equiv Q') (a : Q.Λ) :
+    Q'.form (e.toLinearEquiv a) (e.toLinearEquiv a) = Q.form a a :=
+  e.form_eq a a
+
+/-- **Partition-function invariance**: reindex the Boltzmann sum along
+the underlying equivalence and transport each term by `form_eq`. -/
+theorem partFn_eq (e : Q.Equiv Q') :
+    Q'.toSectorAction.partFn = Q.toSectorAction.partFn := by
+  show ∑' a' : Q'.Λ, Real.exp (-(Q'.form a' a'))
+    = ∑' a : Q.Λ, Real.exp (-(Q.form a a))
+  rw [← _root_.Equiv.tsum_eq e.toLinearEquiv.toEquiv
+    (fun a' => Real.exp (-(Q'.form a' a')))]
+  exact tsum_congr fun a => by
+    rw [show (e.toLinearEquiv.toEquiv a : Q'.Λ) = e.toLinearEquiv a from rfl,
+      e.energy_eq a]
+
+/-- Gram matrices transport along the mapped basis. -/
+theorem gram_map (e : Q.Equiv Q') {n : ℕ}
+    (b : Module.Basis (Fin n) ℤ Q.Λ) :
+    Q'.gram (b.map e.toLinearEquiv) = Q.gram b := by
+  ext i j
+  show Q'.form ((b.map e.toLinearEquiv) i) ((b.map e.toLinearEquiv) j)
+    = Q.form (b i) (b j)
+  rw [Module.Basis.map_apply, Module.Basis.map_apply]
+  exact e.form_eq (b i) (b j)
+
+/-- **Discriminant invariance.** -/
+theorem disc_eq (e : Q.Equiv Q') : Q'.disc = Q.disc := by
+  rw [Q'.disc_eq ((Module.finBasis ℤ Q.Λ).map e.toLinearEquiv), e.gram_map]
+  exact (Q.disc_eq (Module.finBasis ℤ Q.Λ)).symm
+
+end Equiv
+
+/-- **THE DUAL INVOLUTION, BUNDLED** (review #10): the canonical
+reflexivity equivalence is a form-preserving equivalence
+`Q.dual.dual ≃q Q` — the double dual *is* the original action, with
+rank, energy, discriminant, and partition function transported by the
+`Equiv` invariants. -/
+noncomputable def dualDual : (Q.dual.dual).Equiv Q :=
+  (⟨Module.evalEquiv ℤ Q.Λ, Q.dual_dual⟩ : Q.Equiv Q.dual.dual).symm
+
+/-- The double dual's partition function is the original's — through
+the bundled involution. -/
+theorem partFn_dualDual :
+    Q.dual.dual.toSectorAction.partFn = Q.toSectorAction.partFn :=
+  (Q.dualDual).partFn_eq.symm
+
+/-- **The reciprocal-discriminant law** (review #10):
+`disc(Q^∨) = π^{2·rank} / disc(Q)`. -/
+theorem disc_dual : Q.dual.disc = Real.pi ^ (2 * Q.rank) / Q.disc := by
+  rw [Q.dual.disc_eq (Module.finBasis ℤ Q.Λ).dualBasis, Q.gram_dual,
+    Matrix.det_smul, Matrix.det_nonsing_inv, Fintype.card_fin,
+    Ring.inverse_eq_inv]
+  rw [show Q.disc = (Q.gram (Module.finBasis ℤ Q.Λ)).det from rfl,
+    div_eq_mul_inv, ← pow_mul]
+  rfl
+
+/-- **Applying the intrinsic duality twice returns the original**
+(review #10): the two prefactors cancel through the
+reciprocal-discriminant law and `dual_rank` —
+`√(disc(Q^∨)/π^r) · √(disc(Q)/π^r) = 1`. -/
+theorem duality_dualDual :
+    (↑(Q.dual.dual.toSectorAction.partFn) : ℂ)
+      = ↑(Q.toSectorAction.partFn) := by
+  rw [Q.dual.duality, Q.duality, Q.disc_dual, Q.dual_rank]
+  have hπ : (Real.pi : ℝ) ≠ 0 := Real.pi_ne_zero
+  have hd : Q.disc ≠ 0 := Q.disc_pos.ne'
+  have h1 : Real.pi ^ (2 * Q.rank) / Q.disc / Real.pi ^ Q.rank
+      = (Q.disc / Real.pi ^ Q.rank)⁻¹ := by
+    rw [two_mul, pow_add]
+    field_simp
+  rw [h1]
+  have hpos : (0 : ℝ) < Q.disc / Real.pi ^ Q.rank :=
+    div_pos Q.disc_pos (pow_pos Real.pi_pos _)
+  rw [← mul_assoc,
+    ← Complex.mul_cpow_ofReal_nonneg (inv_nonneg.mpr hpos.le) hpos.le,
+    ← Complex.ofReal_mul, inv_mul_cancel₀ hpos.ne', Complex.ofReal_one,
+    Complex.one_cpow, one_mul]
+
 end QuadLatticeAction
+
+/-- Notation for form-preserving equivalences of quadratic-lattice
+actions (review #10). -/
+scoped infixl:25 " ≃q " => QuadLatticeAction.Equiv
 
 end Meno

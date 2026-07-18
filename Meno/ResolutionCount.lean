@@ -60,18 +60,6 @@ def fiberEquivKer {R : Type*} {M : Type*} {N : Type*} [Ring R]
     show (x₀ + g.val) - x₀ = g.val
     abel)
 
-/-- The fiber of a pullback's base map over `d` is the product of the
-two fibers over `d` — the counting engine of the shared-pair
-distribution (review #9). -/
-def pullbackBaseFiber {A B D : Type u} (f : A → D) (g : B → D) (d : D) :
-    {p : SGD.Pullback f g // SGD.Pullback.base p = d}
-      ≃ SGD.Fiber f d × SGD.Fiber g d where
-  toFun p := (⟨p.val.val.1, p.prop⟩,
-    ⟨p.val.val.2, p.val.prop.symm.trans p.prop⟩)
-  invFun x := ⟨⟨(x.1.val, x.2.val), x.1.prop.trans x.2.prop.symm⟩, x.1.prop⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-
 namespace IncidenceGraph
 
 variable (G : IncidenceGraph.{u, v})
@@ -854,13 +842,20 @@ Here the **intrinsic Gibbs distribution** of `classSectorAction`
 * `descriptionMass` — the uniform gauge lift through
   `carrierCompression`; `descriptionEntropy_split` is
   `H(description) = H(residue) + log |gauge|`.
-* `pairMass` — the shared-pair distribution on the self-pullback;
-  `carrier_gravity_entropy` is the **action-consuming gravity
-  theorem** `H(pair) = H(residue) + 2·log |gauge|`, and
-  `carrier_gravity_complexity_of_entropy` re-derives the uniform
-  complexity identity as its uniform-distribution specialization
-  (the SGD-bridge proof of `carrier_gravity_complexity` stands as
-  independent corroboration).
+* `pairDist` — the shared-pair **coupling** on the self-pullback
+  (review #10): normalized (`pairMass_sum`), with **both marginals
+  the description distribution** (`pairDist_fst`, `pairDist_snd`),
+  and the pushforward of the description distribution recovering the
+  residue distribution (`descriptionDist_map`) — all through the
+  `FinDist` abstraction of `Meno/InfoRatchet.lean`.
+* **`carrier_gravity_entropy`** — the four-term gravity identity
+  `H(pair) + H(residue) = H(description) + H(description)`: the
+  generic `FinDist.entropy_gravity`, instantiated at the Gibbs
+  residue distribution. The same generic theorem instantiated at the
+  uniform distribution gives
+  `carrier_gravity_complexity_of_entropy` — a genuine specialization
+  (review #10); the SGD-bridge proof of `carrier_gravity_complexity`
+  stands as independent corroboration.
 * `sectionCost_carrierCompression_div` — the time face: the
   per-sector gauge-fixing cost is the conditional entropy
   `H(description) − H(residue) = log |gauge|`. -/
@@ -943,6 +938,17 @@ theorem residueMass_chart {n : ℕ}
   rw [LinearEquiv.apply_symm_apply] at h
   exact h.symm
 
+/-- **The residue distribution, bundled** (review #10): nonnegativity
+and normalization carried by the structure, not asserted at use
+sites. -/
+noncomputable def residueDist : FinDist (H1Reduction G q) where
+  mass := G.residueMass q
+  nonneg ξ := (G.residueMass_pos q ξ).le
+  sum_one := G.residueMass_sum q
+
+@[simp] theorem residueDist_mass :
+    (G.residueDist q).mass = G.residueMass q := rfl
+
 /-- **The description distribution**: the residue distribution lifted
 uniformly through `carrierCompression` — each finite sector's mass
 divided evenly across its gauge fiber. -/
@@ -976,6 +982,25 @@ theorem descriptionMass_sum :
         field_simp
     _ = 1 := G.residueMass_sum q
 
+/-- **The description distribution, bundled** (review #10): the
+uniform gauge lift of the residue distribution through
+`carrierCompression`, as a `FinDist`. -/
+noncomputable def descriptionDist : FinDist (G.E → ZMod q) :=
+  (G.residueDist q).uniformLift (G.carrierCompression q)
+    Nat.card_pos (G.card_carrierCompression_fiber q)
+
+@[simp] theorem descriptionDist_mass :
+    (G.descriptionDist q).mass = G.descriptionMass q := rfl
+
+/-- **The lift pushforward law, on the carrier** (review #10): pushing
+the description distribution forward through `carrierCompression`
+recovers the residue distribution — `descriptionMass` genuinely
+disintegrates `residueMass` over the gauge fibers. -/
+theorem descriptionDist_map :
+    (G.descriptionDist q).map (G.carrierCompression q) = G.residueDist q :=
+  FinDist.map_uniformLift (G.carrierCompression q) Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.residueDist q)
+
 /-- **H(description) = H(residue) + log |gauge|** (review #9): the
 entropy chain rule at the uniform gauge lift — a description prices a
 finite sector of the carrier plus one free gauge choice. -/
@@ -987,106 +1012,120 @@ theorem descriptionEntropy_split :
     Nat.card_pos (G.card_carrierCompression_fiber q) (G.residueMass_sum q)
     (fun ξ => (G.residueMass_pos q ξ).le)
 
-/-- **The shared-pair distribution**: pairs of descriptions of the
-same finite sector, the residue mass split evenly across the
-`|gauge|²` pairs above it. -/
+/-- **The shared-pair coupling, bundled** (review #10): the
+shared-base coupling of two description lifts over the residue
+distribution — a genuine coupling, by construction: it is nonnegative
+and normalized (the `FinDist` structure), and **both marginals are
+the description distribution** (`pairDist_fst`, `pairDist_snd`). -/
+noncomputable def pairDist :
+    FinDist (SGD.Pullback (G.carrierCompression q)
+      (G.carrierCompression q)) :=
+  (G.residueDist q).coupling (G.carrierCompression q)
+    (G.carrierCompression q) Nat.card_pos Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
+
+/-- The shared-pair mass — the coupling's mass function: each residue
+mass split evenly across the `|gauge|²` pairs above it. -/
 noncomputable def pairMass
     (p : SGD.Pullback (G.carrierCompression q) (G.carrierCompression q)) :
     ℝ :=
-  G.residueMass q (SGD.Pullback.base p)
-    / ((Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) ^ 2 : ℕ) : ℝ)
+  (G.pairDist q).mass p
 
-theorem card_pair_fiber (ξ : H1Reduction G q) :
-    Nat.card {p : SGD.Pullback (G.carrierCompression q)
-        (G.carrierCompression q) // SGD.Pullback.base p = ξ}
-      = Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) ^ 2 := by
-  rw [Nat.card_congr (pullbackBaseFiber (G.carrierCompression q)
-      (G.carrierCompression q) ξ),
-    Nat.card_congr (Equiv.prodCongr (G.carrierFiberEquivGauge q ξ)
-      (G.carrierFiberEquivGauge q ξ)),
-    Nat.card_prod, pow_two]
+theorem pairMass_nonneg
+    (p : SGD.Pullback (G.carrierCompression q) (G.carrierCompression q)) :
+    0 ≤ G.pairMass q p :=
+  (G.pairDist q).nonneg p
 
-/-- **GRAVITY, PRICED ON THE CARRIER** (review #9): the entropy of the
-shared-pair distribution is the residue entropy plus **two** gauge
-logs — a pair of descriptions sharing one finite sector of the
-intrinsic carrier costs the sector's Gibbs entropy once and the gauge
-freedom twice. This is the action-consuming gravity theorem: the
-distribution it prices is the intrinsic Gibbs law of
-`classSectorAction`, not a uniform count. -/
-theorem carrier_gravity_entropy :
+/-- **Normalization** (review #10): the shared-pair masses sum to
+one. -/
+theorem pairMass_sum :
+    ∑ p : SGD.Pullback (G.carrierCompression q) (G.carrierCompression q),
+      G.pairMass q p = 1 :=
+  (G.pairDist q).sum_one
+
+/-- **The first marginal is the description distribution**
+(review #10). -/
+theorem pairDist_fst :
+    (G.pairDist q).map (fun p => p.val.1) = G.descriptionDist q :=
+  FinDist.coupling_fst (G.carrierCompression q) (G.carrierCompression q)
+    Nat.card_pos Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
+    (G.residueDist q)
+
+/-- **The second marginal is the description distribution**
+(review #10). -/
+theorem pairDist_snd :
+    (G.pairDist q).map (fun p => p.val.2) = G.descriptionDist q :=
+  FinDist.coupling_snd (G.carrierCompression q) (G.carrierCompression q)
+    Nat.card_pos Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
+    (G.residueDist q)
+
+/-- The pair entropy splits as residue entropy plus two gauge logs —
+Phase 45's identity, now a corollary of the coupling chain rule. -/
+theorem pairEntropy_split :
     shannonEntropy (G.pairMass q)
       = shannonEntropy (G.residueMass q)
-        + 2 * Real.log (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) := by
-  have hm : 0 < Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) ^ 2 :=
-    pow_pos Nat.card_pos 2
-  have h := shannonEntropy_comp_div
-    (fun p : SGD.Pullback (G.carrierCompression q) (G.carrierCompression q) =>
-      SGD.Pullback.base p)
-    (G.residueMass q) hm (G.card_pair_fiber q) (G.residueMass_sum q)
-    (fun ξ => (G.residueMass_pos q ξ).le)
-  rw [Nat.cast_pow, Real.log_pow] at h
-  exact_mod_cast h
+        + 2 * Real.log
+            (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) := by
+  have hg : ((Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) : ℝ) ≠ 0 := by
+    exact_mod_cast (Nat.card_pos).ne'
+  have h := FinDist.entropy_coupling (G.carrierCompression q)
+    (G.carrierCompression q) Nat.card_pos Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
+    (G.residueDist q)
+  rw [Nat.cast_mul, Real.log_mul hg hg] at h
+  show (G.pairDist q).entropy
+    = shannonEntropy (G.residueMass q) + 2 * Real.log _
+  refine h.trans ?_
+  show shannonEntropy (G.residueMass q) + (Real.log _ + Real.log _)
+    = shannonEntropy (G.residueMass q) + 2 * Real.log _
+  ring
 
-/-- **The uniform identity is the specialization** (review #9): at the
-uniform residue distribution, the entropy chain rule collapses to the
-uniform complexity identity `K(pullback) + K(base) = 2·K(descriptions)`
-— the same statement as `carrier_gravity_complexity`, re-derived from
-the priced machinery. -/
+/-- **GRAVITY ON THE CARRIER — the four-term identity** (review #10):
+sharing one finite sector of the intrinsic carrier saves exactly one
+copy of the residue entropy against two independent descriptions —
+
+    H(pair) + H(residue) = H(description) + H(description)
+
+— the generic entropy gravity identity (`FinDist.entropy_gravity`),
+instantiated at the Gibbs residue distribution of the carrier. -/
+theorem carrier_gravity_entropy :
+    shannonEntropy (G.pairMass q) + shannonEntropy (G.residueMass q)
+      = shannonEntropy (G.descriptionMass q)
+        + shannonEntropy (G.descriptionMass q) :=
+  FinDist.entropy_gravity (G.carrierCompression q) (G.carrierCompression q)
+    Nat.card_pos Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
+    (G.residueDist q)
+
+/-- **The uniform identity is a genuine specialization** (review #10):
+the SAME generic entropy gravity identity, instantiated at the uniform
+distribution — the coupling and lift of the uniform are uniform, the
+entropies are log-cardinalities, and the identity reads
+`K(pullback) + K(base) = K(descriptions) + K(descriptions)`.
+(`carrier_gravity_complexity`, the SGD-bridge derivation, stands as
+the independent corroboration.) -/
 theorem carrier_gravity_complexity_of_entropy :
     (uniformAction (SGD.Pullback (G.carrierCompression q)
         (G.carrierCompression q))).complexity
       + (uniformAction (H1Reduction G q)).complexity
       = (uniformAction (G.E → ZMod q)).complexity
         + (uniformAction (G.E → ZMod q)).complexity := by
-  set g : ℕ := Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) with hg
-  have hgpos : 0 < g := Nat.card_pos
-  have hDpos : 0 < Fintype.card (H1Reduction G q) := Fintype.card_pos
-  set u : H1Reduction G q → ℝ :=
-    fun _ => ((Fintype.card (H1Reduction G q) : ℝ))⁻¹ with hu
-  have hu1 : ∑ ξ : H1Reduction G q, u ξ = 1 := by
-    rw [hu, Finset.sum_const, Finset.card_univ, nsmul_eq_mul,
-      mul_inv_cancel₀ (by exact_mod_cast hDpos.ne')]
-  have hupos : ∀ ξ, 0 ≤ u ξ := fun ξ => by
-    rw [hu]
-    positivity
-  have hm2 : 0 < g ^ 2 := pow_pos hgpos 2
-  have hchain := shannonEntropy_comp_div
-    (fun p : SGD.Pullback (G.carrierCompression q) (G.carrierCompression q) =>
-      SGD.Pullback.base p) u hm2 (G.card_pair_fiber q) hu1 hupos
-  have hcardP : (Fintype.card (SGD.Pullback (G.carrierCompression q)
-      (G.carrierCompression q)) : ℝ)
-      = ((g ^ 2 : ℕ) : ℝ) * Fintype.card (H1Reduction G q) := by
-    have h := sum_comp_card_fiber
-      (fun p : SGD.Pullback (G.carrierCompression q)
-          (G.carrierCompression q) => SGD.Pullback.base p)
-      (G.card_pair_fiber q) (fun _ => (1 : ℝ))
-    rw [Finset.sum_const, Finset.sum_const, Finset.card_univ, Finset.card_univ,
-      nsmul_eq_mul, nsmul_eq_mul, mul_one, mul_one] at h
-    exact h
-  have hfun : (fun p : SGD.Pullback (G.carrierCompression q)
-      (G.carrierCompression q) =>
-        u (SGD.Pullback.base p) / ((g ^ 2 : ℕ) : ℝ))
-      = fun _ => ((Fintype.card (SGD.Pullback (G.carrierCompression q)
-          (G.carrierCompression q)) : ℝ))⁻¹ := by
-    funext p
-    rw [hu, hcardP, div_eq_mul_inv, ← mul_inv]
-    congr 1
-    ring
-  rw [hfun, shannonEntropy_uniform, shannonEntropy_uniform,
-    Nat.cast_pow, Real.log_pow] at hchain
-  have hDlog : Real.log (Fintype.card (H1Reduction G q))
-      = G.b1 * Real.log q := by
-    rw [← Nat.card_eq_fintype_card, G.card_H1Reduction q]
-    push_cast [Real.log_pow]
-    ring
-  have hdesc : Real.log (Fintype.card (G.E → ZMod q))
-      = Real.log g + Real.log (Fintype.card (H1Reduction G q)) := by
-    rw [hg, ← Nat.card_eq_fintype_card (α := G.E → ZMod q),
-      G.log_card_split G.cycleBasis q, hDlog]
+  have h := FinDist.entropy_gravity (G.carrierCompression q)
+    (G.carrierCompression q) Nat.card_pos Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
+    (FinDist.uniform (H1Reduction G q))
+  rw [FinDist.coupling_uniform (G.carrierCompression q)
+      (G.carrierCompression q) Nat.card_pos Nat.card_pos
+      (G.card_carrierCompression_fiber q)
+      (G.card_carrierCompression_fiber q),
+    FinDist.uniformLift_uniform (G.carrierCompression q) Nat.card_pos
+      (G.card_carrierCompression_fiber q),
+    FinDist.entropy_uniform, FinDist.entropy_uniform,
+    FinDist.entropy_uniform] at h
   simp only [uniformAction_complexity]
-  rw [hdesc]
-  push_cast at hchain
-  linarith [hchain]
+  exact h
 
 /-- **The time face, as conditional entropy** (review #9): the
 per-sector gauge-fixing cost of `carrierCompression` is exactly the

@@ -45,6 +45,46 @@ def Pullback.equivProdOfSubsingleton {A B D : Type u} [Subsingleton D]
   left_inv _ := Subtype.ext rfl
   right_inv _ := rfl
 
+/-- The fiber of the pullback's base map over `d` is the product of
+the two fibers over `d` (review #10 — the counting engine of the
+shared-base coupling). -/
+def Pullback.baseFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
+    (d : D) :
+    {p : Pullback f g // p.base = d} ≃ Fiber f d × Fiber g d where
+  toFun p := (⟨p.val.val.1, p.prop⟩,
+    ⟨p.val.val.2, p.val.prop.symm.trans p.prop⟩)
+  invFun x := ⟨⟨(x.1.val, x.2.val), x.1.prop.trans x.2.prop.symm⟩, x.1.prop⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- The fiber of the pullback's first projection over `x` is the
+`g`-fiber over `f x` (review #10 — the first marginal's counting
+engine). -/
+def Pullback.fstFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
+    (x : A) :
+    {p : Pullback f g // p.val.1 = x} ≃ Fiber g (f x) where
+  toFun p := ⟨p.val.val.2, p.val.prop.symm.trans (congrArg f p.prop)⟩
+  invFun y := ⟨⟨(x, y.val), y.prop.symm⟩, rfl⟩
+  left_inv p := by
+    apply Subtype.ext
+    apply Subtype.ext
+    exact Prod.ext p.prop.symm rfl
+  right_inv y := rfl
+
+/-- The fiber of the pullback's second projection over `y` is the
+`f`-fiber over `g y` (review #10 — the second marginal's counting
+engine). -/
+def Pullback.sndFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
+    (y : B) :
+    {p : Pullback f g // p.val.2 = y} ≃ Fiber f (g y) where
+  toFun p := ⟨p.val.val.1, p.val.prop.trans (congrArg g p.prop)⟩
+  invFun x := ⟨⟨(x.val, y), x.prop⟩, rfl⟩
+  left_inv p := by
+    apply Subtype.ext
+    apply Subtype.ext
+    exact Prod.ext rfl p.prop.symm
+  right_inv x := rfl
+
 /-! ## Axiom 1: The Weighted Universe — Complexity Hierarchy -/
 
 /-- Level 1: Base complexity measure (subadditive).

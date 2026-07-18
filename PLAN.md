@@ -234,11 +234,28 @@ summability; the field is discharged from the fundamental Gram chart,
 `Module.Dual ℤ H¹` with the `π²`-scaled inverse real form through the
 flat/sharp isomorphism, every dual basis charting it as the
 coordinate dual (`chartAction_dual`), a basis-independent
-discriminant (`disc_eq`), the intrinsic Siegel–Poisson duality
-(`classQuadAction_duality`, prefactor `√(disc/π^{b₁})`), and the
-double-dual involution along reflexivity (`dual_dual`). The
+discriminant (`disc_eq`) with the reciprocal law
+`disc(Q^∨) = π^{2·rank}/disc(Q)` (`disc_dual`, review #10), the
+intrinsic Siegel–Poisson duality (`classQuadAction_duality`,
+prefactor `√(disc/π^{b₁})`), and the double dual as a **bundled
+form-preserving involution** (review #10): `QuadLatticeAction.Equiv`
+(`≃q`) carries rank, energy, discriminant, and partition function
+(`Equiv.rank_eq`, `Equiv.form_eq`, `Equiv.disc_eq`,
+`Equiv.partFn_eq`), `dualDual : Q.dual.dual ≃q Q` packages
+reflexivity, and applying the duality twice reduces to the original
+through `disc_dual` + `dual_rank` (`duality_dualDual`). The
 per-chart coordinate duality `basisGramData_duality` is a
-**corollary** of the intrinsic one. Consumed by C4.
+**corollary** of the intrinsic one. And the dual **is graph
+homology** (review #10): period evaluation is a basis-free perfect
+pairing `H₁(G;ℤ) ≃ₗ[ℤ] Module.Dual ℤ H¹(G;ℤ)` (`cyclePairing`,
+`cyclesDualEquiv` — well-defined by Stokes, bijective by the
+keystone, in the unpriced topology layer `Meno/GraphHomology.lean`);
+the transported dual form is `π²` times the unit-edge chain pairing
+(`dualForm_cyclesDualEquiv`), the priced cycle lattice is a
+`QuadLatticeAction` (`cycleAction`) form-equivalent to the dual
+(`cycleActionEquivDual`), and Siegel–Poisson duality holds directly
+between harmonic `H¹` sectors and priced `H₁` cycles
+(`cycle_harmonic_duality`). Consumed by C4.
 
 ### C4 -- General harmonic theory for every finite graph — CLOSED (Phase 30)
 
@@ -506,23 +523,32 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   (`sectionCost_carrierCompression`); every K3 fiber statement
   derives from the one fiber-to-kernel equivalence (`fiberEquivKer`,
   review #9);
-* **priced on the carrier** (review #9): the intrinsic Gibbs
+* **priced on the carrier** (reviews #9, #10): the intrinsic Gibbs
   distribution of `classSectorAction` pushes through
   `H¹(G;ℤ) → H1Reduction G q` to the **residue distribution**
   (`residueMass` — positive, normalized, computed by every basis
   chart: `residueMass_pos`, `residueMass_sum`, `residueMass_chart`),
-  lifts uniformly through `carrierCompression` (`descriptionMass`),
-  and prices gravity and time by genuine Shannon entropies
-  (`shannonEntropy` + the uniform-lift chain rule
-  `shannonEntropy_comp_div`, `Meno/InfoRatchet.lean`):
+  with full **distribution semantics** through one abstraction
+  (review #10): `FinDist` (`Meno/InfoRatchet.lean`) carries
+  nonnegativity and normalization, with pushforward (`FinDist.map`),
+  uniform fiber lift (`uniformLift`), shared-base coupling
+  (`coupling`), the lift pushforward law (`map_uniformLift`), both
+  coupling marginals (`coupling_fst`, `coupling_snd`), and **the
+  generic entropy gravity identity** (`entropy_gravity`:
+  `H(coupling) + H(base) = H(lift) + H(lift)`) — proved once. On the
+  carrier: `residueDist`, `descriptionDist` (its lift — pushforward
+  recovers it, `descriptionDist_map`), `pairDist` (a genuine
+  coupling: `pairMass_sum`, `pairDist_fst`, `pairDist_snd`);
   `descriptionEntropy_split` is
   `H(description) = H(residue) + log|gauge|`;
-  **`carrier_gravity_entropy`** is
-  `H(shared pair) = H(residue) + 2·log|gauge|` — the
-  action-consuming gravity theorem on the self-pullback;
-  `carrier_gravity_complexity_of_entropy` re-derives the uniform
-  complexity identity as the chain rule's uniform specialization
-  (the SGD-bridge proof stands as independent corroboration); and
+  **`carrier_gravity_entropy`** is the **four-term gravity identity**
+  `H(pair) + H(residue) = H(description) + H(description)` — the
+  generic theorem instantiated at the Gibbs residue distribution;
+  the same generic theorem at the uniform distribution gives
+  `carrier_gravity_complexity_of_entropy` (a genuine specialization,
+  review #10; the SGD-bridge proof stands as independent
+  corroboration); `pairEntropy_split` keeps the split form
+  `H(pair) = H(residue) + 2·log|gauge|`; and
   `sectionCost_carrierCompression_div` reads the time face as the
   conditional entropy `H(description) − H(residue)` per sector.
 
@@ -4121,5 +4147,48 @@ nothing more and nothing less. Finding 3 turns the duality face from
 per-chart replay into one intrinsic theorem with charts as
 corollaries. Findings 4–5 are the single-source discipline applied to
 proofs and to the check itself. All twelve items remain CLOSED.
+`lake build Meno && lake exe check`: build green (3348 jobs), zero
+`sorry`, zero `axiom`, zero warnings; check PASS.
+
+## Phase 46 addendum: tenth external review — four findings, four confirmed, four repaired (2026-07-18)
+
+Review #10 arrived against the Phase-45 state. Every claim verified
+against the code before repair; all four CONFIRMED — each cites a
+Phase-45 construction accurately and demands the next level of
+structure. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | The intrinsic dual was not identified with graph homology: `classQuadAction_duality` ended at the abstract lattice `Module.Dual ℤ H¹`, with no equivalence to `H₁(G;ℤ)` — the duality did not state that harmonic cohomology dualizes to actual cycles | **CONFIRMED** — no such equivalence existed anywhere in the tree | **The basis-free perfect pairing** (`Meno/GraphHomology.lean`, the unpriced topology layer): `cyclePairing : H₁(G;ℤ) →ₗ[ℤ] Dual ℤ H¹(G;ℤ)` by period evaluation — well-defined by Stokes (`grad_dotProduct_eq` + membership in `ker ∂`), bijective by the keystone (the fundamental cycles are carried to the dual basis of the induced `H¹` basis, `cyclePairing_cycleBasis`) — packaged as `cyclesDualEquiv`. Priced transport (`Meno/BasisIndependence.lean`): the dual action's form on cycles is **`π²` times the unit-edge chain pairing** (`dualForm_cyclesDualEquiv` — the inverse of the inverse chain Gram is the chain Gram); the priced cycle lattice `cycleAction` is a `QuadLatticeAction` with real positivity from the chain Gram; `cycleActionEquivDual : cycleAction ≃q classQuadAction.dual`; and **`cycle_harmonic_duality`** states Siegel–Poisson directly between harmonic `H¹` sectors and priced `H₁` cycles |
+| 2 | `pairMass` was called a distribution without being one: no `pairMass_sum`, no marginal theorems, no pushforward law — and the marquee theorem was the two-log split, not the gravity equation `H(pair) + H(residue) = 2·H(description)` | **CONFIRMED** — `pairMass` was a bare function; `shannonEntropy` accepts any raw `ℝ`-valued function | **One abstraction** (`FinDist`, `Meno/InfoRatchet.lean`): mass + nonnegativity + normalization as a structure; `map` (pushforward), `uniformLift`, `coupling` (on `SGD.Pullback`, fiber counting through the new `SGD.Pullback.baseFiberEquiv`/`fstFiberEquiv`/`sndFiberEquiv` in `Meno/Basic.lean`); **proved once**: the lift pushforward law (`map_uniformLift`), both coupling marginals (`coupling_fst`, `coupling_snd`), the coupling chain rule (`entropy_coupling`), and the generic entropy gravity identity (`entropy_gravity`). Instantiated on the carrier: `residueDist`/`descriptionDist`/`pairDist`; `pairMass_sum`, `pairDist_fst`, `pairDist_snd`, `descriptionDist_map`; and **`carrier_gravity_entropy` is now the four-term identity** `H(pair) + H(residue) = H(description) + H(description)` |
+| 3 | The claimed uniform specialization was another proof: `carrier_gravity_complexity_of_entropy` built a fresh uniform mass and invoked the chain rule again, never using the gravity theorem — the README's "specialization" claim was false | **CONFIRMED** — the Phase-45 proof was a parallel derivation | The generic `FinDist.entropy_gravity` now has **two direct instances**: at `residueDist` it is `carrier_gravity_entropy` (priced gravity); at `FinDist.uniform` — with `uniformLift_uniform` and `coupling_uniform` collapsing the lift and coupling to uniforms and `entropy_uniform` reading log-cardinalities — it is `carrier_gravity_complexity_of_entropy`, now an eight-line instantiation. The SGD-bridge proof (`carrier_gravity_complexity`) is retained as the independent corroborating derivation. README corrected |
+| 4 | `dual_dual` was pointwise form equality after `evalEquiv`, not an involution of bundled actions: no form-preserving equivalence notion, no transported partition function, no reciprocal-discriminant law | **CONFIRMED** | **`QuadLatticeAction.Equiv`** (`≃q`, `Meno/LatticeAction.lean`): a `ℤ`-linear equivalence carrying one form to the other, with `symm`, rank invariance (`Equiv.rank_eq`), energy invariance (`Equiv.form_eq`/`energy_eq`), Gram transport (`Equiv.gram_map`), discriminant invariance (`Equiv.disc_eq`), and partition-function invariance (`Equiv.partFn_eq`); **`dualDual : Q.dual.dual ≃q Q`** packages reflexivity (with `partFn_dualDual`); **`disc_dual : disc(Q^∨) = π^{2·rank}/disc(Q)`**; and **`duality_dualDual`**: applying the intrinsic duality twice reduces to the original — the two prefactors cancel through `disc_dual` and `dual_rank` |
+
+**Rule-3 amendments.** (i) `h1Basis` and `latticeQuotEquiv_h1Basis`
+moved from `BasisIndependence.lean` to `GraphHomology.lean` — the
+induced basis is unpriced and the pairing (topology) consumes it;
+`GraphHomology` gains the `Module.Finite ℤ cycleLattice` instance and
+imports `Mathlib.LinearAlgebra.Dual.Basis`. (ii) `pullbackBaseFiber`
+moved to `Meno/Basic.lean` as `SGD.Pullback.baseFiberEquiv` (with the
+new projection-fiber equivalences) — pullback combinatorics belongs
+to the abstract layer; `InfoRatchet.lean` now imports `Meno.Basic`
+(consistent with the documented flow: Realizations → Information).
+(iii) Phase 45's `carrier_gravity_entropy` (the two-log split) is
+**renamed `pairEntropy_split`** — re-derived from the coupling chain
+rule — and the marquee name now denotes the four-term gravity
+identity, as review #10 prescribes. (iv) `pairMass` is redefined as
+the coupling's mass function (denominator `|gauge|·|gauge|` in place
+of `|gauge|²` — same value, coupling form); `card_pair_fiber` is
+subsumed by the generic `FinDist.card_base_fiber`.
+
+**Discipline check.** No goal reopens. Finding 1 gives the dual its
+topological meaning — the duality now says *cycles price against
+harmonic classes*, closing the loop the thesis always claimed
+(`H₁ ↔ H¹`). Finding 2 replaces ad-hoc mass functions with one
+distribution abstraction whose laws are proved once — the
+single-source discipline applied to probability. Finding 3 makes
+"specialization" true in the proof term, not the prose. Finding 4
+turns the involution from a pointwise identity into transported
+structure. All twelve items remain CLOSED.
 `lake build Meno && lake exe check`: build green (3348 jobs), zero
 `sorry`, zero `axiom`, zero warnings; check PASS.

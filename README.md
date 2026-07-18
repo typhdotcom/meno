@@ -15,18 +15,24 @@ definite on the real scalar extension `ℝ ⊗[ℤ] H¹` (`classForm_self`,
 `classForm_chart`; integral positivity and summability are derived,
 `Meno/LatticeAction.lean`); `classSectorAction` is its analytic
 projection. Every basis-coordinate quadratic action is a
-form-preserving chart of it (`chartAction_h1Basis`), it carries an
-intrinsic dual lattice with the `π²`-scaled inverse form and the
-Siegel–Poisson duality intrinsically (`classQuadAction_duality`,
-`QuadLatticeAction.dual_dual`), every finite-resolution residue is its
-quotient (`h1ResQuotEquiv`), its Gibbs distribution pushes to a
-residue distribution on that quotient (`residueMass`), gravity is the
-entropy of sharing one of its finite sectors
-(`carrier_gravity_entropy`, with `carrier_gravity_complexity` the
-uniform specialization), the gauge-fixing cost of reading a
-description is the time face — the conditional entropy per sector
-(`sectionCost_carrierCompression_div`) — and Gibbs fluctuation
-specializes to it (`classSectorAction_gibbsVariance_nonneg`).
+form-preserving chart of it (`chartAction_h1Basis`), and its dual
+lattice **is graph homology**: period evaluation identifies
+`Module.Dual ℤ H¹` with the cycle lattice `H₁(G;ℤ)`
+(`cyclesDualEquiv`), the dual action is `π²` times the unit-edge
+chain pairing of cycles, and Siegel–Poisson duality holds directly
+between harmonic `H¹` sectors and priced `H₁` cycles
+(`cycle_harmonic_duality`), with the double dual a bundled
+form-preserving involution (`dualDual`, `duality_dualDual`). Every
+finite-resolution residue is its quotient (`h1ResQuotEquiv`), its
+Gibbs distribution pushes to a residue distribution on that quotient
+(`residueMass`), gravity is the four-term entropy identity of sharing
+one of its finite sectors — `H(pair) + H(residue) = 2·H(description)`
+(`carrier_gravity_entropy`, with the uniform complexity identity the
+same generic theorem at the uniform distribution), the gauge-fixing
+cost of reading a description is the time face — the conditional
+entropy per sector (`sectionCost_carrierCompression_div`) — and Gibbs
+fluctuation specializes to it
+(`classSectorAction_gibbsVariance_nonneg`).
 
 Everything below is a checked theorem — zero `sorry`, zero `axiom`
 declarations, ~3300 build jobs green against Lean 4.26.0 / Mathlib.
@@ -49,11 +55,21 @@ functional equation runs through the same single analytic source
 bundle has a dual on `Module.Dual ℤ Λ` with the `π²`-scaled inverse
 real form — no basis in the definition — every dual basis charts it
 as the coordinate dual (`chartAction_dual`), the discriminant is
-basis-independent (`disc_eq`), the duality holds with prefactor
-`√(disc/π^rank)` (`QuadLatticeAction.duality`), the double dual is
-the original along reflexivity (`dual_dual`), and the per-chart
-coordinate duality is a corollary (`basisGramData_duality`,
-`Meno/LatticeAction.lean`).
+basis-independent (`disc_eq`) with the reciprocal law
+`disc(Q^∨) = π^{2·rank}/disc(Q)` (`disc_dual`), the duality holds
+with prefactor `√(disc/π^rank)` (`QuadLatticeAction.duality`), the
+double dual is a **bundled form-preserving involution** —
+`Q.dual.dual ≃q Q` (`dualDual`) with rank, energy, discriminant, and
+partition function transported, and applying the duality twice
+cancels the prefactors and returns the original (`duality_dualDual`).
+The per-chart coordinate duality is a corollary
+(`basisGramData_duality`). And for a graph the dual is **topology**:
+period evaluation is a perfect pairing `H₁(G;ℤ) ≃ Dual ℤ H¹(G;ℤ)`
+(`cyclesDualEquiv`, well-defined by Stokes, bijective by the
+keystone), the transported form is `π²` times the unit-edge chain
+pairing, and the duality reads `Z(priced cycles) =
+√(disc/π^{b₁})·Z(harmonic classes)` (`cycle_harmonic_duality`,
+`Meno/BasisIndependence.lean`).
 
 **Topology, intrinsically.** Every finite multigraph
 (`IncidenceGraph`) carries an intrinsic integral cycle lattice
@@ -164,14 +180,20 @@ sharing a base is worth exactly one copy of it — with the complexity
 form `K(P) + K(D) = K(A) + K(B)` (`gravity_complexity`) realizing the
 abstract `SGD.gravity` of `Meno/Basic.lean`, and the refactoring bound
 `K(P) ≤ K(D) + log(max fiber product)` (`uniform_refactoring_bound`).
-On the graph carrier gravity is **priced by the action**: the entropy
-of the shared-pair distribution — two descriptions of the same finite
-sector, weighted by the intrinsic Gibbs law — is the residue entropy
-plus two gauge logs (`carrier_gravity_entropy`,
-`Meno/ResolutionCount.lean`), and the uniform complexity identity is
-its uniform-distribution specialization
-(`carrier_gravity_complexity_of_entropy`; the SGD-bridge derivation
-`carrier_gravity_complexity` stands as independent corroboration).
+On the graph carrier gravity is **priced by the action**, with full
+distribution semantics (`FinDist`, `Meno/InfoRatchet.lean`): the
+shared-pair coupling of two description lifts is normalized with both
+marginals the description distribution (`pairDist`, `pairDist_fst`,
+`pairDist_snd`), pushing a description forward recovers the residue
+distribution (`descriptionDist_map`), and the gravity identity is
+four-term — `H(pair) + H(residue) = H(description) + H(description)`
+(`carrier_gravity_entropy`, `Meno/ResolutionCount.lean`) — the
+generic `FinDist.entropy_gravity`, proved once and instantiated at
+the Gibbs residue distribution. The same generic theorem at the
+uniform distribution yields the uniform complexity identity
+(`carrier_gravity_complexity_of_entropy` — a genuine specialization);
+the SGD-bridge derivation `carrier_gravity_complexity` stands as
+independent corroboration.
 
 **Uncertainty.** The Gibbs state's fluctuations are the model's
 uncertainty, and they are theorems, not vocabulary: the variance of
@@ -205,12 +227,12 @@ Meno/
 ├── Geodesic.lean              Lawvere-subadditive length class
 ├── HarmonicForm.lean          HarmonicGramData; variational builder; binding algebra
 ├── IncidenceGraph.lean        THE graph substrate: ∂, grad, Stokes (any ring); walks; components; gauge; H₁; b₁
-├── GraphHomology.lean         Pure graph homology: every lattice basis's derived data; keystones; Euler; basisOfCycles
+├── GraphHomology.lean         Pure graph homology: every basis's derived data; keystones; Euler; the H₁ ≃ Dual H¹ pairing
 ├── ThetaGraph.lean            The theta graph: incidence data and raw integral cycle facts
 ├── GraphInstances.lean        Cycle, theta, genuine wedge: connectivity, Euler b₁, and the concrete lattice bases
 ├── PeriodHarmonic.lean        Least-norm-at-prescribed-periods machinery; cycle & wedge Gram forms
 ├── HarmonicClass.lean         Priced Gram data of a basis; intrinsic harmonic energy on H¹; variational identity
-├── BasisIndependence.lean     Bases unimodularly related; partFn is the graph's; classQuadAction bundled
+├── BasisIndependence.lean     Bases unimodularly related; partFn is the graph's; classQuadAction; H₁↔H¹ duality
 ├── WedgePresentation.lean     C5 acceptance witnesses: wedge matter; hand-built bases related to the fundamental one
 ├── Matter.lean                MatterSector = nonzero H¹ class; mass, positivity, trapped paradox
 ├── Binding.lean               2-complexes; the induced map; binding kills matter; exact spectral decomposition
@@ -218,7 +240,7 @@ Meno/
 ├── Basic.lean                 Abstract complexity hierarchy; pullback gravity (interface layer)
 ├── Instances.lean             Log-cardinality instance of the abstract hierarchy
 ├── UniformAction.lean         Type-level gravity realized on the uniform sector action
-├── InfoRatchet.lean           Fiber information; the coding theorem (finite-only costs, extended costs); ratchets
+├── InfoRatchet.lean           Fiber information; the coding theorem; finite distributions and entropy gravity
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; groupoid complexity
