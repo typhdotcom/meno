@@ -31,12 +31,15 @@ variational layer, `Meno/PeriodHarmonic.lean`):
 * `basisOfCycles` — the concrete-instance bridge: closed, independent,
   integrally spanning integer cycles assemble into a lattice basis.
 
-What remains of the metric is the period *pairing* `⬝ᵥ` against the
-basis cycles and the discrete Stokes identity — periods, not a chosen
-Gram: real spanning solves the period system by
-injectivity-implies-surjectivity of the pairing operator on the
-finite-dimensional coefficient space (review #6), with no Gram
-matrix, no positivity, and no inverse. -/
+Real spanning is proved by **scalar extension and dimension**
+(review #7): rational independence transfers to `ℝ` through a cast
+left inverse (`linearIndependent_ratCast`), the rational kernel is
+spanned by the basis after clearing denominators, rank–nullity over
+`ℚ` and `ℝ` pins the real kernel's dimension at `n`
+(`finrank_ker_boundaryLin_eq`), and the independent cast basis fills
+it. No Gram object, no cycle-cycle pairing operator, no self-duality
+— what remains of the metric is period evaluation and the discrete
+Stokes identity. -/
 
 namespace Meno
 
@@ -44,6 +47,172 @@ open scoped BigOperators
 open Matrix
 
 universe u v
+
+/-! ## Scalar extension
+
+The base-change engine (review #7): rational independence transfers to
+`ℝ` through a cast left inverse, and rational vectors clear
+denominators to integer ones. No Gram, no pairing operator — sums and
+`Pi.single` only. -/
+
+section ScalarExtension
+
+/-- Clearing denominators: every rational vector is `1/N` times an
+integer vector, `N` positive. -/
+theorem exists_int_scaling {ι : Type*} [Fintype ι] (x : ι → ℚ) :
+    ∃ (N : ℕ) (y : ι → ℤ), 0 < N ∧ ∀ e, (y e : ℚ) = N * x e := by
+  refine ⟨∏ e', (x e').den,
+    fun e => (x e).num * (((∏ e', (x e').den) / (x e).den : ℕ) : ℤ),
+    Finset.prod_pos fun e _ => Nat.pos_of_ne_zero (x e).den_nz, fun e => ?_⟩
+  have hdvd : (x e).den ∣ ∏ e', (x e').den :=
+    Finset.dvd_prod_of_mem _ (Finset.mem_univ e)
+  have hden : ((x e).den : ℚ) ≠ 0 := by
+    exact_mod_cast (x e).den_nz
+  show (((x e).num * (((∏ e', (x e').den) / (x e).den : ℕ) : ℤ) : ℤ) : ℚ) = _
+  rw [Int.cast_mul, Int.cast_natCast, Nat.cast_div hdvd hden]
+  have hnum : ((x e).num : ℚ) = x e * ((x e).den : ℚ) := by
+    have h := Rat.num_div_den (x e)
+    field_simp at h
+    linarith [h]
+  rw [hnum]
+  field_simp
+
+/-- **Scalar-extension transfer**: a `ℚ`-independent finite family of
+rational vectors stays independent over `ℝ`. The coefficient map
+splits over `ℚ` (vector spaces); the left inverse is rational data,
+and the splitting identity casts along `ℚ →+* ℝ`. -/
+theorem linearIndependent_ratCast {k : ℕ} {ι : Type*} [Fintype ι]
+    [DecidableEq ι] {v : Fin k → ι → ℚ}
+    (hv : LinearIndependent ℚ v) :
+    LinearIndependent ℝ (fun i => fun e => ((v i e : ℚ) : ℝ)) := by
+  classical
+  set φ : (Fin k → ℚ) →ₗ[ℚ] (ι → ℚ) :=
+    { toFun := fun g => fun e => ∑ i, g i * v i e
+      map_add' := fun a b => by
+        funext e
+        show ∑ i, (a i + b i) * v i e
+          = (fun e => ∑ i, a i * v i e) e + (fun e => ∑ i, b i * v i e) e
+        rw [show (∑ i, (a i + b i) * v i e)
+            = ∑ i, (a i * v i e + b i * v i e) from
+          Finset.sum_congr rfl fun i _ => by ring, Finset.sum_add_distrib]
+      map_smul' := fun c a => by
+        funext e
+        show ∑ i, (c * a i) * v i e = c * ∑ i, a i * v i e
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun i _ => by ring } with hφdef
+  have hφapp : ∀ (g : Fin k → ℚ) (e : ι), φ g e = ∑ i, g i * v i e :=
+    fun g e => rfl
+  have hφinj : LinearMap.ker φ = ⊥ := by
+    rw [LinearMap.ker_eq_bot']
+    intro g hg
+    have hg' : ∑ i, g i • v i = 0 := by
+      funext e
+      rw [Finset.sum_apply]
+      have := congrFun hg e
+      rw [hφapp] at this
+      exact this
+    have hz := Fintype.linearIndependent_iff.mp hv g hg'
+    funext i
+    exact hz i
+  obtain ⟨L, hL⟩ := LinearMap.exists_leftInverse_of_injective φ hφinj
+  have hφsingle : ∀ i, φ (Pi.single i 1) = v i := by
+    intro i
+    funext e
+    rw [hφapp]
+    rw [show (fun i' => (Pi.single i 1 : Fin k → ℚ) i' * v i' e)
+        = fun i' => if i' = i then v i' e else 0 from funext fun i' => by
+      rcases eq_or_ne i' i with h | h
+      · subst h
+        rw [if_pos rfl, Pi.single_eq_same, one_mul]
+      · rw [if_neg h, Pi.single_eq_of_ne h, zero_mul]]
+    rw [Finset.sum_ite_eq' Finset.univ i fun i' => v i' e]
+    simp
+  have hdecomp : ∀ i, v i = ∑ e, v i e • Pi.single e (1 : ℚ) := by
+    intro i
+    funext w
+    rw [Finset.sum_apply]
+    have hterm : ∀ e, (v i e • (Pi.single e (1 : ℚ) : ι → ℚ)) w
+        = if e = w then v i e else 0 := by
+      intro e
+      rcases eq_or_ne e w with h | h
+      · subst h
+        rw [Pi.smul_apply, Pi.single_eq_same, smul_eq_mul, mul_one, if_pos rfl]
+      · rw [Pi.smul_apply, Pi.single_eq_of_ne (Ne.symm h), smul_eq_mul,
+          mul_zero, if_neg h]
+    rw [Finset.sum_congr rfl fun e _ => hterm e,
+      Finset.sum_ite_eq' Finset.univ w fun e => v i e]
+    simp
+  have hkey : ∀ i j, (∑ e, v i e * L (Pi.single e 1) j)
+      = if i = j then (1 : ℚ) else 0 := by
+    intro i j
+    have hLvi : L (v i) = Pi.single i 1 := by
+      rw [← hφsingle i]
+      exact LinearMap.congr_fun hL (Pi.single i 1)
+    calc ∑ e, v i e * L (Pi.single e 1) j
+        = (∑ e, v i e • L ((Pi.single e (1 : ℚ) : ι → ℚ))) j := by
+          rw [Finset.sum_apply]
+          exact Finset.sum_congr rfl fun e _ => rfl
+      _ = (L (∑ e, v i e • (Pi.single e (1 : ℚ) : ι → ℚ))) j := by
+          rw [map_sum]
+          exact congrFun (Finset.sum_congr rfl fun e _ =>
+            (map_smul L (v i e) ((Pi.single e (1 : ℚ) : ι → ℚ))).symm) j
+      _ = (L (v i)) j := by rw [← hdecomp i]
+      _ = (Pi.single i 1 : Fin k → ℚ) j := by rw [hLvi]
+      _ = if i = j then (1 : ℚ) else 0 := by
+          rcases eq_or_ne i j with h | h
+          · subst h
+            rw [Pi.single_eq_same, if_pos rfl]
+          · rw [Pi.single_eq_of_ne (Ne.symm h), if_neg h]
+  rw [Fintype.linearIndependent_iff]
+  intro g hg j
+  have hgz : ∀ e, (∑ i, g i * ((v i e : ℚ) : ℝ)) = 0 := by
+    intro e
+    have := congrFun hg e
+    rw [Finset.sum_apply] at this
+    exact this
+  have hcast : ∀ i, (∑ e, ((v i e : ℚ) : ℝ) * ((L (Pi.single e 1) j : ℚ) : ℝ))
+      = if i = j then (1 : ℝ) else 0 := by
+    intro i
+    have hc : ((∑ e, v i e * L (Pi.single e 1) j : ℚ) : ℝ)
+        = ((if i = j then (1 : ℚ) else 0 : ℚ) : ℝ) := by
+      rw [hkey i j]
+    rcases eq_or_ne i j with hij | hij
+    · subst hij
+      rw [if_pos rfl] at hc ⊢
+      push_cast at hc
+      exact hc
+    · rw [if_neg hij] at hc ⊢
+      push_cast at hc
+      exact hc
+  calc g j
+      = ∑ i, g i * (if i = j then (1 : ℝ) else 0) := by
+        rw [show (fun i => g i * (if i = j then (1 : ℝ) else 0))
+            = fun i => if i = j then g i else 0 from funext fun i => by
+          rcases eq_or_ne i j with h | h
+          · subst h
+            rw [if_pos rfl, if_pos rfl, mul_one]
+          · rw [if_neg h, if_neg h, mul_zero]]
+        rw [Finset.sum_ite_eq' Finset.univ j g]
+        simp
+    _ = ∑ i, g i * ∑ e, ((v i e : ℚ) : ℝ) * ((L (Pi.single e 1) j : ℚ) : ℝ) := by
+        refine Finset.sum_congr rfl fun i _ => ?_
+        rw [hcast i]
+    _ = ∑ e, (∑ i, g i * ((v i e : ℚ) : ℝ)) * ((L (Pi.single e 1) j : ℚ) : ℝ) := by
+        calc ∑ i, g i * ∑ e, ((v i e : ℚ) : ℝ) * ((L (Pi.single e 1) j : ℚ) : ℝ)
+            = ∑ i, ∑ e, g i * (((v i e : ℚ) : ℝ) * ((L (Pi.single e 1) j : ℚ) : ℝ)) := by
+              refine Finset.sum_congr rfl fun i _ => ?_
+              rw [Finset.mul_sum]
+          _ = ∑ e, ∑ i, g i * (((v i e : ℚ) : ℝ) * ((L (Pi.single e 1) j : ℚ) : ℝ)) :=
+              Finset.sum_comm
+          _ = ∑ e, (∑ i, g i * ((v i e : ℚ) : ℝ)) * ((L (Pi.single e 1) j : ℚ) : ℝ) := by
+              refine Finset.sum_congr rfl fun e _ => ?_
+              rw [Finset.sum_mul]
+              exact Finset.sum_congr rfl fun i _ => by ring
+    _ = 0 := by
+        refine Finset.sum_eq_zero fun e _ => ?_
+        rw [hgz e, zero_mul]
+
+end ScalarExtension
 
 namespace IncidenceGraph
 
@@ -380,151 +549,222 @@ theorem periodsR_onto (k : Fin n → ℝ) :
         rw [Finset.sum_ite_eq' Finset.univ j k]
         simp
 
-/-- **Real spanning, derived** — with no Gram matrix, no positivity,
-and no inversion (review #6, finding 2): the period-pairing operator
-on the finite-dimensional coefficient space is injective by
-independence, hence surjective, so coefficients matching the cochain's
-periods exist; the residual has vanishing periods, hence — by the walk
-engine — is a gradient, and a closed gradient is zero by Stokes. -/
+/-- Every integral cycle is an **integer** combination of the basis —
+`Module.Basis.sum_repr`, in cochain form. -/
+theorem exists_int_combination {x : G.E → ℤ} (hx : x ∈ G.cycleLattice) :
+    ∃ a : Fin n → ℤ, x = fun e => ∑ i, a i * G.cyclesZ B i e := by
+  have hexp := B.sum_repr ⟨x, hx⟩
+  refine ⟨fun i => B.repr ⟨x, hx⟩ i, ?_⟩
+  have hval := congrArg Subtype.val hexp
+  have hxval : ((⟨x, hx⟩ : G.cycleLattice) : G.E → ℤ) = x := rfl
+  rw [AddSubmonoidClass.coe_finset_sum, hxval] at hval
+  funext e
+  rw [← congrFun hval e, Finset.sum_apply]
+  rfl
+
+include B in
+/-- **The rational cycle space is spanned by the basis**: a closed
+rational cochain clears denominators to an integral cycle, which is an
+integer combination — so the kernel has dimension at most `n`. -/
+theorem finrank_ker_boundaryLin_rat_le :
+    Module.finrank ℚ (LinearMap.ker (G.boundaryLin ℚ)) ≤ n := by
+  have hle : LinearMap.ker (G.boundaryLin ℚ)
+      ≤ Submodule.span ℚ
+        (Set.range fun i => fun e => ((G.cyclesZ B i e : ℤ) : ℚ)) := by
+    intro x hx
+    obtain ⟨N, y, hN, hy⟩ := exists_int_scaling x
+    have hclosed : ∀ v, G.boundary x v = 0 := by
+      intro v
+      have h := LinearMap.mem_ker.mp hx
+      exact congrFun h v
+    have hymem : y ∈ G.cycleLattice := by
+      rw [mem_cycleLattice]
+      intro v
+      apply Int.cast_injective (α := ℚ)
+      rw [Int.cast_zero,
+        show ((G.boundary y v : ℤ) : ℚ) = (Int.castRingHom ℚ) (G.boundary y v)
+          from rfl,
+        G.boundary_ringHom (Int.castRingHom ℚ) y v]
+      have hyx : (fun e => ((Int.castRingHom ℚ) (y e))) = fun e => (N : ℚ) * x e :=
+        funext fun e => hy e
+      rw [hyx,
+        show (fun e => (N : ℚ) * x e) = (N : ℚ) • x from rfl,
+        G.boundary_smul, hclosed v, mul_zero]
+    obtain ⟨a, ha⟩ := G.exists_int_combination B hymem
+    rw [Submodule.mem_span_range_iff_exists_fun]
+    refine ⟨fun i => (a i : ℚ) / N, ?_⟩
+    funext e
+    have hNne : ((N : ℚ)) ≠ 0 := by exact_mod_cast hN.ne'
+    have hxe : x e = (y e : ℚ) / N := by
+      rw [hy e]
+      field_simp
+    rw [Finset.sum_apply, hxe, congrFun ha e]
+    push_cast
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    show ((a i : ℚ) / N) • ((G.cyclesZ B i e : ℤ) : ℚ) = _
+    rw [smul_eq_mul]
+    ring
+  set ψ : (Fin n → ℚ) →ₗ[ℚ] (G.E → ℚ) :=
+    { toFun := fun a => fun e => ∑ i, a i * ((G.cyclesZ B i e : ℤ) : ℚ)
+      map_add' := fun a b => by
+        funext e
+        show ∑ i, (a i + b i) * ((G.cyclesZ B i e : ℤ) : ℚ)
+          = (fun e => ∑ i, a i * ((G.cyclesZ B i e : ℤ) : ℚ)) e
+            + (fun e => ∑ i, b i * ((G.cyclesZ B i e : ℤ) : ℚ)) e
+        rw [show (∑ i, (a i + b i) * ((G.cyclesZ B i e : ℤ) : ℚ))
+            = ∑ i, (a i * ((G.cyclesZ B i e : ℤ) : ℚ)
+              + b i * ((G.cyclesZ B i e : ℤ) : ℚ)) from
+          Finset.sum_congr rfl fun i _ => by ring, Finset.sum_add_distrib]
+      map_smul' := fun c a => by
+        funext e
+        show ∑ i, (c * a i) * ((G.cyclesZ B i e : ℤ) : ℚ)
+          = c * ∑ i, a i * ((G.cyclesZ B i e : ℤ) : ℚ)
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun i _ => by ring } with hψ
+  have hrange : Submodule.span ℚ
+      (Set.range fun i => fun e => ((G.cyclesZ B i e : ℤ) : ℚ))
+      = LinearMap.range ψ := by
+    ext x
+    rw [Submodule.mem_span_range_iff_exists_fun, LinearMap.mem_range]
+    constructor
+    · rintro ⟨c, hc⟩
+      refine ⟨c, ?_⟩
+      funext e
+      rw [← congrFun hc e, Finset.sum_apply]
+      rfl
+    · rintro ⟨c, rfl⟩
+      refine ⟨c, ?_⟩
+      funext e
+      rw [Finset.sum_apply]
+      rfl
+  calc Module.finrank ℚ (LinearMap.ker (G.boundaryLin ℚ))
+      ≤ Module.finrank ℚ (Submodule.span ℚ
+          (Set.range fun i => fun e => ((G.cyclesZ B i e : ℤ) : ℚ))) :=
+        Submodule.finrank_mono hle
+    _ ≤ n := by
+        rw [hrange]
+        have h := LinearMap.finrank_range_le ψ
+        rwa [Module.finrank_fintype_fun_eq_card, Fintype.card_fin] at h
+
+include B in
+/-- **The real cycle-space dimension is `n`, by scalar extension**
+(review #7): rank–nullity over `ℚ` bounds the rank of `∂` below;
+`ℚ`-independent rational vectors in the range stay independent over
+`ℝ` (`linearIndependent_ratCast`), so the real rank is at least the
+rational rank; rank–nullity over `ℝ` then bounds the real kernel by
+`n`, and the cast basis (independent by the coordinate matrix,
+`cast_independent`) fills it. No Gram, no pairing operator, no
+self-duality. -/
+theorem finrank_ker_boundaryLin_eq :
+    Module.finrank ℝ (LinearMap.ker (G.boundaryLin ℝ)) = n := by
+  classical
+  have hrnQ := LinearMap.finrank_range_add_finrank_ker (G.boundaryLin ℚ)
+  rw [Module.finrank_fintype_fun_eq_card] at hrnQ
+  have hkerQ := G.finrank_ker_boundaryLin_rat_le B
+  set r := Module.finrank ℚ ↥(LinearMap.range (G.boundaryLin ℚ)) with hrdef
+  set bR := Module.finBasis ℚ ↥(LinearMap.range (G.boundaryLin ℚ)) with hbR
+  set u : Fin r → (G.V → ℚ) := fun i => (bR i : G.V → ℚ) with hu
+  have huli : LinearIndependent ℚ u := by
+    have h := bR.linearIndependent
+    exact h.map' (Submodule.subtype _) (Submodule.ker_subtype _)
+  have huR := linearIndependent_ratCast huli
+  have hmem : ∀ i, (fun w => ((u i w : ℚ) : ℝ))
+      ∈ LinearMap.range (G.boundaryLin ℝ) := by
+    intro i
+    obtain ⟨ω, hω⟩ := (bR i).2
+    refine ⟨fun e => ((ω e : ℚ) : ℝ), ?_⟩
+    funext w
+    show G.boundary (fun e => ((ω e : ℚ) : ℝ)) w = ((u i w : ℚ) : ℝ)
+    have hcast := G.boundary_ringHom (Rat.castHom ℝ) ω w
+    rw [show (fun e => ((ω e : ℚ) : ℝ)) = fun e => (Rat.castHom ℝ) (ω e)
+        from rfl,
+      ← hcast]
+    have hval : G.boundary ω w = u i w := congrFun hω w
+    rw [show (Rat.castHom ℝ) (G.boundary ω w) = ((G.boundary ω w : ℚ) : ℝ)
+        from rfl,
+      hval]
+  have hspanR : Submodule.span ℝ
+      (Set.range fun i => fun w => ((u i w : ℚ) : ℝ))
+      ≤ LinearMap.range (G.boundaryLin ℝ) := by
+    rw [Submodule.span_le]
+    rintro _ ⟨i, rfl⟩
+    exact hmem i
+  have hrankR : r ≤ Module.finrank ℝ ↥(LinearMap.range (G.boundaryLin ℝ)) := by
+    have hs := finrank_span_eq_card huR
+    rw [Fintype.card_fin] at hs
+    calc r = Module.finrank ℝ ↥(Submodule.span ℝ
+          (Set.range fun i => fun w => ((u i w : ℚ) : ℝ))) := hs.symm
+      _ ≤ _ := Submodule.finrank_mono hspanR
+  have hrnR := LinearMap.finrank_range_add_finrank_ker (G.boundaryLin ℝ)
+  rw [Module.finrank_fintype_fun_eq_card] at hrnR
+  have hliAmb : LinearIndependent ℝ (G.cyclesR B) := by
+    rw [Fintype.linearIndependent_iff]
+    intro g hg
+    have hg' : (fun e => ∑ i, g i * G.cyclesR B i e) = 0 := by
+      funext e
+      rw [← congrFun hg e, Finset.sum_apply]
+      rfl
+    have hz := G.cast_independent B g hg'
+    intro i
+    exact congrFun hz i
+  have hspan_ker : Submodule.span ℝ (Set.range (G.cyclesR B))
+      ≤ LinearMap.ker (G.boundaryLin ℝ) := by
+    rw [Submodule.span_le]
+    rintro _ ⟨i, rfl⟩
+    rw [SetLike.mem_coe, LinearMap.mem_ker]
+    funext v
+    exact G.cyclesR_closed B i v
+  have hlow : n ≤ Module.finrank ℝ ↥(LinearMap.ker (G.boundaryLin ℝ)) := by
+    have hs := finrank_span_eq_card hliAmb
+    rw [Fintype.card_fin] at hs
+    calc n = Module.finrank ℝ ↥(Submodule.span ℝ (Set.range (G.cyclesR B))) :=
+          hs.symm
+      _ ≤ _ := Submodule.finrank_mono hspan_ker
+  omega
+
+/-- **Real spanning, by dimension** (review #7): the cast basis is
+independent with cardinality the kernel's dimension, hence spans. -/
 theorem spanning (ω : G.E → ℝ) (hω : ∀ v, G.boundary ω v = 0) :
     ∃ a : Fin n → ℝ, ω = fun e => ∑ i, a i * G.cyclesR B i e := by
-  -- Pairing a cochain against a coefficient combination.
-  have hswap : ∀ (x : G.E → ℝ) (b : Fin n → ℝ),
-      x ⬝ᵥ (fun e => ∑ j, b j * G.cyclesR B j e)
-        = ∑ j, b j * (x ⬝ᵥ G.cyclesR B j) := by
-    intro x b
-    calc x ⬝ᵥ (fun e => ∑ j, b j * G.cyclesR B j e)
-        = ∑ e, x e * ∑ j, b j * G.cyclesR B j e := rfl
-      _ = ∑ e, ∑ j, b j * (x e * G.cyclesR B j e) := by
-          refine Finset.sum_congr rfl fun e _ => ?_
-          rw [Finset.mul_sum]
-          exact Finset.sum_congr rfl fun j _ => by ring
-      _ = ∑ j, ∑ e, b j * (x e * G.cyclesR B j e) := Finset.sum_comm
-      _ = ∑ j, b j * (x ⬝ᵥ G.cyclesR B j) := by
-          refine Finset.sum_congr rfl fun j _ => ?_
-          rw [← Finset.mul_sum]
-          rfl
-  -- The period-pairing operator on coefficient space.
-  set T : (Fin n → ℝ) →ₗ[ℝ] (Fin n → ℝ) :=
-    { toFun := fun b => fun j => ∑ i, b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
-      map_add' := fun b b' => by
-        funext j
-        show ∑ i, (b i + b' i) * (G.cyclesR B i ⬝ᵥ G.cyclesR B j) = _
-        rw [show (∑ i, (b i + b' i) * (G.cyclesR B i ⬝ᵥ G.cyclesR B j))
-            = ∑ i, (b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
-              + b' i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)) from
-          Finset.sum_congr rfl fun i _ => by ring]
-        rw [Finset.sum_add_distrib]
-        rfl
-      map_smul' := fun c b => by
-        funext j
-        show ∑ i, (c * b i) * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
-          = c * ∑ i, b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
-        rw [Finset.mul_sum]
-        exact Finset.sum_congr rfl fun i _ => by ring } with hT
-  -- The operator computes the periods of the combination.
-  have hTcomb : ∀ (b : Fin n → ℝ) (j : Fin n),
-      T b j = (fun e => ∑ i, b i * G.cyclesR B i e) ⬝ᵥ G.cyclesR B j := by
-    intro b j
-    show ∑ i, b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
-      = ∑ e, (∑ i, b i * G.cyclesR B i e) * G.cyclesR B j e
-    calc ∑ i, b i * (G.cyclesR B i ⬝ᵥ G.cyclesR B j)
-        = ∑ i, ∑ e, b i * (G.cyclesR B i e * G.cyclesR B j e) := by
-          refine Finset.sum_congr rfl fun i _ => ?_
-          show b i * (∑ e, G.cyclesR B i e * G.cyclesR B j e) = _
-          rw [Finset.mul_sum]
-      _ = ∑ e, ∑ i, b i * (G.cyclesR B i e * G.cyclesR B j e) :=
-          Finset.sum_comm
-      _ = ∑ e, (∑ i, b i * G.cyclesR B i e) * G.cyclesR B j e := by
-          refine Finset.sum_congr rfl fun e _ => ?_
-          rw [Finset.sum_mul]
-          exact Finset.sum_congr rfl fun i _ => by ring
-  -- Injective by independence, hence surjective on ℝⁿ.
-  have hker : ∀ b, T b = 0 → b = 0 := by
-    intro b hb
-    have hzz : (fun e => ∑ i, b i * G.cyclesR B i e)
-        ⬝ᵥ (fun e => ∑ i, b i * G.cyclesR B i e) = 0 := by
-      rw [hswap]
-      refine Finset.sum_eq_zero fun j _ => ?_
-      rw [← hTcomb b j, hb]
-      show b j * (0 : Fin n → ℝ) j = 0
-      rw [show (0 : Fin n → ℝ) j = 0 from rfl, mul_zero]
-    exact G.cast_independent B b (dotProduct_self_eq_zero.mp hzz)
-  have hTinj : Function.Injective T := by
-    rw [← LinearMap.ker_eq_bot]
-    exact LinearMap.ker_eq_bot'.mpr hker
-  have hTsurj : Function.Surjective T :=
-    (LinearMap.injective_iff_surjective).mp hTinj
-  obtain ⟨a, ha⟩ := hTsurj (fun j => ω ⬝ᵥ G.cyclesR B j)
+  have hmemc : ∀ i, G.cyclesR B i ∈ LinearMap.ker (G.boundaryLin ℝ) := by
+    intro i
+    rw [LinearMap.mem_ker]
+    funext v
+    exact G.cyclesR_closed B i v
+  set c' : Fin n → LinearMap.ker (G.boundaryLin ℝ) :=
+    fun i => ⟨G.cyclesR B i, hmemc i⟩ with hc'
+  have hsum_coe : ∀ (g : Fin n → ℝ),
+      ((∑ i, g i • c' i : LinearMap.ker (G.boundaryLin ℝ)) : G.E → ℝ)
+        = fun e => ∑ i, g i * G.cyclesR B i e := by
+    intro g
+    rw [AddSubmonoidClass.coe_finset_sum]
+    funext e
+    rw [Finset.sum_apply]
+    rfl
+  have hli : LinearIndependent ℝ c' := by
+    rw [Fintype.linearIndependent_iff]
+    intro g hg
+    have hcoe := congrArg Subtype.val hg
+    rw [hsum_coe g] at hcoe
+    have hgz := G.cast_independent B g hcoe
+    intro i
+    exact congrFun hgz i
+  have hcard : Fintype.card (Fin n)
+      = Module.finrank ℝ (LinearMap.ker (G.boundaryLin ℝ)) := by
+    rw [Fintype.card_fin, G.finrank_ker_boundaryLin_eq B]
+  have hspan : Submodule.span ℝ (Set.range c') = ⊤ := by
+    apply Submodule.eq_top_of_finrank_eq
+    rw [finrank_span_eq_card hli, hcard]
+  have hmem : (⟨ω, by rw [LinearMap.mem_ker]; funext v; exact hω v⟩ :
+      LinearMap.ker (G.boundaryLin ℝ)) ∈ Submodule.span ℝ (Set.range c') := by
+    rw [hspan]
+    trivial
+  obtain ⟨a, ha⟩ := (Submodule.mem_span_range_iff_exists_fun ℝ).mp hmem
   refine ⟨a, ?_⟩
-  set ω' : G.E → ℝ := fun e => ω e - ∑ i, a i * G.cyclesR B i e with hω'
-  -- The residual is closed.
-  have hcomb : ∀ v, G.boundary (fun e => ∑ i, a i * G.cyclesR B i e) v
-      = ∑ i, a i * G.boundary (G.cyclesR B i) v := by
-    intro v
-    rw [boundary_eq_sum]
-    calc ∑ e, G.bcoeff v e * ∑ i, a i * G.cyclesR B i e
-        = ∑ e, ∑ i, a i * (G.bcoeff v e * G.cyclesR B i e) := by
-          refine Finset.sum_congr rfl fun e _ => ?_
-          rw [Finset.mul_sum]
-          exact Finset.sum_congr rfl fun i _ => by ring
-      _ = ∑ i, ∑ e, a i * (G.bcoeff v e * G.cyclesR B i e) :=
-          Finset.sum_comm
-      _ = ∑ i, a i * ∑ e, G.bcoeff v e * G.cyclesR B i e := by
-          refine Finset.sum_congr rfl fun i _ => ?_
-          rw [Finset.mul_sum]
-      _ = ∑ i, a i * G.boundary (G.cyclesR B i) v :=
-          Finset.sum_congr rfl fun i _ => by rw [← boundary_eq_sum]
-  have hclosed' : ∀ v, G.boundary ω' v = 0 := by
-    intro v
-    have hsub : G.boundary ω' v = G.boundary ω v
-        - G.boundary (fun e => ∑ i, a i * G.cyclesR B i e) v := by
-      have h1 := G.boundary_add ω
-        (-(fun e => ∑ i, a i * G.cyclesR B i e)) v
-      rw [G.boundary_neg] at h1
-      rw [show ω' = ω + -(fun e => ∑ i, a i * G.cyclesR B i e) from
-        funext fun e => by
-          show ω e - ∑ i, a i * G.cyclesR B i e
-            = ω e + -(∑ i, a i * G.cyclesR B i e)
-          ring]
-      rw [h1]
-      ring
-    rw [hsub, hω v, hcomb v]
-    rw [Finset.sum_eq_zero fun i _ => by
-      rw [G.cyclesR_closed B i v, mul_zero]]
-    ring
-  -- The residual has vanishing periods: its periods are the target
-  -- periods minus the operator's output, which `ha` matches exactly.
-  have hper' : ∀ j, ω' ⬝ᵥ G.cyclesR B j = 0 := by
-    intro j
-    have hsub : ω' ⬝ᵥ G.cyclesR B j
-        = ω ⬝ᵥ G.cyclesR B j
-          - (fun e => ∑ i, a i * G.cyclesR B i e) ⬝ᵥ G.cyclesR B j := by
-      show ∑ e, (ω e - ∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e = _
-      rw [show (∑ e, (ω e - ∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e)
-          = ∑ e, (ω e * G.cyclesR B j e
-            - (∑ i, a i * G.cyclesR B i e) * G.cyclesR B j e) from
-        Finset.sum_congr rfl fun e _ => by ring]
-      rw [Finset.sum_sub_distrib]
-      rfl
-    rw [hsub, ← hTcomb a j, congrFun ha j]
-    exact sub_self _
-  -- Hence a gradient; a closed gradient is zero.
-  have hcast : ∀ j, ω' ⬝ᵥ (fun e => ((G.cyclesZ B j e : ℤ) : ℝ)) = 0 :=
-    fun j => hper' j
-  obtain ⟨f, hf⟩ : ∃ f : G.V → ℝ, G.grad f = ω' :=
-    ⟨G.integrate ω',
-      G.grad_integrate ω' (fun w c => G.closedWalkSum_eq_zero B ω' hcast c)⟩
-  have hzz : ω' ⬝ᵥ ω' = 0 := by
-    calc ω' ⬝ᵥ ω' = G.grad f ⬝ᵥ ω' := by rw [hf]
-      _ = ∑ v, f v * G.boundary ω' v := G.grad_dotProduct_eq f ω'
-      _ = 0 := Finset.sum_eq_zero fun v _ => by rw [hclosed' v, mul_zero]
-  have hz : ω' = 0 := dotProduct_self_eq_zero.mp hzz
-  funext e
-  have he := congrFun hz e
-  show ω e = ∑ i, a i * G.cyclesR B i e
-  have he' : ω e - ∑ i, a i * G.cyclesR B i e = 0 := he
-  linarith
+  have hcoe := congrArg Subtype.val ha
+  rw [hsum_coe a] at hcoe
+  exact hcoe.symm
 
 /-! ### Stokes and exactness -/
 
@@ -718,47 +958,11 @@ theorem finrank_cochainQuotR :
 
 /-! ## The real cycle-space rank, Euler's formula, spanning criterion -/
 
-/-- The real cycle space has dimension `b₁`: the cast fundamental
-cycles are a basis of `ker ∂ℝ` — independent by `cast_independent`,
-spanning by `spanning`. -/
+/-- The real cycle space has dimension `b₁` — the fundamental instance
+of the scalar-extension rank identity (`finrank_ker_boundaryLin_eq`). -/
 theorem finrank_ker_boundaryLin :
-    Module.finrank ℝ (LinearMap.ker (G.boundaryLin ℝ)) = G.b1 := by
-  have hmemc : ∀ i, G.fundCyclesR i ∈ LinearMap.ker (G.boundaryLin ℝ) := by
-    intro i
-    rw [LinearMap.mem_ker]
-    funext v
-    exact G.cyclesR_closed G.cycleBasis i v
-  set c' : Fin G.b1 → LinearMap.ker (G.boundaryLin ℝ) :=
-    fun i => ⟨G.fundCyclesR i, hmemc i⟩ with hc'
-  have hsum_coe : ∀ (g : Fin G.b1 → ℝ),
-      ((∑ i, g i • c' i : LinearMap.ker (G.boundaryLin ℝ)) : G.E → ℝ)
-        = fun e => ∑ i, g i * G.fundCyclesR i e := by
-    intro g
-    rw [AddSubmonoidClass.coe_finset_sum]
-    funext e
-    rw [Finset.sum_apply]
-    rfl
-  have hli : LinearIndependent ℝ c' := by
-    rw [Fintype.linearIndependent_iff]
-    intro g hg
-    have hcoe := congrArg Subtype.val hg
-    rw [hsum_coe g] at hcoe
-    have hgz := G.cast_independent G.cycleBasis g hcoe
-    intro i
-    exact congrFun hgz i
-  have hspan : ⊤ ≤ Submodule.span ℝ (Set.range c') := by
-    rintro ⟨ω, hω⟩ _
-    obtain ⟨a, ha⟩ := G.spanning G.cycleBasis ω (fun v => by
-      have := LinearMap.mem_ker.mp hω
-      exact congrFun this v)
-    rw [Submodule.mem_span_range_iff_exists_fun]
-    refine ⟨a, ?_⟩
-    apply Subtype.ext
-    rw [hsum_coe a]
-    exact ha.symm
-  have h := Module.finrank_eq_card_basis (Module.Basis.mk hli hspan)
-  rw [Fintype.card_fin] at h
-  exact h
+    Module.finrank ℝ (LinearMap.ker (G.boundaryLin ℝ)) = G.b1 :=
+  G.finrank_ker_boundaryLin_eq G.cycleBasis
 
 /-- **Euler's formula for every finite graph**, proved in the topology
 layer (review #5, finding 1): `b₁ = |E| − |V| + c`, by the real

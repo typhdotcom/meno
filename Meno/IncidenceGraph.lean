@@ -518,6 +518,20 @@ theorem boundary_castR (ω : G.E → ℤ) (v : G.V) :
   push_cast [apply_ite (Int.cast : ℤ → ℝ)]
   norm_num
 
+/-- The boundary commutes with any ring homomorphism on coefficients
+— the scalar-extension engine (review #7). -/
+theorem boundary_ringHom {R S : Type*} [CommRing R] [CommRing S]
+    (f : R →+* S) (ω : G.E → R) (v : G.V) :
+    f (G.boundary ω v) = G.boundary (fun e => f (ω e)) v := by
+  rw [boundary_eq_sum, boundary_eq_sum, map_sum]
+  refine Finset.sum_congr rfl fun e _ => ?_
+  rw [map_mul]
+  congr 1
+  rw [G.bcoeff_def, G.bcoeff_def, map_sub]
+  congr 1
+  · rw [apply_ite f, map_one, map_zero]
+  · rw [apply_ite f, map_one, map_zero]
+
 /-- The integral cycle lattice: `H₁(G;ℤ) = ker ∂ℤ`. -/
 def cycleLattice : Submodule ℤ (G.E → ℤ) := LinearMap.ker (G.boundaryLin ℤ)
 

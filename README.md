@@ -9,10 +9,17 @@ lattice with a positive-definite quadratic action**: the lattice
 enumerates the discrete sectors a system can occupy, the action prices
 them, the Boltzmann sum reads the partition function, and duality,
 minimization, and counting theorems connect the faces. For a graph the
-carrier is one formal object — `IncidenceGraph.classSectorAction`, the
-lattice `H¹(G;ℤ)` with the intrinsic harmonic energy — of which every
-basis-coordinate quadratic action is a chart and every
-finite-resolution residue is a quotient.
+carrier is one bundled formal object — `IncidenceGraph.classQuadAction`,
+the lattice `H¹(G;ℤ)` with the positive-definite polarized form
+`classForm` (`classForm_self`, `classForm_posDef`, `classForm_chart`);
+`classSectorAction` is its analytic projection. Every basis-coordinate
+quadratic action is a form-preserving chart of it, every
+finite-resolution residue is its quotient (`h1ResQuotEquiv`), gravity
+is applied to the self-pullback of reading descriptions as its finite
+sectors (`carrier_gravity_complexity`), the gauge-fixing cost of that
+reading is the time face (`sectionCost_carrierCompression`), and Gibbs
+fluctuation specializes to it
+(`classSectorAction_gibbsVariance_nonneg`).
 
 Everything below is a checked theorem — zero `sorry`, zero `axiom`
 declarations, ~3300 build jobs green against Lean 4.26.0 / Mathlib.

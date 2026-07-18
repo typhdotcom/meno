@@ -112,19 +112,101 @@ theorem summable_classWeight :
     (G.basisGramData G.cycleBasis).toQuadraticAction.toSectorAction.summable
   exact h.congr fun κ => rfl
 
-/-- **THE INTRINSIC CARRIER** (review #6, finding 1): the sector
-lattice `H¹(G;ℤ)` with the harmonic energy, as a `SectorAction`. The
-zero class is the vacuum, energies are nonnegative and positive off
-zero (`harmonicEnergy_pos`), and the Boltzmann weight is summable —
-all derived. This is the one integral carrier of which every
-basis-coordinate quadratic action is a chart and every
-finite-resolution residue is a quotient. -/
-noncomputable def classSectorAction : SectorAction.{v} where
+/-- **The intrinsic polarized form on `H¹(G;ℤ)`** (review #7): the
+Gram bilinear form of the fundamental basis at the classes' keystone
+coordinates. Basis-independent by `classForm_chart`. -/
+noncomputable def classForm
+    (κ κ' : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) : ℝ :=
+  (G.basisGramData G.cycleBasis).interaction
+    (G.h1QuotEquiv κ) (G.h1QuotEquiv κ')
+
+/-- The quadratic law: the harmonic energy is the form's diagonal. -/
+theorem classForm_self (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :
+    G.classForm κ κ = G.harmonicEnergy κ := rfl
+
+theorem classForm_comm (κ κ') : G.classForm κ κ' = G.classForm κ' κ := by
+  unfold classForm HarmonicGramData.interaction
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+  rw [show (G.basisGramData G.cycleBasis).gram j i
+      = (G.basisGramData G.cycleBasis).gram i j from by
+    have h := (G.basisGramData G.cycleBasis).gram_symm
+    calc (G.basisGramData G.cycleBasis).gram j i
+        = (G.basisGramData G.cycleBasis).gramᵀ i j := rfl
+      _ = (G.basisGramData G.cycleBasis).gram i j := by rw [h]]
+  ring
+
+theorem classForm_add_left (κ₁ κ₂ κ') :
+    G.classForm (κ₁ + κ₂) κ' = G.classForm κ₁ κ' + G.classForm κ₂ κ' := by
+  unfold classForm HarmonicGramData.interaction
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  rw [map_add]
+  push_cast [Pi.add_apply]
+  ring
+
+/-- Positive-definiteness of the intrinsic form. -/
+theorem classForm_posDef (κ) (hκ : κ ≠ 0) : 0 < G.classForm κ κ := by
+  rw [G.classForm_self]
+  exact G.harmonicEnergy_pos hκ
+
+/-- **THE INTRINSIC QUADRATIC-LATTICE ACTION** (review #7): the
+thesis's carrier as one bundled object — the lattice `H¹(G;ℤ)` with
+the positive-definite polarized form `classForm`, summable. Every
+basis chart is a form-preserving linear equivalence
+(`classForm_chart` + `latticeQuotEquiv`). -/
+noncomputable def classQuadAction : QuadLatticeAction.{v} where
   Λ := (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)
-  E := G.harmonicEnergy
-  E_zero := ⟨0, G.harmonicEnergy_zero⟩
-  E_nonneg := fun κ => G.harmonicEnergy_nonneg κ
+  form := G.classForm
+  form_comm := G.classForm_comm
+  form_add_left := G.classForm_add_left
+  form_posDef := fun κ hκ => G.classForm_posDef κ hκ
   summable := G.summable_classWeight
+
+/-- **THE INTRINSIC CARRIER** (review #6, finding 1): the analytic
+projection of the intrinsic quadratic-lattice action (review #7) —
+the sector lattice `H¹(G;ℤ)` with the harmonic energy
+`E κ = classForm κ κ`, as a `SectorAction`. -/
+noncomputable def classSectorAction : SectorAction.{v} :=
+  (G.classQuadAction).toSectorAction
+
+/-- The carrier's energy is the harmonic energy — definitionally. -/
+theorem classSectorAction_E :
+    (G.classSectorAction).E = G.harmonicEnergy := rfl
+
+/-- **Basis charts preserve the form** (review #7): the Gram
+interaction of any basis at the keystone coordinates is the intrinsic
+polarized form — via polarization from the chart identity for
+energies, with no coordinate transport. -/
+theorem classForm_chart {n : ℕ} (B : Module.Basis (Fin n) ℤ G.cycleLattice)
+    (κ κ' : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :
+    (G.basisGramData B).interaction
+        (G.latticeQuotEquiv B κ) (G.latticeQuotEquiv B κ')
+      = G.classForm κ κ' := by
+  have hpol : ∀ (H : HarmonicGramData G.V) (a b : Fin H.r → ℤ),
+      H.interaction a b = (H.energy (a + b) - H.energy a - H.energy b) / 2 := by
+    intro H a b
+    have h := H.energy_add a b
+    linarith
+  show _ = (G.basisGramData G.cycleBasis).interaction
+    (G.h1QuotEquiv κ) (G.h1QuotEquiv κ')
+  rw [hpol, hpol]
+  have h1 : (G.basisGramData B).energy
+      (G.latticeQuotEquiv B κ + G.latticeQuotEquiv B κ')
+      = (G.basisGramData G.cycleBasis).energy
+        (G.h1QuotEquiv κ + G.h1QuotEquiv κ') := by
+    rw [show G.latticeQuotEquiv B κ + G.latticeQuotEquiv B κ'
+        = G.latticeQuotEquiv B (κ + κ') from (map_add _ κ κ').symm,
+      show G.h1QuotEquiv κ + G.h1QuotEquiv κ'
+        = G.h1QuotEquiv (κ + κ') from (map_add _ κ κ').symm,
+      G.basisGramData_energy_latticeQuot B (κ + κ')]
+    rfl
+  have h2 := G.basisGramData_energy_latticeQuot B κ
+  have h3 := G.basisGramData_energy_latticeQuot B κ'
+  rw [h1, h2, h3]
+  rfl
 
 /-- The carrier's sector lattice is `H¹(G;ℤ)` — definitionally. -/
 theorem classSectorAction_Λ :
@@ -160,6 +242,19 @@ theorem basisGramData_partFn_eq_classSectorAction {n : ℕ}
     (G.basisGramData B).toQuadraticAction.toSectorAction.partFn
       = (G.classSectorAction).partFn := by
   rw [G.basisGramData_partFn B, G.classSectorAction_partFn]
+
+
+/-- **Uncertainty on the intrinsic carrier** (review #7): the Gibbs
+variance of any observable of the matter classes, against the
+carrier's Boltzmann weights, is nonnegative — Gibbs fluctuation
+specialized from the generic `SectorAction` law to
+`classSectorAction`. -/
+theorem classSectorAction_gibbsVariance_nonneg
+    (f : ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) → ℝ)
+    (hsq : Summable (fun κ => f κ ^ 2 * (G.classSectorAction).gibbsMass κ))
+    (hf : Summable (fun κ => f κ * (G.classSectorAction).gibbsMass κ)) :
+    0 ≤ (G.classSectorAction).gibbsVariance f :=
+  (G.classSectorAction).gibbsVariance_nonneg f hsq hf
 
 end IncidenceGraph
 

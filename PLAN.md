@@ -469,87 +469,30 @@ their docstrings; no theorem statement was weakened.
 
 ### C9 -- Gravity and the ratchet through SectorAction (TypeKernel's replacement) — CLOSED (Phase 36)
 
-**Current state.** `Basic.lean` still carries the pre-plan hierarchy --
-`ComplexityMeasure`, `SigmaComplexity`, `AdditiveComplexity`,
-`refactoring_bound`, `gravity`, `gravity_uniform`,
-`AdditiveComplexityOn` (instance in `Groupoid.lean`), and
-`TransitionComplexity` with the Landauer 2/1 instance (consumed by
-`simplicial_ratchet`) -- fully parallel to and disconnected from
-`SectorAction`. The planned TypeKernel realization was **falsified**
-(Phase 17: `E(id) = log|A|` contradicts `energy_id`; endofunction sums
-break summability). The falsification stands; the unification claim it
-was to deliver is therefore OPEN, not discharged.
+**Delivered.** `Basic.lean` is an upstream **pure interface**
+(abstract complexity classes and pullback combinatorics); the sector
+spine realizes it, and the realization is *invoked, not paralleled*:
 
-**Path: the uniform realization.**
+* `uniformAction A` — a finite type as a sector action with zero
+  energy: `Z = |A|`, `K = log|A|` (`uniformAction_partFn`,
+  `uniformAction_complexity`, `Meno/UniformAction.lean`);
+* `gravity_partFn` / `gravity_complexity` — type-level gravity as a
+  partition-function identity with uniform fibers, realizing
+  `SGD.gravity` through the `logCard` bridge
+  (`logCard_eq_uniformComplexity`, `gravity_logCard` — the abstract
+  theorem instantiated, not reproved); `uniform_refactoring_bound` +
+  `refactoring_bound_logCard` likewise;
+* **on the graph carrier** (review #7): gravity is applied to the
+  self-pullback of `carrierCompression` — pairs of descriptions
+  representing the same finite sector of the intrinsic carrier
+  (`carrier_gravity_complexity`, `Meno/ResolutionCount.lean`), with
+  K3 extracted as the fiber–gauge equivalence
+  (`carrierFiberEquivGauge`) and the gauge-fixing cost transported
+  (`sectionCost_carrierCompression`).
 
-```lean
-def uniformAction (A : Type u) [Fintype A] [Nonempty A] : SectorAction
-    -- sectors A, energy ≡ 0
-
-theorem uniformAction_partFn     : (uniformAction A).partFn = Fintype.card A
-theorem uniformAction_complexity : (uniformAction A).complexity = Real.log (Fintype.card A)
-
-theorem gravity_partFn (f : A → D) (g : B → D)
-    (hf : uniform fibers of f) (hg : uniform fibers of g) :
-    (uniformAction (Pullback f g)).partFn * (uniformAction D).partFn
-      = (uniformAction A).partFn * (uniformAction B).partFn
-
-theorem gravity_complexity (…) :
-    K (Pullback f g) = K A + K B − K D
-```
-
-Then: `Basic.lean`'s `gravity_uniform` re-derived as the log-cardinality
-shadow of `gravity_complexity`; `refactoring_bound` restated over
-`uniformAction`; `simplicial_ratchet` re-proved against C8's derived
-statements; and the `TransitionComplexity` class **deleted** with its
-Landauer instance restated through `fiberInfoCost` (discipline 1c).
-Product additivity is already `SectorAction.prod` (Phase 1);
-`uniformAction (A × B)` is proved equal to the product action.
-
-**Consumer.** The thesis sentence "type-level gravity is a realization of
-the sector spine" becomes true with `uniformAction` as the realization --
-and is excised under F5 if the identity fails.
-
-**Delivered (Phase 36, `Meno/UniformAction.lean`) — with one
-amendment (rule 3).** `uniformAction A` (zero energy on a finite
-nonempty type), `uniformAction_partFn` (`Z = |A|`),
-`uniformAction_complexity` (`K = log|A|`) — `Basic.lean`'s
-log-cardinality complexity, realized as a sector action.
-`gravity_partFn`: `Z(A ×_D B)·Z(D) = Z(A)·Z(B)` for uniform fibers
-(equiv form, matching `SGD.gravity`'s hypotheses);
-`gravity_complexity`: `K(P) + K(D) = K(A) + K(B)` (the sketched
-`K(P) = K(A)+K(B)−K(D)`, in subtraction-free form);
-`gravity_uniform_complexity` — the numeric shadow of
-`SGD.gravity_uniform` at product projections;
-`uniform_refactoring_bound` — `K(P) ≤ K(D) + log(max_d |fiber
-product|)`, the concrete `refactoring_bound`. Product additivity via
-`SectorAction.prod` + `uniformAction_prod_partFn`.
-`TransitionComplexity` and its Landauer 2/1 instance are **deleted**
-from `Basic.lean` (1c). **Amendment**: `simplicial_ratchet` could not
-be literally re-proved against the *finite* coding theorem — the
-homotopy quotient's fibers are infinite — so it is re-proved against
-the **cardinality-free ratchet**
-(`section_not_surjective_of_not_injective`, added to
-`Meno/InfoRatchet.lean` beside the coding theorem): every section of
-the walk quotient misses walks. Where fibers are finite,
-`log_card_sections` remains the quantitative form. F5's check passed:
-the identity holds; nothing is excised.
-
-**Sharpened (Phase 38, review #2 finding 3).** As delivered, Phase 36
-*re-proved* gravity over `uniformAction` but no theorem mentioned
-`SGD.logCard` or invoked `SGD.gravity` — the "realization" was a
-parallel with the same statement shape, and the audit row claiming
-"C9's theorems identify the values" was **false**. The bridge now
-exists (`Meno/UniformAction.lean`): `logCard_eq_uniformComplexity`
-(`SGD.logCard A = ENNReal.ofReal (uniformAction A).complexity` — the
-abstract `AdditiveComplexity ℝ≥0∞` instance computes the sector
-action's number), `gravity_logCard` (`SGD.gravity` **invoked** at that
-instance), `gravity_complexity` re-derived by transporting
-`gravity_logCard` along the bridge (via `ENNReal.ofReal_add` +
-injectivity on nonnegatives — not re-proved from `gravity_partFn`),
-and `refactoring_bound_logCard` (`SGD.refactoring_bound` invoked, with
-`⊤`-boundedness discharging the `BddAbove` hypotheses). The audit row
-is corrected below.
+The falsified TypeKernel design (Phase 17) stands falsified; its
+record, and the pre-realization state this item repaired, are Part II
+history.
 
 ### C10 -- Geodesic — CLOSED (Phase 27)
 
@@ -572,46 +515,24 @@ from the program with prejudice (recorded in the Disposition table).
 
 ### C12 -- Architecture and public claims — CLOSED (Phase 37)
 
-Three parts, strictly ordered:
+Three standing requirements, all met:
 
-1. **Duplication audit** (after C5): enumerate every doubled definition
+1. **No duplication without identification.** Every doubled definition
    across `Simplicial`/`Hodge`/`Groupoid`/`Duality` versus the spine
-   (known candidates: Hodge's graph partition function vs
-   `QuadraticAction`; Groupoid's complexity mirrors vs `SectorAction`;
-   legacy cycle models vs the spine's concrete lattice bases). Each entry
-   receives a prescribed disposition **written into this section as a
-   plan amendment**, then executed. The audit's output is plan text, not
-   an addendum -- deciding stays in the plan.
-2. **Import flow** (after C9): the graph reads Foundation → Topology →
-   Harmonic → Matter/Binding → Information → Realizations, with
-   `Basic.lean` a downstream realization, not a parallel theory.
-3. **README rewrite** (last): the README currently carries a staleness
-   banner (added Phase 28) because its architecture section describes
-   deleted files. It is rewritten only when items C1-C9 are CLOSED, with
-   per-claim theorem citations. Rewriting it earlier would be claiming
-   completion with documentation, which discipline rule 2 forbids.
+   has a prescribed disposition — retained-and-identified, renamed, or
+   deleted. The dispositions were decided as plan text and executed;
+   the record is the audit table in Part II (moved there, Phase 43 —
+   Part I carries requirements, not chronology).
+2. **Import flow.** The layer order matches the import DAG (see "The
+   import flow (current)" below) with no inversions and no residue.
+3. **README.** The README describes the actual architecture, and every
+   physical claim in it cites the theorem that proves it.
 
-**Acceptance.** Audit table filled and executed; `rg` finds no references
-to deleted vocabulary; README describes the actual architecture and every
-physical claim in it cites the theorem that proves it.
-
-**The audit table (Phase 37) — filled and executed.**
-
-| Legacy definition | Spine counterpart | Disposition |
-|---|---|---|
-| `Duality.quadraticPartFn` | `QuadraticAction.scalarPartFn` | retained wrapper; identified `quadraticPartFn_eq_scalarPartFn` (`rfl`, Phase 13) |
-| `GroupoidObj.partFn` / `.complexity` | `LoopKernelObj` → `SectorAction` | retained wrappers; the bridge `toLoopKernelObj` preserves them definitionally (Phase 12) |
-| `GroupoidObj.gibbsMass/Expect/Variance` | `SectorAction.gibbs*` | retained wrappers; identified `gibbsMass_eq_sector`, `gibbsExpect_eq_sector` (`rfl`, Phase 37; variance is defined from expect identically on both sides) |
-| `Hodge.graphPartitionFn` / `graphComplexity` | `QuadraticAction.toSectorAction.partFn` / `.complexity` | retained graph-facing wrapper; identified `graphPartitionFn_eq_spine` (`rfl`, Phase 37) |
-| `Hodge.siegelTheta` | `SiegelPoisson` layer | internal-only; identified with `graphPartitionFn` by `graphPartitionFn_eq_siegelTheta` |
-| `Simplicial`'s walk-route Hodge layer | the period route | **retained by design** as the independent corroborating derivation; identified in `CycleHarmonic` (`cyclePeriodData_energy_eq`, `harmonicEnergy_k_isLeast_periods`, `cycleHarmonicGramData_partFn_eq_partitionFn`) — two derivations, one object |
-| legacy `CycleGraph` (simplicial) vs `cycleGraph` (incidence) | — | different layers (walk model vs edge-data model); identified through `GraphInstances` (`b₁`) and `geodesic_harmonic_duality` |
-| `Instances.logCard` + `AdditiveComplexity ℝ≥0∞` | `uniformAction` (C9) | retained: abstract instance vs numeric realization — **identified** `logCard_eq_uniformComplexity`; `SGD.gravity`/`SGD.refactoring_bound` invoked at the instance (`gravity_logCard`, `refactoring_bound_logCard`). *Corrected Phase 38 (review #2 finding 3): the Phase-37 row claimed this identification before it existed* |
-| `Simplicial.geodesicMass` / `IsGeodesicMatter` (were `Mass`/`IsMatter`) | `MatterSector` + `.mass` (C6) | **retained, renamed** (Phase 38, review #2 finding 5): geodesic (`ℕ` walk-length) vs spectral (`ℝ` variational) mass are *not identified* in general and no longer share a physical name; flagship comparison `geodesic_harmonic_duality` (`n · (1/n) = 1` on `C_n`) |
-| `Simplicial.geodesicBindingDrop` (was `cycleBindingEnergy`) | `TwoComplex` binding (C7) | **retained, renamed** (Phase 38): both models prove exact decompositions (`geodesicBindingDrop_add_union` / `partFn_add_killed`) but no cross-model identification exists — stating one would need a simplicial↔incidence functor, which no goal names |
-| `SGD.TransitionComplexity` + Landauer instance | C8 coding theorem + cardinality-free ratchet | **DELETED** (Phase 36) |
-| `HomKernelCat` / magnitude | — | **DELETED** (Phase 28) |
-| spectator wedge stack | genuine wedge | **DELETED** (Phase 32) |
+**Acceptance (enforced check, Phase 43).** `scripts/check_part1.sh`
+must pass: it greps Part I (everything before Part II) for every
+retired identifier and deleted path and fails on any hit. Run it every
+phase; record the result in the phase addendum. The build being green
+is the acceptance for the import-flow claim.
 
 **`Basic.lean`'s position** (rule-3 amendment, standing): it is not
 *moved* downstream — it is an upstream **pure interface** (abstract
@@ -667,7 +588,7 @@ incidence layer and C6's intrinsic matter; C9 touches only
 | C6 intrinsic matter | `MatterSector G := {κ : H¹(G;ℤ) // κ ≠ 0}`, physics restated | **CLOSED** (Phase 33) |
 | C7 geometric binding | `attach_h1`, dual image `{φ ∣ φ(c)=0}`, kill + removed weight + strict `partFn` drop | **CLOSED** (Phase 35) |
 | C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | **CLOSED** (Phase 34) |
-| C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; `TransitionComplexity` deleted | **CLOSED** (Phase 36) |
+| C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; abstract gravity invoked, not paralleled | **CLOSED** (Phase 36) |
 | C10 geodesic | general simplicial instance + `n·(1/n) = 1` consumer | **CLOSED** (Phase 27) |
 | C11 magnitude/HomKernel excision | file, import, claims removed | **CLOSED** (Phase 28) |
 | C12 architecture + public claims | duplication audit; flowing imports; README rewritten last | **CLOSED** (Phase 37) |
@@ -4045,3 +3966,44 @@ invariant enforced to the letter; finding 4 extends the
 derived-not-stored discipline to its last stored proposition. All
 twelve items remain CLOSED. Build green end-to-end (3343 jobs), zero
 `sorry`, zero `axiom`, zero warnings.
+
+## C12 audit table (moved from Part I, Phase 43 — historical record)
+
+| Legacy definition | Spine counterpart | Disposition |
+|---|---|---|
+| `Duality.quadraticPartFn` | `QuadraticAction.scalarPartFn` | retained wrapper; identified `quadraticPartFn_eq_scalarPartFn` (`rfl`, Phase 13) |
+| `GroupoidObj.partFn` / `.complexity` | `LoopKernelObj` → `SectorAction` | retained wrappers; the bridge `toLoopKernelObj` preserves them definitionally (Phase 12) |
+| `GroupoidObj.gibbsMass/Expect/Variance` | `SectorAction.gibbs*` | retained wrappers; identified `gibbsMass_eq_sector`, `gibbsExpect_eq_sector` (`rfl`, Phase 37; variance is defined from expect identically on both sides) |
+| `Hodge.graphPartitionFn` / `graphComplexity` | `QuadraticAction.toSectorAction.partFn` / `.complexity` | retained graph-facing wrapper; identified `graphPartitionFn_eq_spine` (`rfl`, Phase 37) |
+| `Hodge.siegelTheta` | `SiegelPoisson` layer | internal-only; identified with `graphPartitionFn` by `graphPartitionFn_eq_siegelTheta` |
+| `Simplicial`'s walk-route Hodge layer | the period route | **retained by design** as the independent corroborating derivation; identified in `CycleHarmonic` (`cyclePeriodData_energy_eq`, `harmonicEnergy_k_isLeast_periods`, `cycleHarmonicGramData_partFn_eq_partitionFn`) — two derivations, one object |
+| legacy `CycleGraph` (simplicial) vs `cycleGraph` (incidence) | — | different layers (walk model vs edge-data model); identified through `GraphInstances` (`b₁`) and `geodesic_harmonic_duality` |
+| `Instances.logCard` + `AdditiveComplexity ℝ≥0∞` | `uniformAction` (C9) | retained: abstract instance vs numeric realization — **identified** `logCard_eq_uniformComplexity`; `SGD.gravity`/`SGD.refactoring_bound` invoked at the instance (`gravity_logCard`, `refactoring_bound_logCard`). *Corrected Phase 38 (review #2 finding 3): the Phase-37 row claimed this identification before it existed* |
+| `Simplicial.geodesicMass` / `IsGeodesicMatter` (were `Mass`/`IsMatter`) | `MatterSector` + `.mass` (C6) | **retained, renamed** (Phase 38, review #2 finding 5): geodesic (`ℕ` walk-length) vs spectral (`ℝ` variational) mass are *not identified* in general and no longer share a physical name; flagship comparison `geodesic_harmonic_duality` (`n · (1/n) = 1` on `C_n`) |
+| `Simplicial.geodesicBindingDrop` (was `cycleBindingEnergy`) | `TwoComplex` binding (C7) | **retained, renamed** (Phase 38): both models prove exact decompositions (`geodesicBindingDrop_add_union` / `partFn_add_killed`) but no cross-model identification exists — stating one would need a simplicial↔incidence functor, which no goal names |
+| `SGD.TransitionComplexity` + Landauer instance | C8 coding theorem + cardinality-free ratchet | **DELETED** (Phase 36) |
+| `HomKernelCat` / magnitude | — | **DELETED** (Phase 28) |
+| spectator wedge stack | genuine wedge | **DELETED** (Phase 32) |
+
+## Phase 43 addendum: seventh external review — four findings, four confirmed, four repaired (2026-07-18)
+
+Review #7 arrived against the Phase-42 state; all four findings cite
+Phase-42's own constructions. Every claim verified against code; all
+four CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | Gravity still did not inhabit the intrinsic carrier: the complexity split never invoked the carrier or `gravity_complexity`; gravity remained a theorem about arbitrary finite types | **CONFIRMED** | The prescribed completion, delivered (`Meno/ResolutionCount.lean`): the quotient **named** (`H1Reduction G q`); **`carrierCompression`** reads a description as a finite sector of the carrier (surjective); K3 **extracted as an equivalence** of every compression fiber with the gauge group (`compressionFiberEquivGauge`, `carrierFiberEquivGauge`); **`gravity_complexity` applied to the self-pullback** of `carrierCompression` (`carrier_gravity_complexity` — pairs of descriptions representing the same finite sector); the gauge-fixing cost transported (`sectionCost_carrierCompression` = `q^{b₁}·log|G_q|`); intrinsic Gibbs uncertainty specialized (`classSectorAction_gibbsVariance_nonneg`, `Meno/BasisIndependence.lean`). README updated to cite the consumers |
+| 2 | The Gram was anonymized inside `GraphHomology`, not removed: the spanning operator `T b j = Σᵢ bᵢ⟨cᵢ,cⱼ⟩` *was* the Gram operator, injectivity *was* the positivity argument inline, and the header admitted a metric remained | **CONFIRMED** — Phase 42's repair renamed the object it was asked to remove | The prescribed **scalar-extension proof**: `linearIndependent_ratCast` (ℚ-independent rational vectors stay ℝ-independent — the coefficient map splits over ℚ, `LinearMap.exists_leftInverse_of_injective`, and the splitting identity casts), `exists_int_scaling` (denominator clearing), `boundary_ringHom` (the boundary commutes with any coefficient ring hom, `Meno/IncidenceGraph.lean`); `finrank_ker_boundaryLin_rat_le` (the rational kernel is spanned by the basis after clearing denominators), `finrank_ker_boundaryLin_eq` (rank–nullity over ℚ and ℝ + the transfer pins `dim ker ∂ℝ = n`), and `spanning` by dimension. Verified by grep: `GraphHomology` contains **no** `gramOf` and **no** `dotProduct_self_eq_zero`; period evaluation and Stokes remain, as permitted |
+| 3 | PLAN Part I still not current: C9 claimed the deleted `TransitionComplexity` exists and unification OPEN; C12 claimed a README staleness banner and named deleted vocabulary while asserting its absence; Phase 42's "no retired identifier" claim was **false** (the sweep pattern list was incomplete) | **CONFIRMED** — recorded: Phase 42's verification claim did not hold | C9 and C12 rewritten in present-state form; C9's adoption narrative dropped (falsification record stays in Part II); C12's audit table **moved to Part II**; the sweep is now an **enforced acceptance check** — `scripts/check_part1.sh` greps Part I for the full retired-identifier list and fails on any hit. First run caught one more survivor (the C9 ledger row); fixed; the check now **passes** and is to be run every phase |
+| 4 | The advertised intrinsic object was only a generic `SectorAction` — no lattice structure, bilinear form, or quadratic law | **CONFIRMED** | Generic **`QuadLatticeAction`** (`Meno/SectorAction.lean`): ℤ-module of sectors, ℝ-valued symmetric bi-additive positive-definite form, summability; right-additivity, zero, and nonnegativity derived; `toSectorAction` the analytic projection. Intrinsically: **`classForm`** on `H¹(G;ℤ)` with `classForm_self` (`E(κ) = B(κ,κ)`), `classForm_comm`, `classForm_add_left`, `classForm_posDef`, and **`classForm_chart`** (every basis chart is form-preserving, by polarization from the energy chart identity); **`classQuadAction`** bundles it, and `classSectorAction` is *redefined as its analytic projection* — definitionally compatible, so every consumer compiled unchanged |
+
+**Discipline check.** No goal reopens: findings 1 and 4 complete the
+common-carrier program (review #5 finding 5 → review #6 finding 1 →
+here: the carrier is an object, its faces are consumers, its quadratic
+structure is bundled); finding 2 completes C12's layer boundary in
+proof content, not presentation; finding 3 converts the documentation
+invariant from a claim into a check. Phase 42's false sweep assertion
+is recorded above and stands corrected by the enforced check. All
+twelve items remain CLOSED. `scripts/check_part1.sh` PASS; build green
+end-to-end (3343 jobs), zero `sorry`, zero `axiom`, zero warnings.

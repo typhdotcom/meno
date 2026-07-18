@@ -236,4 +236,52 @@ theorem partFn_sum (A : SectorAction.{u}) (B : SectorAction.{v}) :
 
 end SectorAction
 
+/-- An **integral quadratic-lattice action**: a `ℤ`-module of sectors
+with an `ℝ`-valued symmetric bi-additive positive-definite form, and
+summability of the induced Boltzmann weight (review #7 — the thesis's
+"sector lattice with a positive-definite quadratic action" as one
+bundled object; `toSectorAction` is its analytic projection). -/
+structure QuadLatticeAction where
+  /-- The sector lattice. -/
+  Λ : Type u
+  [addCommGroup : AddCommGroup Λ]
+  [module : Module ℤ Λ]
+  /-- The bilinear form. -/
+  form : Λ → Λ → ℝ
+  form_comm : ∀ a b, form a b = form b a
+  form_add_left : ∀ a₁ a₂ b, form (a₁ + a₂) b = form a₁ b + form a₂ b
+  form_posDef : ∀ a, a ≠ 0 → 0 < form a a
+  summable : Summable (fun a : Λ => Real.exp (-(form a a)))
+
+namespace QuadLatticeAction
+
+attribute [instance] QuadLatticeAction.addCommGroup QuadLatticeAction.module
+
+variable (Q : QuadLatticeAction.{u})
+
+theorem form_add_right (a b₁ b₂ : Q.Λ) :
+    Q.form a (b₁ + b₂) = Q.form a b₁ + Q.form a b₂ := by
+  rw [Q.form_comm, Q.form_add_left, Q.form_comm b₁ a, Q.form_comm b₂ a]
+
+theorem form_zero_left (b : Q.Λ) : Q.form 0 b = 0 := by
+  have h := Q.form_add_left 0 0 b
+  rw [add_zero] at h
+  linarith
+
+theorem form_self_nonneg (a : Q.Λ) : 0 ≤ Q.form a a := by
+  rcases eq_or_ne a 0 with rfl | ha
+  · rw [Q.form_zero_left]
+  · exact (Q.form_posDef a ha).le
+
+/-- The analytic projection: forget the lattice and the bilinear
+structure, keep sectors, energies `E a := form a a`, and the sum. -/
+noncomputable def toSectorAction : SectorAction.{u} where
+  Λ := Q.Λ
+  E := fun a => Q.form a a
+  E_zero := ⟨0, by rw [Q.form_zero_left]⟩
+  E_nonneg := Q.form_self_nonneg
+  summable := Q.summable
+
+end QuadLatticeAction
+
 end Meno
