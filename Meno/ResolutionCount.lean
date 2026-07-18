@@ -1,6 +1,7 @@
 import Meno.GraphHomology
 import Meno.InfoRatchet
 import Meno.UniformAction
+import Mathlib.Algebra.Module.ZMod
 
 /-! # Resolution Counting: the Keystone's Counting Shadows (K1–K3)
 
@@ -669,17 +670,86 @@ abbrev H1Reduction (q : ℕ) [NeZero q] : Type v :=
         ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
           ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))
 
-/-- **Reading a description as a finite sector of the carrier**: the
-mod-`q` class of a description, seen inside `H¹(G;ℤ) ⧸ q·H¹(G;ℤ)`
-along `h1ResQuotEquiv`. -/
-noncomputable def carrierCompression (q : ℕ) [NeZero q]
-    (ω : G.E → ZMod q) : H1Reduction G q :=
-  (G.h1ResQuotEquiv q).symm (Submodule.Quotient.mk ω)
+/-- `H¹(G;ℤ) ⧸ q·H¹(G;ℤ)` is `q`-torsion. -/
+theorem h1Reduction_nsmul_eq_zero (ξ : H1Reduction G q) : q • ξ = 0 := by
+  obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
+  have h : (q : ℤ) • (Submodule.Quotient.mk κ : H1Reduction G q)
+      = Submodule.Quotient.mk ((q : ℤ) • κ) :=
+    (map_zsmul (Submodule.mkQ _) _ _).symm
+  have hz : (Submodule.Quotient.mk ((q : ℤ) • κ) : H1Reduction G q) = 0 := by
+    rw [Submodule.Quotient.mk_eq_zero]
+    exact ⟨κ, rfl⟩
+  calc q • (Submodule.Quotient.mk κ : H1Reduction G q)
+      = (q : ℤ) • (Submodule.Quotient.mk κ : H1Reduction G q) :=
+        (natCast_zsmul _ _).symm
+    _ = 0 := h.trans hz
+
+/-- **The reduction is a `ZMod q`-module** (review #8): the canonical
+scalar structure on the `q`-torsion quotient. -/
+noncomputable instance : Module (ZMod q) (H1Reduction G q) :=
+  AddCommGroup.zmodModule (G.h1Reduction_nsmul_eq_zero q)
+
+/-- The finite reduction, as a **`ZMod q`-linear** equivalence with
+the resolution quotient (review #8 — the `ℤ`-linear `h1ResQuotEquiv`,
+upgraded; `ZMod q`-linearity of an additive map between `ZMod q`
+modules is automatic). -/
+noncomputable def h1ResQuotEquivZMod :
+    H1Reduction G q ≃ₗ[ZMod q]
+      ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
+  { toFun := G.h1ResQuotEquiv q
+    invFun := (G.h1ResQuotEquiv q).symm
+    left_inv := (G.h1ResQuotEquiv q).left_inv
+    right_inv := (G.h1ResQuotEquiv q).right_inv
+    map_add' := map_add _
+    map_smul' := ZMod.map_smul (G.h1ResQuotEquiv q).toLinearMap.toAddMonoidHom }
+
+/-- **The reduction's rank-`b₁` basis** (review #8): the standard
+basis of `(ZMod q)^{b₁}`, pulled back along the keystone at the
+fundamental basis. -/
+noncomputable def h1ReductionBasis :
+    Module.Basis (Fin G.b1) (ZMod q) (H1Reduction G q) :=
+  (Pi.basisFun (ZMod q) (Fin G.b1)).map
+    ((G.h1ResQuotEquivZMod q).trans
+      (G.latticeQuotEquivQ G.cycleBasis q)).symm
+
+/-- **Reading a description as a finite sector of the carrier** — a
+`ZMod q`-linear map (review #8): the class map followed by the
+reduction identification. -/
+noncomputable def carrierCompression :
+    (G.E → ZMod q) →ₗ[ZMod q] H1Reduction G q :=
+  (G.h1ResQuotEquivZMod q).symm.toLinearMap
+    ∘ₗ Submodule.mkQ (LinearMap.range (G.gradLin (ZMod q)))
+
+theorem carrierCompression_apply (ω : G.E → ZMod q) :
+    G.carrierCompression q ω
+      = (G.h1ResQuotEquivZMod q).symm (Submodule.Quotient.mk ω) := rfl
 
 theorem carrierCompression_surjective :
     Function.Surjective (G.carrierCompression q) := fun ξ => by
-  obtain ⟨ω, hω⟩ := Submodule.Quotient.mk_surjective _ ((G.h1ResQuotEquiv q) ξ)
-  exact ⟨ω, by rw [carrierCompression, hω, LinearEquiv.symm_apply_apply]⟩
+  obtain ⟨ω, hω⟩ := Submodule.Quotient.mk_surjective _
+    ((G.h1ResQuotEquivZMod q) ξ)
+  exact ⟨ω, by
+    rw [carrierCompression_apply, hω, LinearEquiv.symm_apply_apply]⟩
+
+/-- **The kernel of the carrier reading is the gauge group** — the
+linear-algebra form of K3 (review #8): fibers are cosets of this
+kernel. -/
+theorem ker_carrierCompression :
+    LinearMap.ker (G.carrierCompression q)
+      = LinearMap.range (G.gradLin (ZMod q)) := by
+  ext ω
+  rw [LinearMap.mem_ker, carrierCompression_apply]
+  constructor
+  · intro h
+    have h0 : (Submodule.Quotient.mk ω :
+        (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) = 0 := by
+      have := congrArg (G.h1ResQuotEquivZMod q) h
+      rwa [LinearEquiv.apply_symm_apply, map_zero] at this
+    rwa [Submodule.Quotient.mk_eq_zero] at h0
+  · intro h
+    rw [show (Submodule.Quotient.mk ω :
+        (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) = 0 from
+      (Submodule.Quotient.mk_eq_zero _).mpr h, map_zero]
 
 /-- **K3, extracted as an equivalence** (review #7): every fiber of
 the mod-`q` class map is the gauge group, by the shift at a chosen
@@ -717,21 +787,42 @@ noncomputable def compressionFiberEquivGauge
         show (Quotient.out x + g.val) - Quotient.out x = g.val
         abel }
 
-/-- Every `carrierCompression` fiber is the gauge group. -/
+/-- **Every `carrierCompression` fiber is the gauge group, by
+kernel/cosets** (review #8): fibers of a surjective linear map are
+cosets of its kernel, and the kernel is the gauge group
+(`ker_carrierCompression`). -/
 noncomputable def carrierFiberEquivGauge (ξ : H1Reduction G q) :
     SGD.Fiber (G.carrierCompression q) ξ
-      ≃ ↥(LinearMap.range (G.gradLin (ZMod q))) :=
-  (Equiv.subtypeEquivRight (fun ω => by
-    show G.carrierCompression q ω = ξ ↔ _
-    rw [carrierCompression, LinearEquiv.symm_apply_eq])).trans
-    (G.compressionFiberEquivGauge q ((G.h1ResQuotEquiv q) ξ))
+      ≃ ↥(LinearMap.range (G.gradLin (ZMod q))) := by
+  have hy₀ := (G.carrierCompression_surjective q ξ).choose_spec
+  set y₀ := (G.carrierCompression_surjective q ξ).choose with hy₀def
+  exact
+    { toFun := fun y => ⟨y.val - y₀, by
+        rw [← G.ker_carrierCompression q, LinearMap.mem_ker, map_sub,
+          y.prop, hy₀]
+        exact sub_self ξ⟩
+      invFun := fun g => ⟨y₀ + g.val, by
+        have hg : g.val ∈ LinearMap.ker (G.carrierCompression q) := by
+          rw [G.ker_carrierCompression q]
+          exact g.prop
+        show G.carrierCompression q (y₀ + g.val) = ξ
+        rw [map_add, hy₀, LinearMap.mem_ker.mp hg, add_zero]⟩
+      left_inv := fun y => by
+        apply Subtype.ext
+        show y₀ + (y.val - y₀) = y.val
+        abel
+      right_inv := fun g => by
+        apply Subtype.ext
+        show (y₀ + g.val) - y₀ = g.val
+        abel }
 
 theorem card_H1Reduction : Nat.card (H1Reduction G q) = q ^ G.b1 := by
   rw [Nat.card_congr (G.h1ResQuotEquiv q).toEquiv, G.card_quotient_eq q]
 
 noncomputable instance : DecidableEq (H1Reduction G q) := Classical.decEq _
 
-instance : Nonempty (SGD.Pullback (G.carrierCompression q) (G.carrierCompression q)) :=
+instance : Nonempty (SGD.Pullback (G.carrierCompression q)
+    (G.carrierCompression q)) :=
   ⟨⟨(0, 0), rfl⟩⟩
 
 /-- **GRAVITY ON THE CARRIER** (review #7): `gravity_complexity`
@@ -748,27 +839,23 @@ theorem carrier_gravity_complexity :
   gravity_complexity (G.carrierCompression q) (G.carrierCompression q)
     (G.carrierFiberEquivGauge q) (G.carrierFiberEquivGauge q)
 
-/-- **The time face on the carrier** (review #7): the gauge-fixing
-cost of `carrierCompression` — the decoder-table cost of reversing
-the carrier reading — is `q^{b₁} · log |G_q|`. -/
+/-- **The time face on the carrier, by transport** (review #8): the
+gauge-fixing cost of `carrierCompression` is the gauge-fixing cost of
+the class map — `sectionCost` is invariant under codomain relabeling
+(`sectionCost_comp_equiv`), and the relabeling is `h1ResQuotEquivZMod`.
+No fiber sum is recomputed. -/
 theorem sectionCost_carrierCompression :
     sectionCost (G.carrierCompression q)
       = (q : ℝ) ^ G.b1
         * Real.log (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) := by
-  haveI : DecidableEq (H1Reduction G q) := Classical.decEq _
-  rw [log_card_sections (G.carrierCompression_surjective q)]
-  unfold fiberInfoCost
-  have hterm : ∀ ξ : H1Reduction G q,
-      Real.log ((Nat.card ((G.carrierCompression q) ⁻¹' {ξ}) : ℕ) : ℝ)
-        = Real.log (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) := by
-    intro ξ
-    congr 2
-    exact Nat.card_congr (G.carrierFiberEquivGauge q ξ)
-  rw [Finset.sum_congr rfl (fun ξ _ => hterm ξ), Finset.sum_const,
-    Finset.card_univ, ← Nat.card_eq_fintype_card, G.card_H1Reduction q,
-    nsmul_eq_mul]
-  push_cast
-  ring
+  have h := sectionCost_comp_equiv
+    (fun y : G.E → ZMod q => (Submodule.Quotient.mk y :
+      (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))))
+    (G.h1ResQuotEquivZMod q).symm.toEquiv
+  rw [show (⇑(G.carrierCompression q) : (G.E → ZMod q) → H1Reduction G q)
+      = fun y => (G.h1ResQuotEquivZMod q).symm.toEquiv
+        (Submodule.Quotient.mk y) from rfl,
+    h, G.sectionCost_compression G.cycleBasis q]
 
 end IncidenceGraph
 

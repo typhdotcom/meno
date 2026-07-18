@@ -57,8 +57,7 @@ attribute [instance] IncidenceGraph.fintypeV IncidenceGraph.fintypeE
 
 /-- Net flow of an `R`-valued 1-cochain into a vertex, for edge data
 `(src, tgt)`: each edge contributes `+ω e` at its target and `−ω e`
-at its source. Relocated from `CyclePresentation.lean` (C1) and
-generalized from `ℝ` to any commutative ring. -/
+at its source. Defined once, over any commutative ring (C1). -/
 def flowBoundary {V : Type u} {ι : Type v} [Fintype ι] [DecidableEq V]
     {R : Type*} [CommRing R] (src tgt : ι → V) (ω : ι → R) (v : V) : R :=
   ∑ e, ((if tgt e = v then (1 : R) else 0)
@@ -495,11 +494,10 @@ theorem grad_integrate (ω : G.E → R)
 
 /-! ## The integral cycle lattice and the first Betti number
 
-Pure topology (moved from `Meno/FundamentalPresentation.lean`,
-review #4): the lattice `H₁(G;ℤ) = ker ∂ℤ` and its rank `b₁` are
+Pure topology: the lattice `H₁(G;ℤ) = ker ∂ℤ` and its rank `b₁` are
 intrinsic to the graph — defined here, in the substrate. The
-fundamental-presentation theorem downstream **consumes** this
-invariant: it constructs a basis of this lattice, proves the
+fundamental-basis theorem (`Meno/GraphHomology.lean`) **consumes**
+this invariant: it constructs a basis of this lattice, proves the
 construction has exactly `b₁` elements (`cycleBasisSigma_fst`), and
 proves Euler's formula `b1_eq` about it. -/
 
@@ -565,8 +563,8 @@ theorem mem_of_smul_mem {c : ℤ} (hc : c ≠ 0) {x : G.E → ℤ}
 
 /-- **The first Betti number, intrinsically**: the rank of the
 integral cycle lattice. No presentation, no chosen basis — this is
-the invariant every presentation must meet (`r_eq_b1`,
-`Meno/FundamentalPresentation.lean`). -/
+the invariant every lattice basis meets (`card_eq_b1`,
+`Meno/GraphHomology.lean`). -/
 noncomputable def b1 : ℕ := Module.finrank ℤ G.cycleLattice
 
 end CycleLattice

@@ -4,10 +4,10 @@ import Meno.Instances
 
 /-! # The Uniform Sector Action: type-level gravity, realized (C9)
 
-**TypeKernel's valid replacement.** The falsified Phase-10 design put
-energies on endofunctions (`E(id) = log|A|` contradicted
-`energy_id`; endofunction sums broke summability). The correct
-realization is simpler: a finite nonempty type is a sector lattice
+The valid replacement for the falsified endofunction-kernel design
+(Part II, Phase 17 record: `E(id) = log|A|` contradicted `energy_id`;
+endofunction sums broke summability). The correct realization is
+simpler: a finite nonempty type is a sector lattice
 with **zero energy everywhere** — every state equally costly to
 name — so its partition function *is* its cardinality and its
 complexity *is* `log |A|` (`uniformAction_partFn`,

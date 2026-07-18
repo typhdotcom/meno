@@ -44,8 +44,8 @@ filled: `thetaMatter` dies (`theta_binding_kills`), `b₁` drops
 `Meno/ThetaBinding.lean` (review #3: this file is generic binding
 theory and imports only the matter layer).
 
-With this file, `killed_releases_mass` — the Phase-27 placeholder
-that accepted an arbitrary killing map — is deleted from
+With this file, the Phase-27 placeholder that accepted an arbitrary
+killing map is deleted from
 `Meno/Matter.lean` (discipline 1c): the induced map now exists, and
 the theorem is about *it*. -/
 

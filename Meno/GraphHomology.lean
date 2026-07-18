@@ -940,6 +940,13 @@ noncomputable def h1QuotEquiv :
     ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) ≃ₗ[ℤ] (Fin G.b1 → ℤ) :=
   G.latticeQuotEquiv G.cycleBasis
 
+/-- `H¹(G;ℤ)` is finite free — through the intrinsic coordinates. -/
+instance : Module.Free ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :=
+  Module.Free.of_equiv G.h1QuotEquiv.symm
+
+instance : Module.Finite ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :=
+  Module.Finite.equiv G.h1QuotEquiv.symm
+
 /-- The intrinsic `H¹` coordinates of a class, on representatives. -/
 theorem h1QuotEquiv_mk (τ : G.E → ℤ) :
     G.h1QuotEquiv (Submodule.Quotient.mk τ)

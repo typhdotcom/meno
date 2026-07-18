@@ -246,8 +246,8 @@ def Contractible (A : Type u) : Prop := Nonempty (A ≃ PUnit.{u+1})
 
 /-! ## The arrow of time — moved
 
-The `TransitionComplexity` class and its Landauer 2/1 instance
-(Phase 10's abstract cost vocabulary) are deleted (Completion Path
+Phase 10's abstract transition-cost class and its Landauer 2/1
+instance are deleted (Completion Path
 C9). The ratchet is now *derived*, not axiomatized:
 `Meno/InfoRatchet.lean` counts the reverse descriptions
 (`log_card_sections` — the coding theorem) and proves the

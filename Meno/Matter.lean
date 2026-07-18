@@ -19,15 +19,14 @@ theorem through the graph-level harmonic theory (C4):
   pair's entire rest mass. Algebraic cancellation inside `H¹`; the
   *geometric* `binding_kills_matter` — an ambient space change killing
   a class under the induced map — is proved in `Meno/Binding.lean`
-  (C7). The Phase-27 arbitrary-map placeholder `killed_releases_mass`
-  is deleted: the induced map exists now, and the theorems are about
-  it.
+  (C7). The Phase-27 arbitrary-map placeholder is deleted: the
+  induced map exists now, and the theorems are about it.
 * `exists_matter` — nontrivial topology (`0 < b₁`) forces matter.
 
 The Phase-22 coordinate subtype `{k : Fin P.r → ℤ // k ≠ 0}` is
 removed (C6, discipline 1c): coordinates now enter only through the
-keystone equivalences, and the Phase-23 `rebaseEquiv` transport is
-subsumed by `mass_chart` — any two presentations' charts of the same
+keystone equivalences, and the Phase-23 coordinate transport is
+subsumed by `mass_chart` — any two bases' charts of the same
 intrinsic sector weigh the same because both equal the intrinsic
 mass. -/
 
@@ -65,7 +64,7 @@ theorem mass_isLeast :
   G.harmonicEnergy_isLeast m.val
 
 /-- **Every basis computes the mass** (the chart lemma, subsuming the
-Phase-23 `rebaseEquiv` transport): the energy any lattice basis
+Phase-23 coordinate transport): the energy any lattice basis
 assigns to the sector's keystone coordinates is the intrinsic mass. -/
 theorem mass_chart {n : ℕ} (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
     (G.basisGramData B).energy (G.latticeQuotEquiv B m.val) = m.mass :=

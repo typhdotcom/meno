@@ -2538,7 +2538,7 @@ theorem geodesic_computation_is_lossy (C : Complex V)
 
 /-- **The simplicial ratchet**: any section of the homotopy quotient
     map misses walks — reversing the quotient loses reachability. The
-    abstract cost-class form (`TransitionComplexity`, Phase 10's
+    abstract cost-class form (Phase 10's transition-cost
     vocabulary) is deleted (C9); this is the cardinality-free ratchet
     of `Meno/InfoRatchet.lean`, which is the form that survives the
     quotient's infinite fibers. Where fibers are finite the coding

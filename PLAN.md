@@ -467,7 +467,7 @@ fixing a representative for **every** class at once
 zero-of-injective lemma survive with explicit junk-value caveats in
 their docstrings; no theorem statement was weakened.
 
-### C9 -- Gravity and the ratchet through SectorAction (TypeKernel's replacement) — CLOSED (Phase 36)
+### C9 -- Gravity and the ratchet through SectorAction — CLOSED (Phase 36)
 
 **Delivered.** `Basic.lean` is an upstream **pure interface**
 (abstract complexity classes and pullback combinatorics); the sector
@@ -490,7 +490,8 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   (`carrierFiberEquivGauge`) and the gauge-fixing cost transported
   (`sectionCost_carrierCompression`).
 
-The falsified TypeKernel design (Phase 17) stands falsified; its
+The falsified endofunction-kernel design (Phase 17) stands
+falsified; its
 record, and the pre-realization state this item repaired, are Part II
 history.
 
@@ -504,9 +505,9 @@ GeodesicInstance section); `cycleGeodesic`; `cycleGeodesic_canonical`
 discipline 1a-1d. The review's item 10 was written before crediting
 Phase 27; its own verdict acknowledges the instance.
 
-### C11 -- Magnitude and HomKernel excision — CLOSED (Phase 28)
+### C11 -- Magnitude-layer excision — CLOSED (Phase 28)
 
-`Meno/HomKernel.lean` deleted; the `Meno.lean` import removed; grep
+The magnitude file deleted; the `Meno.lean` import removed; grep
 verifies no surviving references; build green. The magnitude readout
 `1ᵀ Z⁻¹ 1` promised by original Goal 9 was never built and is removed
 from the program with prejudice (recorded in the Disposition table).
@@ -528,11 +529,20 @@ Three standing requirements, all met:
 3. **README.** The README describes the actual architecture, and every
    physical claim in it cites the theorem that proves it.
 
-**Acceptance (enforced check, Phase 43).** `scripts/check_part1.sh`
-must pass: it greps Part I (everything before Part II) for every
-retired identifier and deleted path and fails on any hit. Run it every
-phase; record the result in the phase addendum. The build being green
-is the acceptance for the import-flow claim.
+**Acceptance (enforced check, Phase 44 — in the toolchain, not a
+shell script).** The canonical signoff command is
+
+```
+lake build Meno && lake exe check
+```
+
+`lake exe check` (`Check.lean`, a Lean executable) is fail-closed: it
+locates the repository root itself, requires **exactly one** Part II
+marker in `PLAN.md`, sweeps Part I, `README.md`, and every source
+file under `Meno/` for the retired-identifier blacklist, and exits
+nonzero on any hit or any I/O failure. Run it every phase; record the
+result in the phase addendum. The build being green is the acceptance
+for the import-flow claim.
 
 **`Basic.lean`'s position** (rule-3 amendment, standing): it is not
 *moved* downstream — it is an upstream **pure interface** (abstract
@@ -590,7 +600,7 @@ incidence layer and C6's intrinsic matter; C9 touches only
 | C8 coding-theorem keystone | `card_sections` → `log = fiberInfoCost`; definitional `sectionCost` replaced | **CLOSED** (Phase 34) |
 | C9 gravity via SectorAction | `uniformAction`; `Z(P)·Z(D) = Z(A)·Z(B)`; abstract gravity invoked, not paralleled | **CLOSED** (Phase 36) |
 | C10 geodesic | general simplicial instance + `n·(1/n) = 1` consumer | **CLOSED** (Phase 27) |
-| C11 magnitude/HomKernel excision | file, import, claims removed | **CLOSED** (Phase 28) |
+| C11 magnitude-layer excision | file, import, claims removed | **CLOSED** (Phase 28) |
 | C12 architecture + public claims | duplication audit; flowing imports; README rewritten last | **CLOSED** (Phase 37) |
 
 ## Disposition of the Original 13 Goals
@@ -609,9 +619,9 @@ preserved in Part II; the main body carries only the present state).
 | 6 | `SectorPresentation` | CLOSED (Phase 16 transport; `end_comm` forced the cohomological turn) |
 | 7 | Matter + `binding_kills_matter` | CLOSED via C6 + C7 (Phases 33, 35): intrinsic `MatterSector`, `binding_kills_matter` proved on 2-complexes, exact spectral decomposition `partFn_add_killed`; the adoption-time mass-release placeholder deleted |
 | 8 | `InfoRatchet` ratchet theorem | CLOSED via C8 (Phase 34, hardened Phases 38-39): section cost **derived** by counting (`card_sections`, `log_card_sections`), finite-only numerical API, extended costs with `⊤` boundaries |
-| 9 | `HomKernel` + magnitude | EXCISED (C11, Phase 28): deleted with prejudice, not delivered |
+| 9 | magnitude layer | EXCISED (C11, Phase 28): deleted with prejudice, not delivered |
 | 10 | `Duality`/`Hodge`/`Zeta` import purity | CLOSED via C12's audit (Phase 37): retained as identified wrappers (`graphPartitionFn_eq_spine`, `gibbsMass_eq_sector`, …) |
-| 11 | `Basic.lean` rewrite via TypeKernel | design FALSIFIED (Phase 17) — stands falsified; the unification claim it carried is CLOSED via C9's realization + the `logCard` bridge (Phases 36, 38: `SGD.gravity` invoked, not paralleled) |
+| 11 | `Basic.lean` rewrite via the endofunction kernel | design FALSIFIED (Phase 17) — stands falsified; the unification claim it carried is CLOSED via C9's realization + the `logCard` bridge (Phases 36, 38: `SGD.gravity` invoked, not paralleled) |
 | 12 | Acyclic flowing import graph | CLOSED via C12 (Phase 37, completed Phases 39-41: topology/pricing split, intrinsic `b1` upstream, basis-first presentations, pure graph-homology layer, layered `Meno.lean` matching the DAG) |
 | 13 | Zero `sorry`/`axiom`, no "future work" | standing invariant, re-verified every session; a property of every state, never a deliverable |
 
@@ -4007,3 +4017,25 @@ invariant from a claim into a check. Phase 42's false sweep assertion
 is recorded above and stands corrected by the enforced check. All
 twelve items remain CLOSED. `scripts/check_part1.sh` PASS; build green
 end-to-end (3343 jobs), zero `sorry`, zero `axiom`, zero warnings.
+
+## Phase 44 addendum: eighth external review — four findings, four confirmed, four repaired (2026-07-18)
+
+Review #8 arrived against the Phase-43 state; the maintainer
+separately directed that the feedback cycle not depend on a shell
+script. Every claim verified; all four CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | `QuadLatticeAction` did not require a lattice: no finite generation or freeness, so infinite-rank modules with summable Gaussian actions inhabited the "carrier" | **CONFIRMED** | `[Module.Free ℤ Λ]` and `[Module.Finite ℤ Λ]` instance fields added to the bundle with `QuadLatticeAction.rank`; `H¹(G;ℤ)` gets `Free`/`Finite` instances through `h1QuotEquiv` (`Meno/GraphHomology.lean`); **`classQuadAction_rank : rank = b₁`**; every chart's coordinate action **receives the Siegel–Poisson duality** (`basisGramData_duality`, the general `QuadraticAction.duality` instantiated at any basis chart) |
+| 2 | The Part I check was fail-open (printed PASS with `PLAN.md` missing), root-dependent, blacklist-incomplete (`TypeKernel`, the magnitude file), and unenforced; source docs still cited deleted paths | **CONFIRMED** — reproduced; the bash script was worse than no check | **The shell script is deleted** (maintainer directive — rule-3 amendment: same acceptance, different vehicle). The check is now **`lake exe check`** (`Check.lean`, a Lean executable wired into `lakefile.toml`): fail-closed by construction (any I/O error exits nonzero), locates the repository root itself, requires exactly one Part II marker, and sweeps PLAN Part I + `README.md` + every `Meno/` source for an extended blacklist (now including `TypeKernel`, the magnitude-layer names, the transition-cost class, coordinate-transport names). Canonical signoff: `lake build Meno && lake exe check`. Its **first run caught nine further stale citations** across seven source files (and the C9/C11 titles and disposition rows in Part I) — all fixed; the check now passes |
+| 3 | `H1Reduction` lost the reduction's algebraic structure: a bare `Type`, a merely-`ℤ`-linear equivalence, a plain-function compression — consumed through cardinality again | **CONFIRMED** | `Module (ZMod q) (H1Reduction G q)` installed (`AddCommGroup.zmodModule` on the `q`-torsion, `h1Reduction_nsmul_eq_zero`); the equivalence upgraded to **`ZMod q`-linear** (`h1ResQuotEquivZMod`, additive-implies-semilinear via `ZMod.map_smul`); the **rank-`b₁` basis** provided (`h1ReductionBasis`); `carrierCompression` redefined as a **`ZMod q`-linear map** (`mkQ` composed with the identification); `ker_carrierCompression = range grad_q`, and the fiber–gauge equivalence re-derived **from kernel/cosets** (`carrierFiberEquivGauge`) |
+| 4 | `sectionCost_carrierCompression` reproved the fiber sum instead of transporting `sectionCost_compression` — the parallel-theory pattern the audit rejects | **CONFIRMED** | Proved once: **`sectionCost_comp_equiv`** (`Meno/InfoRatchet.lean`) — section cost is invariant under postcomposition by a codomain equivalence (`sectionsEquivCompEquiv`); `sectionCost_carrierCompression` now **derived** from that invariance + `h1ResQuotEquivZMod` + `sectionCost_compression`, with no recomputed fiber sum |
+
+**Discipline check.** No goal reopens: finding 1 closes the carrier
+bundle at the thesis's actual generality (finite integral lattice);
+finding 2 converts the acceptance check into toolchain-native,
+fail-closed form — and its first run demonstrated its value; findings
+3–4 replace set-level and duplicated reasoning with the reduction's
+own algebra and a transport lemma. All twelve items remain CLOSED.
+`lake build Meno && lake exe check`: build green (3347 jobs), zero
+`sorry`, zero `axiom`, zero warnings; check PASS.

@@ -36,8 +36,8 @@ and the only cost statement about infinite types is the
 cardinality-free ratchet `section_not_surjective_of_not_injective`.
 
 This file isolates the fiber-information layer. Basic.lean's old
-`TransitionComplexity` class (an axiomatized cost convention; its
-reconciliation program was falsified in Phase 17) is deleted as of C9 —
+axiomatized transition-cost class (its reconciliation program was
+falsified in Phase 17) is deleted as of C9 —
 the ratchet below is derived, and `simplicial_ratchet` consumes it. The
 compression-map specialization — `#sections = |G_q|^{q^{b₁}}`, tying the
 count to the keystone K1–K3 — lives in `Meno/ResolutionCount.lean`. -/
@@ -174,6 +174,35 @@ infinite types `Nat.card` of the section type is `0` and this would
 price infinite ambiguity at zero. -/
 noncomputable def sectionCost [Finite A] [Finite B] (f : A → B) : ℝ :=
   Real.log (Nat.card {s : B → A // ∀ b, f (s b) = b})
+
+/-- Sections are invariant under postcomposition by a codomain
+equivalence: relabeling outputs neither creates nor destroys reverse
+descriptions (review #8 — proved once; consumers transport). -/
+def sectionsEquivCompEquiv {C : Type u} (f : A → B) (e : B ≃ C) :
+    {s : C → A // ∀ c, e (f (s c)) = c} ≃ {s : B → A // ∀ b, f (s b) = b} where
+  toFun s := ⟨fun b => s.val (e b), fun b => e.injective (s.prop (e b))⟩
+  invFun s := ⟨fun c => s.val (e.symm c), fun c => by
+    rw [s.prop (e.symm c), Equiv.apply_symm_apply]⟩
+  left_inv s := by
+    apply Subtype.ext
+    funext c
+    show s.val (e (e.symm c)) = s.val c
+    rw [Equiv.apply_symm_apply]
+  right_inv s := by
+    apply Subtype.ext
+    funext b
+    show s.val (e.symm (e b)) = s.val b
+    rw [Equiv.symm_apply_apply]
+
+/-- **Section cost is invariant under codomain relabeling** — the
+transport lemma (review #8): postcomposing with an equivalence changes
+neither the sections nor their count. -/
+theorem sectionCost_comp_equiv {C : Type u} [Finite A] [Finite B] [Finite C]
+    (f : A → B) (e : B ≃ C) :
+    sectionCost (fun a : A => e (f a)) = sectionCost f := by
+  unfold sectionCost
+  exact congrArg Real.log
+    (congrArg Nat.cast (Nat.card_congr (sectionsEquivCompEquiv f e)))
 
 /-- **The coding theorem** (C8): for a surjection the reverse-description
 cost — genuinely counted — equals the fiber information cost. This is

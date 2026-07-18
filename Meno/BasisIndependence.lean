@@ -176,6 +176,24 @@ noncomputable def classSectorAction : SectorAction.{v} :=
 theorem classSectorAction_E :
     (G.classSectorAction).E = G.harmonicEnergy := rfl
 
+/-- **The carrier's rank is `b₁`** (review #8): the intrinsic lattice
+is finite free of exactly the graph's first Betti number. -/
+theorem classQuadAction_rank : (G.classQuadAction).rank = G.b1 := by
+  show Module.finrank ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) = G.b1
+  rw [G.h1QuotEquiv.finrank_eq, Module.finrank_fintype_fun_eq_card,
+    Fintype.card_fin]
+
+/-- **Every chart's coordinate action receives the Siegel–Poisson
+duality** (review #8): the general `QuadraticAction.duality` applies
+to the Gram data of any basis chart of the carrier. -/
+theorem basisGramData_duality {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
+    (↑((G.basisGramData B).toQuadraticAction.dual.toSectorAction.partFn) : ℂ)
+      = ↑(((G.basisGramData B).toQuadraticAction.Q.det) / Real.pi ^ n : ℝ)
+          ^ ((1 : ℂ) / 2)
+        * ↑((G.basisGramData B).toQuadraticAction.toSectorAction.partFn) :=
+  (G.basisGramData B).toQuadraticAction.duality
+
 /-- **Basis charts preserve the form** (review #7): the Gram
 interaction of any basis at the keystone coordinates is the intrinsic
 polarized form — via polarization from the chart identity for

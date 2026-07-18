@@ -4,6 +4,8 @@ import Mathlib.Topology.Algebra.InfiniteSum.Ring
 import Mathlib.Topology.Algebra.InfiniteSum.Order
 import Mathlib.Topology.Algebra.InfiniteSum.Constructions
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
+import Mathlib.LinearAlgebra.FiniteDimensional.Basic
+import Mathlib.LinearAlgebra.FreeModule.Basic
 
 /-! # Sector Action: the analytic primitive
 
@@ -236,16 +238,20 @@ theorem partFn_sum (A : SectorAction.{u}) (B : SectorAction.{v}) :
 
 end SectorAction
 
-/-- An **integral quadratic-lattice action**: a `ℤ`-module of sectors
-with an `ℝ`-valued symmetric bi-additive positive-definite form, and
+/-- An **integral quadratic-lattice action**: a finite free `ℤ`-module
+of sectors — a genuine integral lattice (review #8) — with an
+`ℝ`-valued symmetric bi-additive positive-definite form, and
 summability of the induced Boltzmann weight (review #7 — the thesis's
 "sector lattice with a positive-definite quadratic action" as one
-bundled object; `toSectorAction` is its analytic projection). -/
+bundled object; `toSectorAction` is its analytic projection,
+`QuadLatticeAction.rank` its rank). -/
 structure QuadLatticeAction where
   /-- The sector lattice. -/
   Λ : Type u
   [addCommGroup : AddCommGroup Λ]
   [module : Module ℤ Λ]
+  [free : Module.Free ℤ Λ]
+  [finite : Module.Finite ℤ Λ]
   /-- The bilinear form. -/
   form : Λ → Λ → ℝ
   form_comm : ∀ a b, form a b = form b a
@@ -256,8 +262,13 @@ structure QuadLatticeAction where
 namespace QuadLatticeAction
 
 attribute [instance] QuadLatticeAction.addCommGroup QuadLatticeAction.module
+  QuadLatticeAction.free QuadLatticeAction.finite
 
 variable (Q : QuadLatticeAction.{u})
+
+/-- The rank of the sector lattice — finite and free by the bundle
+(review #8): the lattice is a genuine finite integral lattice. -/
+noncomputable def rank : ℕ := Module.finrank ℤ Q.Λ
 
 theorem form_add_right (a b₁ b₂ : Q.Λ) :
     Q.form a (b₁ + b₂) = Q.form a b₁ + Q.form a b₂ := by
