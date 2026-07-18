@@ -1,11 +1,13 @@
 /-! # The documentation acceptance check (PLAN, C12)
 
-`lake exe check` — fail-closed by construction (any I/O error or
-malformed structure exits nonzero): locates the repository root by
-walking upward, requires exactly one Part II marker in `PLAN.md`,
-and sweeps PLAN Part I, `README.md`, and every `.lean` file under
-`Meno/` (plus `Meno.lean`) for retired identifiers and deleted
-paths. In the Lean toolchain, not a shell script (review #8 and
+`lake exe check`, run from the **repository root** — the directory
+holding `lakefile.toml`. Lake itself refuses to start anywhere else,
+so the check does not pretend to search for the root: it verifies the
+working directory and fails closed. Requires exactly one Part II
+marker in `PLAN.md`, and sweeps PLAN Part I, `README.md`, `Meno.lean`,
+and every `.lean` file under `Meno/` — recursively — for retired
+identifiers and deleted paths. Any missing file or I/O error exits
+nonzero. In the Lean toolchain, not a shell script (review #8 and
 maintainer preference). -/
 
 def blacklist : List String :=
@@ -23,16 +25,6 @@ def partIIMarker : String := "# Part II"
 def containsSub (hay pat : String) : Bool :=
   ((hay.splitOn pat).length > 1)
 
-def findRoot : IO System.FilePath := do
-  let mut dir : System.FilePath ← IO.currentDir
-  for _ in [0:8] do
-    if (← (dir / "PLAN.md").pathExists) then
-      return dir
-    match dir.parent with
-    | some p => dir := p
-    | none => break
-  throw <| IO.userError "check: PLAN.md not found walking up from cwd"
-
 def sweep (label : String) (text : String) : List String :=
   (text.splitOn "\n").zipIdx.flatMap fun (line, i) =>
     blacklist.filterMap fun pat =>
@@ -41,7 +33,12 @@ def sweep (label : String) (text : String) : List String :=
       else none
 
 def main : IO UInt32 := do
-  let root ← findRoot
+  let root ← IO.currentDir
+  unless (← (root / "lakefile.toml").pathExists) do
+    throw <| IO.userError
+      "check: lakefile.toml not found — run from the repository root"
+  unless (← (root / "PLAN.md").pathExists) do
+    throw <| IO.userError "check: PLAN.md not found in the repository root"
   let plan ← IO.FS.readFile (root / "PLAN.md")
   let parts := plan.splitOn partIIMarker
   if parts.length != 2 then
@@ -49,14 +46,13 @@ def main : IO UInt32 := do
     return 1
   let partI := parts[0]!
   let readme ← IO.FS.readFile (root / "README.md")
-  let menoDir := root / "Meno"
-  let entries ← menoDir.readDir
+  let sources ← (root / "Meno").walkDir
   let mut hits : List String := sweep "PLAN.md(Part I)" partI
   hits := hits ++ sweep "README.md" readme
-  for ent in entries do
-    if ent.path.extension == some "lean" then
-      let txt ← IO.FS.readFile ent.path
-      hits := hits ++ sweep s!"Meno/{ent.fileName}" txt
+  for p in sources.qsort (fun a b => a.toString < b.toString) do
+    if p.extension == some "lean" then
+      let txt ← IO.FS.readFile p
+      hits := hits ++ sweep (p.toString.drop (root.toString.length + 1)) txt
   let rootMeno ← IO.FS.readFile (root / "Meno.lean")
   hits := hits ++ sweep "Meno.lean" rootMeno
   if hits.isEmpty then

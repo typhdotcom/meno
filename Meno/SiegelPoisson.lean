@@ -1095,8 +1095,10 @@ theorem QuadraticAction.eq_of_Q_eq {r : ℕ} {A B : QuadraticAction r}
   subst h'
   rfl
 
-/-- Inverse of a nonzero scalar multiple of an invertible matrix. -/
-private lemma smul_inv_of_isUnit {r : ℕ} {c : ℝ} (hc : c ≠ 0)
+/-- Inverse of a nonzero scalar multiple of an invertible matrix.
+Public: the intrinsic dual's involution (`Meno/LatticeAction.lean`)
+also consumes it. -/
+lemma smul_inv_of_isUnit {r : ℕ} {c : ℝ} (hc : c ≠ 0)
     {A : Matrix (Fin r) (Fin r) ℝ} (hA : IsUnit A.det) :
     (c • A)⁻¹ = c⁻¹ • A⁻¹ := by
   apply Matrix.inv_eq_right_inv

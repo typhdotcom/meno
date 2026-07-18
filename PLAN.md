@@ -223,7 +223,22 @@ graph-level `IncidenceGraph.partFn`: the partition function is a
 function of the graph alone. The intrinsic form of all of this is
 the carrier `classSectorAction` (`H¹(G;ℤ)` with the harmonic energy),
 of which every basis action is a chart (`classSectorAction_energy`,
-`basisGramData_partFn_eq_classSectorAction`). Consumed by C4.
+`basisGramData_partFn_eq_classSectorAction`). The carrier is bundled
+as `classQuadAction : QuadLatticeAction` (`Meno/LatticeAction.lean`):
+a finite free `ℤ`-lattice whose polarized form is positive definite
+**on the real scalar extension** `ℝ ⊗[ℤ] Λ` (review #9 — integral
+positivity does not suffice and is now a *derived* theorem, as is
+summability; the field is discharged from the fundamental Gram chart,
+`bilinBaseChange_posDef_of_gram`). Every basis charts the bundle
+(`chartAction_h1Basis`), and the bundle carries an **intrinsic dual**:
+`Module.Dual ℤ H¹` with the `π²`-scaled inverse real form through the
+flat/sharp isomorphism, every dual basis charting it as the
+coordinate dual (`chartAction_dual`), a basis-independent
+discriminant (`disc_eq`), the intrinsic Siegel–Poisson duality
+(`classQuadAction_duality`, prefactor `√(disc/π^{b₁})`), and the
+double-dual involution along reflexivity (`dual_dual`). The
+per-chart coordinate duality `basisGramData_duality` is a
+**corollary** of the intrinsic one. Consumed by C4.
 
 ### C4 -- General harmonic theory for every finite graph — CLOSED (Phase 30)
 
@@ -488,7 +503,28 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   (`carrier_gravity_complexity`, `Meno/ResolutionCount.lean`), with
   K3 extracted as the fiber–gauge equivalence
   (`carrierFiberEquivGauge`) and the gauge-fixing cost transported
-  (`sectionCost_carrierCompression`).
+  (`sectionCost_carrierCompression`); every K3 fiber statement
+  derives from the one fiber-to-kernel equivalence (`fiberEquivKer`,
+  review #9);
+* **priced on the carrier** (review #9): the intrinsic Gibbs
+  distribution of `classSectorAction` pushes through
+  `H¹(G;ℤ) → H1Reduction G q` to the **residue distribution**
+  (`residueMass` — positive, normalized, computed by every basis
+  chart: `residueMass_pos`, `residueMass_sum`, `residueMass_chart`),
+  lifts uniformly through `carrierCompression` (`descriptionMass`),
+  and prices gravity and time by genuine Shannon entropies
+  (`shannonEntropy` + the uniform-lift chain rule
+  `shannonEntropy_comp_div`, `Meno/InfoRatchet.lean`):
+  `descriptionEntropy_split` is
+  `H(description) = H(residue) + log|gauge|`;
+  **`carrier_gravity_entropy`** is
+  `H(shared pair) = H(residue) + 2·log|gauge|` — the
+  action-consuming gravity theorem on the self-pullback;
+  `carrier_gravity_complexity_of_entropy` re-derives the uniform
+  complexity identity as the chain rule's uniform specialization
+  (the SGD-bridge proof stands as independent corroboration); and
+  `sectionCost_carrierCompression_div` reads the time face as the
+  conditional entropy `H(description) − H(residue)` per sector.
 
 The falsified endofunction-kernel design (Phase 17) stands
 falsified; its
@@ -536,13 +572,16 @@ shell script).** The canonical signoff command is
 lake build Meno && lake exe check
 ```
 
-`lake exe check` (`Check.lean`, a Lean executable) is fail-closed: it
-locates the repository root itself, requires **exactly one** Part II
-marker in `PLAN.md`, sweeps Part I, `README.md`, and every source
-file under `Meno/` for the retired-identifier blacklist, and exits
-nonzero on any hit or any I/O failure. Run it every phase; record the
-result in the phase addendum. The build being green is the acceptance
-for the import-flow claim.
+`lake exe check` (`Check.lean`, a Lean executable) is fail-closed and
+**repository-root-only** (review #9: Lake itself refuses to start
+outside the root, so the executable verifies the working directory
+and fails closed rather than pretending to search — the unreachable
+root-walk is deleted): it requires **exactly one** Part II marker in
+`PLAN.md`, sweeps Part I, `README.md`, `Meno.lean`, and every `.lean`
+source under `Meno/` — **recursively** — for the retired-identifier
+blacklist, and exits nonzero on any hit or any I/O failure. Run it
+every phase; record the result in the phase addendum. The build being
+green is the acceptance for the import-flow claim.
 
 **`Basic.lean`'s position** (rule-3 amendment, standing): it is not
 *moved* downstream — it is an upstream **pure interface** (abstract
@@ -561,9 +600,14 @@ data and raw cycle facts; `GraphInstances` — connectivity, Euler
 values, the three concrete lattice bases) → Variational
 (`PeriodHarmonic`) → Priced bases and intrinsic harmonic
 (`HarmonicClass` — `basisGramData`, `harmonicEnergy`;
-`BasisIndependence` — unimodular relatedness, graph `partFn`) →
+`LatticeAction` — the carrier bundle `QuadLatticeAction` with its
+charts and intrinsic dual, on the analytic spine downstream of
+`SiegelPoisson`; `BasisIndependence` — unimodular relatedness, graph
+`partFn`, the bundled carrier `classQuadAction`) →
 Matter/Binding → Realizations (`Basic`, `Instances`, `UniformAction`)
-→ Information on the carrier (`InfoRatchet`, `ResolutionCount`) →
+→ Information on the carrier (`InfoRatchet`, `ResolutionCount` — the
+latter downstream of `BasisIndependence` since Phase 45: the Gibbs
+residue distribution lives there) →
 Concrete consumers (`WedgePresentation`, `ThetaHarmonic`,
 `ThetaBinding`) → Corroborating models. `GraphInstances` imports only
 the topology layer, so `Meno.lean`'s "unpriced topology" grouping is
@@ -572,7 +616,7 @@ the Phase 37–40 sequence of inversions found and repaired — lives in
 Part II's phase addenda.
 
 **README** rewritten (Phase 37) and kept current: the architecture
-section lists the actual source files (31 as of Phase 41) and every
+section lists the actual source files (32 as of Phase 45) and every
 physical claim cites its theorem by name.
 
 ## Execution Order
@@ -4038,4 +4082,44 @@ fail-closed form — and its first run demonstrated its value; findings
 3–4 replace set-level and duplicated reasoning with the reduction's
 own algebra and a transport lemma. All twelve items remain CLOSED.
 `lake build Meno && lake exe check`: build green (3347 jobs), zero
+`sorry`, zero `axiom`, zero warnings; check PASS.
+
+## Phase 45 addendum: ninth external review — five findings, five confirmed, five repaired (2026-07-18)
+
+Review #9 arrived against the Phase-44 state. Every claim verified
+against the code before repair; all five CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | Gravity and time still discarded the quadratic action: `carrier_gravity_complexity` priced everything through `uniformAction` (energy identically zero) — the faces shared the carrier's quotient, not its priced carrier | **CONFIRMED** — `UniformAction.lean` has `E := fun _ => 0`; no theorem consumed the intrinsic form on the reduction | The intrinsic Gibbs distribution pushed through `H¹(G;ℤ) → H1Reduction G q`: **`residueMass`** with positivity (`residueMass_pos`), normalization (`residueMass_sum`), and basis independence (`residueMass_chart` — every basis chart computes it); the uniform gauge lift **`descriptionMass`**; Shannon entropy and the uniform-lift chain rule proved once (`shannonEntropy`, `sum_comp_card_fiber`, `shannonEntropy_comp_div`, `shannonEntropy_uniform` — `Meno/InfoRatchet.lean`); **`descriptionEntropy_split`**: `H(description) = H(residue) + log|gauge|`; **`carrier_gravity_entropy`**: `H(shared pair) = H(residue) + 2·log|gauge|` — the action-consuming gravity theorem (`pairMass` on the self-pullback, fibers counted by `pullbackBaseFiber`); **`carrier_gravity_complexity_of_entropy`** re-derives the uniform complexity identity as the chain rule's uniform specialization (the SGD-bridge proof retained as independent corroboration — the codebase's two-derivations pattern); **`sectionCost_carrierCompression_div`**: `sectionCost / \|H1Reduction\| = H(description) − H(residue)` — the conditional `log\|gauge\|` |
+| 2 | `QuadLatticeAction` did not encode genuine positive-definiteness: positivity tested only at integral points, summability separately stored — `B((m,n),(m',n')) = (m+√2n)(m'+√2n')` on `ℤ²` is integrally positive with a real null direction and divergent Gaussian sum; the stored `summable` was assertion debt | **CONFIRMED** — the counterexample is genuine (irrationality of `√2` gives integral positivity; Diophantine approximation kills summability) | The bundle rebuilt in the new **`Meno/LatticeAction.lean`** (rule-3 relocation, recorded below): field **`posDef_baseChange`** — positive-definiteness of the canonical bilinear extension `bilinBaseChange` on `ℝ ⊗[ℤ] Λ` (built by `liftBaseChange` in each slot; no basis in the definition); **`form_posDef` and `summable` are now theorems** with the retired fields' names (integral positivity through the lattice embedding, `one_tmul_ne_zero`; summability through any basis + `summable_exp_neg_quadForm` at the derived-PosDef Gram chart, `gram_posDef`); the converse discharge **`bilinBaseChange_posDef_of_gram`** lets one positive-definite Gram chart certify the whole extension — which is how **`classQuadAction` discharges the field from its Gram chart** (`classForm_h1Basis` at the fundamental basis, `Meno/BasisIndependence.lean`) |
+| 3 | `basisGramData_duality` was coordinate replay — a direct call to `QuadraticAction.duality`, with no dual lattice, no dual-basis charts, no basis-independent prefactor | **CONFIRMED** — the proof term was literally `(G.basisGramData B).toQuadraticAction.duality` | **The intrinsic dual** (`QuadLatticeAction.dual`, `Meno/LatticeAction.lean`): `Module.Dual ℤ Q.Λ` with the `π²`-scaled inverse real form through the flat/sharp isomorphism of the positive-definite pairing (`flatEquiv` — injective by positivity, bijective in finite dimension); **every dual basis charts it as the coordinate dual** (`dualForm_dualBasis`: the dual Gram is `π²·(gram b)⁻¹`; `chartAction_dual` as an equality of `QuadraticAction`s); the **basis-independent discriminant** (`disc`, `disc_eq` by unimodular congruence `gram_congr`, `disc_pos`); the **intrinsic Poisson duality** `QuadLatticeAction.duality` with prefactor `√(disc/π^rank)`; **`dual_dual`** along `Module.evalEquiv` (reflexivity of finite free modules); `dual_rank`. `basisGramData_duality` is **re-derived as a corollary** (chart the carrier at `h1Basis B`, transport partition functions through `partFn_chartAction`, read the determinant through `disc_eq`), and `classQuadAction_duality` states the carrier's duality basis-free |
+| 4 | Three parallel fiber-coset proofs: `card_fiber`, `compressionFiberEquivGauge`, `carrierFiberEquivGauge` each hand-rolled the same shift | **CONFIRMED** — the translation construction appeared verbatim three times in `ResolutionCount.lean` | One construction: **`fiberEquivKer`** — the fiber of a linear map over an attained value is a coset of its kernel; `card_fiber` derives through `Submodule.mkQ` + `Submodule.ker_mkQ`, `compressionFiberEquivGauge` through the `Quotient.out` representative, `carrierFiberEquivGauge` through `ker_carrierCompression`; all three handwritten translations deleted |
+| 5 | The acceptance check made two false enforcement claims: the root-walk is unreachable (Lake fails from subdirectories before `main` runs) and `readDir` scans only the immediate directory while claiming "every source under `Meno/`" | **CONFIRMED** — reproduced: `lake exe check` from `Meno/` dies inside Lake ("no configuration file"); `readDir` is single-level | `Check.lean` rewritten: **repository-root-only** (verifies `lakefile.toml` and `PLAN.md` in the working directory and fails closed with a clear error — tested directly: the binary invoked from a subdirectory exits 1), the dead root-walk deleted, the `Meno/` traversal **recursive** (`walkDir`), the docstring stating exactly what is enforced. No wrapper, no script (the Phase-44 maintainer directive stands) |
+
+**Rule-3 amendments.** (i) `QuadLatticeAction` relocated from
+`SectorAction.lean` to the new `Meno/LatticeAction.lean` (downstream
+of `SiegelPoisson`): deriving summability and the dual requires the
+coordinate summability engine and the coordinate duality, which cannot
+be imported into `SectorAction.lean` without inverting the spine. Part
+I's carrier account and the import-flow paragraph updated; the README
+architecture tree gains the file (32 sources). (ii)
+`ResolutionCount.lean` now imports `BasisIndependence.lean` — the
+residue distribution consumes `classSectorAction`; the flow paragraph
+records the edge. (iii) The Phase-44 ledger's "locates the repository
+root itself" stands above as history; the claim was false in exactly
+the way finding 5 states and is corrected in code and in C12's Part I
+acceptance text.
+
+**Discipline check.** No goal reopens. Finding 1 completes the
+common-carrier program a third time (interface → object → priced
+object): gravity and time now consume the action's Gibbs law, with the
+uniform identities as specializations. Finding 2 removes the last
+stored analytic field from the carrier bundle — the structure now
+stores exactly what "positive-definite quadratic lattice" claims,
+nothing more and nothing less. Finding 3 turns the duality face from
+per-chart replay into one intrinsic theorem with charts as
+corollaries. Findings 4–5 are the single-source discipline applied to
+proofs and to the check itself. All twelve items remain CLOSED.
+`lake build Meno && lake exe check`: build green (3348 jobs), zero
 `sorry`, zero `axiom`, zero warnings; check PASS.

@@ -10,16 +10,23 @@ enumerates the discrete sectors a system can occupy, the action prices
 them, the Boltzmann sum reads the partition function, and duality,
 minimization, and counting theorems connect the faces. For a graph the
 carrier is one bundled formal object — `IncidenceGraph.classQuadAction`,
-the lattice `H¹(G;ℤ)` with the positive-definite polarized form
-`classForm` (`classForm_self`, `classForm_posDef`, `classForm_chart`);
-`classSectorAction` is its analytic projection. Every basis-coordinate
-quadratic action is a form-preserving chart of it, every
-finite-resolution residue is its quotient (`h1ResQuotEquiv`), gravity
-is applied to the self-pullback of reading descriptions as its finite
-sectors (`carrier_gravity_complexity`), the gauge-fixing cost of that
-reading is the time face (`sectionCost_carrierCompression`), and Gibbs
-fluctuation specializes to it
-(`classSectorAction_gibbsVariance_nonneg`).
+the lattice `H¹(G;ℤ)` with the polarized form `classForm`, positive
+definite on the real scalar extension `ℝ ⊗[ℤ] H¹` (`classForm_self`,
+`classForm_chart`; integral positivity and summability are derived,
+`Meno/LatticeAction.lean`); `classSectorAction` is its analytic
+projection. Every basis-coordinate quadratic action is a
+form-preserving chart of it (`chartAction_h1Basis`), it carries an
+intrinsic dual lattice with the `π²`-scaled inverse form and the
+Siegel–Poisson duality intrinsically (`classQuadAction_duality`,
+`QuadLatticeAction.dual_dual`), every finite-resolution residue is its
+quotient (`h1ResQuotEquiv`), its Gibbs distribution pushes to a
+residue distribution on that quotient (`residueMass`), gravity is the
+entropy of sharing one of its finite sectors
+(`carrier_gravity_entropy`, with `carrier_gravity_complexity` the
+uniform specialization), the gauge-fixing cost of reading a
+description is the time face — the conditional entropy per sector
+(`sectionCost_carrierCompression_div`) — and Gibbs fluctuation
+specializes to it (`classSectorAction_gibbsVariance_nonneg`).
 
 Everything below is a checked theorem — zero `sorry`, zero `axiom`
 declarations, ~3300 build jobs green against Lean 4.26.0 / Mathlib.
@@ -38,7 +45,15 @@ genuinely non-diagonal instance, the theta graph's coupled Gram form
 cycle-graph T-duality through the spine with no bespoke modular input
 (`partitionFn_T_duality_via_spine`), and Riemann's derivation of the
 functional equation runs through the same single analytic source
-(`Meno/Zeta.lean`).
+(`Meno/Zeta.lean`). The duality is also **intrinsic**: the carrier
+bundle has a dual on `Module.Dual ℤ Λ` with the `π²`-scaled inverse
+real form — no basis in the definition — every dual basis charts it
+as the coordinate dual (`chartAction_dual`), the discriminant is
+basis-independent (`disc_eq`), the duality holds with prefactor
+`√(disc/π^rank)` (`QuadLatticeAction.duality`), the double dual is
+the original along reflexivity (`dual_dual`), and the per-chart
+coordinate duality is a corollary (`basisGramData_duality`,
+`Meno/LatticeAction.lean`).
 
 **Topology, intrinsically.** Every finite multigraph
 (`IncidenceGraph`) carries an intrinsic integral cycle lattice
@@ -132,6 +147,14 @@ The residue's uniform complexity `b₁ · log q` and the K2 split are
 derived through that reduction
 (`uniformAction_h1ResQuot_complexity`,
 `uniformComplexity_split_carrier`, `Meno/ResolutionCount.lean`).
+The reduction is moreover **priced**: the carrier's intrinsic Gibbs
+distribution pushes forward to the residue distribution
+(`residueMass` — positive, normalized, computed by every basis chart),
+lifts uniformly through the compression (`descriptionMass`), the
+description entropy splits as residue entropy plus the gauge log
+(`descriptionEntropy_split`), and the per-sector gauge-fixing cost is
+exactly that conditional entropy (`sectionCost_carrierCompression_div`)
+— time's arrow priced against the Gibbs law, not only against counts.
 
 **Gravity.** A finite type is a sector lattice with zero energy:
 `Z = |A|`, `K = log|A|` (`uniformAction`, `Meno/UniformAction.lean`).
@@ -141,6 +164,14 @@ sharing a base is worth exactly one copy of it — with the complexity
 form `K(P) + K(D) = K(A) + K(B)` (`gravity_complexity`) realizing the
 abstract `SGD.gravity` of `Meno/Basic.lean`, and the refactoring bound
 `K(P) ≤ K(D) + log(max fiber product)` (`uniform_refactoring_bound`).
+On the graph carrier gravity is **priced by the action**: the entropy
+of the shared-pair distribution — two descriptions of the same finite
+sector, weighted by the intrinsic Gibbs law — is the residue entropy
+plus two gauge logs (`carrier_gravity_entropy`,
+`Meno/ResolutionCount.lean`), and the uniform complexity identity is
+its uniform-distribution specialization
+(`carrier_gravity_complexity_of_entropy`; the SGD-bridge derivation
+`carrier_gravity_complexity` stands as independent corroboration).
 
 **Uncertainty.** The Gibbs state's fluctuations are the model's
 uncertainty, and they are theorems, not vocabulary: the variance of
@@ -168,6 +199,7 @@ Meno/
 ├── SectorAction.lean          Analytic primitive: sectors, Boltzmann weights, partFn, complexity
 ├── QuadraticAction.lean       kᵀQk actions; scalar & diagonal Siegel–Poisson duality
 ├── SiegelPoisson.lean         Full-generality (non-diagonal) Siegel–Poisson via Poisson summation
+├── LatticeAction.lean         The carrier bundle: real-extension positivity, charts, intrinsic dual & duality
 ├── LoopKernel.lean            Categorical presentation: End(base) as sector lattice
 ├── SectorPresentation.lean    MulEquiv coordinates; duality transport
 ├── Geodesic.lean              Lawvere-subadditive length class
@@ -178,7 +210,7 @@ Meno/
 ├── GraphInstances.lean        Cycle, theta, genuine wedge: connectivity, Euler b₁, and the concrete lattice bases
 ├── PeriodHarmonic.lean        Least-norm-at-prescribed-periods machinery; cycle & wedge Gram forms
 ├── HarmonicClass.lean         Priced Gram data of a basis; intrinsic harmonic energy on H¹; variational identity
-├── BasisIndependence.lean     Bases unimodularly related; partFn is the graph's
+├── BasisIndependence.lean     Bases unimodularly related; partFn is the graph's; classQuadAction bundled
 ├── WedgePresentation.lean     C5 acceptance witnesses: wedge matter; hand-built bases related to the fundamental one
 ├── Matter.lean                MatterSector = nonzero H¹ class; mass, positivity, trapped paradox
 ├── Binding.lean               2-complexes; the induced map; binding kills matter; exact spectral decomposition
@@ -187,7 +219,7 @@ Meno/
 ├── Instances.lean             Log-cardinality instance of the abstract hierarchy
 ├── UniformAction.lean         Type-level gravity realized on the uniform sector action
 ├── InfoRatchet.lean           Fiber information; the coding theorem (finite-only costs, extended costs); ratchets
-├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the residue on the sector-action carrier
+├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; groupoid complexity
 ├── CycleHarmonic.lean         Flagship bridge: walk route ≡ period route; T-duality on C_n

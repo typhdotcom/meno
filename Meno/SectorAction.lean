@@ -4,8 +4,6 @@ import Mathlib.Topology.Algebra.InfiniteSum.Ring
 import Mathlib.Topology.Algebra.InfiniteSum.Order
 import Mathlib.Topology.Algebra.InfiniteSum.Constructions
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
-import Mathlib.LinearAlgebra.FiniteDimensional.Basic
-import Mathlib.LinearAlgebra.FreeModule.Basic
 
 /-! # Sector Action: the analytic primitive
 
@@ -101,6 +99,11 @@ theorem complexity_nonneg : 0 ≤ A.complexity :=
 /-- The Gibbs density is non-negative. -/
 theorem gibbsMass_nonneg (k : A.Λ) : 0 ≤ A.gibbsMass k :=
   div_nonneg (A.weight_nonneg k) A.partFn_pos.le
+
+/-- The Gibbs density is strictly positive: every sector carries
+weight. -/
+theorem gibbsMass_pos (k : A.Λ) : 0 < A.gibbsMass k :=
+  div_pos (A.weight_pos k) A.partFn_pos
 
 /-- The Gibbs density is summable. -/
 theorem summable_gibbsMass : Summable A.gibbsMass := by
@@ -237,62 +240,5 @@ theorem partFn_sum (A : SectorAction.{u}) (B : SectorAction.{v}) :
   congr 1
 
 end SectorAction
-
-/-- An **integral quadratic-lattice action**: a finite free `ℤ`-module
-of sectors — a genuine integral lattice (review #8) — with an
-`ℝ`-valued symmetric bi-additive positive-definite form, and
-summability of the induced Boltzmann weight (review #7 — the thesis's
-"sector lattice with a positive-definite quadratic action" as one
-bundled object; `toSectorAction` is its analytic projection,
-`QuadLatticeAction.rank` its rank). -/
-structure QuadLatticeAction where
-  /-- The sector lattice. -/
-  Λ : Type u
-  [addCommGroup : AddCommGroup Λ]
-  [module : Module ℤ Λ]
-  [free : Module.Free ℤ Λ]
-  [finite : Module.Finite ℤ Λ]
-  /-- The bilinear form. -/
-  form : Λ → Λ → ℝ
-  form_comm : ∀ a b, form a b = form b a
-  form_add_left : ∀ a₁ a₂ b, form (a₁ + a₂) b = form a₁ b + form a₂ b
-  form_posDef : ∀ a, a ≠ 0 → 0 < form a a
-  summable : Summable (fun a : Λ => Real.exp (-(form a a)))
-
-namespace QuadLatticeAction
-
-attribute [instance] QuadLatticeAction.addCommGroup QuadLatticeAction.module
-  QuadLatticeAction.free QuadLatticeAction.finite
-
-variable (Q : QuadLatticeAction.{u})
-
-/-- The rank of the sector lattice — finite and free by the bundle
-(review #8): the lattice is a genuine finite integral lattice. -/
-noncomputable def rank : ℕ := Module.finrank ℤ Q.Λ
-
-theorem form_add_right (a b₁ b₂ : Q.Λ) :
-    Q.form a (b₁ + b₂) = Q.form a b₁ + Q.form a b₂ := by
-  rw [Q.form_comm, Q.form_add_left, Q.form_comm b₁ a, Q.form_comm b₂ a]
-
-theorem form_zero_left (b : Q.Λ) : Q.form 0 b = 0 := by
-  have h := Q.form_add_left 0 0 b
-  rw [add_zero] at h
-  linarith
-
-theorem form_self_nonneg (a : Q.Λ) : 0 ≤ Q.form a a := by
-  rcases eq_or_ne a 0 with rfl | ha
-  · rw [Q.form_zero_left]
-  · exact (Q.form_posDef a ha).le
-
-/-- The analytic projection: forget the lattice and the bilinear
-structure, keep sectors, energies `E a := form a a`, and the sum. -/
-noncomputable def toSectorAction : SectorAction.{u} where
-  Λ := Q.Λ
-  E := fun a => Q.form a a
-  E_zero := ⟨0, by rw [Q.form_zero_left]⟩
-  E_nonneg := Q.form_self_nonneg
-  summable := Q.summable
-
-end QuadLatticeAction
 
 end Meno

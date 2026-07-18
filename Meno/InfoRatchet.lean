@@ -387,4 +387,68 @@ theorem descriptionCost_eq [Fintype A] [Fintype B] (f : A → B) :
   rw [Nat.card_fun, Nat.cast_pow, Real.log_pow, Nat.card_eq_fintype_card,
     Nat.card_eq_fintype_card]
 
+/-! ## Shannon entropy and the uniform-lift chain rule (review #9)
+
+The gravity face of the carrier is priced by genuine distribution
+entropies, not only log-cardinalities: `shannonEntropy` is the Shannon
+entropy (nats) of a mass function on a finite type;
+`shannonEntropy_comp_div` is the chain rule for a uniform lift along a
+constant-fiber map — the lifted entropy exceeds the base entropy by
+exactly the log of the fiber size; `shannonEntropy_uniform` identifies
+the uniform case with the log-cardinality complexity. The carrier
+instantiation — the intrinsic Gibbs distribution pushed through
+`H¹(G;ℤ) → H1Reduction G q` — lives in `Meno/ResolutionCount.lean`. -/
+
+/-- **Shannon entropy** (nats) of a mass function on a finite type. -/
+noncomputable def shannonEntropy {X : Type u} [Fintype X] (p : X → ℝ) : ℝ :=
+  -∑ x, p x * Real.log (p x)
+
+/-- Summing a composite through a map with constant fiber count `m`
+multiplies the base sum by `m`. -/
+theorem sum_comp_card_fiber {X D : Type u} [Fintype X] [Fintype D]
+    [DecidableEq D] (f : X → D) {m : ℕ}
+    (hfib : ∀ d, Nat.card {x : X // f x = d} = m) (g : D → ℝ) :
+    ∑ x, g (f x) = m * ∑ d, g d := by
+  rw [← Finset.sum_fiberwise' Finset.univ f g, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun d _ => ?_
+  rw [Finset.sum_const]
+  have hcard : (Finset.univ.filter fun x : X => f x = d).card = m := by
+    rw [← Fintype.card_subtype, ← Nat.card_eq_fintype_card]
+    exact hfib d
+  rw [hcard, nsmul_eq_mul]
+
+/-- **The entropy chain rule for a uniform lift** (review #9): pulling
+a distribution back along a constant-fiber map, dividing each mass
+evenly across the fiber, adds exactly the log of the fiber size. -/
+theorem shannonEntropy_comp_div {X D : Type u} [Fintype X] [Fintype D]
+    [DecidableEq D] (f : X → D) (p : D → ℝ) {m : ℕ} (hm : 0 < m)
+    (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hp1 : ∑ d, p d = 1) (hp : ∀ d, 0 ≤ p d) :
+    shannonEntropy (fun x => p (f x) / m)
+      = shannonEntropy p + Real.log m := by
+  have hm' : (m : ℝ) ≠ 0 := by exact_mod_cast hm.ne'
+  unfold shannonEntropy
+  rw [sum_comp_card_fiber f hfib (fun d => p d / m * Real.log (p d / m))]
+  have hterm : ∀ d, (m : ℝ) * (p d / m * Real.log (p d / m))
+      = p d * Real.log (p d) - p d * Real.log m := by
+    intro d
+    rcases eq_or_lt_of_le (hp d) with h0 | hpos
+    · rw [← h0]
+      simp
+    · rw [Real.log_div (ne_of_gt hpos) hm']
+      field_simp
+  rw [Finset.mul_sum, Finset.sum_congr rfl fun d _ => hterm d,
+    Finset.sum_sub_distrib, ← Finset.sum_mul, hp1, one_mul]
+  ring
+
+/-- Entropy of the uniform distribution is the log-cardinality — the
+bridge from distribution entropy to `uniformAction` complexity. -/
+theorem shannonEntropy_uniform (X : Type u) [Fintype X] [Nonempty X] :
+    shannonEntropy (fun _ : X => ((Fintype.card X : ℝ))⁻¹)
+      = Real.log (Fintype.card X) := by
+  have hpos : (0 : ℝ) < Fintype.card X := by exact_mod_cast Fintype.card_pos
+  unfold shannonEntropy
+  rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, Real.log_inv]
+  field_simp
+
 end Meno
