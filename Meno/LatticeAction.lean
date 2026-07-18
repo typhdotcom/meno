@@ -739,7 +739,18 @@ structure Equiv (Q Q' : QuadLatticeAction.{u}) where
 
 namespace Equiv
 
-variable {Q Q' : QuadLatticeAction.{u}}
+variable {Q Q' Q'' : QuadLatticeAction.{u}}
+
+theorem ext {e e' : Q.Equiv Q'} (h : e.toLinearEquiv = e'.toLinearEquiv) :
+    e = e' := by
+  cases e
+  cases e'
+  simpa using h
+
+/-- The identity equivalence (review #11). -/
+def refl (Q : QuadLatticeAction.{u}) : Q.Equiv Q where
+  toLinearEquiv := LinearEquiv.refl ℤ Q.Λ
+  form_eq _ _ := rfl
 
 /-- Form-preserving equivalences invert. -/
 def symm (e : Q.Equiv Q') : Q'.Equiv Q where
@@ -748,6 +759,25 @@ def symm (e : Q.Equiv Q') : Q'.Equiv Q where
     have h := e.form_eq (e.toLinearEquiv.symm a) (e.toLinearEquiv.symm b)
     rw [LinearEquiv.apply_symm_apply, LinearEquiv.apply_symm_apply] at h
     exact h.symm
+
+/-- Form-preserving equivalences compose (review #11). -/
+def trans (e : Q.Equiv Q') (e' : Q'.Equiv Q'') : Q.Equiv Q'' where
+  toLinearEquiv := e.toLinearEquiv.trans e'.toLinearEquiv
+  form_eq a b := by
+    show Q''.form (e'.toLinearEquiv (e.toLinearEquiv a))
+      (e'.toLinearEquiv (e.toLinearEquiv b)) = Q.form a b
+    rw [e'.form_eq, e.form_eq]
+
+@[simp] theorem refl_trans (e : Q.Equiv Q') : (refl Q).trans e = e :=
+  ext (by ext x; rfl)
+
+@[simp] theorem trans_refl (e : Q.Equiv Q') : e.trans (refl Q') = e :=
+  ext (by ext x; rfl)
+
+theorem trans_assoc (e : Q.Equiv Q') (e' : Q'.Equiv Q'')
+    {Q''' : QuadLatticeAction.{u}} (e'' : Q''.Equiv Q''') :
+    (e.trans e').trans e'' = e.trans (e'.trans e'') :=
+  ext (by ext x; rfl)
 
 /-- **Rank invariance.** -/
 theorem rank_eq (e : Q.Equiv Q') : Q.rank = Q'.rank := by
@@ -786,6 +816,40 @@ theorem disc_eq (e : Q.Equiv Q') : Q'.disc = Q.disc := by
   rw [Q'.disc_eq ((Module.finBasis ℤ Q.Λ).map e.toLinearEquiv), e.gram_map]
   exact (Q.disc_eq (Module.finBasis ℤ Q.Λ)).symm
 
+/-- **Form-preserving equivalences dualize, contravariantly**
+(review #11): the dual map of the underlying equivalence carries the
+dual forms to each other — chart both dual forms at a basis and its
+image, where the Grams agree (`gram_map`). -/
+noncomputable def dual (e : Q.Equiv Q') : (Q'.dual).Equiv (Q.dual) where
+  toLinearEquiv := e.toLinearEquiv.dualMap
+  form_eq φ ψ := by
+    have hcoord : ∀ (χ : Module.Dual ℤ Q'.Λ)
+        (i : Fin (Module.finrank ℤ Q.Λ)),
+        (Module.finBasis ℤ Q.Λ).dualBasis.repr (e.toLinearEquiv.dualMap χ) i
+          = ((Module.finBasis ℤ Q.Λ).map e.toLinearEquiv).dualBasis.repr χ i := by
+      intro χ i
+      rw [Module.Basis.dualBasis_repr, Module.Basis.dualBasis_repr]
+      show χ (e.toLinearEquiv (Module.finBasis ℤ Q.Λ i)) = χ _
+      rw [Module.Basis.map_apply]
+    have hL := Q.dual.form_repr (Module.finBasis ℤ Q.Λ).dualBasis
+      (e.toLinearEquiv.dualMap φ) (e.toLinearEquiv.dualMap ψ)
+    have hR := Q'.dual.form_repr
+      ((Module.finBasis ℤ Q.Λ).map e.toLinearEquiv).dualBasis φ ψ
+    refine hL.trans (Eq.trans ?_ hR.symm)
+    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    congr 1
+    · congr 1
+      · exact congrArg _ (hcoord φ i)
+      · exact congrArg _ (hcoord ψ j)
+    · show Q.dualForm ((Module.finBasis ℤ Q.Λ).dualBasis i)
+          ((Module.finBasis ℤ Q.Λ).dualBasis j)
+        = Q'.dualForm
+            (((Module.finBasis ℤ Q.Λ).map e.toLinearEquiv).dualBasis i)
+            (((Module.finBasis ℤ Q.Λ).map e.toLinearEquiv).dualBasis j)
+      rw [Q.dualForm_dualBasis (Module.finBasis ℤ Q.Λ) i j,
+        Q'.dualForm_dualBasis ((Module.finBasis ℤ Q.Λ).map e.toLinearEquiv) i j,
+        e.gram_map (Module.finBasis ℤ Q.Λ)]
+
 end Equiv
 
 /-- **THE DUAL INVOLUTION, BUNDLED** (review #10): the canonical
@@ -802,6 +866,26 @@ theorem partFn_dualDual :
     Q.dual.dual.toSectorAction.partFn = Q.toSectorAction.partFn :=
   (Q.dualDual).partFn_eq.symm
 
+/-- **Dual-double naturality** (review #11): the involution commutes
+with every form-preserving equivalence — reflexivity is natural. -/
+theorem dualDual_naturality {Q' : QuadLatticeAction.{u}} (e : Q.Equiv Q') :
+    (Q.dualDual).trans e = (e.dual.dual).trans Q'.dualDual := by
+  refine Equiv.ext ?_
+  refine LinearEquiv.toLinearMap_injective ?_
+  ext x
+  show e.toLinearEquiv ((Module.evalEquiv ℤ Q.Λ).symm x)
+    = (Module.evalEquiv ℤ Q'.Λ).symm
+        (e.toLinearEquiv.dualMap.dualMap x)
+  apply (Module.evalEquiv ℤ Q'.Λ).injective
+  rw [LinearEquiv.apply_symm_apply]
+  have h := Module.Dual.eval_comp_comp_evalEquiv_eq
+    (f := e.toLinearEquiv.toLinearMap)
+  have hx := congrArg (fun L => L x) h
+  simp only [LinearMap.coe_comp, Function.comp_apply,
+    LinearEquiv.coe_coe] at hx
+  rw [Module.evalEquiv_apply]
+  exact hx
+
 /-- **The reciprocal-discriminant law** (review #10):
 `disc(Q^∨) = π^{2·rank} / disc(Q)`. -/
 theorem disc_dual : Q.dual.disc = Real.pi ^ (2 * Q.rank) / Q.disc := by
@@ -812,27 +896,33 @@ theorem disc_dual : Q.dual.disc = Real.pi ^ (2 * Q.rank) / Q.disc := by
     div_eq_mul_inv, ← pow_mul]
   rfl
 
-/-- **Applying the intrinsic duality twice returns the original**
-(review #10): the two prefactors cancel through the
-reciprocal-discriminant law and `dual_rank` —
-`√(disc(Q^∨)/π^r) · √(disc(Q)/π^r) = 1`. -/
-theorem duality_dualDual :
-    (↑(Q.dual.dual.toSectorAction.partFn) : ℂ)
-      = ↑(Q.toSectorAction.partFn) := by
-  rw [Q.dual.duality, Q.duality, Q.disc_dual, Q.dual_rank]
-  have hπ : (Real.pi : ℝ) ≠ 0 := Real.pi_ne_zero
-  have hd : Q.disc ≠ 0 := Q.disc_pos.ne'
+/-- **The two duality prefactors multiply to one** (review #11): the
+analytic cancellation exposed as its own theorem —
+`√(disc(Q^∨)/π^r) · √(disc(Q)/π^r) = 1`, through the
+reciprocal-discriminant law and `dual_rank`. -/
+theorem dual_prefactor_mul_one :
+    ((Q.dual.disc / Real.pi ^ Q.dual.rank : ℝ) : ℂ) ^ ((1 : ℂ) / 2)
+      * ((Q.disc / Real.pi ^ Q.rank : ℝ) : ℂ) ^ ((1 : ℂ) / 2) = 1 := by
+  rw [Q.disc_dual, Q.dual_rank]
+  have hpos : (0 : ℝ) < Q.disc / Real.pi ^ Q.rank :=
+    div_pos Q.disc_pos (pow_pos Real.pi_pos _)
   have h1 : Real.pi ^ (2 * Q.rank) / Q.disc / Real.pi ^ Q.rank
       = (Q.disc / Real.pi ^ Q.rank)⁻¹ := by
     rw [two_mul, pow_add]
     field_simp
-  rw [h1]
-  have hpos : (0 : ℝ) < Q.disc / Real.pi ^ Q.rank :=
-    div_pos Q.disc_pos (pow_pos Real.pi_pos _)
-  rw [← mul_assoc,
-    ← Complex.mul_cpow_ofReal_nonneg (inv_nonneg.mpr hpos.le) hpos.le,
+  rw [h1, ← Complex.mul_cpow_ofReal_nonneg (inv_nonneg.mpr hpos.le) hpos.le,
     ← Complex.ofReal_mul, inv_mul_cancel₀ hpos.ne', Complex.ofReal_one,
-    Complex.one_cpow, one_mul]
+    Complex.one_cpow]
+
+/-- **Applying the intrinsic duality twice returns the original**
+(review #10): two applications of `duality`, with the prefactors
+cancelling through `dual_prefactor_mul_one` (review #11 — the
+prefactor content is now a named theorem, not a proof route). -/
+theorem duality_dualDual :
+    (↑(Q.dual.dual.toSectorAction.partFn) : ℂ)
+      = ↑(Q.toSectorAction.partFn) := by
+  rw [Q.dual.duality, Q.duality, ← mul_assoc, Q.dual_prefactor_mul_one,
+    one_mul]
 
 end QuadLatticeAction
 

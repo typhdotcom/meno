@@ -730,6 +730,144 @@ theorem entropy_gravity [DecidableEq D] (f : X → D) (g : Y → D)
     Real.log_mul (by exact_mod_cast hm.ne') (by exact_mod_cast hm'.ne')]
   ring
 
+/-! ### The uniform entropy defect (review #11)
+
+`Δ(P) = log|X| − H(P)` measures how far a distribution sits below
+maximal ignorance. It is nonnegative (`defect_nonneg` — the maximum
+entropy theorem), vanishes exactly at the uniform distribution
+(`defect_eq_zero_iff`), and is **preserved** by uniform fiber lifting
+and shared-base coupling (`defect_uniformLift`, `defect_coupling`) —
+the bridge from action-priced entropies to uniform counting. -/
+
+/-- **The uniform entropy defect**: `Δ(P) = log|X| − H(P)`. -/
+noncomputable def defect [Nonempty X] (P : FinDist X) : ℝ :=
+  Real.log (Fintype.card X) - P.entropy
+
+private lemma defect_term_nonneg {N : ℕ} (hN : 0 < N) {p : ℝ} (hp : 0 ≤ p) :
+    0 ≤ p * Real.log (p * N) - p + 1 / N := by
+  have hN' : (0 : ℝ) < N := by exact_mod_cast hN
+  rcases eq_or_lt_of_le hp with h0 | hpos
+  · rw [← h0]
+    simp
+  · have ht : 0 < p * N := mul_pos hpos hN'
+    have hlog : Real.log (1 / (p * N)) ≤ 1 / (p * N) - 1 :=
+      Real.log_le_sub_one_of_pos (by positivity)
+    rw [one_div, Real.log_inv] at hlog
+    have h2 : 1 - (p * N)⁻¹ ≤ Real.log (p * N) := by linarith
+    have h3 : p * (1 - (p * N)⁻¹) ≤ p * Real.log (p * N) :=
+      mul_le_mul_of_nonneg_left h2 hp
+    have h4 : p * (1 - (p * N)⁻¹) = p - 1 / N := by
+      field_simp
+    linarith
+
+private lemma defect_term_eq_zero {N : ℕ} (hN : 0 < N) {p : ℝ} (hp : 0 ≤ p)
+    (h0 : p * Real.log (p * N) - p + 1 / N = 0) : p = (N : ℝ)⁻¹ := by
+  have hN' : (0 : ℝ) < N := by exact_mod_cast hN
+  rcases eq_or_lt_of_le hp with hz | hpos
+  · exfalso
+    rw [← hz] at h0
+    simp at h0
+    exact absurd h0 (by positivity)
+  · by_contra hne
+    have ht : 0 < p * N := mul_pos hpos hN'
+    have htne : p * N ≠ 1 := by
+      intro h1
+      apply hne
+      field_simp at h1 ⊢
+      linarith
+    have hstrict : Real.log (1 / (p * N)) < 1 / (p * N) - 1 :=
+      Real.log_lt_sub_one_of_pos (by positivity)
+        (by
+          rw [one_div]
+          exact fun h => htne (by
+            have := congrArg (· * (p * N)) h
+            field_simp at this
+            linarith))
+    rw [one_div, Real.log_inv] at hstrict
+    have h2 : 1 - (p * N)⁻¹ < Real.log (p * N) := by linarith
+    have h3 : p * (1 - (p * N)⁻¹) < p * Real.log (p * N) :=
+      mul_lt_mul_of_pos_left h2 hpos
+    have h4 : p * (1 - (p * N)⁻¹) = p - 1 / N := by
+      field_simp
+    linarith
+
+private lemma defect_eq_sum [Nonempty X] (P : FinDist X) :
+    P.defect = ∑ x, (P.mass x * Real.log (P.mass x * Fintype.card X)
+      - P.mass x + 1 / Fintype.card X) := by
+  have hN : (0 : ℝ) < Fintype.card X := by exact_mod_cast Fintype.card_pos
+  have hterm : ∀ x, P.mass x * Real.log (P.mass x * Fintype.card X)
+      = P.mass x * Real.log (P.mass x)
+        + P.mass x * Real.log (Fintype.card X) := by
+    intro x
+    rcases eq_or_lt_of_le (P.nonneg x) with h0 | hpos
+    · rw [← h0]
+      simp
+    · rw [Real.log_mul hpos.ne' hN.ne']
+      ring
+  show Real.log (Fintype.card X) - shannonEntropy P.mass = _
+  rw [shannonEntropy,
+    Finset.sum_add_distrib, Finset.sum_sub_distrib,
+    Finset.sum_congr rfl fun x _ => hterm x, Finset.sum_add_distrib,
+    ← Finset.sum_mul, P.sum_one, one_mul,
+    Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_one_div,
+    div_self hN.ne']
+  ring
+
+/-- **The maximum entropy theorem**: the defect is nonnegative —
+`H(P) ≤ log|X|`. -/
+theorem defect_nonneg [Nonempty X] (P : FinDist X) : 0 ≤ P.defect := by
+  rw [P.defect_eq_sum]
+  exact Finset.sum_nonneg fun x _ =>
+    defect_term_nonneg Fintype.card_pos (P.nonneg x)
+
+/-- **Zero defect characterizes the uniform distribution.** -/
+theorem defect_eq_zero_iff [Nonempty X] (P : FinDist X) :
+    P.defect = 0 ↔ P = uniform X := by
+  constructor
+  · intro h0
+    apply ext
+    funext x
+    have hterms := (Finset.sum_eq_zero_iff_of_nonneg
+      (fun x _ => defect_term_nonneg Fintype.card_pos (P.nonneg x))).mp
+      ((P.defect_eq_sum).symm.trans h0)
+    have hx := hterms x (Finset.mem_univ x)
+    exact defect_term_eq_zero Fintype.card_pos (P.nonneg x) hx
+  · rintro rfl
+    rw [defect, entropy_uniform]
+    ring
+
+/-- **Uniform fiber lifting preserves the defect** (review #11): the
+lift adds `log m` to the entropy and `log m` to the log-cardinality. -/
+theorem defect_uniformLift [DecidableEq D] [Nonempty D] [Nonempty X]
+    (f : X → D) {m : ℕ} (hm : 0 < m)
+    (hfib : ∀ d, Nat.card {x : X // f x = d} = m) (P : FinDist D) :
+    (P.uniformLift f hm hfib).defect = P.defect := by
+  rw [defect, defect, entropy_uniformLift,
+    card_eq_card_mul_of_fiber f hfib, Nat.cast_mul,
+    Real.log_mul (by exact_mod_cast Fintype.card_pos.ne' :
+        (Fintype.card D : ℝ) ≠ 0)
+      (by exact_mod_cast hm.ne' : (m : ℝ) ≠ 0)]
+  ring
+
+omit [Fintype X] [Fintype Y] in
+/-- **Shared-base coupling preserves the defect** (review #11): the
+coupling adds `log(m·m')` to both sides. -/
+theorem defect_coupling [DecidableEq D] [Nonempty D] (f : X → D)
+    (g : Y → D) [Fintype (SGD.Pullback f g)]
+    [Nonempty (SGD.Pullback f g)] {m m' : ℕ}
+    (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') (P : FinDist D) :
+    (P.coupling f g hm hm' hf hg).defect = P.defect := by
+  rw [defect, defect, entropy_coupling,
+    card_eq_card_mul_of_fiber
+      (fun p : SGD.Pullback f g => SGD.Pullback.base p)
+      (card_base_fiber f g hf hg), Nat.cast_mul,
+    Real.log_mul (by exact_mod_cast Fintype.card_pos.ne' :
+        (Fintype.card D : ℝ) ≠ 0)
+      (by exact_mod_cast (Nat.mul_pos hm hm').ne' : ((m * m' : ℕ) : ℝ) ≠ 0)]
+  ring
+
 end FinDist
 
 end Meno

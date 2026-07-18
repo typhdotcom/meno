@@ -69,7 +69,17 @@ period evaluation is a perfect pairing `H₁(G;ℤ) ≃ Dual ℤ H¹(G;ℤ)`
 keystone), the transported form is `π²` times the unit-edge chain
 pairing, and the duality reads `Z(priced cycles) =
 √(disc/π^{b₁})·Z(harmonic classes)` (`cycle_harmonic_duality`,
-`Meno/BasisIndependence.lean`).
+`Meno/BasisIndependence.lean`). The form-preserving equivalences are
+a calculus (`refl`/`trans`/`symm`/`dual` with laws and dual-double
+naturality), giving the symmetric statement `classQuadAction ≃q
+cycleAction.dual` (`classActionEquivCycleDual`); the two duality
+prefactors multiply to one as a named theorem
+(`dual_prefactor_mul_one`). **The concrete dualities flow through the
+topological theorem**: the theta duality and the cycle-graph
+T-duality are `cycle_harmonic_duality` read in the concrete lattice
+bases (`theta_siegelPoisson_duality`,
+`partitionFn_T_duality_via_spine`) — the coordinate duality is
+consumed once, inside the intrinsic proof.
 
 **Topology, intrinsically.** Every finite multigraph
 (`IncidenceGraph`) carries an intrinsic integral cycle lattice
@@ -193,7 +203,15 @@ the Gibbs residue distribution. The same generic theorem at the
 uniform distribution yields the uniform complexity identity
 (`carrier_gravity_complexity_of_entropy` — a genuine specialization);
 the SGD-bridge derivation `carrier_gravity_complexity` stands as
-independent corroboration.
+independent corroboration. Pricing and counting are **numerically
+bridged** by the uniform entropy defect `Δ(P) = log|X| − H(P)`
+(`FinDist.defect` — nonnegative by the maximum entropy theorem, zero
+exactly at the uniform distribution, preserved by lifting and
+coupling): the *same* action-induced deficit separates every uniform
+complexity from its Gibbs entropy — `K_uniform = H + Δ` for residue,
+description, and pair alike (`uniformComplexity_residue_split`,
+`uniformComplexity_description_split`, `uniformComplexity_pair_split`,
+`Meno/ResolutionCount.lean`).
 
 **Uncertainty.** The Gibbs state's fluctuations are the model's
 uncertainty, and they are theorems, not vocabulary: the variance of

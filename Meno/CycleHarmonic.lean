@@ -125,20 +125,67 @@ theorem cycleHarmonicGramData_partFn_eq_partitionFn (n : ℕ) (hn : n ≥ 3) :
 
   `Z(π² · n) = √((1/n) / π) · partitionFn n hn`
 
-is a consequence of `QuadraticAction.scalarPartFn_duality` applied at
-coupling `α = 1/n`. No bespoke modular input is needed at this layer —
-the duality is unpacked from the analytic primitive. The categorical
-groupoid wrapper from `Duality.lean` is no longer load-bearing for this
-correspondence; the new spine carries it. -/
+— now derived **through the topology** (review #11): it is
+`cycle_harmonic_duality` at the cycle graph, read in the
+`cycleLatticeBasis` chart. The dual side is the priced cycle lattice —
+the all-ones cycle with chain Gram `!![n]`, so the homology action is
+the scalar action at `π²·n` — the harmonic side is the legacy
+`partitionFn`, and the prefactor is the carrier discriminant `1/n`.
+No bespoke modular input, and no direct coordinate duality call: the
+scalar `S`-transformation is consumed once, inside the intrinsic
+proof's analytic spine. -/
 theorem partitionFn_T_duality_via_spine (n : ℕ) (hn : n ≥ 3) :
     (↑(QuadraticAction.scalarPartFn (Real.pi ^ 2 * n)) : ℂ) =
     ↑((1 / (n : ℝ)) / Real.pi) ^ ((1 : ℂ) / 2) * ↑(partitionFn n hn) := by
-  have hn0 : (0 : ℝ) < n := by exact_mod_cast (show 0 < n by omega)
-  have hαpos : (0 : ℝ) < 1 / n := one_div_pos.mpr hn0
-  have hπα : Real.pi ^ 2 / (1 / n) = Real.pi ^ 2 * n := by field_simp
-  rw [show Real.pi ^ 2 * n = Real.pi ^ 2 / (1 / n) from hπα.symm,
-      QuadraticAction.scalarPartFn_duality (1 / n) hαpos,
-      scalarPartFn_one_div_n_eq_partitionFn n hn]
+  have hpos : 0 < n := by omega
+  have hn0 : (0 : ℝ) < n := by exact_mod_cast hpos
+  have hπn : (0 : ℝ) < Real.pi ^ 2 * n := by positivity
+  have hcycR : (cycleGraph n hpos).cyclesR (cycleLatticeBasis n hpos)
+      = cycleAllOnes n := by
+    funext i e
+    show (((cycleGraph n hpos).cyclesZ (cycleLatticeBasis n hpos) i e
+      : ℤ) : ℝ) = cycleAllOnes n i e
+    rw [cyclesZ_cycleLatticeBasis]
+    simp [cycleCyclesZ, cycleAllOnes]
+  have hdual : ((cycleGraph n hpos).cycleAction).toSectorAction.partFn
+      = QuadraticAction.scalarPartFn (Real.pi ^ 2 * n) := by
+    rw [← ((cycleGraph n hpos).cycleAction).partFn_chartAction
+      (cycleLatticeBasis n hpos)]
+    rw [show ((cycleGraph n hpos).cycleAction).chartAction
+        (cycleLatticeBasis n hpos)
+        = QuadraticAction.ofScalar (Real.pi ^ 2 * n) hπn from
+      QuadraticAction.eq_of_Q_eq (by
+        rw [QuadLatticeAction.chartAction_Q,
+          (cycleGraph n hpos).cycleAction_gram (cycleLatticeBasis n hpos),
+          hcycR, gramOf_cycleAllOnes]
+        show Real.pi ^ 2 • !![(n : ℝ)] = !![Real.pi ^ 2 * n]
+        ext i j
+        fin_cases i
+        fin_cases j
+        simp)]
+    exact QuadraticAction.ofScalar_partFn_eq _ hπn
+  have hharm : ((cycleGraph n hpos).classQuadAction).toSectorAction.partFn
+      = partitionFn n hn := by
+    rw [(cycleGraph n hpos).classQuadAction_partFn,
+      ← (cycleGraph n hpos).basisGramData_partFn (cycleLatticeBasis n hpos),
+      ← cycleHarmonicGramData_partFn_eq_partitionFn n hn]
+    refine QuadraticAction.partFn_eq_of_Q_eq _ _ ?_
+    rw [HarmonicGramData.toQuadraticAction_Q,
+      HarmonicGramData.toQuadraticAction_Q,
+      (cycleGraph n hpos).basisGramData_gram, hcycR, gramOf_cycleAllOnes,
+      inv_fin_one _ hn0.ne']
+    show !![(n : ℝ)⁻¹] = !![1 / (n : ℝ)]
+    rw [one_div]
+  have hdisc : ((cycleGraph n hpos).classQuadAction).disc = 1 / (n : ℝ) := by
+    rw [(cycleGraph n hpos).classQuadAction_disc (cycleLatticeBasis n hpos),
+      hcycR, gramOf_cycleAllOnes, inv_fin_one _ hn0.ne']
+    show (!![(n : ℝ)⁻¹] : Matrix (Fin 1) (Fin 1) ℝ).det = 1 / (n : ℝ)
+    rw [Matrix.det_fin_one]
+    norm_num
+  have hb1 : (cycleGraph n hpos).b1 = 1 := cycleGraph_b1' n hpos
+  have h := (cycleGraph n hpos).cycle_harmonic_duality
+  rw [hb1, hdisc, pow_one, hdual, hharm] at h
+  exact h
 
 /-! ## Theta identification (formerly `Theta.lean`)
 

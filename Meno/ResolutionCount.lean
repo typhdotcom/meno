@@ -949,48 +949,39 @@ noncomputable def residueDist : FinDist (H1Reduction G q) where
 @[simp] theorem residueDist_mass :
     (G.residueDist q).mass = G.residueMass q := rfl
 
-/-- **The description distribution**: the residue distribution lifted
-uniformly through `carrierCompression` — each finite sector's mass
-divided evenly across its gauge fiber. -/
-noncomputable def descriptionMass (ω : G.E → ZMod q) : ℝ :=
-  G.residueMass q (G.carrierCompression q ω)
-    / Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))
-
 theorem card_carrierCompression_fiber (ξ : H1Reduction G q) :
     Nat.card {ω : G.E → ZMod q // G.carrierCompression q ω = ξ}
       = Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) :=
   Nat.card_congr (G.carrierFiberEquivGauge q ξ)
 
-theorem descriptionMass_pos (ω : G.E → ZMod q) :
-    0 < G.descriptionMass q ω :=
-  div_pos (G.residueMass_pos q _) (by exact_mod_cast Nat.card_pos)
-
-theorem descriptionMass_sum :
-    ∑ ω : G.E → ZMod q, G.descriptionMass q ω = 1 := by
-  have h := sum_comp_card_fiber (G.carrierCompression q)
-    (G.card_carrierCompression_fiber q)
-    (fun ξ => G.residueMass q ξ
-      / Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))))
-  have hg : (0 : ℝ) < Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) := by
-    exact_mod_cast Nat.card_pos
-  calc ∑ ω : G.E → ZMod q, G.descriptionMass q ω
-      = (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) : ℝ)
-        * ∑ ξ : H1Reduction G q, G.residueMass q ξ
-            / Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) := h
-    _ = ∑ ξ : H1Reduction G q, G.residueMass q ξ := by
-        rw [← Finset.sum_div]
-        field_simp
-    _ = 1 := G.residueMass_sum q
-
-/-- **The description distribution, bundled** (review #10): the
+/-- **The description distribution, bundled first** (review #11): the
 uniform gauge lift of the residue distribution through
-`carrierCompression`, as a `FinDist`. -/
+`carrierCompression` — normalization and nonnegativity come from the
+`FinDist` structure, never recomputed. -/
 noncomputable def descriptionDist : FinDist (G.E → ZMod q) :=
   (G.residueDist q).uniformLift (G.carrierCompression q)
     Nat.card_pos (G.card_carrierCompression_fiber q)
 
+/-- **The description mass — the distribution's mass projection**
+(review #11): each finite sector's residue mass divided evenly across
+its gauge fiber. -/
+noncomputable def descriptionMass : (G.E → ZMod q) → ℝ :=
+  (G.descriptionDist q).mass
+
 @[simp] theorem descriptionDist_mass :
     (G.descriptionDist q).mass = G.descriptionMass q := rfl
+
+theorem descriptionMass_pos (ω : G.E → ZMod q) :
+    0 < G.descriptionMass q ω := by
+  show 0 < G.residueMass q (G.carrierCompression q ω)
+    / (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) : ℝ)
+  exact div_pos (G.residueMass_pos q _) (by exact_mod_cast Nat.card_pos)
+
+/-- Normalization — from the bundled distribution, not recomputed
+(review #11). -/
+theorem descriptionMass_sum :
+    ∑ ω : G.E → ZMod q, G.descriptionMass q ω = 1 :=
+  (G.descriptionDist q).sum_one
 
 /-- **The lift pushforward law, on the carrier** (review #10): pushing
 the description distribution forward through `carrierCompression`
@@ -1008,9 +999,8 @@ theorem descriptionEntropy_split :
     shannonEntropy (G.descriptionMass q)
       = shannonEntropy (G.residueMass q)
         + Real.log (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) :=
-  shannonEntropy_comp_div (G.carrierCompression q) (G.residueMass q)
-    Nat.card_pos (G.card_carrierCompression_fiber q) (G.residueMass_sum q)
-    (fun ξ => (G.residueMass_pos q ξ).le)
+  FinDist.entropy_uniformLift (G.carrierCompression q) Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.residueDist q)
 
 /-- **The shared-pair coupling, bundled** (review #10): the
 shared-base coupling of two description lifts over the residue
@@ -1126,6 +1116,79 @@ theorem carrier_gravity_complexity_of_entropy :
     FinDist.entropy_uniform] at h
   simp only [uniformAction_complexity]
   exact h
+
+/-! ### The uniform entropy defect: pricing meets counting (review #11)
+
+The Gibbs-priced and uniform-counting gravity identities were two
+instances of one generic theorem; the **defect** `Δ = log|X| − H(P)`
+is their numerical bridge. Because lifting and coupling preserve the
+defect (`FinDist.defect_uniformLift`, `FinDist.defect_coupling`), the
+*same* action-induced information deficit separates every uniform
+complexity from its Gibbs entropy:
+
+    K_uniform(residue)     = H(residue)     + Δ
+    K_uniform(description) = H(description) + Δ
+    K_uniform(pair)        = H(pair)        + Δ
+
+— the uniform gravity identity is the Gibbs entropy gravity plus the
+same deficit on both sides. -/
+
+/-- **The action-induced information deficit** (review #11): how far
+the Gibbs residue distribution sits below maximal ignorance on the
+finite reduction. Nonnegative (`FinDist.defect_nonneg`); zero exactly
+when the Gibbs law is uniform (`FinDist.defect_eq_zero_iff`). -/
+noncomputable def residueDefect : ℝ := (G.residueDist q).defect
+
+/-- `K_uniform(residue) = H(residue) + Δ`. -/
+theorem uniformComplexity_residue_split :
+    (uniformAction (H1Reduction G q)).complexity
+      = shannonEntropy (G.residueMass q) + G.residueDefect q := by
+  rw [uniformAction_complexity]
+  show _ = shannonEntropy (G.residueMass q)
+    + (Real.log (Fintype.card (H1Reduction G q))
+        - shannonEntropy (G.residueMass q))
+  ring
+
+/-- `K_uniform(description) = H(description) + Δ` — **the same Δ**:
+the uniform gauge lift preserves the deficit (review #11). -/
+theorem uniformComplexity_description_split :
+    (uniformAction (G.E → ZMod q)).complexity
+      = shannonEntropy (G.descriptionMass q) + G.residueDefect q := by
+  have h := FinDist.defect_uniformLift (G.carrierCompression q)
+    Nat.card_pos (G.card_carrierCompression_fiber q) (G.residueDist q)
+  rw [uniformAction_complexity]
+  have h2 : Real.log (Fintype.card (G.E → ZMod q))
+      = (G.descriptionDist q).entropy + (G.descriptionDist q).defect := by
+    show _ = _ + (Real.log (Fintype.card (G.E → ZMod q))
+      - (G.descriptionDist q).entropy)
+    ring
+  rw [h2]
+  exact congrArg₂ (· + ·) rfl h
+
+/-- `K_uniform(pair) = H(pair) + Δ` — **the same Δ**: the shared-base
+coupling preserves the deficit (review #11). Together with the
+previous two, the uniform gravity identity equals the Gibbs entropy
+gravity identity plus the same action-induced deficit on both
+sides — pricing and counting are two decompositions of one
+quantity. -/
+theorem uniformComplexity_pair_split :
+    (uniformAction (SGD.Pullback (G.carrierCompression q)
+        (G.carrierCompression q))).complexity
+      = shannonEntropy (G.pairMass q) + G.residueDefect q := by
+  have h := FinDist.defect_coupling (G.carrierCompression q)
+    (G.carrierCompression q) Nat.card_pos Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
+    (G.residueDist q)
+  rw [uniformAction_complexity]
+  have h2 : Real.log (Fintype.card (SGD.Pullback (G.carrierCompression q)
+      (G.carrierCompression q)))
+      = (G.pairDist q).entropy + (G.pairDist q).defect := by
+    show _ = _ + (Real.log (Fintype.card (SGD.Pullback
+        (G.carrierCompression q) (G.carrierCompression q)))
+      - (G.pairDist q).entropy)
+    ring
+  rw [h2]
+  exact congrArg₂ (· + ·) rfl h
 
 /-- **The time face, as conditional entropy** (review #9): the
 per-sector gauge-fixing cost of `carrierCompression` is exactly the

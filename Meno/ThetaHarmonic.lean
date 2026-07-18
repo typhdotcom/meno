@@ -202,19 +202,49 @@ theorem thetaMatter_mass : thetaMatter.mass = 1/3 := by
   norm_num [Fin.sum_univ_two]
 
 /-- **The first non-diagonal consumer of the general Siegel–Poisson
-duality**: the theta graph's quadratic action, with its topologically
-derived coupled Gram form of determinant `1/12`, obeys
-`Z(π²·Q⁻¹) = √((1/12)/π²)·Z(Q)`. Phases 15 and 17 meet. -/
+duality — now through the topology** (review #11): the theta duality
+is `cycle_harmonic_duality` at the theta graph, read in the
+`thetaLatticeBasis` chart. The dual side is the priced cycle lattice
+(`cycleAction_gram`: `π²` times the chain Gram `!![4,2;2,4]`), the
+harmonic side is the graph partition function, and the prefactor is
+the carrier discriminant `det !![1/3,−1/6;−1/6,1/3] = 1/12`. The
+coordinate `QuadraticAction.duality` is not called here — it is
+consumed once, inside the intrinsic proof. -/
 theorem theta_siegelPoisson_duality :
     (↑(thetaHarmonicGramData.toQuadraticAction.dual.toSectorAction.partFn) : ℂ)
       = ↑((1/12 : ℝ) / Real.pi ^ 2) ^ ((1 : ℂ) / 2)
         * ↑(thetaHarmonicGramData.toQuadraticAction.toSectorAction.partFn) := by
-  have h := (thetaHarmonicGramData.toQuadraticAction).duality
-  have hdet : (thetaHarmonicGramData.toQuadraticAction).Q.det = 1/12 := by
+  have hb1 : thetaGraph.b1 = 2 :=
+    (thetaGraph.card_eq_b1 thetaLatticeBasis).symm
+  have hchain : IsUnit (!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ).det :=
+    isUnit_iff_ne_zero.mpr (ne_of_gt thetaChainGram_posDef.det_pos)
+  have hdual :
+      thetaHarmonicGramData.toQuadraticAction.dual.toSectorAction.partFn
+        = (thetaGraph.cycleAction).toSectorAction.partFn := by
+    rw [← (thetaGraph.cycleAction).partFn_chartAction thetaLatticeBasis]
+    refine QuadraticAction.partFn_eq_of_Q_eq _ _ ?_
+    rw [QuadraticAction.dual_Q, QuadLatticeAction.chartAction_Q,
+      thetaGraph.cycleAction_gram thetaLatticeBasis,
+      cyclesR_thetaLatticeBasis, gramOf_thetaCycles,
+      HarmonicGramData.toQuadraticAction_Q, thetaHarmonicGramData_gram,
+      ← thetaChainGram_inv, Matrix.nonsing_inv_nonsing_inv _ hchain]
+  have hharm :
+      thetaHarmonicGramData.toQuadraticAction.toSectorAction.partFn
+        = (thetaGraph.classQuadAction).toSectorAction.partFn := by
+    rw [thetaGraph.classQuadAction_partFn,
+      ← thetaGraph.basisGramData_partFn thetaLatticeBasis]
+    refine QuadraticAction.partFn_eq_of_Q_eq _ _ ?_
+    rw [HarmonicGramData.toQuadraticAction_Q,
+      HarmonicGramData.toQuadraticAction_Q, thetaHarmonicGramData_gram,
+      basisGramData_theta_gram]
+  have hdisc : (thetaGraph.classQuadAction).disc = (1/12 : ℝ) := by
+    rw [thetaGraph.classQuadAction_disc thetaLatticeBasis,
+      cyclesR_thetaLatticeBasis, gramOf_thetaCycles, thetaChainGram_inv]
     show (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ).det = 1/12
     rw [Matrix.det_fin_two]
     norm_num
-  rw [hdet] at h
+  have h := thetaGraph.cycle_harmonic_duality
+  rw [hb1, hdisc, ← hdual, ← hharm] at h
   exact h
 
 end Theta

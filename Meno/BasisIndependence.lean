@@ -381,10 +381,16 @@ theorem classQuadAction_gram_h1Basis {n : ℕ}
   ext i j
   exact G.classForm_h1Basis B i j
 
+private lemma cast_dot_cyclesB {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (i j : Fin n) :
+    ((G.cyclesZ B i ⬝ᵥ G.cyclesZ B j : ℤ) : ℝ)
+      = gramOf (G.cyclesR B) i j :=
+  (G.cast_periods B (G.cyclesZ B i) j).symm
+
 private lemma cast_dot_cycles (i j : Fin G.b1) :
     ((G.cyclesZ G.cycleBasis i ⬝ᵥ G.cyclesZ G.cycleBasis j : ℤ) : ℝ)
       = gramOf (G.cyclesR G.cycleBasis) i j :=
-  (G.cast_periods G.cycleBasis (G.cyclesZ G.cycleBasis i) j).symm
+  G.cast_dot_cyclesB G.cycleBasis i j
 
 /-- **The priced cycle lattice**: `H₁(G;ℤ)` with `π²` times the
 unit-edge chain pairing — the topological carrier of the intrinsic
@@ -474,6 +480,45 @@ theorem cycle_harmonic_duality :
         * ↑((G.classQuadAction).toSectorAction.partFn) := by
   rw [← (G.cycleActionEquivDual).partFn_eq]
   exact G.classQuadAction_duality
+
+/-- **The symmetric topological statement** (review #11): the carrier
+itself is form-equivalent to the dual of the priced cycle lattice —
+harmonic cohomology *is* the dual of priced homology, derived in the
+equivalence calculus: the involution's inverse composed with the
+dualized period-evaluation equivalence. -/
+noncomputable def classActionEquivCycleDual :
+    (G.classQuadAction).Equiv (G.cycleAction).dual :=
+  ((G.classQuadAction).dualDual.symm).trans (G.cycleActionEquivDual).dual
+
+/-! ### Chart interfaces for concrete consumers (review #11)
+
+The flagship graphs re-derive their coordinate dualities from
+`cycle_harmonic_duality`; these lemmas read the intrinsic objects in
+any basis's coordinates. -/
+
+/-- The homology action's Gram at any basis is `π²` times the chain
+Gram of the basis cycles. -/
+theorem cycleAction_gram {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
+    (G.cycleAction).gram B = Real.pi ^ 2 • gramOf (G.cyclesR B) := by
+  ext i j
+  rw [Matrix.smul_apply, smul_eq_mul]
+  show Real.pi ^ 2 * (((B i : G.E → ℤ) ⬝ᵥ (B j : G.E → ℤ) : ℤ) : ℝ) = _
+  congr 1
+  exact G.cast_dot_cyclesB B i j
+
+/-- The carrier's discriminant, in any basis's coordinates: the
+determinant of the inverse chain Gram. -/
+theorem classQuadAction_disc {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
+    (G.classQuadAction).disc = ((gramOf (G.cyclesR B))⁻¹).det := by
+  refine ((G.classQuadAction).disc_eq (G.h1Basis B)).trans ?_
+  rw [G.classQuadAction_gram_h1Basis, G.basisGramData_gram]
+
+/-- The carrier's partition function is the graph's. -/
+theorem classQuadAction_partFn :
+    (G.classQuadAction).toSectorAction.partFn = G.partFn :=
+  G.classSectorAction_partFn
 
 end IncidenceGraph
 

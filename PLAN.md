@@ -255,7 +255,21 @@ the transported dual form is `π²` times the unit-edge chain pairing
 `QuadLatticeAction` (`cycleAction`) form-equivalent to the dual
 (`cycleActionEquivDual`), and Siegel–Poisson duality holds directly
 between harmonic `H¹` sectors and priced `H₁` cycles
-(`cycle_harmonic_duality`). Consumed by C4.
+(`cycle_harmonic_duality`). The equivalence layer is a **calculus**
+(review #11): `Equiv.refl`/`trans`/`dual` with identity, composition,
+and associativity laws and dual-double naturality
+(`dualDual_naturality`), yielding the symmetric topological statement
+`classQuadAction ≃q cycleAction.dual` (`classActionEquivCycleDual`);
+the analytic cancellation is the named theorem
+`dual_prefactor_mul_one` (the two duality prefactors multiply to one),
+through which `duality_dualDual` is derived. **The concrete flagships
+flow through the topological theorem** (review #11):
+`theta_siegelPoisson_duality` and `partitionFn_T_duality_via_spine`
+are `cycle_harmonic_duality` at the theta and cycle graphs, read in
+the `thetaLatticeBasis`/`cycleLatticeBasis` charts
+(`cycleAction_gram`, `classQuadAction_disc`, `classQuadAction_partFn`);
+direct coordinate duality calls remain only inside the generic
+intrinsic proof. Consumed by C4.
 
 ### C4 -- General harmonic theory for every finite graph — CLOSED (Phase 30)
 
@@ -551,6 +565,25 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   `H(pair) = H(residue) + 2·log|gauge|`; and
   `sectionCost_carrierCompression_div` reads the time face as the
   conditional entropy `H(description) − H(residue)` per sector.
+  The description branch flows entirely through the bundled API
+  (review #11): `descriptionDist` is defined first, `descriptionMass`
+  is its mass projection, and normalization and the entropy split are
+  `FinDist.sum_one` and `FinDist.entropy_uniformLift`. **Pricing and
+  counting are numerically bridged** (review #11) by the uniform
+  entropy defect `Δ(P) = log|X| − H(P)` (`FinDist.defect`):
+  nonnegative (`defect_nonneg` — the maximum entropy theorem), zero
+  exactly at the uniform distribution (`defect_eq_zero_iff`), and
+  **preserved** by uniform lifting and shared-base coupling
+  (`defect_uniformLift`, `defect_coupling`) — so on the carrier the
+  *same* action-induced deficit `Δ` (`residueDefect`) separates every
+  uniform complexity from its Gibbs entropy:
+  `K_uniform(residue) = H(residue) + Δ`,
+  `K_uniform(description) = H(description) + Δ`,
+  `K_uniform(pair) = H(pair) + Δ`
+  (`uniformComplexity_residue_split`,
+  `uniformComplexity_description_split`,
+  `uniformComplexity_pair_split`) — the uniform gravity identity is
+  the Gibbs entropy gravity plus the same deficit on both sides.
 
 The falsified endofunction-kernel design (Phase 17) stands
 falsified; its
@@ -4190,5 +4223,28 @@ single-source discipline applied to probability. Finding 3 makes
 "specialization" true in the proof term, not the prose. Finding 4
 turns the involution from a pointwise identity into transported
 structure. All twelve items remain CLOSED.
+`lake build Meno && lake exe check`: build green (3348 jobs), zero
+`sorry`, zero `axiom`, zero warnings; check PASS.
+
+## Phase 47 addendum: eleventh external review — four findings, four confirmed, four repaired (2026-07-18)
+
+Review #11 arrived against the Phase-46 state. Every claim verified
+against the code before repair; all four CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | The homology duality had no concrete consumer: `theta_siegelPoisson_duality` still called the coordinate `QuadraticAction.duality` directly, and `partitionFn_T_duality_via_spine` still called the scalar duality directly — the perfect pairing was proved but not authoritative | **CONFIRMED** — both proofs were direct coordinate invocations; `cycle_harmonic_duality` had zero downstream references | **Both flagships re-derived from `cycle_harmonic_duality`**: chart interfaces added (`cycleAction_gram` — the homology action's Gram at any basis is `π²` times the chain Gram; `classQuadAction_disc` — the carrier discriminant is the inverse chain Gram's determinant; `classQuadAction_partFn`; the private cast lemma generalized to every basis). Theta: the dual side is the priced cycle lattice at `thetaLatticeBasis` (`π²·!![4,2;2,4]`), the harmonic side the graph partition function, the prefactor `det !![1/3,−1/6;−1/6,1/3] = 1/12` — through `card_eq_b1` for the exponent. Cycle: at `cycleLatticeBasis` the chain Gram is `!![n]`, so the homology action **is** the scalar action at `π²·n` (`cyclesR_cycleLatticeBasis` cast identity inline), the harmonic side is the legacy `partitionFn`, the prefactor `1/n`. Direct coordinate duality calls now occur only inside the generic intrinsic proof |
+| 2 | Gibbs gravity and uniform complexity had the same shape but no numerical bridge — parallel instances of `FinDist.entropy_gravity`, with nothing comparing their entropies | **CONFIRMED** | **The uniform entropy defect** (`FinDist.defect`, `Meno/InfoRatchet.lean`): `Δ(P) = log\|X\| − H(P)`; **`defect_nonneg`** — the maximum entropy theorem, by the termwise Gibbs-inequality bound `p·log(pN) − p + 1/N ≥ 0` from `Real.log_le_sub_one_of_pos`; **`defect_eq_zero_iff`** — zero defect characterizes the uniform distribution, by the strict form `Real.log_lt_sub_one_of_pos` (empty-mass points contribute `1/N > 0`, so equality forces every mass to `1/N`); **`defect_uniformLift`** and **`defect_coupling`** — lifting and coupling preserve the defect (`log m` enters both the entropy and the log-cardinality). On the carrier (`residueDefect := (residueDist).defect`): **`uniformComplexity_residue_split`**, **`uniformComplexity_description_split`**, **`uniformComplexity_pair_split`** — `K_uniform = H + Δ` with the **same** `Δ` in all three: the uniform gravity identity equals Gibbs entropy gravity plus the same action-induced deficit on both sides |
+| 3 | The description branch bypassed `FinDist`: `descriptionMass_sum` recomputed normalization manually and `descriptionEntropy_split` invoked the raw Shannon engine directly | **CONFIRMED** | Reordered (review #11's prescription exactly): `descriptionDist` is defined **first**, `descriptionMass` is its mass projection, normalization is `(descriptionDist).sum_one`, positivity a two-line `div_pos`, and the entropy split is `FinDist.entropy_uniformLift`. The raw `shannonEntropy_comp_div` engine is consumed only beneath the bundled API |
+| 4 | `≃q` was not a calculus — only `symm` existed, so the involution could not compose with the graph identification; and `duality_dualDual` had the same proposition as `partFn_dualDual`, its prefactor content living only in the proof route | **CONFIRMED** | **`Equiv.refl`/`trans`/`dual`** added (`Meno/LatticeAction.lean`) with `ext`, identity laws (`refl_trans`, `trans_refl`), associativity (`trans_assoc`), and **dual-double naturality** (`dualDual_naturality` — the involution commutes with every equivalence, by `Module.Dual.eval_comp_comp_evalEquiv_eq`); `Equiv.dual` is contravariant, chart-verified at a basis and its image where the Grams agree. Derived: **`classActionEquivCycleDual : classQuadAction ≃q cycleAction.dual`** — the symmetric topological statement, as `dualDual.symm.trans (cycleActionEquivDual.dual)`. The analytic cancellation is now the named theorem **`dual_prefactor_mul_one`** (`√(disc(Q^∨)/π^r)·√(disc(Q)/π^r) = 1`), and `duality_dualDual` is re-derived through it — two `duality` applications and the prefactor theorem |
+
+**Discipline check.** No goal reopens. Finding 1 makes the
+topological duality authoritative — the flagships that motivated the
+program now flow through it, and the coordinate engine is consumed
+exactly once. Finding 2 supplies the missing theorem connecting
+pricing to counting: one deficit, preserved by every construction on
+the carrier. Findings 3–4 are the single-source discipline again —
+distributions through their API, equivalences through their calculus.
+All twelve items remain CLOSED.
 `lake build Meno && lake exe check`: build green (3348 jobs), zero
 `sorry`, zero `axiom`, zero warnings; check PASS.
