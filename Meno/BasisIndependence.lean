@@ -354,6 +354,174 @@ theorem classSectorAction_gibbsVariance_nonneg
     0 ≤ (G.classSectorAction).gibbsVariance f :=
   (G.classSectorAction).gibbsVariance_nonneg f hsq hf
 
+/-! ### The energy moments of the intrinsic carrier (review #14)
+
+The generic variance law above still demands summability from its
+callers. For the **energy observable** the moments are theorems: a
+polynomial-times-Gaussian bound (`x·e⁻ˣ ≤ 2·e^{−x/2}`,
+`x²·e⁻ˣ ≤ 16·e^{−x/2}`) against the half-energy Boltzmann weight —
+summable because half the Gram is still positive definite — makes
+both harmonic-energy moments summable, so the carrier's energy
+variance is **unconditionally** nonnegative
+(`classSectorAction_gibbsVariance_energy_nonneg`) and strictly
+positive on any graph with cycles
+(`classSectorAction_gibbsVariance_energy_pos`). -/
+
+private lemma mul_exp_neg_le (x : ℝ) :
+    x * Real.exp (-x) ≤ 2 * Real.exp (-(x / 2)) := by
+  have h1 : x ≤ 2 * Real.exp (x / 2) := by
+    have h := Real.add_one_le_exp (x / 2)
+    nlinarith [Real.exp_pos (x / 2)]
+  calc x * Real.exp (-x) ≤ 2 * Real.exp (x / 2) * Real.exp (-x) :=
+        mul_le_mul_of_nonneg_right h1 (Real.exp_pos _).le
+    _ = 2 * Real.exp (-(x / 2)) := by
+        rw [mul_assoc, ← Real.exp_add]
+        congr 2
+        ring
+
+private lemma sq_mul_exp_neg_le {x : ℝ} (hx : 0 ≤ x) :
+    x ^ 2 * Real.exp (-x) ≤ 16 * Real.exp (-(x / 2)) := by
+  have h1 : x ≤ 4 * Real.exp (x / 4) := by
+    have h := Real.add_one_le_exp (x / 4)
+    nlinarith [Real.exp_pos (x / 4)]
+  have h2 : x ^ 2 ≤ 16 * Real.exp (x / 2) := by
+    have h3 := mul_le_mul h1 h1 hx (by positivity)
+    calc x ^ 2 = x * x := sq x
+      _ ≤ 4 * Real.exp (x / 4) * (4 * Real.exp (x / 4)) := h3
+      _ = 16 * Real.exp (x / 2) := by
+          rw [show (4 : ℝ) * Real.exp (x / 4) * (4 * Real.exp (x / 4))
+              = 16 * (Real.exp (x / 4) * Real.exp (x / 4)) from by ring,
+            ← Real.exp_add]
+          congr 2
+          ring
+  calc x ^ 2 * Real.exp (-x) ≤ 16 * Real.exp (x / 2) * Real.exp (-x) :=
+        mul_le_mul_of_nonneg_right h2 (Real.exp_pos _).le
+    _ = 16 * Real.exp (-(x / 2)) := by
+        rw [mul_assoc, ← Real.exp_add]
+        congr 2
+        ring
+
+private lemma summable_exp_neg_half_energy :
+    Summable (fun k : Fin G.b1 → ℤ =>
+      Real.exp (-((G.basisGramData G.cycleBasis).energy k / 2))) := by
+  have hpos : (((1 : ℝ) / 2) • (G.basisGramData G.cycleBasis).gram).PosDef :=
+    posDef_smul' (G.basisGramData G.cycleBasis).gram_posDef (by norm_num)
+  refine (summable_exp_neg_quadForm hpos).congr fun k => ?_
+  congr 1
+  rw [neg_inj]
+  show ∑ i, ∑ j, (((1 : ℝ) / 2) • (G.basisGramData G.cycleBasis).gram) i j
+        * (k i : ℝ) * (k j : ℝ)
+    = (∑ i, ∑ j, (G.basisGramData G.cycleBasis).gram i j
+        * (k i : ℝ) * (k j : ℝ)) / 2
+  rw [Finset.sum_div]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Finset.sum_div]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  rw [Matrix.smul_apply, smul_eq_mul]
+  ring
+
+private lemma summable_energy_weight_chart :
+    Summable (fun k : Fin G.b1 → ℤ =>
+      (G.basisGramData G.cycleBasis).energy k
+        * Real.exp (-(G.basisGramData G.cycleBasis).energy k)) :=
+  Summable.of_nonneg_of_le
+    (fun k => mul_nonneg
+      ((G.basisGramData G.cycleBasis).toQuadraticAction.energy_nonneg k)
+      (Real.exp_pos _).le)
+    (fun k => mul_exp_neg_le ((G.basisGramData G.cycleBasis).energy k))
+    ((G.summable_exp_neg_half_energy).mul_left 2)
+
+private lemma summable_energy_sq_weight_chart :
+    Summable (fun k : Fin G.b1 → ℤ =>
+      (G.basisGramData G.cycleBasis).energy k ^ 2
+        * Real.exp (-(G.basisGramData G.cycleBasis).energy k)) :=
+  Summable.of_nonneg_of_le
+    (fun _ => mul_nonneg (sq_nonneg _) (Real.exp_pos _).le)
+    (fun k => sq_mul_exp_neg_le
+      ((G.basisGramData G.cycleBasis).toQuadraticAction.energy_nonneg k))
+    ((G.summable_exp_neg_half_energy).mul_left 16)
+
+/-- **The first harmonic-energy moment is summable** (review #14). -/
+theorem summable_harmonicEnergy_gibbs :
+    Summable (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
+      G.harmonicEnergy κ * (G.classSectorAction).gibbsMass κ) := by
+  have h1 : Summable (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
+      G.harmonicEnergy κ * Real.exp (-G.harmonicEnergy κ)) := by
+    have h2 := (Equiv.summable_iff
+      (G.latticeQuotEquiv G.cycleBasis).toEquiv).mpr
+      (G.summable_energy_weight_chart)
+    refine h2.congr fun κ => ?_
+    show (G.basisGramData G.cycleBasis).energy
+          (G.latticeQuotEquiv G.cycleBasis κ)
+        * Real.exp (-(G.basisGramData G.cycleBasis).energy
+          (G.latticeQuotEquiv G.cycleBasis κ)) = _
+    rw [G.basisGramData_energy_latticeQuot G.cycleBasis κ]
+  refine (h1.div_const (G.classSectorAction).partFn).congr fun κ => ?_
+  show G.harmonicEnergy κ * Real.exp (-G.harmonicEnergy κ)
+      / (G.classSectorAction).partFn = _
+  rw [mul_div_assoc]
+  rfl
+
+/-- **The second harmonic-energy moment is summable** (review #14). -/
+theorem summable_harmonicEnergy_sq_gibbs :
+    Summable (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
+      G.harmonicEnergy κ ^ 2 * (G.classSectorAction).gibbsMass κ) := by
+  have h1 : Summable (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
+      G.harmonicEnergy κ ^ 2 * Real.exp (-G.harmonicEnergy κ)) := by
+    have h2 := (Equiv.summable_iff
+      (G.latticeQuotEquiv G.cycleBasis).toEquiv).mpr
+      (G.summable_energy_sq_weight_chart)
+    refine h2.congr fun κ => ?_
+    show (G.basisGramData G.cycleBasis).energy
+          (G.latticeQuotEquiv G.cycleBasis κ) ^ 2
+        * Real.exp (-(G.basisGramData G.cycleBasis).energy
+          (G.latticeQuotEquiv G.cycleBasis κ)) = _
+    rw [G.basisGramData_energy_latticeQuot G.cycleBasis κ]
+  refine (h1.div_const (G.classSectorAction).partFn).congr fun κ => ?_
+  show G.harmonicEnergy κ ^ 2 * Real.exp (-G.harmonicEnergy κ)
+      / (G.classSectorAction).partFn = _
+  rw [mul_div_assoc]
+  rfl
+
+/-- **Uncertainty on the intrinsic carrier, unconditional**
+(review #14): the Gibbs variance of the harmonic energy against the
+carrier's Boltzmann weights is nonnegative — no summability
+hypotheses; the moments are theorems. -/
+theorem classSectorAction_gibbsVariance_energy_nonneg :
+    0 ≤ (G.classSectorAction).gibbsVariance (G.classSectorAction).E :=
+  (G.classSectorAction).gibbsVariance_nonneg _
+    (G.summable_harmonicEnergy_sq_gibbs) (G.summable_harmonicEnergy_gibbs)
+
+/-- **Strict uncertainty on the intrinsic carrier** (review #14): on
+any graph with cycles the harmonic energy genuinely fluctuates — the
+vacuum has zero energy, a basis class has positive energy, and one of
+the two misses the Gibbs mean. -/
+theorem classSectorAction_gibbsVariance_energy_pos (hb : 0 < G.b1) :
+    0 < (G.classSectorAction).gibbsVariance (G.classSectorAction).E := by
+  obtain ⟨i⟩ : Nonempty (Fin G.b1) := ⟨⟨0, hb⟩⟩
+  set κ₁ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) :=
+    (G.latticeQuotEquiv G.cycleBasis).symm (Pi.single i 1) with hκ₁
+  have hκ₁ne : κ₁ ≠ 0 := by
+    intro h
+    have h2 := congrArg (G.latticeQuotEquiv G.cycleBasis) h
+    rw [hκ₁, LinearEquiv.apply_symm_apply, map_zero] at h2
+    have h3 := congrFun h2 i
+    rw [Pi.single_eq_same, Pi.zero_apply] at h3
+    exact one_ne_zero h3
+  have hE1 : 0 < G.harmonicEnergy κ₁ := G.harmonicEnergy_pos hκ₁ne
+  by_cases hc : (G.classSectorAction).gibbsExpect (G.classSectorAction).E = 0
+  · refine (G.classSectorAction).gibbsVariance_pos _
+      (G.summable_harmonicEnergy_sq_gibbs) (G.summable_harmonicEnergy_gibbs)
+      (k₀ := κ₁) ?_
+    rw [hc]
+    exact ne_of_gt hE1
+  · refine (G.classSectorAction).gibbsVariance_pos _
+      (G.summable_harmonicEnergy_sq_gibbs) (G.summable_harmonicEnergy_gibbs)
+      (k₀ := (0 : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))) ?_
+    show G.harmonicEnergy 0 ≠ _
+    rw [G.harmonicEnergy_zero]
+    exact fun h => hc h.symm
+
 /-! ## The intrinsic dual identified with graph homology (review #10)
 
 The abstract dual lattice `Module.Dual ℤ H¹(G;ℤ)` *is* the cycle

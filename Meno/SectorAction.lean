@@ -121,32 +121,37 @@ theorem gibbsExpect_one : A.gibbsExpect (fun _ => 1) = 1 := by
   show ∑' k, 1 * A.gibbsMass k = 1
   simp [A.tsum_gibbsMass_eq_one]
 
-/-- Variance is non-negative when the relevant moments are summable.
-The proof is the classical argument: `(f - ⟨f⟩)² · μ ≥ 0` pointwise; sum
-and expand using linearity of `tsum`. -/
-theorem gibbsVariance_nonneg (f : A.Λ → ℝ)
+/-- The centered second moment is summable when both raw moments
+are. -/
+theorem summable_sq_sub_gibbs (f : A.Λ → ℝ)
     (hsq : Summable (fun k => f k ^ 2 * A.gibbsMass k))
     (hf : Summable (fun k => f k * A.gibbsMass k)) :
-    0 ≤ A.gibbsVariance f := by
+    Summable (fun k => (f k - A.gibbsExpect f) ^ 2 * A.gibbsMass k) := by
   set c := A.gibbsExpect f with hc
-  have hμ := A.summable_gibbsMass
   have hfc : Summable (fun k => 2 * c * (f k * A.gibbsMass k)) :=
     hf.mul_left (2 * c)
-  have hc2 : Summable (fun k => c ^ 2 * A.gibbsMass k) := hμ.mul_left (c ^ 2)
-  have expand : ∀ k, (f k - c) ^ 2 * A.gibbsMass k =
-      f k ^ 2 * A.gibbsMass k - 2 * c * (f k * A.gibbsMass k)
-      + c ^ 2 * A.gibbsMass k := by
-    intro k; ring
-  have hshift : Summable (fun k => (f k - c) ^ 2 * A.gibbsMass k) := by
-    refine ((hsq.sub hfc).add hc2).congr ?_
-    intro k; rw [expand k]
-  have hnn : ∀ k, 0 ≤ (f k - c) ^ 2 * A.gibbsMass k := fun k =>
-    mul_nonneg (sq_nonneg _) (A.gibbsMass_nonneg k)
-  have hge : 0 ≤ ∑' k, (f k - c) ^ 2 * A.gibbsMass k := tsum_nonneg hnn
-  -- Compute the tsum on the LHS in closed form.
+  have hc2 : Summable (fun k => c ^ 2 * A.gibbsMass k) :=
+    A.summable_gibbsMass.mul_left (c ^ 2)
+  refine ((hsq.sub hfc).add hc2).congr ?_
+  intro k; ring
+
+/-- **The variance is the centered second moment** (review #14): with
+both raw moments summable, `Var(f) = ∑' (f − ⟨f⟩)² · μ` — the closed
+form behind both the nonnegativity and the strict positivity of Gibbs
+fluctuation. -/
+theorem gibbsVariance_eq_tsum (f : A.Λ → ℝ)
+    (hsq : Summable (fun k => f k ^ 2 * A.gibbsMass k))
+    (hf : Summable (fun k => f k * A.gibbsMass k)) :
+    A.gibbsVariance f
+      = ∑' k, (f k - A.gibbsExpect f) ^ 2 * A.gibbsMass k := by
+  set c := A.gibbsExpect f with hc
+  have hfc : Summable (fun k => 2 * c * (f k * A.gibbsMass k)) :=
+    hf.mul_left (2 * c)
+  have hc2 : Summable (fun k => c ^ 2 * A.gibbsMass k) :=
+    A.summable_gibbsMass.mul_left (c ^ 2)
   have hcong : (fun k => (f k - c) ^ 2 * A.gibbsMass k) =
       (fun k => f k ^ 2 * A.gibbsMass k - 2 * c * (f k * A.gibbsMass k)
-                + c ^ 2 * A.gibbsMass k) := by funext k; exact expand k
+                + c ^ 2 * A.gibbsMass k) := by funext k; ring
   have hT : ∑' k, (f k - c) ^ 2 * A.gibbsMass k = A.gibbsVariance f := by
     rw [hcong, (hsq.sub hfc).tsum_add hc2, hsq.tsum_sub hfc,
         tsum_mul_left, tsum_mul_left, A.tsum_gibbsMass_eq_one]
@@ -156,7 +161,33 @@ theorem gibbsVariance_nonneg (f : A.Λ → ℝ)
       = A.gibbsExpect (fun k => f k ^ 2) - A.gibbsExpect f ^ 2
     have : c = A.gibbsExpect f := hc
     rw [this]; ring
-  linarith [hge, hT]
+  exact hT.symm
+
+/-- Variance is non-negative when the relevant moments are summable.
+The classical argument: `(f - ⟨f⟩)² · μ ≥ 0` pointwise; sum via the
+centered-moment closed form. -/
+theorem gibbsVariance_nonneg (f : A.Λ → ℝ)
+    (hsq : Summable (fun k => f k ^ 2 * A.gibbsMass k))
+    (hf : Summable (fun k => f k * A.gibbsMass k)) :
+    0 ≤ A.gibbsVariance f := by
+  rw [A.gibbsVariance_eq_tsum f hsq hf]
+  exact tsum_nonneg fun k => mul_nonneg (sq_nonneg _) (A.gibbsMass_nonneg k)
+
+/-- **Strict Gibbs fluctuation** (review #14): an observable that
+misses its own mean somewhere has strictly positive variance — every
+sector carries positive Gibbs mass, so the centered term at the
+witness is positive. -/
+theorem gibbsVariance_pos (f : A.Λ → ℝ)
+    (hsq : Summable (fun k => f k ^ 2 * A.gibbsMass k))
+    (hf : Summable (fun k => f k * A.gibbsMass k))
+    {k₀ : A.Λ} (hk₀ : f k₀ ≠ A.gibbsExpect f) :
+    0 < A.gibbsVariance f := by
+  rw [A.gibbsVariance_eq_tsum f hsq hf]
+  refine (A.summable_sq_sub_gibbs f hsq hf).tsum_pos
+    (fun k => mul_nonneg (sq_nonneg _) (A.gibbsMass_nonneg k)) k₀ ?_
+  refine mul_pos ?_ (A.gibbsMass_pos k₀)
+  exact lt_of_le_of_ne (sq_nonneg _)
+    (Ne.symm (pow_ne_zero 2 (sub_ne_zero.mpr hk₀)))
 
 /-! ## Product: independent sectors -/
 

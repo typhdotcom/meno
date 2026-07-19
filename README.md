@@ -28,14 +28,15 @@ Gibbs distribution pushes to a residue distribution on that quotient
 (`residueMass`), gravity is the four-term identity of sharing one of
 its finite sectors — priced at the level of actions,
 `K(pair) + K(residue) = 2·K(description)` (`carrier_gravity_action`),
-with the entropy form (`carrier_gravity_entropy`) and the uniform
-complexity identity the same generic theorems specialized — the
-gauge-fixing cost of reading a description is the time face — the
-complexity difference `K(description) − K(residue)` per sector
-(`sectionCost_carrierCompression_action`, equivalently the
-conditional entropy, `sectionCost_carrierCompression_div`) — and
-Gibbs fluctuation specializes to it
-(`classSectorAction_gibbsVariance_nonneg`).
+with the entropy form a corollary of the priced calculus
+(`carrier_gravity_entropy`) and the uniform complexity identity the
+priced identity plus the common deficit — the gauge-fixing cost of
+reading a description is the time face — the complexity difference
+`K(description) − K(residue)` per sector
+(`sectionCost_carrierCompression_action`, a direct specialization of
+the generic priced time law) — and Gibbs fluctuation consumes it
+unconditionally, strictly on any graph with cycles
+(`classSectorAction_gibbsVariance_energy_pos`).
 
 Everything below is a checked theorem — zero `sorry`, zero `axiom`
 declarations, ~3300 build jobs green against Lean 4.26.0 / Mathlib.
@@ -200,7 +201,10 @@ description entropy splits as residue entropy plus the gauge log
 exactly that conditional entropy (`sectionCost_carrierCompression_div`)
 — at the action level, exactly the complexity difference
 `K(descriptionAction) − K(residueAction)`
-(`sectionCost_carrierCompression_action`) — time's arrow priced
+(`sectionCost_carrierCompression_action` — a direct specialization
+of the generic priced time law
+`sectionCost f / |Λ| = K(uniformLift) − K(base)`,
+`SectorAction.sectionCost_uniformLift`) — time's arrow priced
 against the action, not only against counts.
 
 **Gravity.** A finite type is a sector lattice with zero energy:
@@ -238,13 +242,14 @@ untouched: `descriptionAction_gibbsExpect_E`,
 **priced**, at partition functions and at complexities —
 `Z(pair)·Z(residue) = Z(description)²` (`carrier_gravity_partFn`)
 and `K(pair) + K(residue) = 2·K(description)`
-(`carrier_gravity_action`) — with the entropy form
-`H(pair) + H(residue) = 2·H(description)`
-(`carrier_gravity_entropy`, the generic `FinDist.entropy_gravity`
-instantiated at the Gibbs residue distribution; at the uniform
-distribution it yields the uniform complexity identity,
-`carrier_gravity_complexity_of_entropy`, with the SGD-bridge
-derivation `carrier_gravity_complexity` as independent
+(`carrier_gravity_action`) — and the entropy form
+`H(pair) + H(residue) = 2·H(description)` is a **corollary of the
+priced calculus** (`SectorAction.entropy_gravity` — the four Gibbs
+entropy splits, complexity gravity, and the expectation transports —
+instantiated at the residue action, `carrier_gravity_entropy`), with
+the uniform complexity identity the priced identity plus the common
+deficit (`carrier_gravity_complexity_of_entropy`; the SGD-bridge
+derivation `carrier_gravity_complexity` stands as independent
 corroboration). Pricing and counting are **numerically bridged** by
 the uniform entropy defect `Δ(P) = log|X| − H(P)` (`FinDist.defect`
 — nonnegative by the maximum entropy theorem, zero exactly at the
@@ -269,12 +274,40 @@ resolution `1 < q` **all three bridge terms are strictly positive**,
 (`uniformComplexity_residue_bridge_pos`, subsuming
 `residueDist_ne_uniform` and `residueDefect_pos`), concretely at the
 theta graph with `q = 2` (`theta_residue_bridge_pos`,
-`theta_residueDefect_pos`).
+`theta_residueDefect_pos`). The strictness reaches the whole
+branch — the description and pair bridges also decompose into three
+strictly positive terms (`uniformComplexity_description_bridge_pos`,
+`uniformComplexity_pair_bridge_pos`) — and the resolutions form a
+**tower**: coarse-graining has identity and composition laws
+(`coarseGrain_id`, `coarseGrain_comp`), for `q ∣ q'` the finer
+reduction maps canonically onto the coarser (`h1TowerMap`), residue
+weights, masses, and the Gibbs law push forward
+(`residueWeight_tower`, `residueMass_tower`, `residueDist_tower`),
+the coarse residue action **is** the coarse-graining of the finer one
+(`residueAction_tower` — concretely at theta, `4 → 2`,
+`theta_residueAction_tower`), and the partition-function
+factorization is transitive (`classPartFn_tower`). One theorem
+carries the whole priced package on one explicit graph
+(`theta_priced_faces`): partition-function gravity, complexity
+gravity, priced time, strict bridge terms, strict energy variance,
+at `q = 2`.
 
 **Uncertainty.** The Gibbs state's fluctuations are the model's
 uncertainty, and they are theorems, not vocabulary: the variance of
 any observable against the Boltzmann weights is nonnegative
-(`gibbsVariance_nonneg`, `Meno/SectorAction.lean`), and the
+(`gibbsVariance_nonneg`, `Meno/SectorAction.lean`), and strictly
+positive as soon as the observable misses its own mean somewhere
+(`gibbsVariance_pos`). On the intrinsic carrier the moments are
+theorems, not hypotheses — both harmonic-energy moments are summable
+(`summable_harmonicEnergy_gibbs`, `summable_harmonicEnergy_sq_gibbs`:
+a polynomial-times-Gaussian bound against the half-energy Boltzmann
+weight) — so the carrier's energy variance is **unconditionally**
+nonnegative and **strictly positive** on any graph with cycles
+(`classSectorAction_gibbsVariance_energy_nonneg`,
+`classSectorAction_gibbsVariance_energy_pos`,
+`Meno/BasisIndependence.lean`); the same strictness holds at every
+finite resolution, for the residue, description, and pair actions
+(`residueAction_gibbsVariance_E_pos` and its transports). And the
 **fluctuation–dissipation identity** ties response to fluctuation —
 on the canonical quadratic family, the derivative of the Gibbs mean
 of squared winding in the coupling is *minus the Gibbs variance* of

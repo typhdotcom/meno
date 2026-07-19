@@ -451,4 +451,56 @@ theorem theta_residue_bridge_pos :
   rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
   norm_num
 
+noncomputable local instance :
+    Fintype (IncidenceGraph.H1Reduction thetaGraph 4) :=
+  thetaGraph.h1ReductionFintype 4
+
+/-- **The resolution tower, concretely** (review #14): reducing the
+theta graph from resolution `4` to resolution `2` — the coarse
+residue action **is** the coarse-graining of the finer one along the
+canonical tower map. -/
+theorem theta_residueAction_tower :
+    (thetaGraph.residueAction 4).coarseGrain
+        (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num)))
+        0
+        (thetaGraph.residueAction_tower_weight_pos 2 4 (by norm_num))
+        (thetaGraph.residueAction_tower_weight_le 2 4 (by norm_num))
+      = thetaGraph.residueAction 2 :=
+  thetaGraph.residueAction_tower 2 4 (by norm_num)
+
+/-- **The priced faces on the theta graph at `q = 2`** (review #14):
+the priced partition-function gravity identity, the priced complexity
+gravity identity, the priced time identity, the three strictly
+positive bridge terms, and the strictly positive energy variance —
+every face of the program, priced and strict, on one explicit
+graph. -/
+theorem theta_priced_faces :
+    (thetaGraph.pairAction 2).partFn * (thetaGraph.residueAction 2).partFn
+        = (thetaGraph.descriptionAction 2).partFn
+          * (thetaGraph.descriptionAction 2).partFn
+      ∧ (thetaGraph.pairAction 2).complexity
+            + (thetaGraph.residueAction 2).complexity
+          = (thetaGraph.descriptionAction 2).complexity
+            + (thetaGraph.descriptionAction 2).complexity
+      ∧ sectionCost (thetaGraph.carrierCompression 2)
+            / Nat.card (IncidenceGraph.H1Reduction thetaGraph 2)
+          = (thetaGraph.descriptionAction 2).complexity
+            - (thetaGraph.residueAction 2).complexity
+      ∧ 0 < (thetaGraph.residueAction 2).complexity
+      ∧ 0 < (thetaGraph.residueAction 2).gibbsExpect
+          (thetaGraph.residueAction 2).E
+      ∧ 0 < thetaGraph.residueDefect 2
+      ∧ 0 < (thetaGraph.residueAction 2).gibbsVariance
+          (thetaGraph.residueAction 2).E := by
+  have hb : 0 < thetaGraph.b1 := by
+    rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
+    norm_num
+  exact ⟨thetaGraph.carrier_gravity_partFn 2,
+    thetaGraph.carrier_gravity_action 2,
+    thetaGraph.sectionCost_carrierCompression_action 2,
+    thetaGraph.residueAction_complexity_pos 2 hb (by norm_num),
+    thetaGraph.residueAction_gibbsExpect_E_pos 2 hb (by norm_num),
+    thetaGraph.residueDefect_pos 2 hb (by norm_num),
+    thetaGraph.residueAction_gibbsVariance_E_pos 2 hb (by norm_num)⟩
+
 end Meno

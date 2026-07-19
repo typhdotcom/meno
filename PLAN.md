@@ -672,7 +672,48 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   `uniformComplexity_description_bridge`,
   `uniformComplexity_pair_bridge`), with expected energy and variance
   transported (`descriptionAction_gibbsExpect_E`,
-  `pairAction_gibbsVariance_E`, …).
+  `pairAction_gibbsVariance_E`, …). Since review #14 the two gravity
+  routes are one: the **priced entropy gravity identity**
+  (`SectorAction.entropy_gravity`, `Meno/InfoRatchet.lean`) is
+  derived from the four Gibbs entropy splits, complexity gravity, and
+  the expectation transports, `carrier_gravity_entropy` is its
+  instantiation at the residue action, and the uniform identity is
+  the priced identity plus the common deficit
+  (`carrier_gravity_complexity_of_entropy`). Time is a **generic
+  priced law**: for any constant-fiber map,
+  `sectionCost/|Λ| = K(uniformLift) − K(base)`
+  (`SectorAction.sectionCost_uniformLift`), the carrier theorem its
+  direct specialization. Coarse-graining has **identity and
+  composition laws** (`coarseWeight_id`, `coarseGrain_id`,
+  `coarseWeight_comp`, `coarseGrain_comp`), so the resolutions form a
+  **tower**: for `q ∣ q'` the canonical map `h1TowerMap` commutes
+  with the carrier projections (`h1TowerMap_mk`), weights, masses,
+  and the Gibbs law push forward (`residueWeight_tower`,
+  `residueMass_tower`, `residueDist_tower`), the coarse residue
+  action **is** the coarse-graining of the finer one
+  (`residueAction_tower`), and the partition-function factorization
+  is transitive (`residueWeight_factor_trans`, `classPartFn_tower`) —
+  concretely at theta, `4 → 2` (`theta_residueAction_tower`).
+  **Uncertainty consumes the carrier unconditionally** (review #14):
+  both harmonic-energy moments are summable
+  (`summable_harmonicEnergy_gibbs`, `summable_harmonicEnergy_sq_gibbs`
+  — a polynomial-times-Gaussian bound against the half-energy
+  Boltzmann weight), so the carrier's energy variance needs no
+  caller-supplied hypotheses and is strictly positive on any graph
+  with cycles (`classSectorAction_gibbsVariance_energy_nonneg`,
+  `classSectorAction_gibbsVariance_energy_pos`,
+  `Meno/BasisIndependence.lean`); the finite strict-fluctuation law
+  (`SectorAction.gibbsVariance_pos`, `gibbsVariance_pos_of_ne`)
+  makes the residue action's energy variance strictly positive,
+  transported to descriptions and pairs
+  (`residueAction_gibbsVariance_E_pos`, `…description…`, `…pair…`).
+  Strictness reaches the gravity branch: the description and pair
+  bridges decompose into three strictly positive terms
+  (`uniformComplexity_description_bridge_pos`,
+  `uniformComplexity_pair_bridge_pos`), and the theta graph at
+  `q = 2` carries the full priced package — partition-function
+  gravity, complexity gravity, priced time, strict bridge terms,
+  strict energy variance (`theta_priced_faces`).
 
 The falsified endofunction-kernel design (Phase 17) stands
 falsified; its
@@ -4428,3 +4469,47 @@ one deficit. Finding 4 leaves one analytic engine where there were
 two proofs; finding 5 corrects the record by deletion, as directed.
 All twelve items CLOSED at phase end. `lake build Meno`: build green
 (3348 jobs), zero `sorry`, zero `axiom`, zero warnings.
+
+## Phase 50 addendum: fourteenth external review — five findings, five confirmed, five repaired (2026-07-19)
+
+Review #14 arrived against the Phase-49 state, finding the next
+layer: the two gravity routes still parallel, uncertainty not
+genuinely consuming the carrier, the resolutions disconnected
+snapshots, time a graph-specific rewrite, and strictness stopping at
+the residue. Every claim verified against the code before repair;
+all five CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | Priced gravity and entropy gravity remained parallel proofs: `carrier_gravity_entropy` still invoked `FinDist.entropy_gravity` directly while `carrier_gravity_action` invoked the priced calculus — contradicting the Phase-49 amendment's claim that the entropy identities are corollaries of the Gibbs/action layer | **CONFIRMED** — the two derivations shared no theorem | **The priced entropy gravity identity** (`SectorAction.entropy_gravity`, `Meno/InfoRatchet.lean`): derived from the four Gibbs entropy splits (`entropy_gibbs`), `complexity_gravity`, and the three expectation transports — `linarith` closes. `carrier_gravity_entropy` re-derived through it at the residue action (moved to the priced section); **the uniform identity is the priced identity plus the common deficit**: `carrier_gravity_complexity_of_entropy` re-derived from `carrier_gravity_entropy` + the three `uniformComplexity_*_split` theorems. (Review #10's route — the generic `FinDist` theorem at the uniform law — is superseded; recorded as a rule-3 amendment. `FinDist.entropy_gravity` remains as distribution-layer library; the SGD-bridge `carrier_gravity_complexity` stands as corroboration) |
+| 2 | Uncertainty did not genuinely consume the intrinsic carrier: `classSectorAction_gibbsVariance_nonneg` merely restated the generic theorem, demanding both moment summabilities from callers — yet README and the `ResolutionCount` section docstring cited it as the completed carrier specialization | **CONFIRMED** | **The moments are theorems** (`Meno/BasisIndependence.lean`): `x·e⁻ˣ ≤ 2e^{−x/2}` and `x²·e⁻ˣ ≤ 16e^{−x/2}` (from `Real.add_one_le_exp`), the half-energy Boltzmann weight summable (half the Gram is positive definite, `posDef_smul'` + `summable_exp_neg_quadForm`), transported through the `cycleBasis` chart to **`summable_harmonicEnergy_gibbs`** and **`summable_harmonicEnergy_sq_gibbs`**. Hence **`classSectorAction_gibbsVariance_energy_nonneg`** (unconditional) and **`classSectorAction_gibbsVariance_energy_pos`** for `0 < b₁` (vacuum at zero energy, a basis class at positive energy — one of them misses the mean). Generic layer: `gibbsVariance_eq_tsum` (the centered second moment, extracted from the old nonnegativity proof), **`gibbsVariance_pos`** (witness misses the mean), finite form **`gibbsVariance_pos_of_ne`**. Applied: **`residueAction_gibbsVariance_E_pos`** (witness pair `0`, `ξ ≠ 0`), transported to `descriptionAction`/`pairAction`, instantiated on theta at `q = 2` (inside `theta_priced_faces`). Overciting docstrings corrected |
+| 3 | Coarse-graining had no composition law — one projection, every `residueAction q` built independently from the infinite carrier; nothing related resolution `q'` to resolution `q` for `q ∣ q'` | **CONFIRMED** | **Identity and composition laws** (`Meno/InfoRatchet.lean`): `coarseWeight_id`/`coarseGrain_id` (at any zero-energy modal sector), `coarseWeight_comp` (composite fibers as a sigma — `compFiberEquiv`), `coarseGrain_coarseWeight`, **`coarseGrain_comp`** (the modal normalizations cancel out of the free-energy differences; structure equality by proof irrelevance, `mk_eq_mk`). **The tower** (`Meno/ResolutionCount.lean`): `h1TowerMap (q ∣ q') : H1Reduction G q' →ₗ[ℤ] H1Reduction G q` (`Submodule.mapQ` at the identity, `range_qsmul_le`), commuting with the carrier projections definitionally (`h1TowerMap_mk := rfl`); **pushforwards** `residueWeight_tower`, `residueMass_tower`, `residueDist_tower` (the Gibbs law as `FinDist.map`); **`residueAction_tower`**: the coarse residue action **is** the coarse-graining of the finer one — one application of `coarseGrain_comp`; **transitivity** `residueWeight_factor_trans` (`W_q(0) = W_{q'}(0)·W_tower(0)`) and `classPartFn_tower`. Concrete: **`theta_residueAction_tower`** (theta, `4 → 2`) |
+| 4 | The time theorem was a graph-specific coincidence: `sectionCost_carrierCompression_action` was proved by rewriting the old entropy/counting theorem, and the generic layer had no theorem connecting the lift's complexity increment to `sectionCost` | **CONFIRMED** | **The generic priced time law** (`SectorAction.sectionCost_uniformLift`, `Meno/InfoRatchet.lean`): for a constant-fiber map into a finite sector action, `sectionCost f / |Λ| = K(uniformLift) − K(base)` — surjectivity from nonempty fibers, the section count through `sectionCost_eq_fiberInfoCost` (constant fibers give `|Λ|·log m`), the increment from `uniformLift_complexity`. The carrier theorem re-proved as its **direct specialization** (one `Nat.card_eq_fintype_card` rewrite) |
+| 5 | Strictness stopped at the residue and the gravity branch lacked a concrete consumer: the description and pair bridges were equality-only, and the theta consumer carried only the residue bridge | **CONFIRMED** | **Strict bridges on descriptions and pairs**: `descriptionAction_complexity_pos`/`pairAction_complexity_pos` (residue complexity plus a nonnegative gauge log), `…gibbsExpect_E_pos` (transports), **`uniformComplexity_description_bridge_pos`**, **`uniformComplexity_pair_bridge_pos`** — three strictly positive terms each. **The theta consumer** (`theta_priced_faces`, `Meno/ThetaHarmonic.lean`, `q = 2`): the priced partition-function gravity identity, the priced complexity gravity identity, the priced time identity, the three strict bridge terms, and the strict energy variance — one conjunction, one explicit graph |
+
+**Rule-3 amendments.** (1) The carrier's entropy gravity route:
+review #10's derivation (the generic `FinDist.entropy_gravity` at the
+Gibbs and uniform laws) is superseded — entropy gravity is now a
+corollary of the priced calculus (`SectorAction.entropy_gravity`),
+and the uniform identity is the priced identity plus the common
+deficit. (2) The carrier's time route: the entropy-difference proof
+is superseded by direct specialization of the generic priced law;
+the entropy identity (`sectionCost_carrierCompression_div`) stands
+as the distribution-layer face. (3) The uncertainty face's carrier
+citation: `classSectorAction_gibbsVariance_nonneg` (hypotheses
+demanded from callers) is no longer cited as the completed
+specialization; the energy-observable theorems (unconditional,
+strict) carry the claim.
+
+**Discipline check.** No goal reopens. The phase's center is
+coherence: finding 1 makes the two gravity derivations one theorem
+apart, finding 3 makes the resolutions one tower instead of a family
+of snapshots — both were places where the formalization had the
+*instances* but not the *functoriality*. Finding 2 closes the last
+"hypotheses supplied by the caller" gap on the carrier: the moment
+bounds are the first place the program prices a polynomial against
+its own Gaussian decay. Findings 4–5 finish the pattern of
+reviews #13–14: every face generic, every strictness cashed, one
+graph carrying all of it. All twelve items remain CLOSED.
+`lake build Meno`: build green (3348 jobs), zero `sorry`, zero
+`axiom`, zero warnings.

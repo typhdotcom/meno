@@ -502,6 +502,23 @@ theorem SectorAction.entropy_gibbs (A : SectorAction.{u}) [Fintype A.Λ] :
     Finset.sum_neg_distrib, ← Finset.mul_sum, hsum, hexpect]
   ring
 
+/-- **Strict Gibbs fluctuation, finite form** (review #14): on a
+finite sector action, an observable taking two distinct values has
+strictly positive variance — both moments are finite sums, and one of
+the two witnesses misses the mean. -/
+theorem SectorAction.gibbsVariance_pos_of_ne (A : SectorAction.{u})
+    [Fintype A.Λ] (f : A.Λ → ℝ) {k l : A.Λ} (h : f k ≠ f l) :
+    0 < A.gibbsVariance f := by
+  have hsq : Summable (fun k => f k ^ 2 * A.gibbsMass k) :=
+    (hasSum_fintype _).summable
+  have hf : Summable (fun k => f k * A.gibbsMass k) :=
+    (hasSum_fintype _).summable
+  by_cases hk : f k = A.gibbsExpect f
+  · refine A.gibbsVariance_pos f hsq hf (k₀ := l) ?_
+    rw [← hk]
+    exact fun heq => h heq.symm
+  · exact A.gibbsVariance_pos f hsq hf (k₀ := k) hk
+
 /-! ## Finite distributions (review #10)
 
 The distribution semantics of the gravity face, as one abstraction: a
@@ -1072,6 +1089,130 @@ theorem coarseGrain_gibbsMass (b : B) :
 
 end CoarseGrain
 
+/-! ### Identity and composition of coarse-grainings (review #14)
+
+Coarse-graining is not a family of disconnected snapshots: the
+identity projection changes nothing (`coarseWeight_id`,
+`coarseGrain_id`), and coarse-graining a coarse-graining is the
+coarse-graining along the composite — the modal normalizations
+cancel (`coarseWeight_comp`, `coarseGrain_comp`). -/
+
+/-- Coarse weights along the identity are the weights: the fiber is a
+single sector. -/
+theorem coarseWeight_id (A : SectorAction.{u}) (b : A.Λ) :
+    A.coarseWeight (fun k => k) b = A.weight b := by
+  have h : ∀ k : {k : A.Λ // k = b},
+      k ≠ (⟨b, rfl⟩ : {k : A.Λ // k = b}) → A.weight k.val = 0 :=
+    fun k hk => absurd (Subtype.ext k.prop) hk
+  calc A.coarseWeight (fun k => k) b
+      = ∑' k : {k : A.Λ // k = b}, A.weight k.val := rfl
+    _ = A.weight b := tsum_eq_single _ h
+
+private theorem mk_eq_mk {Λ : Type u} {E E' : Λ → ℝ}
+    {h₁ : ∃ z, E z = 0} {h₂ : ∀ k, 0 ≤ E k}
+    {h₃ : Summable fun k => Real.exp (-E k)}
+    {h₁' : ∃ z, E' z = 0} {h₂' : ∀ k, 0 ≤ E' k}
+    {h₃' : Summable fun k => Real.exp (-E' k)} (h : E = E') :
+    SectorAction.mk Λ E h₁ h₂ h₃ = SectorAction.mk Λ E' h₁' h₂' h₃' := by
+  subst h
+  rfl
+
+/-- **Coarse-graining along the identity is the identity**
+(review #14): at any zero-energy ground sector as the modal choice,
+the coarse action is the action itself. -/
+theorem coarseGrain_id (A : SectorAction.{u}) [Fintype A.Λ] {z : A.Λ}
+    (hz : A.E z = 0)
+    (hpos : ∀ b, 0 < A.coarseWeight (fun k => k) b)
+    (hmax : ∀ b, A.coarseWeight (fun k => k) b
+      ≤ A.coarseWeight (fun k => k) z) :
+    A.coarseGrain (fun k => k) z hpos hmax = A := by
+  cases A with
+  | mk Λ E hE₀ hEnn hsum =>
+    refine mk_eq_mk ?_
+    funext b
+    rw [coarseWeight_id, coarseWeight_id]
+    show Real.log (Real.exp (-E z)) - Real.log (Real.exp (-E b)) = E b
+    rw [Real.log_exp, Real.log_exp, show E z = 0 from hz]
+    ring
+
+/-- The fiber of a composite projection, as a sigma of intermediate
+fibers. -/
+private def compFiberEquiv {α B C : Type u} (p : α → B) (p' : B → C)
+    (c : C) :
+    {k : α // p' (p k) = c}
+      ≃ Σ b : {b : B // p' b = c}, {k : α // p k = b.val} where
+  toFun k := ⟨⟨p k.val, k.prop⟩, ⟨k.val, rfl⟩⟩
+  invFun σ := ⟨σ.2.val, by rw [σ.2.prop]; exact σ.1.prop⟩
+  left_inv k := rfl
+  right_inv σ := by
+    obtain ⟨⟨b, hb⟩, k, hk⟩ := σ
+    refine Sigma.ext (Subtype.ext hk) ?_
+    exact (Subtype.heq_iff_coe_eq (fun k' => by
+      show p k' = p k ↔ p k' = b
+      rw [hk])).mpr rfl
+
+/-- **Coarse weights compose** (review #14): the fiber of a composite
+projection decomposes as the fibers over the intermediate fiber. -/
+theorem coarseWeight_comp (A : SectorAction.{u}) {B C : Type u}
+    (p : A.Λ → B) (p' : B → C) (c : C) :
+    A.coarseWeight (fun k => p' (p k)) c
+      = ∑' b : {b : B // p' b = c}, A.coarseWeight p b.val := by
+  classical
+  have hsum : Summable (fun σ : Σ b : {b : B // p' b = c},
+      {k : A.Λ // p k = b.val} => A.weight σ.2.val) :=
+    (Equiv.summable_iff (compFiberEquiv p p' c)).mp (A.summable.subtype _)
+  calc A.coarseWeight (fun k => p' (p k)) c
+      = ∑' k : {k : A.Λ // p' (p k) = c}, A.weight k.val := rfl
+    _ = ∑' σ : Σ b : {b : B // p' b = c}, {k : A.Λ // p k = b.val},
+          A.weight σ.2.val :=
+        Equiv.tsum_eq (compFiberEquiv p p' c) (fun σ => A.weight σ.2.val)
+    _ = ∑' b : {b : B // p' b = c},
+          ∑' k : {k : A.Λ // p k = b.val}, A.weight k.val := hsum.tsum_sigma
+    _ = ∑' b : {b : B // p' b = c}, A.coarseWeight p b.val := rfl
+
+/-- The coarse action's own coarse weight: the composite coarse
+weight over the modal fiber weight. -/
+theorem coarseGrain_coarseWeight (A : SectorAction.{u}) {B C : Type u}
+    [Fintype B] (p : A.Λ → B) (b₀ : B)
+    (hpos : ∀ b, 0 < A.coarseWeight p b)
+    (hmax : ∀ b, A.coarseWeight p b ≤ A.coarseWeight p b₀)
+    (p' : B → C) (c : C) :
+    (A.coarseGrain p b₀ hpos hmax).coarseWeight p' c
+      = A.coarseWeight (fun k => p' (p k)) c / A.coarseWeight p b₀ := by
+  calc (A.coarseGrain p b₀ hpos hmax).coarseWeight p' c
+      = ∑' b : {b : B // p' b = c},
+          (A.coarseGrain p b₀ hpos hmax).weight b.val := rfl
+    _ = ∑' b : {b : B // p' b = c},
+          A.coarseWeight p b.val / A.coarseWeight p b₀ :=
+        tsum_congr fun b => coarseGrain_weight A p b₀ hpos hmax b.val
+    _ = (∑' b : {b : B // p' b = c}, A.coarseWeight p b.val)
+          / A.coarseWeight p b₀ := by rw [tsum_div_const]
+    _ = A.coarseWeight (fun k => p' (p k)) c / A.coarseWeight p b₀ := by
+        rw [coarseWeight_comp A p p' c]
+
+/-- **Coarse-grainings compose** (review #14): coarse-graining a
+coarse-graining is the coarse-graining along the composite — the
+modal normalizations cancel out of the free-energy differences. -/
+theorem coarseGrain_comp (A : SectorAction.{u}) {B C : Type u}
+    [Fintype B] [Fintype C] (p : A.Λ → B) (p' : B → C) (b₀ : B) (c₀ : C)
+    (hpos : ∀ b, 0 < A.coarseWeight p b)
+    (hmax : ∀ b, A.coarseWeight p b ≤ A.coarseWeight p b₀)
+    (hpos' : ∀ c, 0 < (A.coarseGrain p b₀ hpos hmax).coarseWeight p' c)
+    (hmax' : ∀ c, (A.coarseGrain p b₀ hpos hmax).coarseWeight p' c
+      ≤ (A.coarseGrain p b₀ hpos hmax).coarseWeight p' c₀)
+    (hpos'' : ∀ c, 0 < A.coarseWeight (fun k => p' (p k)) c)
+    (hmax'' : ∀ c, A.coarseWeight (fun k => p' (p k)) c
+      ≤ A.coarseWeight (fun k => p' (p k)) c₀) :
+    (A.coarseGrain p b₀ hpos hmax).coarseGrain p' c₀ hpos' hmax'
+      = A.coarseGrain (fun k => p' (p k)) c₀ hpos'' hmax'' := by
+  refine mk_eq_mk ?_
+  funext c
+  rw [coarseGrain_coarseWeight A p b₀ hpos hmax p' c₀,
+    coarseGrain_coarseWeight A p b₀ hpos hmax p' c,
+    Real.log_div (hpos'' c₀).ne' (hpos b₀).ne',
+    Real.log_div (hpos'' c).ne' (hpos b₀).ne']
+  ring
+
 /-! ### The priced uniform lift -/
 
 section UniformLift
@@ -1181,6 +1322,35 @@ theorem uniformLift_gibbsVariance_E :
     (A.uniformLift f hm hfib).gibbsVariance (A.uniformLift f hm hfib).E
       = A.gibbsVariance A.E :=
   uniformLift_gibbsVariance A f hm hfib A.E
+
+/-- **TIME, GENERIC AND PRICED** (review #14): for a constant-fiber
+map into a finite sector action's sector type, the normalized section
+cost is exactly the complexity increment of the priced uniform lift —
+`sectionCost f / |Λ| = K(uniformLift) − K(base)`. The section count
+is the theorem (`sectionCost_eq_fiberInfoCost`); the increment is
+`log m` (`uniformLift_complexity`). -/
+theorem sectionCost_uniformLift :
+    sectionCost f / Fintype.card A.Λ
+      = (A.uniformLift f hm hfib).complexity - A.complexity := by
+  classical
+  have hsurj : Function.Surjective f := by
+    intro d
+    have hpos : 0 < Nat.card {x : X // f x = d} := by
+      rw [hfib d]; exact hm
+    obtain ⟨⟨x, hx⟩⟩ := (Nat.card_pos_iff.mp hpos).1
+    exact ⟨x, hx⟩
+  have hcost : sectionCost f = Fintype.card A.Λ * Real.log m := by
+    rw [sectionCost_eq_fiberInfoCost hsurj]
+    unfold fiberInfoCost
+    rw [Finset.sum_congr rfl fun b _ => by
+      rw [show (Nat.card (f ⁻¹' {b}) : ℕ) = m from hfib b]]
+    rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+  have hcard : (0 : ℝ) < Fintype.card A.Λ := by
+    have : Nonempty A.Λ := ⟨A.E_zero.choose⟩
+    exact_mod_cast Fintype.card_pos
+  rw [hcost, uniformLift_complexity A f hm hfib,
+    mul_div_cancel_left₀ _ hcard.ne']
+  ring
 
 end UniformLift
 
@@ -1344,6 +1514,24 @@ theorem complexity_gravity :
   rw [coupling_complexity A f g hm hm' hf hg,
     uniformLift_complexity A f hm hf, uniformLift_complexity A g hm' hg]
   ring
+
+/-- **THE PRICED ENTROPY GRAVITY IDENTITY** (review #14): the
+four-term entropy identity of the Gibbs laws, derived from the four
+Gibbs entropy splits `H = K + ⟨E⟩`, the complexity gravity identity,
+and the expectation transports — entropy gravity is a corollary of
+the priced calculus, not a parallel theorem. -/
+theorem entropy_gravity :
+    shannonEntropy (A.coupling f g hm hm' hf hg).gibbsMass
+      + shannonEntropy A.gibbsMass
+    = shannonEntropy (A.uniformLift f hm hf).gibbsMass
+      + shannonEntropy (A.uniformLift g hm' hg).gibbsMass := by
+  rw [SectorAction.entropy_gibbs, SectorAction.entropy_gibbs,
+    SectorAction.entropy_gibbs, SectorAction.entropy_gibbs,
+    coupling_gibbsExpect_E A f g hm hm' hf hg,
+    uniformLift_gibbsExpect_E A f hm hf,
+    uniformLift_gibbsExpect_E A g hm' hg]
+  have h := complexity_gravity A f g hm hm' hf hg
+  linarith
 
 end Coupling
 
