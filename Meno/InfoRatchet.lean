@@ -907,4 +907,446 @@ theorem defect_coupling [DecidableEq D] [Nonempty D] (f : X → D)
 
 end FinDist
 
+/-! ## Generic priced constructions (review #13)
+
+The `FinDist` layer above carries the *distribution* semantics of the
+gravity face; here the same three constructions are built at the level
+of **sector actions**, so that gravity and time are priced by `log Z`
+and expected energy, not only measured by entropy:
+
+* `SectorAction.coarseGrain` — project the sector type along a map,
+  summing Boltzmann weights over each fiber (`coarseWeight`); the
+  coarse energy is the effective free energy measured from a modal
+  sector. The partition function factorizes
+  (`partFn_eq_coarseWeight_mul`) and the complexity decomposes
+  (`complexity_eq_coarseGrain`).
+* `SectorAction.uniformLift` — pull a finite action back along a
+  constant-fiber map; the Gibbs law of the lift **is** the
+  `FinDist.uniformLift` of the Gibbs law (`uniformLift_gibbsDist`).
+* `SectorAction.coupling` — price the shared-base pullback; the Gibbs
+  law of the coupling **is** the `FinDist.coupling` of the Gibbs law
+  (`coupling_gibbsDist`).
+
+The lift and coupling preserve every pulled-back observable's
+expectation and variance (`uniformLift_gibbsExpect`,
+`coupling_gibbsVariance`, …), and satisfy the **action-level gravity
+identities** `Z_pair · Z_base = Z_lift · Z_lift` (`partFn_gravity`)
+and `K(pair) + K(base) = K(lift) + K(lift)` (`complexity_gravity`). -/
+
+namespace SectorAction
+
+/-- The Gibbs distribution of a finite sector action, bundled as a
+`FinDist` (review #13). -/
+noncomputable def gibbsDist (A : SectorAction.{u}) [Fintype A.Λ] :
+    FinDist A.Λ where
+  mass := A.gibbsMass
+  nonneg := A.gibbsMass_nonneg
+  sum_one := by
+    have h := A.tsum_gibbsMass_eq_one
+    rwa [tsum_fintype] at h
+
+@[simp] theorem gibbsDist_mass (A : SectorAction.{u}) [Fintype A.Λ] :
+    A.gibbsDist.mass = A.gibbsMass := rfl
+
+/-! ### Coarse-graining: fiber Boltzmann sums -/
+
+/-- **The unnormalized coarse weight** (review #13): the Boltzmann sum
+of a fiber of a projection — the total weight the fine action assigns
+to a coarse sector. -/
+noncomputable def coarseWeight (A : SectorAction.{u}) {B : Type u}
+    (p : A.Λ → B) (b : B) : ℝ :=
+  ∑' k : {k : A.Λ // p k = b}, A.weight k.val
+
+/-- Fiber Boltzmann sums converge. -/
+theorem summable_coarse (A : SectorAction.{u}) {B : Type u}
+    (p : A.Λ → B) (b : B) :
+    Summable (fun k : {k : A.Λ // p k = b} => A.weight k.val) :=
+  A.summable.subtype _
+
+/-- A coarse sector with a nonempty fiber carries positive weight. -/
+theorem coarseWeight_pos (A : SectorAction.{u}) {B : Type u}
+    {p : A.Λ → B} {b : B} (h : ∃ k, p k = b) :
+    0 < A.coarseWeight p b := by
+  obtain ⟨k₀, hk₀⟩ := h
+  exact (A.summable_coarse p b).tsum_pos
+    (fun k => A.weight_nonneg k.val) ⟨k₀, hk₀⟩ (A.weight_pos k₀)
+
+/-- The coarse weights sum to the partition function — the fibers
+partition the sector type. -/
+theorem sum_coarseWeight (A : SectorAction.{u}) {B : Type u} [Fintype B]
+    (p : A.Λ → B) : ∑ b, A.coarseWeight p b = A.partFn := by
+  have hσ := (Equiv.summable_iff (Equiv.sigmaFiberEquiv p)).mpr A.summable
+  calc ∑ b, A.coarseWeight p b
+      = ∑' b : B, A.coarseWeight p b := (tsum_fintype _).symm
+    _ = ∑' σ : Σ b : B, {k : A.Λ // p k = b}, A.weight σ.2.val :=
+        hσ.tsum_sigma.symm
+    _ = ∑' k : A.Λ, A.weight k := Equiv.tsum_eq (Equiv.sigmaFiberEquiv p) _
+
+/-- **The effective free energy** of a coarse sector (review #13):
+`F b = −log W b`. -/
+noncomputable def coarseFreeEnergy (A : SectorAction.{u}) {B : Type u}
+    (p : A.Λ → B) (b : B) : ℝ :=
+  -Real.log (A.coarseWeight p b)
+
+section CoarseGrain
+
+variable (A : SectorAction.{u}) {B : Type u} [Fintype B] (p : A.Λ → B)
+  (b₀ : B) (hpos : ∀ b, 0 < A.coarseWeight p b)
+  (hmax : ∀ b, A.coarseWeight p b ≤ A.coarseWeight p b₀)
+
+/-- **Coarse-graining a sector action** (review #13): project the
+sector type along `p`, pricing each coarse sector by its fiber
+Boltzmann sum. The energy is the effective free energy measured from
+the modal sector `b₀` — nonnegative exactly because `b₀` is modal,
+vanishing at `b₀`. -/
+noncomputable def coarseGrain : SectorAction.{u} where
+  Λ := B
+  E b := Real.log (A.coarseWeight p b₀) - Real.log (A.coarseWeight p b)
+  E_zero := ⟨b₀, sub_self _⟩
+  E_nonneg b := sub_nonneg.mpr (Real.log_le_log (hpos b) (hmax b))
+  summable := (hasSum_fintype _).summable
+
+instance : Fintype (A.coarseGrain p b₀ hpos hmax).Λ :=
+  inferInstanceAs (Fintype B)
+
+/-- The coarse energy is the free-energy difference from the modal
+sector: `E b = F b − F b₀` (review #13). -/
+theorem coarseGrain_E (b : B) :
+    (A.coarseGrain p b₀ hpos hmax).E b
+      = A.coarseFreeEnergy p b - A.coarseFreeEnergy p b₀ := by
+  show Real.log (A.coarseWeight p b₀) - Real.log (A.coarseWeight p b)
+    = -Real.log (A.coarseWeight p b) - -Real.log (A.coarseWeight p b₀)
+  ring
+
+/-- The coarse Boltzmann weight is the fiber-weight ratio against the
+modal fiber. -/
+theorem coarseGrain_weight (b : B) :
+    (A.coarseGrain p b₀ hpos hmax).weight b
+      = A.coarseWeight p b / A.coarseWeight p b₀ := by
+  show Real.exp (-(Real.log (A.coarseWeight p b₀)
+      - Real.log (A.coarseWeight p b))) = _
+  rw [neg_sub, Real.exp_sub, Real.exp_log (hpos b), Real.exp_log (hpos b₀)]
+
+/-- The coarse partition function: `Z_coarse = Z / W b₀`. -/
+theorem coarseGrain_partFn :
+    (A.coarseGrain p b₀ hpos hmax).partFn
+      = A.partFn / A.coarseWeight p b₀ := by
+  show (∑' b : B, (A.coarseGrain p b₀ hpos hmax).weight b) = _
+  rw [tsum_fintype,
+    Finset.sum_congr rfl fun b _ => coarseGrain_weight A p b₀ hpos hmax b,
+    ← Finset.sum_div, A.sum_coarseWeight p]
+
+/-- **The partition function factorizes through a coarse-graining**
+(review #13): `Z = W b₀ · Z_coarse`. -/
+theorem partFn_eq_coarseWeight_mul :
+    A.partFn
+      = A.coarseWeight p b₀ * (A.coarseGrain p b₀ hpos hmax).partFn := by
+  rw [coarseGrain_partFn A p b₀ hpos hmax]
+  have h0 : A.coarseWeight p b₀ ≠ 0 := (hpos b₀).ne'
+  field_simp
+
+/-- **The complexity decomposition through a coarse-graining**
+(review #13): `log Z = log W b₀ + K_coarse`. -/
+theorem complexity_eq_coarseGrain :
+    A.complexity
+      = Real.log (A.coarseWeight p b₀)
+        + (A.coarseGrain p b₀ hpos hmax).complexity := by
+  show Real.log A.partFn
+    = _ + Real.log (A.coarseGrain p b₀ hpos hmax).partFn
+  rw [coarseGrain_partFn A p b₀ hpos hmax,
+    Real.log_div (ne_of_gt A.partFn_pos) (ne_of_gt (hpos b₀))]
+  ring
+
+/-- **The coarse Gibbs mass is the fiber Gibbs mass** (review #13):
+`μ_coarse b = W b / Z` — the pushforward of the fine Gibbs law. -/
+theorem coarseGrain_gibbsMass (b : B) :
+    (A.coarseGrain p b₀ hpos hmax).gibbsMass b
+      = A.coarseWeight p b / A.partFn := by
+  show (A.coarseGrain p b₀ hpos hmax).weight b
+      / (A.coarseGrain p b₀ hpos hmax).partFn = _
+  rw [coarseGrain_weight A p b₀ hpos hmax b,
+    coarseGrain_partFn A p b₀ hpos hmax]
+  have h0 : A.coarseWeight p b₀ ≠ 0 := (hpos b₀).ne'
+  have hZ : A.partFn ≠ 0 := ne_of_gt A.partFn_pos
+  field_simp
+
+end CoarseGrain
+
+/-! ### The priced uniform lift -/
+
+section UniformLift
+
+variable (A : SectorAction.{u}) [Fintype A.Λ] {X : Type u} [Fintype X]
+  (f : X → A.Λ) {m : ℕ} (hm : 0 < m)
+  (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
+
+/-- **The priced uniform lift** (review #13): pull a finite sector
+action back along a constant-fiber map. Energy is pulled back
+unchanged — each fine sector prices exactly as its coarse image, so
+each Boltzmann weight is copied `m` times across the fiber. -/
+noncomputable def uniformLift : SectorAction.{u} where
+  Λ := X
+  E x := A.E (f x)
+  E_zero := by
+    obtain ⟨z, hz⟩ := A.E_zero
+    have hcard : 0 < Nat.card {x : X // f x = z} := by
+      rw [hfib z]; exact hm
+    obtain ⟨⟨x₀, hx₀⟩⟩ := (Nat.card_pos_iff.mp hcard).1
+    exact ⟨x₀, by rw [hx₀, hz]⟩
+  E_nonneg x := A.E_nonneg (f x)
+  summable := (hasSum_fintype _).summable
+
+instance : Fintype (A.uniformLift f hm hfib).Λ :=
+  inferInstanceAs (Fintype X)
+
+/-- The lift's partition function: `Z_lift = m · Z`. -/
+theorem uniformLift_partFn :
+    (A.uniformLift f hm hfib).partFn = m * A.partFn := by
+  classical
+  show (∑' x : X, Real.exp (-A.E (f x))) = m * A.partFn
+  rw [tsum_fintype,
+    sum_comp_card_fiber f hfib (fun d => Real.exp (-A.E d))]
+  show (m : ℝ) * ∑ d, Real.exp (-A.E d) = (m : ℝ) * A.partFn
+  congr 1
+  show ∑ d, Real.exp (-A.E d) = ∑' d, A.weight d
+  rw [tsum_fintype]
+  rfl
+
+/-- The lift's complexity: `K_lift = log m + K`. -/
+theorem uniformLift_complexity :
+    (A.uniformLift f hm hfib).complexity = Real.log m + A.complexity := by
+  show Real.log (A.uniformLift f hm hfib).partFn = _
+  rw [uniformLift_partFn A f hm hfib,
+    Real.log_mul (by exact_mod_cast hm.ne' : (m : ℝ) ≠ 0)
+      (ne_of_gt A.partFn_pos)]
+  rfl
+
+/-- The lift's Gibbs mass: the base Gibbs mass split evenly across the
+fiber. -/
+theorem uniformLift_gibbsMass (x : X) :
+    (A.uniformLift f hm hfib).gibbsMass x = A.gibbsMass (f x) / m := by
+  show (A.uniformLift f hm hfib).weight x
+      / (A.uniformLift f hm hfib).partFn = _
+  rw [uniformLift_partFn A f hm hfib]
+  show A.weight (f x) / ((m : ℝ) * A.partFn) = _
+  rw [mul_comm, ← div_div]
+  rfl
+
+/-- **The lift's Gibbs distribution is the `FinDist` uniform lift of
+the base's** (review #13). -/
+theorem uniformLift_gibbsDist [DecidableEq A.Λ] :
+    (A.uniformLift f hm hfib).gibbsDist
+      = A.gibbsDist.uniformLift f hm hfib := by
+  refine FinDist.ext ?_
+  funext x
+  show (A.uniformLift f hm hfib).gibbsMass x = A.gibbsMass (f x) / m
+  exact uniformLift_gibbsMass A f hm hfib x
+
+/-- **Pulled-back observables keep their expectation through the
+lift** (review #13). -/
+theorem uniformLift_gibbsExpect (φ : A.Λ → ℝ) :
+    (A.uniformLift f hm hfib).gibbsExpect (fun x => φ (f x))
+      = A.gibbsExpect φ := by
+  classical
+  have hm' : (m : ℝ) ≠ 0 := by exact_mod_cast hm.ne'
+  show (∑' x : X, φ (f x) * (A.uniformLift f hm hfib).gibbsMass x)
+    = ∑' d, φ d * A.gibbsMass d
+  rw [tsum_fintype, tsum_fintype,
+    Finset.sum_congr rfl fun x _ => by
+      rw [uniformLift_gibbsMass A f hm hfib x],
+    sum_comp_card_fiber f hfib (fun d => φ d * (A.gibbsMass d / m)),
+    Finset.mul_sum]
+  refine Finset.sum_congr rfl fun d _ => ?_
+  field_simp
+
+/-- **Pulled-back observables keep their variance through the lift**
+(review #13). -/
+theorem uniformLift_gibbsVariance (φ : A.Λ → ℝ) :
+    (A.uniformLift f hm hfib).gibbsVariance (fun x => φ (f x))
+      = A.gibbsVariance φ := by
+  show (A.uniformLift f hm hfib).gibbsExpect (fun x => φ (f x) ^ 2)
+      - (A.uniformLift f hm hfib).gibbsExpect (fun x => φ (f x)) ^ 2
+    = A.gibbsExpect (fun d => φ d ^ 2) - A.gibbsExpect φ ^ 2
+  rw [uniformLift_gibbsExpect A f hm hfib φ,
+    uniformLift_gibbsExpect A f hm hfib (fun d => φ d ^ 2)]
+
+/-- The lift's expected energy is the base's (review #13). -/
+theorem uniformLift_gibbsExpect_E :
+    (A.uniformLift f hm hfib).gibbsExpect (A.uniformLift f hm hfib).E
+      = A.gibbsExpect A.E :=
+  uniformLift_gibbsExpect A f hm hfib A.E
+
+/-- The lift's energy variance is the base's (review #13). -/
+theorem uniformLift_gibbsVariance_E :
+    (A.uniformLift f hm hfib).gibbsVariance (A.uniformLift f hm hfib).E
+      = A.gibbsVariance A.E :=
+  uniformLift_gibbsVariance A f hm hfib A.E
+
+end UniformLift
+
+/-! ### The priced shared-base coupling -/
+
+section Coupling
+
+variable (A : SectorAction.{u}) [Fintype A.Λ] {X Y : Type u} [Fintype X]
+  [Fintype Y] (f : X → A.Λ) (g : Y → A.Λ) [Fintype (SGD.Pullback f g)]
+  {m m' : ℕ} (hm : 0 < m) (hm' : 0 < m')
+  (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+  (hg : ∀ d, Nat.card {y : Y // g y = d} = m')
+
+/-- **The priced shared-base coupling** (review #13): price the
+pullback of two constant-fiber maps by the base energy at the shared
+image. -/
+noncomputable def coupling : SectorAction.{u} where
+  Λ := SGD.Pullback f g
+  E p := A.E (SGD.Pullback.base p)
+  E_zero := by
+    obtain ⟨z, hz⟩ := A.E_zero
+    have hcf : 0 < Nat.card {x : X // f x = z} := by rw [hf z]; exact hm
+    have hcg : 0 < Nat.card {y : Y // g y = z} := by rw [hg z]; exact hm'
+    obtain ⟨⟨x₀, hx₀⟩⟩ := (Nat.card_pos_iff.mp hcf).1
+    obtain ⟨⟨y₀, hy₀⟩⟩ := (Nat.card_pos_iff.mp hcg).1
+    refine ⟨⟨(x₀, y₀), hx₀.trans hy₀.symm⟩, ?_⟩
+    show A.E (f x₀) = 0
+    rw [hx₀, hz]
+  E_nonneg p := A.E_nonneg _
+  summable := (hasSum_fintype _).summable
+
+instance : Fintype (A.coupling f g hm hm' hf hg).Λ :=
+  inferInstanceAs (Fintype (SGD.Pullback f g))
+
+omit [Fintype X] [Fintype Y] in
+/-- The coupling's partition function: `Z_pair = m·m' · Z`. -/
+theorem coupling_partFn :
+    (A.coupling f g hm hm' hf hg).partFn
+      = ((m * m' : ℕ) : ℝ) * A.partFn := by
+  classical
+  show (∑' p : SGD.Pullback f g, Real.exp (-A.E (SGD.Pullback.base p))) = _
+  rw [tsum_fintype,
+    sum_comp_card_fiber (fun p : SGD.Pullback f g => SGD.Pullback.base p)
+      (FinDist.card_base_fiber f g hf hg) (fun d => Real.exp (-A.E d))]
+  show ((m * m' : ℕ) : ℝ) * ∑ d, Real.exp (-A.E d) = _
+  congr 1
+  show ∑ d, Real.exp (-A.E d) = ∑' d, A.weight d
+  rw [tsum_fintype]
+  rfl
+
+omit [Fintype X] [Fintype Y] in
+/-- The coupling's complexity: `K_pair = log m + log m' + K`. -/
+theorem coupling_complexity :
+    (A.coupling f g hm hm' hf hg).complexity
+      = Real.log m + Real.log m' + A.complexity := by
+  have hm0 : (m : ℝ) ≠ 0 := by exact_mod_cast hm.ne'
+  have hm'0 : (m' : ℝ) ≠ 0 := by exact_mod_cast hm'.ne'
+  show Real.log (A.coupling f g hm hm' hf hg).partFn = _
+  rw [coupling_partFn A f g hm hm' hf hg, Nat.cast_mul,
+    Real.log_mul (mul_ne_zero hm0 hm'0) (ne_of_gt A.partFn_pos),
+    Real.log_mul hm0 hm'0]
+  rfl
+
+omit [Fintype X] [Fintype Y] in
+/-- The coupling's Gibbs mass: the base Gibbs mass split evenly across
+the `m·m'` pairs above it. -/
+theorem coupling_gibbsMass (p : SGD.Pullback f g) :
+    (A.coupling f g hm hm' hf hg).gibbsMass p
+      = A.gibbsMass (SGD.Pullback.base p) / ((m * m' : ℕ) : ℝ) := by
+  show (A.coupling f g hm hm' hf hg).weight p
+      / (A.coupling f g hm hm' hf hg).partFn = _
+  rw [coupling_partFn A f g hm hm' hf hg]
+  show A.weight (SGD.Pullback.base p) / (((m * m' : ℕ) : ℝ) * A.partFn) = _
+  rw [mul_comm, ← div_div]
+  rfl
+
+omit [Fintype X] [Fintype Y] in
+/-- **The coupling's Gibbs distribution is the `FinDist` shared-base
+coupling of the base's** (review #13). -/
+theorem coupling_gibbsDist [DecidableEq A.Λ] :
+    (A.coupling f g hm hm' hf hg).gibbsDist
+      = A.gibbsDist.coupling f g hm hm' hf hg := by
+  refine FinDist.ext ?_
+  funext p
+  show (A.coupling f g hm hm' hf hg).gibbsMass p
+    = A.gibbsMass (SGD.Pullback.base p) / ((m * m' : ℕ) : ℝ)
+  exact coupling_gibbsMass A f g hm hm' hf hg p
+
+omit [Fintype X] [Fintype Y] in
+/-- **Pulled-back observables keep their expectation through the
+coupling** (review #13). -/
+theorem coupling_gibbsExpect (φ : A.Λ → ℝ) :
+    (A.coupling f g hm hm' hf hg).gibbsExpect
+        (fun p => φ (SGD.Pullback.base p))
+      = A.gibbsExpect φ := by
+  classical
+  have hmm : ((m * m' : ℕ) : ℝ) ≠ 0 := by
+    exact_mod_cast (Nat.mul_pos hm hm').ne'
+  show (∑' p : SGD.Pullback f g,
+      φ (SGD.Pullback.base p) * (A.coupling f g hm hm' hf hg).gibbsMass p)
+    = ∑' d, φ d * A.gibbsMass d
+  rw [tsum_fintype, tsum_fintype,
+    Finset.sum_congr rfl fun p _ => by
+      rw [coupling_gibbsMass A f g hm hm' hf hg p],
+    sum_comp_card_fiber (fun p : SGD.Pullback f g => SGD.Pullback.base p)
+      (FinDist.card_base_fiber f g hf hg)
+      (fun d => φ d * (A.gibbsMass d / ((m * m' : ℕ) : ℝ))),
+    Finset.mul_sum]
+  refine Finset.sum_congr rfl fun d _ => ?_
+  field_simp
+
+omit [Fintype X] [Fintype Y] in
+/-- **Pulled-back observables keep their variance through the
+coupling** (review #13). -/
+theorem coupling_gibbsVariance (φ : A.Λ → ℝ) :
+    (A.coupling f g hm hm' hf hg).gibbsVariance
+        (fun p => φ (SGD.Pullback.base p))
+      = A.gibbsVariance φ := by
+  show (A.coupling f g hm hm' hf hg).gibbsExpect
+        (fun p => φ (SGD.Pullback.base p) ^ 2)
+      - (A.coupling f g hm hm' hf hg).gibbsExpect
+          (fun p => φ (SGD.Pullback.base p)) ^ 2
+    = A.gibbsExpect (fun d => φ d ^ 2) - A.gibbsExpect φ ^ 2
+  rw [coupling_gibbsExpect A f g hm hm' hf hg φ,
+    coupling_gibbsExpect A f g hm hm' hf hg (fun d => φ d ^ 2)]
+
+omit [Fintype X] [Fintype Y] in
+/-- The coupling's expected energy is the base's (review #13). -/
+theorem coupling_gibbsExpect_E :
+    (A.coupling f g hm hm' hf hg).gibbsExpect
+        (A.coupling f g hm hm' hf hg).E
+      = A.gibbsExpect A.E :=
+  coupling_gibbsExpect A f g hm hm' hf hg A.E
+
+omit [Fintype X] [Fintype Y] in
+/-- The coupling's energy variance is the base's (review #13). -/
+theorem coupling_gibbsVariance_E :
+    (A.coupling f g hm hm' hf hg).gibbsVariance
+        (A.coupling f g hm hm' hf hg).E
+      = A.gibbsVariance A.E :=
+  coupling_gibbsVariance A f g hm hm' hf hg A.E
+
+/-- **The action-level partition-function gravity identity**
+(review #13): `Z_pair · Z_base = Z_lift · Z_lift`. -/
+theorem partFn_gravity :
+    (A.coupling f g hm hm' hf hg).partFn * A.partFn
+      = (A.uniformLift f hm hf).partFn
+        * (A.uniformLift g hm' hg).partFn := by
+  rw [coupling_partFn A f g hm hm' hf hg, uniformLift_partFn A f hm hf,
+    uniformLift_partFn A g hm' hg]
+  push_cast
+  ring
+
+/-- **The action-level complexity gravity identity** (review #13):
+`K(coupling) + K(base) = K(lift) + K(lift)` — the entropy gravity
+identity's priced sibling, at the level of `log Z`. -/
+theorem complexity_gravity :
+    (A.coupling f g hm hm' hf hg).complexity + A.complexity
+      = (A.uniformLift f hm hf).complexity
+        + (A.uniformLift g hm' hg).complexity := by
+  rw [coupling_complexity A f g hm hm' hf hg,
+    uniformLift_complexity A f hm hf, uniformLift_complexity A g hm' hg]
+  ring
+
+end Coupling
+
+end SectorAction
+
 end Meno

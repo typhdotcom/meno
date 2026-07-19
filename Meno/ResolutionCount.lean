@@ -606,7 +606,7 @@ noncomputable def h1ResQuotEquiv :
   (Submodule.quotEquivOfEq _ _ (G.ker_h1Res q).symm).trans
     ((G.h1Res q).quotKerEquivOfSurjective (G.h1Res_surjective q))
 
-noncomputable instance :
+noncomputable instance h1ReductionFintype :
     Fintype (((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
         ⧸ LinearMap.range ((q : ℤ) •
           (LinearMap.id :
@@ -614,7 +614,7 @@ noncomputable instance :
               ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))) :=
   Fintype.ofEquiv _ (G.h1ResQuotEquiv q).toEquiv.symm
 
-instance :
+instance h1ReductionNonempty :
     Nonempty (((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
         ⧸ LinearMap.range ((q : ℤ) •
           (LinearMap.id :
@@ -1387,14 +1387,21 @@ theorem uniformComplexity_pair_split :
   rw [h2]
   exact congrArg₂ (· + ·) rfl h
 
-/-! ### The residue action: pricing on the finite reduction (review #12)
+/-! ### The residue action: coarse-graining the harmonic action (reviews #12, #13)
 
 The `K_uniform = H + Δ` splits above become a genuine *pricing* bridge
 once the residue distribution is exhibited as the Gibbs law of an
-action. The **residue action** is the normalized finite sector action
-induced by the coset Boltzmann weights: its energy is the log-ratio
-against the modal zero class (nonnegative by the strict modal bound,
-vanishing at the ground state `0`), its Gibbs mass **is** the residue
+action — and the action itself must be the **coarse-graining of the
+harmonic action**, not a reconstruction from the normalized masses
+(review #13). The **unnormalized coset weight**
+`W ξ = ∑_{κ mod q = ξ} exp(−harmonicEnergy κ)` (`residueWeight`)
+satisfies `residueMass ξ = W ξ / Z` (`residueMass_eq_residueWeight_div`);
+the **residue action** is `classSectorAction.coarseGrain` at the
+quotient map, so its energy is the effective free-energy difference
+`F ξ − F 0` with `F = −log W` (`residueAction_E_freeEnergy`), the
+partition function factorizes as `Z = W 0 · Z_residue`
+(`classPartFn_eq_residueWeight_mul`), and the complexity decomposes
+(`classComplexity_residue_split`). Its Gibbs mass **is** the residue
 distribution (`residueAction_gibbsMass`), the Gibbs entropy split
 gives `H(residue) = K + ⟨E⟩` (`residueAction_entropy_split`), and the
 uniform complexity decomposes as
@@ -1411,27 +1418,116 @@ theorem residueMass_le_residueMass_zero (ξ : H1Reduction G q) :
   · rw [hξ]
   · exact (G.residueMass_lt_residueMass_zero q hξ).le
 
-/-- **The residue action** (review #12): the normalized finite sector
-action induced by the coset Boltzmann weights — energy is the
-log-ratio of residue masses against the modal zero class, so the zero
-class is the ground state and every energy is nonnegative by the
-strict modal bound. -/
-noncomputable def residueAction : SectorAction.{v} where
-  Λ := H1Reduction G q
-  E ξ := Real.log (G.residueMass q 0) - Real.log (G.residueMass q ξ)
-  E_zero := ⟨0, sub_self _⟩
-  E_nonneg ξ := sub_nonneg.mpr (Real.log_le_log
-    (G.residueMass_pos q ξ) (G.residueMass_le_residueMass_zero q ξ))
-  summable := (hasSum_fintype _).summable
+/-- **The unnormalized coset weight** (review #13):
+`W ξ = ∑_{κ mod q = ξ} exp(−harmonicEnergy κ)` — the harmonic
+action's coarse weight at the quotient map onto the finite
+reduction. -/
+noncomputable def residueWeight (ξ : H1Reduction G q) : ℝ :=
+  (G.classSectorAction).coarseWeight
+    (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
+      (Submodule.Quotient.mk κ : H1Reduction G q)) ξ
+
+/-- Every coset weight is positive — the fiber is nonempty. -/
+theorem residueWeight_pos (ξ : H1Reduction G q) :
+    0 < G.residueWeight q ξ := by
+  obtain ⟨κ₀, hκ₀⟩ := Submodule.Quotient.mk_surjective _ ξ
+  exact SectorAction.coarseWeight_pos (G.classSectorAction) ⟨κ₀, hκ₀⟩
+
+/-- **The residue mass is the coset weight over the partition
+function** (review #13): the normalized masses of `residueMass` are
+the coarse Boltzmann weights of the harmonic action, divided by its
+partition function. -/
+theorem residueMass_eq_residueWeight_div (ξ : H1Reduction G q) :
+    G.residueMass q ξ
+      = G.residueWeight q ξ / (G.classSectorAction).partFn := by
+  show (∑' κ : {κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) //
+      (Submodule.Quotient.mk κ : H1Reduction G q) = ξ},
+    (G.classSectorAction).weight κ.val / (G.classSectorAction).partFn) = _
+  rw [tsum_div_const]
+  rfl
+
+/-- The zero coset is modal at the weight level. -/
+theorem residueWeight_le_residueWeight_zero (ξ : H1Reduction G q) :
+    G.residueWeight q ξ ≤ G.residueWeight q 0 := by
+  have hZ : (0 : ℝ) < (G.classSectorAction).partFn :=
+    (G.classSectorAction).partFn_pos
+  have h := G.residueMass_le_residueMass_zero q ξ
+  rw [G.residueMass_eq_residueWeight_div q ξ,
+    G.residueMass_eq_residueWeight_div q 0] at h
+  have h2 := mul_le_mul_of_nonneg_right h hZ.le
+  rwa [div_mul_cancel₀ _ hZ.ne', div_mul_cancel₀ _ hZ.ne'] at h2
+
+/-- **The residue action** (reviews #12, #13): the coarse-graining of
+the harmonic action at the quotient map onto the finite reduction —
+the generic `SectorAction.coarseGrain`, with the zero class as the
+modal ground state. Its energy is the coset free-energy difference,
+its partition function divides the harmonic one, and its Gibbs mass
+is the residue distribution. -/
+noncomputable def residueAction : SectorAction.{v} :=
+  (G.classSectorAction).coarseGrain
+    (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
+      (Submodule.Quotient.mk κ : H1Reduction G q)) 0
+    (G.residueWeight_pos q) (G.residueWeight_le_residueWeight_zero q)
+
+noncomputable instance : Fintype (G.residueAction q).Λ :=
+  inferInstanceAs (Fintype (H1Reduction G q))
+
+noncomputable instance : DecidableEq (G.residueAction q).Λ :=
+  inferInstanceAs (DecidableEq (H1Reduction G q))
+
+/-- The residue action's energy, in terms of the normalized masses —
+the partition function cancels out of the weight ratio (the retired
+definition of review #12, now a theorem). -/
+theorem residueAction_E (ξ : H1Reduction G q) :
+    (G.residueAction q).E ξ
+      = Real.log (G.residueMass q 0) - Real.log (G.residueMass q ξ) := by
+  have hZ : (0 : ℝ) < (G.classSectorAction).partFn :=
+    (G.classSectorAction).partFn_pos
+  show Real.log (G.residueWeight q 0) - Real.log (G.residueWeight q ξ) = _
+  rw [G.residueMass_eq_residueWeight_div q 0,
+    G.residueMass_eq_residueWeight_div q ξ,
+    Real.log_div (G.residueWeight_pos q 0).ne' hZ.ne',
+    Real.log_div (G.residueWeight_pos q ξ).ne' hZ.ne']
+  ring
+
+/-- **The effective free energy of a finite sector** (review #13):
+`F ξ = −log W ξ`. -/
+noncomputable def residueFreeEnergy (ξ : H1Reduction G q) : ℝ :=
+  -Real.log (G.residueWeight q ξ)
+
+/-- **The residue energy is the free-energy difference**
+(review #13): `E ξ = F ξ − F 0`. -/
+theorem residueAction_E_freeEnergy (ξ : H1Reduction G q) :
+    (G.residueAction q).E ξ
+      = G.residueFreeEnergy q ξ - G.residueFreeEnergy q 0 := by
+  show Real.log (G.residueWeight q 0) - Real.log (G.residueWeight q ξ)
+    = -Real.log (G.residueWeight q ξ) - -Real.log (G.residueWeight q 0)
+  ring
+
+/-- **The harmonic partition function factorizes through the residue
+action** (review #13): `Z = W 0 · Z_residue`. -/
+theorem classPartFn_eq_residueWeight_mul :
+    (G.classSectorAction).partFn
+      = G.residueWeight q 0 * (G.residueAction q).partFn :=
+  SectorAction.partFn_eq_coarseWeight_mul (G.classSectorAction) _ 0
+    (G.residueWeight_pos q) (G.residueWeight_le_residueWeight_zero q)
+
+/-- **The harmonic complexity decomposes through the residue action**
+(review #13): `log Z = log W 0 + K(residueAction)`. -/
+theorem classComplexity_residue_split :
+    (G.classSectorAction).complexity
+      = Real.log (G.residueWeight q 0) + (G.residueAction q).complexity :=
+  SectorAction.complexity_eq_coarseGrain (G.classSectorAction) _ 0
+    (G.residueWeight_pos q) (G.residueWeight_le_residueWeight_zero q)
 
 /-- The residue action's Boltzmann weight is the mass ratio against
 the modal class. -/
 theorem residueAction_weight (ξ : H1Reduction G q) :
     (G.residueAction q).weight ξ
       = G.residueMass q ξ / G.residueMass q 0 := by
-  show Real.exp (-(Real.log (G.residueMass q 0)
-      - Real.log (G.residueMass q ξ))) = _
-  rw [neg_sub, Real.exp_sub, Real.exp_log (G.residueMass_pos q ξ),
+  show Real.exp (-(G.residueAction q).E ξ) = _
+  rw [G.residueAction_E q ξ, neg_sub, Real.exp_sub,
+    Real.exp_log (G.residueMass_pos q ξ),
     Real.exp_log (G.residueMass_pos q 0)]
 
 /-- The residue action's partition function is the reciprocal modal
@@ -1489,6 +1585,121 @@ theorem uniformComplexity_residue_bridge :
         + G.residueDefect q := by
   rw [G.uniformComplexity_residue_split q, G.residueAction_entropy_split q]
 
+/-- The residue action's Gibbs distribution, bundled: it **is** the
+residue distribution (review #13). -/
+theorem residueAction_gibbsDist :
+    (G.residueAction q).gibbsDist = G.residueDist q := by
+  refine @FinDist.ext (H1Reduction G q) _ _ _ ?_
+  funext ξ
+  show (G.residueAction q).gibbsMass ξ = (G.residueDist q).mass ξ
+  rw [G.residueAction_gibbsMass q]
+  rfl
+
+/-! #### The strict theorems of the residue action (review #13)
+
+The strict modal bound is fully cashed at the action level: energy is
+zero exactly on the ground class and strictly positive exactly off
+it; on any graph with cycles at any resolution `1 < q`, the residue
+complexity and the expected energy are strictly positive, so the
+pricing–counting bridge decomposes the uniform complexity into
+**three strictly positive terms**. -/
+
+/-- **Energy vanishes exactly at the zero class** (review #13). -/
+theorem residueAction_E_eq_zero_iff (ξ : H1Reduction G q) :
+    (G.residueAction q).E ξ = 0 ↔ ξ = 0 := by
+  constructor
+  · intro h
+    by_contra hξ
+    have hlt := G.residueMass_lt_residueMass_zero q hξ
+    have hlog := Real.log_lt_log (G.residueMass_pos q ξ) hlt
+    rw [G.residueAction_E q ξ] at h
+    linarith
+  · rintro rfl
+    rw [G.residueAction_E q 0]
+    exact sub_self _
+
+/-- **Energy is strictly positive exactly off the zero class**
+(review #13). -/
+theorem residueAction_E_pos_iff (ξ : H1Reduction G q) :
+    0 < (G.residueAction q).E ξ ↔ ξ ≠ 0 := by
+  constructor
+  · intro h hξ0
+    exact absurd ((G.residueAction_E_eq_zero_iff q ξ).mpr hξ0) (ne_of_gt h)
+  · intro hξ
+    exact lt_of_le_of_ne ((G.residueAction q).E_nonneg ξ)
+      (fun heq => hξ ((G.residueAction_E_eq_zero_iff q ξ).mp heq.symm))
+
+/-- The modal mass is strictly below one on any graph with cycles at
+any resolution `1 < q` — some other class carries positive mass. -/
+theorem residueMass_zero_lt_one (hb : 0 < G.b1) (hq : 1 < q) :
+    G.residueMass q 0 < 1 := by
+  classical
+  have hcard : 1 < Nat.card (H1Reduction G q) := by
+    rw [G.card_H1Reduction q]
+    exact Nat.one_lt_pow hb.ne' hq
+  haveI : Nontrivial (H1Reduction G q) :=
+    Finite.one_lt_card_iff_nontrivial.mp hcard
+  obtain ⟨ξ, hξ⟩ := exists_ne (0 : H1Reduction G q)
+  have hsub : G.residueMass q 0 + G.residueMass q ξ
+      ≤ ∑ η : H1Reduction G q, G.residueMass q η := by
+    have h := Finset.sum_le_sum_of_subset_of_nonneg
+      (Finset.subset_univ ({0, ξ} : Finset (H1Reduction G q)))
+      (fun η _ _ => (G.residueMass_pos q η).le)
+    rwa [Finset.sum_pair (Ne.symm hξ)] at h
+  rw [G.residueMass_sum q] at hsub
+  have hpos := G.residueMass_pos q ξ
+  linarith
+
+/-- **The residue complexity is strictly positive** (review #13):
+`K(residueAction) = −log(residueMass 0) > 0`. -/
+theorem residueAction_complexity_pos (hb : 0 < G.b1) (hq : 1 < q) :
+    0 < (G.residueAction q).complexity := by
+  rw [G.residueAction_complexity q]
+  have h1 := G.residueMass_pos q 0
+  have h2 := G.residueMass_zero_lt_one q hb hq
+  have h3 := Real.log_neg h1 h2
+  linarith
+
+/-- **The expected residue energy is strictly positive**
+(review #13): some class off the ground state carries positive Gibbs
+mass at positive energy. -/
+theorem residueAction_gibbsExpect_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
+    0 < (G.residueAction q).gibbsExpect (G.residueAction q).E := by
+  classical
+  have hcard : 1 < Nat.card (H1Reduction G q) := by
+    rw [G.card_H1Reduction q]
+    exact Nat.one_lt_pow hb.ne' hq
+  haveI : Nontrivial (H1Reduction G q) :=
+    Finite.one_lt_card_iff_nontrivial.mp hcard
+  obtain ⟨ξ, hξ⟩ := exists_ne (0 : H1Reduction G q)
+  show 0 < ∑' η : H1Reduction G q,
+    (G.residueAction q).E η * (G.residueAction q).gibbsMass η
+  rw [tsum_fintype]
+  refine Finset.sum_pos'
+    (fun η _ => mul_nonneg ((G.residueAction q).E_nonneg η)
+      ((G.residueAction q).gibbsMass_nonneg η))
+    ⟨ξ, Finset.mem_univ ξ, ?_⟩
+  exact mul_pos ((G.residueAction_E_pos_iff q ξ).mpr hξ)
+    ((G.residueAction q).gibbsMass_pos ξ)
+
+/-- **THE BRIDGE, IN THREE STRICTLY POSITIVE TERMS** (review #13): on
+any graph with cycles, at any resolution `1 < q`, the uniform
+complexity decomposes as `K_uniform = K(residueAction) + ⟨E⟩ + Δ`
+with every summand strictly positive — pricing genuinely carries
+complexity, energy, and deficit, none of them degenerate. -/
+theorem uniformComplexity_residue_bridge_pos (hb : 0 < G.b1) (hq : 1 < q) :
+    (uniformAction (H1Reduction G q)).complexity
+        = (G.residueAction q).complexity
+          + (G.residueAction q).gibbsExpect (G.residueAction q).E
+          + G.residueDefect q
+      ∧ 0 < (G.residueAction q).complexity
+      ∧ 0 < (G.residueAction q).gibbsExpect (G.residueAction q).E
+      ∧ 0 < G.residueDefect q :=
+  ⟨G.uniformComplexity_residue_bridge q,
+    G.residueAction_complexity_pos q hb hq,
+    G.residueAction_gibbsExpect_E_pos q hb hq,
+    G.residueDefect_pos q hb hq⟩
+
 /-- **The time face, as conditional entropy** (review #9): the
 per-sector gauge-fixing cost of `carrierCompression` is exactly the
 entropy gap `H(description) − H(residue) = log |gauge|`. -/
@@ -1508,6 +1719,237 @@ theorem sectionCost_carrierCompression_div :
     positivity
   field_simp
   ring
+
+/-! ### Priced gravity and time (review #13)
+
+Descriptions and pairs were `FinDist` constructions — gravity and
+time were measured by entropy but not priced by any action. Here they
+become actions themselves: the **description action** is the priced
+uniform lift of the residue action through `carrierCompression`, the
+**pair action** its priced shared-base self-coupling. Their Gibbs
+distributions are exactly the bundled distributions above
+(`descriptionAction_gibbsDist`, `pairAction_gibbsDist`), expected
+energy and variance transport untouched
+(`descriptionAction_gibbsExpect_E`, …), **gravity holds at the level
+of partition functions and complexities** (`carrier_gravity_partFn`,
+`carrier_gravity_action`), the time face is the complexity difference
+`K(description) − K(residue)`
+(`sectionCost_carrierCompression_action`), and the pricing–counting
+bridge extends to descriptions and pairs
+(`uniformComplexity_description_bridge`,
+`uniformComplexity_pair_bridge`). -/
+
+/-- **The description action** (review #13): the priced uniform lift
+of the residue action through the carrier compression — each
+description prices as its finite sector, the gauge choice is free. -/
+noncomputable def descriptionAction : SectorAction.{v} :=
+  (G.residueAction q).uniformLift (G.carrierCompression q)
+    Nat.card_pos (G.card_carrierCompression_fiber q)
+
+noncomputable instance : Fintype (G.descriptionAction q).Λ :=
+  inferInstanceAs (Fintype (G.E → ZMod q))
+
+/-- **The pair action** (review #13): the priced shared-base coupling
+of two description lifts over the residue action. -/
+noncomputable def pairAction : SectorAction.{v} :=
+  (G.residueAction q).coupling (G.carrierCompression q)
+    (G.carrierCompression q) Nat.card_pos Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
+
+noncomputable instance : Fintype (G.pairAction q).Λ :=
+  inferInstanceAs
+    (Fintype (SGD.Pullback (G.carrierCompression q) (G.carrierCompression q)))
+
+/-- The description action's Gibbs mass is the description mass
+(review #13). -/
+theorem descriptionAction_gibbsMass :
+    (G.descriptionAction q).gibbsMass = G.descriptionMass q := by
+  funext ω
+  have h : (G.descriptionAction q).gibbsMass ω
+      = (G.residueAction q).gibbsMass (G.carrierCompression q ω)
+        / (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) : ℝ) :=
+    SectorAction.uniformLift_gibbsMass (G.residueAction q)
+      (G.carrierCompression q) Nat.card_pos
+      (G.card_carrierCompression_fiber q) ω
+  rw [h, G.residueAction_gibbsMass q]
+  rfl
+
+/-- **The description action's Gibbs distribution is the description
+distribution** (review #13): the priced lift's Gibbs law is the
+`FinDist` uniform lift of the residue distribution. -/
+theorem descriptionAction_gibbsDist :
+    (G.descriptionAction q).gibbsDist = G.descriptionDist q := by
+  have h := SectorAction.uniformLift_gibbsDist (G.residueAction q)
+    (G.carrierCompression q) Nat.card_pos (G.card_carrierCompression_fiber q)
+  rw [G.residueAction_gibbsDist q] at h
+  exact h
+
+/-- The pair action's Gibbs mass is the shared-pair mass
+(review #13). -/
+theorem pairAction_gibbsMass :
+    (G.pairAction q).gibbsMass = G.pairMass q := by
+  funext p
+  have h : (G.pairAction q).gibbsMass p
+      = (G.residueAction q).gibbsMass (SGD.Pullback.base p)
+        / ((Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))
+            * Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) : ℕ) : ℝ) :=
+    SectorAction.coupling_gibbsMass (G.residueAction q)
+      (G.carrierCompression q) (G.carrierCompression q)
+      Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
+      (G.card_carrierCompression_fiber q) p
+  rw [h, G.residueAction_gibbsMass q]
+  rfl
+
+/-- **The pair action's Gibbs distribution is the shared-pair
+coupling** (review #13): the priced coupling's Gibbs law is the
+`FinDist` shared-base coupling of the residue distribution. -/
+theorem pairAction_gibbsDist :
+    (G.pairAction q).gibbsDist = G.pairDist q := by
+  have h := SectorAction.coupling_gibbsDist (G.residueAction q)
+    (G.carrierCompression q) (G.carrierCompression q)
+    Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
+    (G.card_carrierCompression_fiber q)
+  rw [G.residueAction_gibbsDist q] at h
+  exact h
+
+/-- `K(description) = K(residue) + log |gauge|` (review #13) — the
+complexity chain rule at the priced lift. -/
+theorem descriptionAction_complexity :
+    (G.descriptionAction q).complexity
+      = (G.residueAction q).complexity
+        + Real.log (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) := by
+  have h := SectorAction.uniformLift_complexity (G.residueAction q)
+    (G.carrierCompression q) Nat.card_pos (G.card_carrierCompression_fiber q)
+  exact h.trans (add_comm _ _)
+
+/-- `K(pair) = K(residue) + 2·log |gauge|` (review #13). -/
+theorem pairAction_complexity :
+    (G.pairAction q).complexity
+      = (G.residueAction q).complexity
+        + 2 * Real.log (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) := by
+  have h : (G.pairAction q).complexity
+      = Real.log (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))))
+        + Real.log (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))))
+        + (G.residueAction q).complexity :=
+    SectorAction.coupling_complexity (G.residueAction q)
+      (G.carrierCompression q) (G.carrierCompression q)
+      Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
+      (G.card_carrierCompression_fiber q)
+  rw [h]
+  ring
+
+/-- **GRAVITY, PRICED — partition functions** (review #13): sharing
+one finite sector multiplies out —
+`Z(pair) · Z(residue) = Z(description) · Z(description)`. -/
+theorem carrier_gravity_partFn :
+    (G.pairAction q).partFn * (G.residueAction q).partFn
+      = (G.descriptionAction q).partFn * (G.descriptionAction q).partFn :=
+  SectorAction.partFn_gravity (G.residueAction q)
+    (G.carrierCompression q) (G.carrierCompression q)
+    Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
+    (G.card_carrierCompression_fiber q)
+
+/-- **GRAVITY, PRICED — complexities** (review #13): the four-term
+gravity identity at the level of `log Z`:
+`K(pair) + K(residue) = K(description) + K(description)`. -/
+theorem carrier_gravity_action :
+    (G.pairAction q).complexity + (G.residueAction q).complexity
+      = (G.descriptionAction q).complexity
+        + (G.descriptionAction q).complexity :=
+  SectorAction.complexity_gravity (G.residueAction q)
+    (G.carrierCompression q) (G.carrierCompression q)
+    Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
+    (G.card_carrierCompression_fiber q)
+
+/-- **TIME, PRICED** (review #13): the per-sector gauge-fixing cost
+is the complexity difference of the priced actions —
+`sectionCost / |sectors| = K(descriptionAction) − K(residueAction)`. -/
+theorem sectionCost_carrierCompression_action :
+    sectionCost (G.carrierCompression q) / Nat.card (H1Reduction G q)
+      = (G.descriptionAction q).complexity
+        - (G.residueAction q).complexity := by
+  rw [G.sectionCost_carrierCompression_div q,
+    G.descriptionAction_complexity q, G.descriptionEntropy_split q]
+  ring
+
+/-- The description action's expected energy is the residue action's
+(review #13): the free gauge choice carries no energy. -/
+theorem descriptionAction_gibbsExpect_E :
+    (G.descriptionAction q).gibbsExpect (G.descriptionAction q).E
+      = (G.residueAction q).gibbsExpect (G.residueAction q).E :=
+  SectorAction.uniformLift_gibbsExpect_E (G.residueAction q)
+    (G.carrierCompression q) Nat.card_pos (G.card_carrierCompression_fiber q)
+
+/-- The description action's energy variance is the residue action's
+(review #13). -/
+theorem descriptionAction_gibbsVariance_E :
+    (G.descriptionAction q).gibbsVariance (G.descriptionAction q).E
+      = (G.residueAction q).gibbsVariance (G.residueAction q).E :=
+  SectorAction.uniformLift_gibbsVariance_E (G.residueAction q)
+    (G.carrierCompression q) Nat.card_pos (G.card_carrierCompression_fiber q)
+
+/-- The pair action's expected energy is the residue action's
+(review #13). -/
+theorem pairAction_gibbsExpect_E :
+    (G.pairAction q).gibbsExpect (G.pairAction q).E
+      = (G.residueAction q).gibbsExpect (G.residueAction q).E :=
+  SectorAction.coupling_gibbsExpect_E (G.residueAction q)
+    (G.carrierCompression q) (G.carrierCompression q)
+    Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
+    (G.card_carrierCompression_fiber q)
+
+/-- The pair action's energy variance is the residue action's
+(review #13). -/
+theorem pairAction_gibbsVariance_E :
+    (G.pairAction q).gibbsVariance (G.pairAction q).E
+      = (G.residueAction q).gibbsVariance (G.residueAction q).E :=
+  SectorAction.coupling_gibbsVariance_E (G.residueAction q)
+    (G.carrierCompression q) (G.carrierCompression q)
+    Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
+    (G.card_carrierCompression_fiber q)
+
+/-- `H(description) = K(descriptionAction) + ⟨E⟩` (review #13): the
+Gibbs entropy split at the description action. -/
+theorem descriptionAction_entropy_split :
+    shannonEntropy (G.descriptionMass q)
+      = (G.descriptionAction q).complexity
+        + (G.descriptionAction q).gibbsExpect (G.descriptionAction q).E := by
+  have h := SectorAction.entropy_gibbs (G.descriptionAction q)
+  rw [G.descriptionAction_gibbsMass q] at h
+  exact h
+
+/-- **THE BRIDGE, ON DESCRIPTIONS** (review #13):
+`K_uniform(description) = K(descriptionAction) + ⟨E⟩ + Δ` — the same
+deficit as on the residue. -/
+theorem uniformComplexity_description_bridge :
+    (uniformAction (G.E → ZMod q)).complexity
+      = (G.descriptionAction q).complexity
+        + (G.descriptionAction q).gibbsExpect (G.descriptionAction q).E
+        + G.residueDefect q := by
+  rw [G.uniformComplexity_description_split q,
+    G.descriptionAction_entropy_split q]
+
+/-- `H(pair) = K(pairAction) + ⟨E⟩` (review #13): the Gibbs entropy
+split at the pair action. -/
+theorem pairAction_entropy_split :
+    shannonEntropy (G.pairMass q)
+      = (G.pairAction q).complexity
+        + (G.pairAction q).gibbsExpect (G.pairAction q).E := by
+  have h := SectorAction.entropy_gibbs (G.pairAction q)
+  rw [G.pairAction_gibbsMass q] at h
+  exact h
+
+/-- **THE BRIDGE, ON PAIRS** (review #13):
+`K_uniform(pair) = K(pairAction) + ⟨E⟩ + Δ` — the same deficit on all
+three levels: the uniform gravity identity is the priced gravity
+identity plus the one action-induced deficit on both sides. -/
+theorem uniformComplexity_pair_bridge :
+    (uniformAction (SGD.Pullback (G.carrierCompression q)
+        (G.carrierCompression q))).complexity
+      = (G.pairAction q).complexity
+        + (G.pairAction q).gibbsExpect (G.pairAction q).E
+        + G.residueDefect q := by
+  rw [G.uniformComplexity_pair_split q, G.pairAction_entropy_split q]
 
 end IncidenceGraph
 

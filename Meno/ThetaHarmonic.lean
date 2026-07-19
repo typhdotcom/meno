@@ -421,4 +421,34 @@ theorem theta_residueDefect_pos : 0 < thetaGraph.residueDefect 2 := by
   rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
   norm_num
 
+/-- The finite reduction's `Fintype` instance, pinned at the theta
+graph: `thetaGraph` is reducible, so its projections reduce to
+concrete types in instance goals and the generic instance's graph
+metavariable cannot be solved by unification — apply it by name. -/
+noncomputable local instance :
+    Fintype (IncidenceGraph.H1Reduction thetaGraph 2) :=
+  thetaGraph.h1ReductionFintype 2
+
+local instance : Nonempty (IncidenceGraph.H1Reduction thetaGraph 2) :=
+  thetaGraph.h1ReductionNonempty 2
+
+/-- **The complete positive decomposition, concretely** (review #13):
+at resolution `q = 2` the theta graph's uniform complexity decomposes
+into the residue action's complexity, its expected energy, and the
+deficit — all three strictly positive. The pricing–counting bridge,
+fully cashed on an explicit graph. -/
+theorem theta_residue_bridge_pos :
+    (uniformAction (IncidenceGraph.H1Reduction thetaGraph 2)).complexity
+        = (thetaGraph.residueAction 2).complexity
+          + (thetaGraph.residueAction 2).gibbsExpect
+              (thetaGraph.residueAction 2).E
+          + thetaGraph.residueDefect 2
+      ∧ 0 < (thetaGraph.residueAction 2).complexity
+      ∧ 0 < (thetaGraph.residueAction 2).gibbsExpect
+          (thetaGraph.residueAction 2).E
+      ∧ 0 < thetaGraph.residueDefect 2 := by
+  refine thetaGraph.uniformComplexity_residue_bridge_pos 2 ?_ (by norm_num)
+  rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
+  norm_num
+
 end Meno

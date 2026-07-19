@@ -623,7 +623,56 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   at every resolution `1 < q` (`residueDist_ne_uniform`,
   `residueDefect_pos`), instantiated concretely at the theta graph
   with `q = 2` (`theta_residueDefect_pos`,
-  `Meno/ThetaHarmonic.lean`).
+  `Meno/ThetaHarmonic.lean`). The residue action **is the
+  coarse-graining of the harmonic action** (review #13), not a
+  reconstruction from normalized masses: the generic
+  `SectorAction.coarseGrain` (`Meno/InfoRatchet.lean`) prices a
+  projection by fiber Boltzmann sums (`coarseWeight`), with the
+  partition function factorizing (`partFn_eq_coarseWeight_mul`) and
+  the complexity decomposing (`complexity_eq_coarseGrain`); on the
+  carrier, the unnormalized coset weight
+  `W ξ = ∑_{κ mod q = ξ} exp(−harmonicEnergy κ)` (`residueWeight`)
+  satisfies `residueMass = W/Z` (`residueMass_eq_residueWeight_div`),
+  the energy is the effective free-energy difference `F ξ − F 0` with
+  `F = −log W` (`residueFreeEnergy`, `residueAction_E_freeEnergy`),
+  and the harmonic partition function and complexity factor through
+  the residue action (`classPartFn_eq_residueWeight_mul`,
+  `classComplexity_residue_split`). The strict bound is **fully
+  cashed at the action level** (review #13): `E ξ = 0 ↔ ξ = 0` and
+  `0 < E ξ ↔ ξ ≠ 0` (`residueAction_E_eq_zero_iff`,
+  `residueAction_E_pos_iff`), and for `0 < b₁`, `1 < q` the bridge
+  decomposes the uniform complexity into **three strictly positive
+  terms** — `0 < K(residueAction)`, `0 < ⟨E⟩`, `0 < Δ`
+  (`residueAction_complexity_pos`, `residueAction_gibbsExpect_E_pos`,
+  `uniformComplexity_residue_bridge_pos`), instantiated completely on
+  the theta graph at `q = 2` (`theta_residue_bridge_pos`). **Gravity
+  and time are priced** (review #13): descriptions and pairs are
+  themselves actions — the generic priced constructions
+  `SectorAction.uniformLift` and `SectorAction.coupling`
+  (`Meno/InfoRatchet.lean`) pull a finite action back along
+  constant-fiber maps, their Gibbs distributions are exactly the
+  `FinDist` constructions (`uniformLift_gibbsDist`,
+  `coupling_gibbsDist`), every pulled-back observable keeps its
+  expectation and variance (`uniformLift_gibbsExpect`,
+  `coupling_gibbsVariance`, …), and the **action-level gravity
+  identities** hold once, generically: `Z_pair · Z_base = Z_lift²`
+  (`partFn_gravity`) and `K(pair) + K(base) = 2·K(lift)`
+  (`complexity_gravity`). On the carrier: `descriptionAction` and
+  `pairAction` (`descriptionAction_gibbsDist = descriptionDist`,
+  `pairAction_gibbsDist = pairDist`), the priced gravity identities
+  `carrier_gravity_partFn` and `carrier_gravity_action`, the time
+  face as the complexity difference
+  `sectionCost/|sectors| = K(descriptionAction) − K(residueAction)`
+  (`sectionCost_carrierCompression_action`), the entropy splits
+  `H = K + ⟨E⟩` at all three levels
+  (`residueAction_entropy_split`, `descriptionAction_entropy_split`,
+  `pairAction_entropy_split`), and the pricing–counting bridge on all
+  three levels with the same deficit
+  (`uniformComplexity_residue_bridge`,
+  `uniformComplexity_description_bridge`,
+  `uniformComplexity_pair_bridge`), with expected energy and variance
+  transported (`descriptionAction_gibbsExpect_E`,
+  `pairAction_gibbsVariance_E`, …).
 
 The falsified endofunction-kernel design (Phase 17) stands
 falsified; its
@@ -4320,8 +4369,7 @@ residue action; the tautological splits stand as corollaries of the
 bridge, not as its content.
 
 **Discipline check.** No goal reopens. Finding 2 is the phase's
-mathematical center: the first strict inequality of the program —
-everything before it was equality bookkeeping; the shifted-Gaussian
+mathematical center: the shifted-Gaussian
 Fourier argument turns Siegel–Poisson's *machinery* (not just its
 statement) into a consumer-facing theorem. Finding 1 then uses
 finding 2's modal bound to make the residue action well-formed (its
@@ -4331,3 +4379,52 @@ single-consumption claim; finding 5 removes the surface that
 pretended to enforce what only review can. All twelve items remain
 CLOSED. `lake build Meno`: build green (3348 jobs), zero `sorry`,
 zero `axiom`, zero warnings.
+
+*(Phase 49 correction, review #13 finding 5: this check originally
+called finding 2 "the first strict inequality of the program —
+everything before it was equality bookkeeping." That was false —
+`attach_partFn_lt` (`Meno/Binding.lean`), `complexity_gap_pos`,
+`quadraticPartFn_strictAnti`, and `quadraticObj_gibbsVariance_pos`
+(`Meno/Duality.lean`) are strict and predate it. The sentence is
+removed above, not qualified.)*
+
+## Phase 49 addendum: thirteenth external review — five findings, five confirmed, five repaired (2026-07-19)
+
+Review #13 arrived against the Phase-48 state, opening with the
+verdict that all five Phase-48 repairs are genuine, and finding the
+next layer of debt: the priced action existed only on the residue,
+was reconstructed rather than derived, kept its strictness in the
+distribution layer, duplicated its Fourier engine, and had one false
+ledger sentence. Every claim verified against the code before
+repair; all five CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | Gravity and time still did not consume the priced action: `residueAction` existed only on the residue — `descriptionDist`/`pairDist` remained `FinDist` constructions, `carrier_gravity_entropy` contained no `SectorAction`, partition function, or action complexity, and README's "priced by the action" was premature | **CONFIRMED** — `ResolutionCount.lean:1146`/`:1195` were pure distribution constructions; no action-level gravity identity existed anywhere | **Generic priced constructions** (`Meno/InfoRatchet.lean`): `SectorAction.uniformLift` (energy pulled back along a constant-fiber map; `Z_lift = m·Z`, `K_lift = log m + K`) and `SectorAction.coupling` (base energy on the shared-base pullback; `Z_pair = m·m'·Z`), with `SectorAction.gibbsDist` bundling the finite Gibbs law and the headline identities **`uniformLift_gibbsDist`**/**`coupling_gibbsDist`**: the Gibbs distributions of the priced constructions are *exactly* `FinDist.uniformLift`/`FinDist.coupling` of the base Gibbs law. Expectation and variance of every pulled-back observable transport (`uniformLift_gibbsExpect`/`_gibbsVariance`/`_E` and coupling analogs). **Action-level gravity, generic**: `partFn_gravity` (`Z_pair·Z_base = Z_lift²`) and `complexity_gravity` (`K(pair) + K(base) = 2·K(lift)`). On the carrier (`Meno/ResolutionCount.lean`): **`descriptionAction`**, **`pairAction`**, their Gibbs identities (`descriptionAction_gibbsDist = descriptionDist`, `pairAction_gibbsDist = pairDist`), complexity charts (`K(description) = K(residue) + log\|gauge\|`, `K(pair) = K(residue) + 2·log\|gauge\|`), **`carrier_gravity_partFn`**, **`carrier_gravity_action`**, **time restated as `K(descriptionAction) − K(residueAction)`** (`sectionCost_carrierCompression_action`), the entropy splits and **bridges at all three levels** (`descriptionAction_entropy_split`, `pairAction_entropy_split`, `uniformComplexity_description_bridge`, `uniformComplexity_pair_bridge` — the same `Δ`), and the moment transports (`descriptionAction_gibbsExpect_E`, `pairAction_gibbsVariance_E`, …) |
+| 2 | `residueAction` was reconstructed from the normalized distribution, not proved to be the coarse-graining of the harmonic action: `residueMass` sums already-normalized Gibbs masses, the energy took their log ratio — any strictly positive distribution admits that reconstruction — and no theorem related its partition function to `classSectorAction.partFn`, despite the ledger calling it "the harmonic action's pricing" | **CONFIRMED** — `rg` found no theorem mentioning both `residueAction` (or its `partFn`) and `classSectorAction.partFn` | **`SectorAction.coarseGrain`** (`Meno/InfoRatchet.lean`): the generic coarse-graining — fiber Boltzmann sums `coarseWeight` (summable, positive on nonempty fibers, summing to `Z`), effective free energy `coarseFreeEnergy = −log W`, energy `F b − F b₀` from a modal sector, **`partFn_eq_coarseWeight_mul`** (`Z = W b₀ · Z_coarse`), **`complexity_eq_coarseGrain`**, **`coarseGrain_gibbsMass = W b / Z`**. On the carrier: `residueWeight ξ = ∑_{κ mod q = ξ} exp(−harmonicEnergy κ)` (`residueWeight`, positive), **`residueMass_eq_residueWeight_div`** (`residueMass = W/Z` — review #13's demanded identity), `residueFreeEnergy`, and **`residueAction` redefined as `classSectorAction.coarseGrain` at the quotient map** — the review-#12 defining equation `E ξ = log(residueMass 0) − log(residueMass ξ)` is now the *theorem* `residueAction_E`, `E ξ = F ξ − F 0` is `residueAction_E_freeEnergy`, and the factorizations are **`classPartFn_eq_residueWeight_mul`** (`Z = W 0 · Z_residue`) and **`classComplexity_residue_split`**. All Phase-48 charts re-derived; downstream statements unchanged |
+| 3 | The strict inequality was not fully cashed: `residueMass_lt_residueMass_zero` was weakened to nonnegativity when constructing the action, which therefore lacked its natural strict theorems | **CONFIRMED** — only `E_nonneg` existed at the action level | At the action level (`Meno/ResolutionCount.lean`): **`residueAction_E_eq_zero_iff`** (`E ξ = 0 ↔ ξ = 0`), **`residueAction_E_pos_iff`** (`0 < E ξ ↔ ξ ≠ 0`), `residueMass_zero_lt_one` (the modal mass is < 1 once a second class exists), **`residueAction_complexity_pos`** and **`residueAction_gibbsExpect_E_pos`** for `0 < b₁`, `1 < q`, and **`uniformComplexity_residue_bridge_pos`**: the bridge decomposes the uniform complexity into **three strictly positive terms** `K(residueAction) + ⟨E⟩ + Δ`. Complete concrete instance: **`theta_residue_bridge_pos`** (`Meno/ThetaHarmonic.lean`, theta graph at `q = 2` — with the graph's `Fintype`/`Nonempty` reduction instances applied by name, since `thetaGraph` is reducible and the generic instances' graph metavariable is not solvable by unification against its unfolded projections) |
+| 4 | The Fourier engine was duplicated: `tsum_gaussian_eq` and `periodization_lt_periodization_zero` independently rebuilt the same continuous periodization, coefficient formula, Gaussian summability proof, and Fourier convergence argument | **CONFIRMED** — the scaffold (`G`, `hcoeff`, `hMinv_pos`, summability congruence, character-at-origin computation, `hasSum_mFourier_series_apply_of_summable` application) appeared twice, line for line | **The Gaussian Fourier engine** (`Meno/SiegelPoisson.lean`): `gaussFourierCoeff` (`det⁻¹ᐟ²·exp(−π·mᵀM⁻¹m)`, positive — `gaussFourierCoeff_pos` — and summable — `summable_gaussFourierCoeff`), the coefficient identity `mFourierCoeff_periodization`, and the single `HasSum` theorem **`hasSum_gaussFourier_periodization`**: the torus Fourier series of the periodized Gaussian converges at every shift to the periodization. Origin corollary `hasSum_gaussFourierCoeff_periodization_zero` (real form, characters = 1). **Both consumers re-derived**: `tsum_gaussian_eq` (statement unchanged — cast bookkeeping plus the origin corollary) and `periodization_lt_periodization_zero` (real parts of the engine at the shift and at the origin, then the unchanged domination/misalignment argument and `hasSum_lt`) |
+| 5 | The Phase-48 ledger declared closure over false prose: "the first strict inequality of the program … everything earlier was equality bookkeeping" — with existing counterexamples; and C9 should return to OPEN until findings 1–2 make its action-level claims true | **CONFIRMED** — `attach_partFn_lt` (`Meno/Binding.lean:535`), `complexity_gap_pos` (`Meno/Duality.lean:305`), `quadraticPartFn_strictAnti` (`:415`), and `quadraticObj_gibbsVariance_pos` (`:858`) are strict inequalities predating Phase 48 | **The sentence removed, not qualified** (correction note left in the Phase-48 check recording what was removed and why). **C9 reopened** at receipt of review #13 — its account claimed action-priced gravity the code did not have — and **re-closed within this phase** by findings 1–2's repairs; the C9 account in Part I now describes the coarse-graining and the priced lift/coupling layer |
+
+**Rule-3 amendments.** (1) C9's pricing route: the residue action is
+*derived* — `classSectorAction.coarseGrain` at the quotient map — and
+gravity and time are priced through the generic lift/coupling
+constructions; the entropy identities stand as corollaries of the
+Gibbs entropy split, not as the content of the faces. (2) The
+Siegel–Poisson analytic route: both consumers (Poisson summation at
+the origin, the strict modal bound) derive from the single Gaussian
+Fourier engine `hasSum_gaussFourier_periodization`; the engine, not
+either consumer, is the load-bearing analytic theorem.
+
+**Discipline check.** One reopen this phase: **C9 OPEN at review
+receipt** (its action-level claims were ahead of the code — the
+exact failure mode the discipline exists to name), **re-closed** by
+finding 1's priced gravity/time layer and finding 2's coarse-graining
+derivation. Findings 1 and 2 interlock: the coarse-graining supplies
+the unnormalized weights whose modal bound is finding 3's strictness,
+and the priced lift/coupling carry that pricing to descriptions and
+pairs, so the bridge now reads identically at all three levels with
+one deficit. Finding 4 leaves one analytic engine where there were
+two proofs; finding 5 corrects the record by deletion, as directed.
+All twelve items CLOSED at phase end. `lake build Meno`: build green
+(3348 jobs), zero `sorry`, zero `axiom`, zero warnings.

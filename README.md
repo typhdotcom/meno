@@ -25,13 +25,16 @@ between harmonic `H¹` sectors and priced `H₁` cycles
 form-preserving involution (`dualDual`, `duality_dualDual`). Every
 finite-resolution residue is its quotient (`h1ResQuotEquiv`), its
 Gibbs distribution pushes to a residue distribution on that quotient
-(`residueMass`), gravity is the four-term entropy identity of sharing
-one of its finite sectors — `H(pair) + H(residue) = 2·H(description)`
-(`carrier_gravity_entropy`, with the uniform complexity identity the
-same generic theorem at the uniform distribution), the gauge-fixing
-cost of reading a description is the time face — the conditional
-entropy per sector (`sectionCost_carrierCompression_div`) — and Gibbs
-fluctuation specializes to it
+(`residueMass`), gravity is the four-term identity of sharing one of
+its finite sectors — priced at the level of actions,
+`K(pair) + K(residue) = 2·K(description)` (`carrier_gravity_action`),
+with the entropy form (`carrier_gravity_entropy`) and the uniform
+complexity identity the same generic theorems specialized — the
+gauge-fixing cost of reading a description is the time face — the
+complexity difference `K(description) − K(residue)` per sector
+(`sectionCost_carrierCompression_action`, equivalently the
+conditional entropy, `sectionCost_carrierCompression_div`) — and
+Gibbs fluctuation specializes to it
 (`classSectorAction_gibbsVariance_nonneg`).
 
 Everything below is a checked theorem — zero `sorry`, zero `axiom`
@@ -195,7 +198,10 @@ lifts uniformly through the compression (`descriptionMass`), the
 description entropy splits as residue entropy plus the gauge log
 (`descriptionEntropy_split`), and the per-sector gauge-fixing cost is
 exactly that conditional entropy (`sectionCost_carrierCompression_div`)
-— time's arrow priced against the Gibbs law, not only against counts.
+— at the action level, exactly the complexity difference
+`K(descriptionAction) − K(residueAction)`
+(`sectionCost_carrierCompression_action`) — time's arrow priced
+against the action, not only against counts.
 
 **Gravity.** A finite type is a sector lattice with zero energy:
 `Z = |A|`, `K = log|A|` (`uniformAction`, `Meno/UniformAction.lean`).
@@ -205,45 +211,65 @@ sharing a base is worth exactly one copy of it — with the complexity
 form `K(P) + K(D) = K(A) + K(B)` (`gravity_complexity`) realizing the
 abstract `SGD.gravity` of `Meno/Basic.lean`, and the refactoring bound
 `K(P) ≤ K(D) + log(max fiber product)` (`uniform_refactoring_bound`).
-On the graph carrier gravity is **priced by the action**, with full
-distribution semantics (`FinDist`, `Meno/InfoRatchet.lean`): the
-shared-pair coupling of two description lifts is normalized with both
-marginals the description distribution (`pairDist`, `pairDist_fst`,
-`pairDist_snd`), pushing a description forward recovers the residue
-distribution (`descriptionDist_map`), and the gravity identity is
-four-term — `H(pair) + H(residue) = H(description) + H(description)`
-(`carrier_gravity_entropy`, `Meno/ResolutionCount.lean`) — the
-generic `FinDist.entropy_gravity`, proved once and instantiated at
-the Gibbs residue distribution. The same generic theorem at the
-uniform distribution yields the uniform complexity identity
-(`carrier_gravity_complexity_of_entropy` — a genuine specialization);
-the SGD-bridge derivation `carrier_gravity_complexity` stands as
-independent corroboration. Pricing and counting are **numerically
-bridged** by the uniform entropy defect `Δ(P) = log|X| − H(P)`
-(`FinDist.defect` — nonnegative by the maximum entropy theorem, zero
-exactly at the uniform distribution, preserved by lifting and
-coupling): the *same* action-induced deficit separates every uniform
-complexity from its Gibbs entropy — `K_uniform = H + Δ` for residue,
-description, and pair alike (`uniformComplexity_residue_split`,
-`uniformComplexity_description_split`, `uniformComplexity_pair_split`,
-`Meno/ResolutionCount.lean`). The bridge genuinely contains
-**pricing**: the residue distribution is the Gibbs law of the
-**residue action** — the normalized finite sector action of the coset
-Boltzmann weights (`residueAction`, `residueAction_gibbsMass`) — so
-its entropy splits as complexity plus expected energy,
-`H(residue) = K + ⟨E⟩` (`SectorAction.entropy_gibbs`,
-`residueAction_entropy_split`), and the full identity reads
-`K_uniform = K(residueAction) + ⟨E_residue⟩ + Δ`
-(`uniformComplexity_residue_bridge`). And the deficit is **strictly
-positive** wherever there is anything to price: the zero class is
-strictly modal — every nonzero sector carries strictly less residue
-mass (`residueMass_lt_residueMass_zero`, through the positive shifted
-Gaussian Fourier coefficients underlying Siegel–Poisson:
-`periodization_lt_periodization_zero`, `Meno/SiegelPoisson.lean`) —
-so the Gibbs law is never uniform and `0 < Δ` on every graph with
-cycles at every resolution `1 < q` (`residueDist_ne_uniform`,
-`residueDefect_pos`), concretely at the theta graph with `q = 2`
-(`theta_residueDefect_pos`).
+On the graph carrier gravity is **priced by the action**, at the
+level of the actions themselves (`Meno/InfoRatchet.lean`,
+`Meno/ResolutionCount.lean`). The residue distribution is the Gibbs
+law of the **residue action**, and the residue action is *derived*,
+not reconstructed: it is the coarse-graining of the harmonic action
+at the quotient map (`SectorAction.coarseGrain`, `residueAction`) —
+unnormalized coset weights `W ξ = ∑_{κ mod q = ξ} exp(−E_harm κ)`
+(`residueWeight`) with `residueMass = W/Z`
+(`residueMass_eq_residueWeight_div`), energy the effective
+free-energy difference `F ξ − F 0` with `F = −log W`
+(`residueAction_E_freeEnergy`), and the harmonic partition function
+factorizing as `Z = W 0 · Z_residue`
+(`classPartFn_eq_residueWeight_mul`, with the complexity
+decomposition `classComplexity_residue_split`). Descriptions and
+pairs are actions too: the **priced uniform lift** and **priced
+shared-base coupling** (`SectorAction.uniformLift`,
+`SectorAction.coupling`) whose Gibbs laws are exactly the `FinDist`
+constructions (`uniformLift_gibbsDist`, `coupling_gibbsDist`; on the
+carrier `descriptionAction` and `pairAction` with
+`descriptionAction_gibbsDist`, `pairAction_gibbsDist`, both coupling
+marginals the description distribution — `pairDist_fst`,
+`pairDist_snd` — and expected energy and variance transported
+untouched: `descriptionAction_gibbsExpect_E`,
+`pairAction_gibbsVariance_E`). The gravity identity then holds
+**priced**, at partition functions and at complexities —
+`Z(pair)·Z(residue) = Z(description)²` (`carrier_gravity_partFn`)
+and `K(pair) + K(residue) = 2·K(description)`
+(`carrier_gravity_action`) — with the entropy form
+`H(pair) + H(residue) = 2·H(description)`
+(`carrier_gravity_entropy`, the generic `FinDist.entropy_gravity`
+instantiated at the Gibbs residue distribution; at the uniform
+distribution it yields the uniform complexity identity,
+`carrier_gravity_complexity_of_entropy`, with the SGD-bridge
+derivation `carrier_gravity_complexity` as independent
+corroboration). Pricing and counting are **numerically bridged** by
+the uniform entropy defect `Δ(P) = log|X| − H(P)` (`FinDist.defect`
+— nonnegative by the maximum entropy theorem, zero exactly at the
+uniform distribution, preserved by lifting and coupling), and the
+bridge carries pricing **at all three levels with the same
+deficit** — `K_uniform = K(action) + ⟨E⟩ + Δ` for residue,
+description, and pair (`uniformComplexity_residue_bridge`,
+`uniformComplexity_description_bridge`,
+`uniformComplexity_pair_bridge`, through the Gibbs entropy split
+`H = K + ⟨E⟩`, `SectorAction.entropy_gibbs`). And the decomposition
+is **strict** wherever there is anything to price: energy vanishes
+exactly at the zero class and is strictly positive exactly off it
+(`residueAction_E_eq_zero_iff`, `residueAction_E_pos_iff`) — the
+zero class is strictly modal, every nonzero sector carrying strictly
+less residue mass (`residueMass_lt_residueMass_zero`, through the
+single Gaussian Fourier engine of Siegel–Poisson:
+`hasSum_gaussFourier_periodization` feeding both Poisson summation
+and the strict modal bound `periodization_lt_periodization_zero`,
+`Meno/SiegelPoisson.lean`) — so on every graph with cycles at every
+resolution `1 < q` **all three bridge terms are strictly positive**,
+`0 < K(residueAction)`, `0 < ⟨E⟩`, `0 < Δ`
+(`uniformComplexity_residue_bridge_pos`, subsuming
+`residueDist_ne_uniform` and `residueDefect_pos`), concretely at the
+theta graph with `q = 2` (`theta_residue_bridge_pos`,
+`theta_residueDefect_pos`).
 
 **Uncertainty.** The Gibbs state's fluctuations are the model's
 uncertainty, and they are theorems, not vocabulary: the variance of

@@ -898,138 +898,88 @@ lemma posDef_inv {A : Matrix (Fin d) (Fin d) ℝ} (hA : A.PosDef) :
     have hstary : star y = y := funext fun i => star_trivial _
     rwa [hstary] at h
 
-/-- **Multivariate Poisson summation for the Gaussian family**: the
-lattice sum of `exp(-π·xᵀMx)` equals the lattice sum of its Fourier
-transform. The theorem Mathlib does not yet have, at the generality
-Meno needs. -/
-theorem tsum_gaussian_eq (hM : M.PosDef) :
-    (∑' n : Fin d → ℤ, ((gaussian M (fun i => (n i : ℝ)) : ℝ) : ℂ))
-      = ∑' m : Fin d → ℤ,
-          ((M.det⁻¹ : ℝ) : ℂ) ^ ((1 : ℂ) / 2)
-            * Complex.exp (((-Real.pi
-                * (∑ i, ∑ j, M⁻¹ i j * (m i : ℝ) * (m j : ℝ)) : ℝ) : ℂ)) := by
-  set G : C(UnitAddTorus (Fin d), ℂ) :=
-    ⟨fun z => ((torusPeriodization M z : ℝ) : ℂ),
-      Complex.continuous_ofReal.comp (continuous_torusPeriodization hM)⟩ with hGdef
-  have hcoeff : ∀ m : Fin d → ℤ, mFourierCoeff (⇑G) m
-      = ((M.det⁻¹ : ℝ) : ℂ) ^ ((1 : ℂ) / 2)
-          * Complex.exp (((-Real.pi
-              * (∑ i, ∑ j, M⁻¹ i j * (m i : ℝ) * (m j : ℝ)) : ℝ) : ℂ)) := by
-    intro m
-    have h1 : mFourierCoeff (⇑G) m
-        = mFourierCoeff (fun z => ((torusPeriodization M z : ℝ) : ℂ)) m := rfl
-    rw [h1, mFourierCoeff_torusPeriodization hM m, integral_charGauss_eq hM m]
+/-! ### The Gaussian Fourier engine (review #13)
+
+Poisson summation at the origin and the strict modal bound consume
+the same analytic fact: the torus Fourier series of the Gaussian
+periodization converges pointwise, with **positive shifted Gaussian**
+coefficients. The fact is stated once
+(`hasSum_gaussFourier_periodization`); both consumers derive from
+it. -/
+
+/-- The Gaussian Fourier coefficient `det(M)⁻¹ᐟ² · exp(−π·mᵀM⁻¹m)` —
+the Fourier transform of the Gaussian family, evaluated on the dual
+lattice. -/
+noncomputable def gaussFourierCoeff (M : Matrix (Fin d) (Fin d) ℝ)
+    (m : Fin d → ℤ) : ℝ :=
+  M.det⁻¹ ^ ((1 : ℝ) / 2)
+    * Real.exp (-Real.pi * (∑ i, ∑ j, M⁻¹ i j * (m i : ℝ) * (m j : ℝ)))
+
+/-- Every Gaussian Fourier coefficient is strictly positive. -/
+theorem gaussFourierCoeff_pos (hM : M.PosDef) (m : Fin d → ℤ) :
+    0 < gaussFourierCoeff M m :=
+  mul_pos (Real.rpow_pos_of_pos (inv_pos.mpr hM.det_pos) _) (Real.exp_pos _)
+
+/-- The Gaussian Fourier coefficients are summable — they are a
+Gaussian family for the inverse Gram. -/
+theorem summable_gaussFourierCoeff (hM : M.PosDef) :
+    Summable (gaussFourierCoeff M) := by
   have hMinv_pos : (Real.pi • M⁻¹).PosDef :=
     posDef_smul' (posDef_inv hM) Real.pi_pos
-  have hsummable : Summable (mFourierCoeff (⇑G)) := by
-    refine Summable.congr ?_ (fun m => (hcoeff m).symm)
-    refine Summable.mul_left _ ?_
-    refine Summable.of_norm ?_
-    have hnorm : ∀ m : Fin d → ℤ,
-        ‖Complex.exp (((-Real.pi
-            * (∑ i, ∑ j, M⁻¹ i j * (m i : ℝ) * (m j : ℝ)) : ℝ) : ℂ))‖
-          = Real.exp (-(∑ i, ∑ j, (Real.pi • M⁻¹) i j * (m i : ℝ) * (m j : ℝ))) := by
-      intro m
-      rw [← Complex.ofReal_exp, Complex.norm_real, Real.norm_eq_abs,
-        abs_of_pos (Real.exp_pos _)]
-      congr 1
-      rw [neg_mul, neg_inj, Finset.mul_sum]
-      refine Finset.sum_congr rfl (fun i _ => ?_)
-      rw [Finset.mul_sum]
-      refine Finset.sum_congr rfl (fun j _ => ?_)
-      rw [Matrix.smul_apply, smul_eq_mul]
-      ring
-    exact (summable_exp_neg_quadForm hMinv_pos).congr (fun m => (hnorm m).symm)
-  have h0 := (hasSum_mFourier_series_apply_of_summable hsummable
-    (torusMk (fun _ : Fin d => (0 : ℝ)))).tsum_eq
-  have hone : ∀ m : Fin d → ℤ,
-      mFourier m (torusMk (fun _ : Fin d => (0 : ℝ))) = 1 := by
-    intro m
-    show (∏ i, fourier (m i) (torusMk (fun _ : Fin d => (0 : ℝ)) i)) = 1
-    have : ∀ i : Fin d, torusMk (fun _ : Fin d => (0 : ℝ)) i = 0 := by
-      intro i
-      show (((0 : ℝ)) : UnitAddCircle) = 0
-      exact QuotientAddGroup.mk_zero _
-    rw [Finset.prod_congr rfl (fun i _ => by rw [this i, fourier_eval_zero])]
-    exact Finset.prod_const_one
-  have hG0 : G (torusMk (fun _ : Fin d => (0 : ℝ)))
-      = ∑' n : Fin d → ℤ, ((gaussian M (fun i => (n i : ℝ)) : ℝ) : ℂ) := by
-    show ((torusPeriodization M (torusMk (fun _ : Fin d => (0 : ℝ))) : ℝ) : ℂ) = _
-    rw [torusPeriodization_mk, periodization, Complex.ofReal_tsum]
-    refine tsum_congr (fun n => ?_)
-    congr 2
-    funext i
-    simp
-  rw [← hG0]
-  rw [← h0]
-  refine tsum_congr (fun m => ?_)
-  rw [hone m, smul_eq_mul, mul_one, hcoeff m]
+  refine Summable.mul_left _ ?_
+  refine (summable_exp_neg_quadForm hMinv_pos).congr (fun m => ?_)
+  congr 1
+  rw [neg_mul, neg_inj, Finset.mul_sum]
+  refine Finset.sum_congr rfl (fun i _ => ?_)
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl (fun j _ => ?_)
+  rw [Matrix.smul_apply, smul_eq_mul]
+  ring
 
-/-- **The strict modal bound for the Gaussian periodization**
-(review #12): away from the integer lattice, the periodized Gaussian
-sits strictly below its value at the origin. Every torus Fourier
-coefficient of the periodization is a **positive** shifted Gaussian
-(`mFourierCoeff_torusPeriodization`, `integral_charGauss_eq`), and a
-shift with a non-integer coordinate breaks the alignment of at least
-one character. -/
-theorem periodization_lt_periodization_zero (hM : M.PosDef)
-    {x : Fin d → ℝ} {i₀ : Fin d} (hx : ∀ k : ℤ, x i₀ ≠ (k : ℝ)) :
-    periodization M x < periodization M 0 := by
-  classical
+/-- The torus Fourier coefficient of the periodization is the Gaussian
+Fourier coefficient (`mFourierCoeff_torusPeriodization` +
+`integral_charGauss_eq`, the complex power collapsed to a real
+one). -/
+theorem mFourierCoeff_periodization (hM : M.PosDef) (m : Fin d → ℤ) :
+    mFourierCoeff (fun z => ((torusPeriodization M z : ℝ) : ℂ)) m
+      = ((gaussFourierCoeff M m : ℝ) : ℂ) := by
+  have hdet : (0 : ℝ) ≤ M.det⁻¹ := (inv_pos.mpr hM.det_pos).le
+  rw [mFourierCoeff_torusPeriodization hM m, integral_charGauss_eq hM m,
+    gaussFourierCoeff]
+  push_cast [Complex.ofReal_cpow hdet]
+  norm_num
+
+/-- **The Gaussian Fourier engine** (review #13): the torus Fourier
+series of the periodized Gaussian converges at every shift, to the
+periodization — one `HasSum`, consumed by Poisson summation at the
+origin (`tsum_gaussian_eq`) and by the strict modal bound
+(`periodization_lt_periodization_zero`). -/
+theorem hasSum_gaussFourier_periodization (hM : M.PosDef) (x : Fin d → ℝ) :
+    HasSum (fun m : Fin d → ℤ =>
+        ((gaussFourierCoeff M m : ℝ) : ℂ) * mFourier m (torusMk x))
+      ((periodization M x : ℝ) : ℂ) := by
   set G : C(UnitAddTorus (Fin d), ℂ) :=
     ⟨fun z => ((torusPeriodization M z : ℝ) : ℂ),
       Complex.continuous_ofReal.comp (continuous_torusPeriodization hM)⟩
     with hGdef
-  -- the Fourier coefficients, as positive reals
-  set c : (Fin d → ℤ) → ℝ := fun m =>
-    M.det⁻¹ ^ ((1 : ℝ) / 2)
-      * Real.exp (-Real.pi * (∑ i, ∑ j, M⁻¹ i j * (m i : ℝ) * (m j : ℝ)))
-    with hcdef
-  have hdet : (0 : ℝ) ≤ M.det⁻¹ := (inv_pos.mpr hM.det_pos).le
-  have hcpos : ∀ m, 0 < c m := fun m =>
-    mul_pos (Real.rpow_pos_of_pos (inv_pos.mpr hM.det_pos) _) (Real.exp_pos _)
-  have hcoeff : ∀ m : Fin d → ℤ, mFourierCoeff (⇑G) m = ((c m : ℝ) : ℂ) := by
-    intro m
-    have h1 : mFourierCoeff (⇑G) m
-        = mFourierCoeff (fun z => ((torusPeriodization M z : ℝ) : ℂ)) m := rfl
-    rw [h1, mFourierCoeff_torusPeriodization hM m, integral_charGauss_eq hM m,
-      hcdef]
-    push_cast [Complex.ofReal_cpow hdet]
-    norm_num
-  have hMinv_pos : (Real.pi • M⁻¹).PosDef :=
-    posDef_smul' (posDef_inv hM) Real.pi_pos
-  have hsumc : Summable c := by
-    refine Summable.mul_left _ ?_
-    refine (summable_exp_neg_quadForm hMinv_pos).congr (fun m => ?_)
-    congr 1
-    rw [neg_mul, neg_inj, Finset.mul_sum]
-    refine Finset.sum_congr rfl (fun i _ => ?_)
-    rw [Finset.mul_sum]
-    refine Finset.sum_congr rfl (fun j _ => ?_)
-    rw [Matrix.smul_apply, smul_eq_mul]
-    ring
+  have hcoeff : ∀ m : Fin d → ℤ,
+      mFourierCoeff (⇑G) m = ((gaussFourierCoeff M m : ℝ) : ℂ) :=
+    fun m => mFourierCoeff_periodization hM m
   have hsummable : Summable (mFourierCoeff (⇑G)) := by
     refine Summable.congr ?_ (fun m => (hcoeff m).symm)
-    exact_mod_cast hsumc
-  -- the Fourier series converges to the periodization at both points
-  have hGmk : ∀ y : Fin d → ℝ,
-      G (torusMk y) = ((periodization M y : ℝ) : ℂ) := by
-    intro y
-    show ((torusPeriodization M (torusMk y) : ℝ) : ℂ) = _
+    exact_mod_cast summable_gaussFourierCoeff hM
+  have h := hasSum_mFourier_series_apply_of_summable hsummable (torusMk x)
+  have hGmk : G (torusMk x) = ((periodization M x : ℝ) : ℂ) := by
+    show ((torusPeriodization M (torusMk x) : ℝ) : ℂ) = _
     rw [torusPeriodization_mk]
-  have hsx : HasSum (fun m => ((c m : ℝ) : ℂ) * mFourier m (torusMk x))
-      ((periodization M x : ℝ) : ℂ) := by
-    have h := hasSum_mFourier_series_apply_of_summable hsummable (torusMk x)
-    rw [hGmk x] at h
-    simpa only [hcoeff, smul_eq_mul] using h
-  have hs0 : HasSum
-      (fun m => ((c m : ℝ) : ℂ) * mFourier m (torusMk (0 : Fin d → ℝ)))
-      ((periodization M 0 : ℝ) : ℂ) := by
-    have h := hasSum_mFourier_series_apply_of_summable hsummable
-      (torusMk (0 : Fin d → ℝ))
-    rw [hGmk 0] at h
-    simpa only [hcoeff, smul_eq_mul] using h
-  -- every character is 1 at the origin
+  rw [hGmk] at h
+  simpa only [hcoeff, smul_eq_mul] using h
+
+/-- The engine at the origin, real form: every character is `1`, so
+the coefficients themselves sum to the periodization at `0`. -/
+theorem hasSum_gaussFourierCoeff_periodization_zero (hM : M.PosDef) :
+    HasSum (gaussFourierCoeff M) (periodization M 0) := by
+  have h := hasSum_gaussFourier_periodization hM (0 : Fin d → ℝ)
   have hone : ∀ m : Fin d → ℤ,
       mFourier m (torusMk (0 : Fin d → ℝ)) = 1 := by
     intro m
@@ -1040,17 +990,60 @@ theorem periodization_lt_periodization_zero (hM : M.PosDef)
       exact QuotientAddGroup.mk_zero _
     rw [Finset.prod_congr rfl (fun i _ => by rw [hz i, fourier_eval_zero])]
     exact Finset.prod_const_one
-  -- real parts: the two lattice sums, with cosine-weighted coefficients
+  have h' : HasSum (fun m : Fin d → ℤ => ((gaussFourierCoeff M m : ℝ) : ℂ))
+      ((periodization M 0 : ℝ) : ℂ) := by
+    simpa only [hone, mul_one] using h
+  simpa only [Complex.ofReal_re] using Complex.hasSum_re h'
+
+/-- **Multivariate Poisson summation for the Gaussian family**: the
+lattice sum of `exp(-π·xᵀMx)` equals the lattice sum of its Fourier
+transform. The theorem Mathlib does not yet have, at the generality
+Meno needs. Derived from the Gaussian Fourier engine at the origin
+(review #13). -/
+theorem tsum_gaussian_eq (hM : M.PosDef) :
+    (∑' n : Fin d → ℤ, ((gaussian M (fun i => (n i : ℝ)) : ℝ) : ℂ))
+      = ∑' m : Fin d → ℤ,
+          ((M.det⁻¹ : ℝ) : ℂ) ^ ((1 : ℂ) / 2)
+            * Complex.exp (((-Real.pi
+                * (∑ i, ∑ j, M⁻¹ i j * (m i : ℝ) * (m j : ℝ)) : ℝ) : ℂ)) := by
+  have hdet : (0 : ℝ) ≤ M.det⁻¹ := (inv_pos.mpr hM.det_pos).le
+  have h0 : periodization M 0 = ∑' m : Fin d → ℤ, gaussFourierCoeff M m :=
+    (hasSum_gaussFourierCoeff_periodization_zero hM).tsum_eq.symm
+  have hL : ((periodization M 0 : ℝ) : ℂ)
+      = ∑' n : Fin d → ℤ, ((gaussian M (fun i => (n i : ℝ)) : ℝ) : ℂ) := by
+    rw [periodization, Complex.ofReal_tsum]
+    refine tsum_congr (fun n => ?_)
+    congr 2
+    funext i
+    simp
+  rw [← hL, h0, Complex.ofReal_tsum]
+  refine tsum_congr (fun m => ?_)
+  rw [gaussFourierCoeff]
+  push_cast [Complex.ofReal_cpow hdet]
+  norm_num
+
+/-- **The strict modal bound for the Gaussian periodization**
+(review #12): away from the integer lattice, the periodized Gaussian
+sits strictly below its value at the origin. Every torus Fourier
+coefficient of the periodization is a **positive** shifted Gaussian
+(`gaussFourierCoeff_pos`), and a shift with a non-integer coordinate
+breaks the alignment of at least one character. Derived from the
+Gaussian Fourier engine (review #13). -/
+theorem periodization_lt_periodization_zero (hM : M.PosDef)
+    {x : Fin d → ℝ} {i₀ : Fin d} (hx : ∀ k : ℤ, x i₀ ≠ (k : ℝ)) :
+    periodization M x < periodization M 0 := by
+  classical
+  -- the Fourier coefficients, as positive reals
+  set c : (Fin d → ℤ) → ℝ := gaussFourierCoeff M with hcdef
+  have hcpos : ∀ m, 0 < c m := gaussFourierCoeff_pos hM
+  -- real parts of the engine, at the shift and at the origin
   have hre_x : HasSum (fun m => c m * (mFourier m (torusMk x)).re)
       (periodization M x) := by
-    have h := Complex.hasSum_re hsx
+    have h := Complex.hasSum_re (hasSum_gaussFourier_periodization hM x)
     rw [Complex.ofReal_re] at h
     simpa only [Complex.re_ofReal_mul] using h
-  have hre_0 : HasSum c (periodization M 0) := by
-    have h := Complex.hasSum_re hs0
-    rw [Complex.ofReal_re] at h
-    simp only [hone, mul_one, Complex.ofReal_re] at h
-    exact h
+  have hre_0 : HasSum c (periodization M 0) :=
+    hasSum_gaussFourierCoeff_periodization_zero hM
   -- every term is dominated by its coefficient …
   have hle : ∀ m : Fin d → ℤ,
       c m * (mFourier m (torusMk x)).re ≤ c m := by
