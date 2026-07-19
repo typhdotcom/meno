@@ -654,8 +654,8 @@ theorem theta_tower_price_triangle :
     norm_num
   have hchain := thetaGraph.residue_tower_condEntropy_trans 2 4 8
     (by norm_num) (by norm_num)
-  have hcost := thetaGraph.sectionCost_h1TowerMap_trans 2 4 8 2 2
-    (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+  have hcost := thetaGraph.sectionCost_h1TowerMap_trans 2 4 8
+    (by norm_num) (by norm_num)
   have hprice := thetaGraph.residue_tower_price_trans 2 4 8 2 2
     (by norm_num) (by norm_num) (by norm_num) (by norm_num)
   rw [hb2] at hprice

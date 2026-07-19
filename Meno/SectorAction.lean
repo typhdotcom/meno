@@ -234,6 +234,31 @@ theorem complexity_prod (A : SectorAction.{u}) (B : SectorAction.{v}) :
   show Real.log (A.prod B).partFn = Real.log A.partFn + Real.log B.partFn
   rw [partFn_prod, Real.log_mul (ne_of_gt A.partFn_pos) (ne_of_gt B.partFn_pos)]
 
+/-! ## Energy-preserving equivalence -/
+
+/-- **Energy-preserving equivalence of sector actions** (review #21):
+a relabeling of sectors under which every sector keeps its energy.
+The congruence law of the pricing instance
+(`instAdditiveComplexityOnSectorAction`, `Meno/UniformAction.lean`). -/
+def EnergyEquiv (A B : SectorAction.{u}) : Prop :=
+  ∃ e : A.Λ ≃ B.Λ, ∀ x, B.E (e x) = A.E x
+
+/-- Partition functions agree across an energy-preserving
+equivalence: the Boltzmann sum is reindexed, term by term. -/
+theorem partFn_congr {A B : SectorAction.{u}} (h : A.EnergyEquiv B) :
+    A.partFn = B.partFn := by
+  obtain ⟨e, he⟩ := h
+  show ∑' x, A.weight x = ∑' y, B.weight y
+  rw [← Equiv.tsum_eq e B.weight]
+  exact tsum_congr fun x => by
+    show Real.exp (-A.E x) = Real.exp (-B.E (e x))
+    rw [he x]
+
+/-- Complexity agrees across an energy-preserving equivalence. -/
+theorem complexity_congr {A B : SectorAction.{u}} (h : A.EnergyEquiv B) :
+    A.complexity = B.complexity :=
+  congrArg Real.log (partFn_congr h)
+
 /-! ## Disjoint sum: mutually exclusive sectors -/
 
 /-- Disjoint sum of sector actions: sectors are tagged unions, energies follow

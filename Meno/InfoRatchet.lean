@@ -1,5 +1,6 @@
 import Meno.Basic
 import Meno.SectorAction
+import Meno.UniformAction
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Set.Card
@@ -1792,6 +1793,23 @@ theorem uniformLift_gibbsVariance_E :
       = A.gibbsVariance A.E :=
   uniformLift_gibbsVariance A f hm hfib A.E
 
+omit [Fintype A.Λ] in
+/-- **The lift decomposes as base ⊗ free sectors** (review #21): the
+priced uniform lift is energy-equivalent to the independent product
+of the base with a free action on any `m`-element sector type — the
+structured form of the fiber decomposition `uniformLift_partFn`
+computes numerically. -/
+theorem uniformLift_energyEquiv (W : Type u) [Fintype W] [Nonempty W]
+    (hW : Fintype.card W = m) :
+    (A.uniformLift f hm hfib).EnergyEquiv (A.prod (uniformAction W)) := by
+  have ef : ∀ d, Nonempty ({x : X // f x = d} ≃ W) := fun d =>
+    Finite.card_eq.mp (by rw [hfib d, Nat.card_eq_fintype_card, hW])
+  refine ⟨(Equiv.sigmaFiberEquiv f).symm.trans
+    ((Equiv.sigmaCongrRight fun d => (ef d).some).trans
+      (Equiv.sigmaEquivProd A.Λ W)), fun x => ?_⟩
+  show A.E (f x) + 0 = A.E (f x)
+  rw [add_zero]
+
 /-- **TIME, GENERIC AND PRICED** (review #14): for a constant-fiber
 map into a finite sector action's sector type, the normalized section
 cost is exactly the complexity increment of the priced uniform lift —
@@ -1962,27 +1980,67 @@ theorem coupling_gibbsVariance_E :
       = A.gibbsVariance A.E :=
   coupling_gibbsVariance A f g hm hm' hf hg A.E
 
-/-- **The action-level partition-function gravity identity**
-(review #13): `Z_pair · Z_base = Z_lift · Z_lift`. -/
-theorem partFn_gravity :
-    (A.coupling f g hm hm' hf hg).partFn * A.partFn
-      = (A.uniformLift f hm hf).partFn
-        * (A.uniformLift g hm' hg).partFn := by
-  rw [coupling_partFn A f g hm hm' hf hg, uniformLift_partFn A f hm hf,
-    uniformLift_partFn A g hm' hg]
-  push_cast
-  ring
+omit [Fintype A.Λ] in
+/-- **The coupling decomposes as base ⊗ (free ⊗ free)** (review #21):
+the priced shared-base coupling is energy-equivalent to the
+independent product of the base with two free actions — exactly the
+shape `algebraic_gravity` consumes. -/
+theorem coupling_energyEquiv (W W' : Type u) [Fintype W] [Nonempty W]
+    [Fintype W'] [Nonempty W'] (hW : Fintype.card W = m)
+    (hW' : Fintype.card W' = m') :
+    (A.coupling f g hm hm' hf hg).EnergyEquiv
+      (A.prod ((uniformAction W).prod (uniformAction W'))) := by
+  have ef : ∀ d, Nonempty ({x : X // f x = d} ≃ W) := fun d =>
+    Finite.card_eq.mp (by rw [hf d, Nat.card_eq_fintype_card, hW])
+  have eg : ∀ d, Nonempty ({y : Y // g y = d} ≃ W') := fun d =>
+    Finite.card_eq.mp (by rw [hg d, Nat.card_eq_fintype_card, hW'])
+  refine ⟨(SGD.Pullback.equivSigmaFiber f g).trans
+    ((Equiv.sigmaCongrRight fun d =>
+        Equiv.prodCongr (ef d).some (eg d).some).trans
+      (Equiv.sigmaEquivProd A.Λ (W × W'))), fun p => ?_⟩
+  show A.E (SGD.Pullback.base p) + (0 + 0) = A.E (SGD.Pullback.base p)
+  rw [add_zero, add_zero]
 
-/-- **The action-level complexity gravity identity** (review #13):
-`K(coupling) + K(base) = K(lift) + K(lift)` — the entropy gravity
-identity's priced sibling, at the level of `log Z`. -/
+omit [Fintype A.Λ] in
+/-- **THE PRICED GRAVITY IDENTITY — the one engine, invoked**
+(reviews #13, #21): `K(coupling) + K(base) = K(lift) + K(lift)` —
+`SGD.AdditiveComplexityOn.algebraic_gravity` at the pricing instance
+(`instAdditiveComplexityOnSectorAction`), the decomposition lemmas
+supplying `coupling ≈ A ⊗ (free ⊗ free)` and `lift ≈ A ⊗ free`. Not
+a parallel computation: the same theorem that gives counting gravity
+(`SGD.gravity`) gives this — and the engine route needs no finiteness
+of the base. -/
 theorem complexity_gravity :
     (A.coupling f g hm hm' hf hg).complexity + A.complexity
       = (A.uniformLift f hm hf).complexity
         + (A.uniformLift g hm' hg).complexity := by
-  rw [coupling_complexity A f g hm hm' hf hg,
-    uniformLift_complexity A f hm hf, uniformLift_complexity A g hm' hg]
-  ring
+  haveI : Nonempty (ULift.{u} (Fin m)) := ⟨ULift.up ⟨0, hm⟩⟩
+  haveI : Nonempty (ULift.{u} (Fin m')) := ⟨ULift.up ⟨0, hm'⟩⟩
+  have hW : Fintype.card (ULift.{u} (Fin m)) = m := by simp
+  have hW' : Fintype.card (ULift.{u} (Fin m')) = m' := by simp
+  rw [SectorAction.complexity_congr
+      (coupling_energyEquiv A f g hm hm' hf hg _ _ hW hW'),
+    SectorAction.complexity_congr (uniformLift_energyEquiv A f hm hf _ hW),
+    SectorAction.complexity_congr (uniformLift_energyEquiv A g hm' hg _ hW')]
+  exact SGD.AdditiveComplexityOn.algebraic_gravity A
+    (uniformAction (ULift (Fin m))) (uniformAction (ULift (Fin m')))
+
+omit [Fintype A.Λ] in
+/-- **The action-level partition-function gravity identity**
+(reviews #13, #21): `Z_pair · Z_base = Z_lift · Z_lift` — the
+complexity gravity identity exponentiated, since every partition
+function is positive. -/
+theorem partFn_gravity :
+    (A.coupling f g hm hm' hf hg).partFn * A.partFn
+      = (A.uniformLift f hm hf).partFn
+        * (A.uniformLift g hm' hg).partFn := by
+  have h := congrArg Real.exp (complexity_gravity A f g hm hm' hf hg)
+  simp only [SectorAction.complexity, Real.exp_add,
+    Real.exp_log (A.coupling f g hm hm' hf hg).partFn_pos,
+    Real.exp_log A.partFn_pos,
+    Real.exp_log (A.uniformLift f hm hf).partFn_pos,
+    Real.exp_log (A.uniformLift g hm' hg).partFn_pos] at h
+  exact h
 
 /-- **THE PRICED ENTROPY GRAVITY IDENTITY** (review #14): the
 four-term entropy identity of the Gibbs laws, derived from the four

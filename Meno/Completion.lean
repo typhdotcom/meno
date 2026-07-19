@@ -21,9 +21,12 @@ C1–C10 appears as a field in exactly one law package —
   trapped paradox, annihilation, existence, the restriction image,
   attached rank, the kill theorem, exact surviving energies, the
   exact spectral decomposition, strict weight loss;
-* `CodingGravityLaws` (C8–C9 generic): K1–K3, gauge counting, the
-  coding theorem with its `ℝ≥0∞` boundary, compression costs, the
-  `logCard` realization, and the priced gravity/time laws;
+* `ResolutionCodingLaws` (C8–C9 on the graph; review #21 split):
+  K1–K3, gauge counting, compression sections/costs, recovery;
+* `CodingGravityLaws` (C8–C9 generic, graph-free; review #21 split):
+  section counting, the coding theorem with its `ℝ≥0∞` boundary, the
+  `logCard` realization, and the gravity/time laws — the one engine
+  `algebraic_gravity` at its counting and pricing instances;
 * `ThermalDualityLaws`, `InformationLaws`, `ResolutionTowerLaws`
   (C9/C12 analytic, information, and resolution spines — defined
   with their subjects);
@@ -274,14 +277,14 @@ theorem matterBindingLaws (G : IncidenceGraph.{u, v}) :
   weight_bound := TwoComplex.attach_partFn_add_le
   partFn_strict := TwoComplex.attach_partFn_lt
 
-/-! ## C8–C9 generic: the coding-gravity laws -/
+/-! ## C8–C9 on the graph: the resolution-coding laws -/
 
-/-- **The coding-gravity laws** (C8 and the generic C9 gravity/time
-laws): K1–K3 at every modulus, gauge counting, the coding theorem
-with its honest `ℝ≥0∞` boundary, compression costs, the `logCard`
-realization of the abstract hierarchy, and the priced gravity and
-time identities of sector actions. -/
-structure CodingGravityLaws (G : IncidenceGraph.{u, v}) : Prop where
+/-- **The resolution-coding laws of a graph** (C8–C9's
+graph-dependent family; split from the generic `CodingGravityLaws`
+by review #21): K1–K3 at every modulus, gauge counting, compression
+sections and costs, and per-class recovery — every field mentions
+the graph. -/
+structure ResolutionCodingLaws (G : IncidenceGraph.{u, v}) : Prop where
   k1 : ∀ {n : ℕ}, Module.Basis (Fin n) ℤ G.cycleLattice →
     ∀ (q : ℕ) [NeZero q],
     Nat.card ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
@@ -326,6 +329,31 @@ structure CodingGravityLaws (G : IncidenceGraph.{u, v}) : Prop where
         (Submodule.Quotient.mk y :
           (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))) x
       = Real.log (Nat.card (LinearMap.range (G.gradLin (ZMod q))))
+
+/-- **Every graph satisfies the resolution-coding laws** — direct
+assignments. -/
+theorem resolutionCodingLaws (G : IncidenceGraph.{u, v}) :
+    ResolutionCodingLaws G where
+  k1 := G.card_quotient
+  k1_intrinsic := G.card_quotient_eq
+  k1_reduction := G.card_H1Reduction
+  k2 := G.log_card_split
+  k3 := G.card_fiber
+  gauge_count := G.card_gauge
+  compression_sections := G.card_compression_sections
+  compression_cost := G.sectionCost_compression
+  recovery := G.recoveryCost_compression
+
+/-! ## C8–C9 generic: the coding-gravity laws -/
+
+/-- **The coding-gravity laws** (C8's generic coding theorems and
+C9's generic gravity/time laws; graph-free after review #21's split
+— no vacuous graph quantifier): section counting, the coding theorem
+with its honest `ℝ≥0∞` boundary, the uniform action, the `logCard`
+bridge, gravity and the refactoring bound at the counting instance,
+and the priced gravity and time identities of sector actions — the
+one engine `algebraic_gravity` at its two physical instances. -/
+structure CodingGravityLaws : Prop where
   sections_count : ∀ {A B : Type u} [Finite A] [Fintype B]
     (f : A → B),
     Nat.card {s : B → A // ∀ b, f (s b) = b}
@@ -354,7 +382,7 @@ structure CodingGravityLaws (G : IncidenceGraph.{u, v}) : Prop where
     SGD.logCard (SGD.Pullback f g)
       ≤ SGD.logCard D + (⨆ d, SGD.logCard (SGD.Fiber f d))
         + ⨆ d, SGD.logCard (SGD.Fiber g d)
-  priced_gravity_partFn : ∀ (A : SectorAction.{u}) [Fintype A.Λ]
+  priced_gravity_partFn : ∀ (A : SectorAction.{u})
     {X Y : Type u} [Fintype X] [Fintype Y]
     (f : X → A.Λ) (g : Y → A.Λ) [Fintype (SGD.Pullback f g)]
     {m m' : ℕ} (hm : 0 < m) (hm' : 0 < m')
@@ -363,7 +391,7 @@ structure CodingGravityLaws (G : IncidenceGraph.{u, v}) : Prop where
     (A.coupling f g hm hm' hf hg).partFn * A.partFn
       = (A.uniformLift f hm hf).partFn
         * (A.uniformLift g hm' hg).partFn
-  priced_gravity_complexity : ∀ (A : SectorAction.{u}) [Fintype A.Λ]
+  priced_gravity_complexity : ∀ (A : SectorAction.{u})
     {X Y : Type u} [Fintype X] [Fintype Y]
     (f : X → A.Λ) (g : Y → A.Λ) [Fintype (SGD.Pullback f g)]
     {m m' : ℕ} (hm : 0 < m) (hm' : 0 < m')
@@ -388,19 +416,8 @@ structure CodingGravityLaws (G : IncidenceGraph.{u, v}) : Prop where
     sectionCost f / Fintype.card A.Λ
       = (A.uniformLift f hm hfib).complexity - A.complexity
 
-/-- **Every graph satisfies the coding-gravity laws** — direct
-assignments. -/
-theorem codingGravityLaws (G : IncidenceGraph.{u, v}) :
-    CodingGravityLaws G where
-  k1 := G.card_quotient
-  k1_intrinsic := G.card_quotient_eq
-  k1_reduction := G.card_H1Reduction
-  k2 := G.log_card_split
-  k3 := G.card_fiber
-  gauge_count := G.card_gauge
-  compression_sections := G.card_compression_sections
-  compression_cost := G.sectionCost_compression
-  recovery := G.recoveryCost_compression
+/-- **The coding-gravity laws hold** — direct assignments. -/
+theorem codingGravityLaws : CodingGravityLaws.{u} where
   sections_count := card_sections
   coding := sectionCost_eq_fiberInfoCost
   cost_top := sectionCostE_eq_top_iff
@@ -591,9 +608,10 @@ theorem flagshipLaws : FlagshipLaws where
 
 /-! ## The semantic completion certificate -/
 
-/-- **THE SEMANTIC COMPLETION CERTIFICATE** (reviews #18, #19):
+/-- **THE SEMANTIC COMPLETION CERTIFICATE** (reviews #18, #19, #21):
 every Part-I acceptance family, one field each, assembled — the four
-Part-I law packages, the three generic spine certificates, and the
+graph-quantified Part-I law packages, the graph-free coding-gravity
+package, the three generic spine certificates, and the
 flagship consumers. "Semantic": Lean's kernel certifies these
 propositions; C11's deletion state and C12's import-DAG and
 duplication constraints are repository invariants checked by the
@@ -603,7 +621,9 @@ structure MenoSemanticCompletion : Prop where
   harmonic : ∀ G : IncidenceGraph.{u, v}, HarmonicCarrierLaws G
   matter_binding : ∀ G : IncidenceGraph.{u, v},
     MatterBindingLaws.{u, v, w} G
-  coding_gravity : ∀ G : IncidenceGraph.{u, v}, CodingGravityLaws G
+  resolution_coding : ∀ G : IncidenceGraph.{u, v},
+    ResolutionCodingLaws G
+  coding_gravity : CodingGravityLaws.{u}
   thermal : ∀ Q : QuadLatticeAction.{u},
     QuadLatticeAction.ThermalDualityLaws Q
   information : ∀ {X : Type u} [Fintype X] [DecidableEq X]
@@ -622,6 +642,7 @@ theorem menoSemanticCompletion : MenoSemanticCompletion.{u, v, w} where
   topology := graphTopologyLaws
   harmonic := harmonicCarrierLaws
   matter_binding := matterBindingLaws
+  resolution_coding := resolutionCodingLaws
   coding_gravity := codingGravityLaws
   thermal := QuadLatticeAction.thermalDualityLaws
   information := FinDist.informationLaws

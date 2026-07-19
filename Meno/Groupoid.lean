@@ -681,10 +681,13 @@ theorem GroupoidObj.sigmaComplexity_prod_family_le_logCard_max_split
           Finset.univ.sup' hne (fun d : D => (Q d).complexity) := by
         rw [add_assoc]
 
-/-- Groupoid complexity is an instance of the domain-generic additive complexity
-    class from Basic.lean. The algebraic gravity theorem and unit laws
-    from `AdditiveComplexityOn` apply to groupoid objects through this instance. -/
-noncomputable instance : SGD.AdditiveComplexityOn GroupoidObj ℝ where
+/-- Groupoid complexity is an instance of the domain-generic additive
+    complexity class from Basic.lean — the one gravity engine's third
+    instance (counting, pricing, groupoid). The algebraic gravity
+    theorem is applied through this instance:
+    `GroupoidObj.shared_component_identity`, below (review #21). -/
+noncomputable instance instAdditiveComplexityOnGroupoidObj :
+    SGD.AdditiveComplexityOn GroupoidObj ℝ where
   C := GroupoidObj.complexity
   unit := GroupoidObj.trivial
   equiv := GroupoidObj.Equiv
@@ -692,6 +695,18 @@ noncomputable instance : SGD.AdditiveComplexityOn GroupoidObj ℝ where
   unit_zero := GroupoidObj.trivial_complexity
   congr := GroupoidObj.congr_complexity
   prod_add := GroupoidObj.prod_complexity
+
+/-- **The groupoid shared-component identity** (review #21): merging
+two products sharing the component `P` saves exactly `C(P)` —
+`SGD.AdditiveComplexityOn.algebraic_gravity` **invoked** at the
+groupoid instance. The corroborating model consumes the same gravity
+engine as the spine. -/
+theorem GroupoidObj.shared_component_identity
+    (P Q R : GroupoidObj.{0, u}) :
+    (P.prod (Q.prod R)).complexity + P.complexity
+      = (P.prod Q).complexity + (P.prod R).complexity :=
+  SGD.AdditiveComplexityOn.algebraic_gravity
+    (inst := instAdditiveComplexityOnGroupoidObj) P Q R
 
 /-- Lower bound on sigma complexity: at least the maximum fiber complexity.
     Complement to `sigmaComplexity_le_logCard_max` (upper bound).

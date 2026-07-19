@@ -662,10 +662,11 @@ theorem uniformComplexity_split_carrier :
 carrier; `carrierCompression` is the map that reads a resolution-`q`
 description as a finite sector of the carrier. K3 is extracted as an
 **equivalence** of every compression fiber with the gauge group
-(`carrierFiberEquivGauge`), `gravity_complexity` is **applied** to the
-self-pullback of `carrierCompression` (`carrier_gravity_complexity` —
-pairs of descriptions representing the same finite sector), and the
-gauge-fixing cost transports (`sectionCost_carrierCompression`). With
+(`carrierFiberEquivGauge`), the carrier gravity identity
+(`carrier_gravity_complexity` — pairs of descriptions representing
+the same finite sector) is proved **once**, in the priced section
+below (review #21), and the gauge-fixing cost transports
+(`sectionCost_carrierCompression`). With
 the intrinsic Gibbs fluctuation — unconditional and strict for the
 energy observable, the moments being theorems
 (`classSectorAction_gibbsVariance_energy_nonneg`,
@@ -804,20 +805,6 @@ noncomputable instance carrierPullbackFintype :
       (G.carrierCompression q)) :=
   inferInstance
 
-/-- **GRAVITY ON THE CARRIER** (review #7): `gravity_complexity`
-applied to the self-pullback of `carrierCompression` — pairs of
-descriptions representing the **same finite sector of the intrinsic
-carrier**, with the base the carrier's reduction. Sharing the sector
-is worth exactly one copy of its complexity. -/
-theorem carrier_gravity_complexity :
-    (uniformAction (SGD.Pullback (G.carrierCompression q)
-        (G.carrierCompression q))).complexity
-      + (uniformAction (H1Reduction G q)).complexity
-      = (uniformAction (G.E → ZMod q)).complexity
-        + (uniformAction (G.E → ZMod q)).complexity :=
-  gravity_complexity (G.carrierCompression q) (G.carrierCompression q)
-    (G.carrierFiberEquivGauge q) (G.carrierFiberEquivGauge q)
-
 /-- **The time face on the carrier, by transport** (review #8): the
 gauge-fixing cost of `carrierCompression` is the gauge-fixing cost of
 the class map — `sectionCost` is invariant under codomain relabeling
@@ -862,9 +849,10 @@ Here the **intrinsic Gibbs distribution** of `classSectorAction`
   review #14 a **corollary of the priced calculus**
   (`SectorAction.entropy_gravity` at the residue action), with the
   uniform complexity identity the priced identity plus the common
-  deficit (`carrier_gravity_complexity_of_entropy`); the SGD-bridge
-  proof of `carrier_gravity_complexity` stands as independent
-  corroboration. Both live at the end of the priced section.
+  deficit (`carrier_gravity_complexity` — proved **once**, here;
+  review #21 deleted the parallel SGD-bridge proof, both routes now
+  flowing through the one engine `algebraic_gravity`). Both live at
+  the end of the priced section.
 * `sectionCost_carrierCompression_div` — the time face: the
   per-sector gauge-fixing cost is the conditional entropy
   `H(description) − H(residue) = log |gauge|`. -/
@@ -1943,14 +1931,17 @@ theorem carrier_gravity_entropy :
     G.descriptionAction_gibbsMass q] at h
   exact h
 
-/-- **The uniform identity: the priced identity plus the common
-deficit** (review #14): adding `Δ` to every term of the priced
-entropy gravity identity yields the uniform complexity identity —
-counting is pricing plus one deficit, on both sides. (Review #10's
-derivation — the same generic distribution theorem at the uniform
-law — is superseded by this priced route; the SGD-bridge derivation
-`carrier_gravity_complexity` stands as independent corroboration.) -/
-theorem carrier_gravity_complexity_of_entropy :
+/-- **GRAVITY ON THE CARRIER** (reviews #7, #10, #14, #21): pairs of
+descriptions representing the **same finite sector of the intrinsic
+carrier** — sharing the sector is worth exactly one copy of its
+complexity. Proved **once**: the uniform identity is the priced
+entropy gravity identity (`carrier_gravity_entropy`, itself the one
+engine `algebraic_gravity` at the pricing instance) plus the common
+deficit `Δ` on every term — counting is pricing plus one deficit, on
+both sides. Review #21 deleted the parallel SGD-bridge proof of this
+statement: with both instances flowing through one engine, there is
+nothing left to corroborate. -/
+theorem carrier_gravity_complexity :
     (uniformAction (SGD.Pullback (G.carrierCompression q)
         (G.carrierCompression q))).complexity
       + (uniformAction (H1Reduction G q)).complexity
@@ -2567,9 +2558,11 @@ map pushes the fine Gibbs law to the coarse one and the uniform
 distribution to the uniform distribution. The strict growth for
 `b₁ > 0`, `c > 1` (`residue_tower_price_strict`) retains its Fourier
 modal argument; this weak form needs none of it. -/
-theorem residueDefect_mono (hdvd : q ∣ q') (hq' : q' = c * q) :
+theorem residueDefect_mono (hdvd : q ∣ q') :
     G.residueDefect q ≤ G.residueDefect q' := by
   classical
+  obtain ⟨c, hc0⟩ := id hdvd
+  have hq' : q' = c * q := by rw [hc0, mul_comm]
   have hc : c ≠ 0 := by
     rintro rfl
     exact (NeZero.ne q') (by rw [hq', zero_mul])
@@ -2615,16 +2608,19 @@ theorem residue_tower_condEntropy_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
     rfl
   rw [hcomp, FinDist.condEntropy_comp, G.residueDist_tower q' q'' h₂]
 
-/-- **Section costs add along the tower** (review #17): reversing two
-resolution steps costs the sum of the one-step ratchet costs. -/
-theorem sectionCost_h1TowerMap_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'')
-    (hq' : q' = c * q) (hq'' : q'' = c' * q') :
+/-- **Section costs add along the tower** (review #17; review #21
+shed the two ratio witnesses the conclusion never used). -/
+theorem sectionCost_h1TowerMap_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
     sectionCost (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
         / Nat.card (H1Reduction G q)
       = sectionCost (⇑(G.h1TowerMap q' q'' h₂))
             / Nat.card (H1Reduction G q')
         + sectionCost (⇑(G.h1TowerMap q q' h₁))
             / Nat.card (H1Reduction G q) := by
+  obtain ⟨c, hc0⟩ := id h₁
+  obtain ⟨c', hc0'⟩ := id h₂
+  have hq' : q' = c * q := by rw [hc0, mul_comm]
+  have hq'' : q'' = c' * q' := by rw [hc0', mul_comm]
   have hc : c ≠ 0 := by
     rintro rfl
     exact (NeZero.ne q') (by rw [hq', zero_mul])
@@ -2718,8 +2714,8 @@ structure ResolutionTowerLaws (G : IncidenceGraph.{u, v}) : Prop where
         (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
       = (G.residueDist q'').condEntropy (⇑(G.h1TowerMap q' q'' h₂))
         + (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' h₁))
-  cost_add : ∀ (q q' q'' c c' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
-    (h₁ : q ∣ q') (h₂ : q' ∣ q''), q' = c * q → q'' = c' * q' →
+  cost_add : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
     sectionCost (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
         / Nat.card (H1Reduction G q)
       = sectionCost (⇑(G.h1TowerMap q' q'' h₂))
@@ -2733,9 +2729,8 @@ structure ResolutionTowerLaws (G : IncidenceGraph.{u, v}) : Prop where
         (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
       = G.b1 * Real.log ((c' * c : ℕ))
         - (G.residueDefect q'' - G.residueDefect q)
-  deficit_mono : ∀ (q q' c : ℕ) [NeZero q] [NeZero q'],
-    q ∣ q' → q' = c * q →
-    G.residueDefect q ≤ G.residueDefect q'
+  deficit_mono : ∀ (q q' : ℕ) [NeZero q] [NeZero q'],
+    q ∣ q' → G.residueDefect q ≤ G.residueDefect q'
   price_strict : ∀ (q q' c : ℕ) [NeZero q] [NeZero q'],
     0 < G.b1 → 1 < c → ∀ (hdvd : q ∣ q'), q' = c * q →
     0 < (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
@@ -2763,12 +2758,11 @@ theorem resolutionTowerLaws (G : IncidenceGraph.{u, v}) :
   cost_id := fun q _ => G.sectionCost_h1TowerMap_id q
   price_add := fun q q' q'' _ _ _ h₁ h₂ =>
     G.residue_tower_condEntropy_trans q q' q'' h₁ h₂
-  cost_add := fun q q' q'' c c' _ _ _ h₁ h₂ hq' hq'' =>
-    G.sectionCost_h1TowerMap_trans q q' q'' c c' h₁ h₂ hq' hq''
+  cost_add := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.sectionCost_h1TowerMap_trans q q' q'' h₁ h₂
   deficit_telescope := fun q q' q'' c c' _ _ _ h₁ h₂ hq' hq'' =>
     G.residue_tower_price_trans q q' q'' c c' h₁ h₂ hq' hq''
-  deficit_mono := fun q q' c _ _ h hq' =>
-    G.residueDefect_mono q q' c h hq'
+  deficit_mono := fun q q' _ _ h => G.residueDefect_mono q q' h
   price_strict := fun q q' c _ _ hb hc hdvd hq' =>
     G.residue_tower_price_strict q q' c hb hc hdvd hq'
 

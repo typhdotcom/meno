@@ -529,26 +529,43 @@ fixing a representative for **every** class at once
 zero-of-injective lemma survive with explicit junk-value caveats in
 their docstrings; no theorem statement was weakened.
 
-### C9 -- Gravity and the ratchet through SectorAction — CLOSED (Phase 36; REOPENED at review #18 receipt, RECLOSED Phase 54 by certificate)
+### C9 -- Gravity and the ratchet through SectorAction — CLOSED (Phase 36; REOPENED at reviews #18, #21 receipt, RECLOSED Phases 54, 57)
 
-**Delivered.** `Basic.lean` is an upstream **pure interface**
-(abstract complexity classes and pullback combinatorics); the sector
-spine realizes it, and the realization is *invoked, not paralleled*:
+**Delivered.** **There is one gravity theorem** (review #21):
+`SGD.AdditiveComplexityOn.algebraic_gravity` (`Meno/Basic.lean`) —
+merging two structures sharing a component saves exactly the shared
+component's complexity, stated on any domain with a unit, an
+equivalence, and an additive product. `Basic.lean` is the upstream
+interface **and the actual spine of gravity**: every gravity
+identity of the program is `algebraic_gravity` at an instance —
+counting (`instAdditiveComplexityOnType`), pricing
+(`instAdditiveComplexityOnSectorAction`,
+`Meno/UniformAction.lean`), groupoid
+(`instAdditiveComplexityOnGroupoidObj`, `Meno/Groupoid.lean`):
 
 * `uniformAction A` — a finite type as a sector action with zero
   energy: `Z = |A|`, `K = log|A|` (`uniformAction_partFn`,
   `uniformAction_complexity`, `Meno/UniformAction.lean`);
-* `gravity_partFn` / `gravity_complexity` — type-level gravity as a
-  partition-function identity with uniform fibers, realizing
-  `SGD.gravity` through the `logCard` bridge
-  (`logCard_eq_uniformComplexity`, `gravity_logCard` — the abstract
-  theorem instantiated, not reproved); `uniform_refactoring_bound` +
-  `refactoring_bound_logCard` likewise;
-* **on the graph carrier** (review #7): gravity is applied to the
-  self-pullback of `carrierCompression` — pairs of descriptions
-  representing the same finite sector of the intrinsic carrier
-  (`carrier_gravity_complexity`, `Meno/ResolutionCount.lean`), with
-  K3 extracted as the fiber–gauge equivalence
+* **counting gravity** — `SGD.gravity` is `algebraic_gravity` at the
+  Type-level instance, the sigma-fiber decompositions supplying
+  `Pullback f g ≃ D × (F × G)`, `A ≃ D × F`, `B ≃ D × G`
+  (review #21); `gravity_logCard` and `refactoring_bound_logCard`
+  **invoke** the abstract theorems at the `logCard`
+  `AdditiveComplexity ℝ≥0∞` instance, bridged to the priced world by
+  `logCard_eq_uniformComplexity`;
+* **priced gravity** — `SectorAction.complexity_gravity`
+  (`Meno/InfoRatchet.lean`) is `algebraic_gravity` at the pricing
+  instance, the energy-preserving decompositions
+  `coupling ≈ base ⊗ (free ⊗ free)` and `lift ≈ base ⊗ free`
+  (`coupling_energyEquiv`, `uniformLift_energyEquiv`, via
+  `SectorAction.EnergyEquiv`/`complexity_congr`) supplying the
+  shapes; `partFn_gravity` is its exponential, `entropy_gravity`
+  its Gibbs-split corollary (review #21);
+* **on the graph carrier** (reviews #7, #21): the carrier gravity
+  identity — pairs of descriptions representing the same finite
+  sector of the intrinsic carrier (`carrier_gravity_complexity`,
+  `Meno/ResolutionCount.lean`) — is proved **once**, in the priced
+  section, with K3 extracted as the fiber–gauge equivalence
   (`carrierFiberEquivGauge`) and the gauge-fixing cost transported
   (`sectionCost_carrierCompression`); every K3 fiber statement
   derives from the one fiber-to-kernel equivalence (`fiberEquivKer`,
@@ -574,10 +591,10 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   **`carrier_gravity_entropy`** is the **four-term gravity identity**
   `H(pair) + H(residue) = H(description) + H(description)` — the
   generic theorem instantiated at the Gibbs residue distribution;
-  the same generic theorem at the uniform distribution gives
-  `carrier_gravity_complexity_of_entropy` (a genuine specialization,
-  review #10; the SGD-bridge proof stands as independent
-  corroboration); `pairEntropy_split` keeps the split form
+  the uniform identity `carrier_gravity_complexity` is the priced
+  identity plus the common deficit — proved **once** (review #21
+  deleted the parallel SGD-bridge proof of the same statement);
+  `pairEntropy_split` keeps the split form
   `H(pair) = H(residue) + 2·log|gauge|`; and
   `sectionCost_carrierCompression_div` reads the time face as the
   conditional entropy `H(description) − H(residue)` per sector.
@@ -655,9 +672,10 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   `coupling_gibbsDist`), every pulled-back observable keeps its
   expectation and variance (`uniformLift_gibbsExpect`,
   `coupling_gibbsVariance`, …), and the **action-level gravity
-  identities** hold once, generically: `Z_pair · Z_base = Z_lift²`
-  (`partFn_gravity`) and `K(pair) + K(base) = 2·K(lift)`
-  (`complexity_gravity`). On the carrier: `descriptionAction` and
+  identities** hold once, generically: `K(pair) + K(base) = 2·K(lift)`
+  (`complexity_gravity` — since review #21 `algebraic_gravity` at
+  the pricing instance, with no finiteness needed of the base) and
+  `Z_pair · Z_base = Z_lift²` (`partFn_gravity` — its exponential). On the carrier: `descriptionAction` and
   `pairAction` (`descriptionAction_gibbsDist = descriptionDist`,
   `pairAction_gibbsDist = pairDist`), the priced gravity identities
   `carrier_gravity_partFn` and `carrier_gravity_action`, the time
@@ -679,7 +697,8 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   the expectation transports, `carrier_gravity_entropy` is its
   instantiation at the residue action, and the uniform identity is
   the priced identity plus the common deficit
-  (`carrier_gravity_complexity_of_entropy`). Time is a **generic
+  (`carrier_gravity_complexity` — since review #21 the one proof of
+  that statement). Time is a **generic
   priced law**: for any constant-fiber map,
   `sectionCost/|Λ| = K(uniformLift) − K(base)`
   (`SectorAction.sectionCost_uniformLift`), the carrier theorem its
@@ -792,7 +811,9 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   no support hypothesis; with `FinDist.map_id`, `FinDist.map_comp`,
   `mass_le_map`) specializes to `H(q″|q) = H(q″|q′) + H(q′|q)`
   (`residue_tower_condEntropy_trans`), section costs add
-  (`sectionCost_h1TowerMap_trans`), and the deficit increments
+  (`sectionCost_h1TowerMap_trans` — since review #21 stated from
+  divisibility alone, the redundant ratio witnesses shed at the
+  source, as is `residueDefect_mono`), and the deficit increments
   telescope — the two-step price identity is the sum of the one-step
   identities (`residue_tower_price_trans`) — consumed on theta along
   the full triangle `8 → 4 → 2` (`theta_tower_price_triangle`:
@@ -879,7 +900,7 @@ from the program with prejudice (recorded in the Disposition table).
 `LoopKernel.lean` is retained -- it has consumers (`SectorPresentation`,
 `Groupoid`).
 
-### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at review #18 receipt, RECLOSED Phase 54 by certificate)
+### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21 receipt, RECLOSED Phases 54, 57)
 
 Three standing requirements, all met:
 
@@ -919,7 +940,10 @@ script — stands, since nothing replaces the checker.)
 **mechanically from this Part** — every C1–C10 acceptance signature
 is a field in exactly one law package: `GraphTopologyLaws` (C1–C2),
 `HarmonicCarrierLaws` (C3–C4), `MatterBindingLaws` (C6–C7),
-`CodingGravityLaws` (C8–C9 generic), the three spine certificates
+`ResolutionCodingLaws` (C8–C9 on the graph) and `CodingGravityLaws`
+(C8–C9 generic, **graph-free** — review #21 split the package so the
+generic laws are not vacuously quantified over a graph none of them
+mentions), the three spine certificates
 `ThermalDualityLaws`/`InformationLaws`/`ResolutionTowerLaws`
 (defined with their subjects), and `FlagshipLaws` (C5 + the concrete
 cycle/wedge/theta/binding/geodesic consumers) — all **derived**
@@ -937,12 +961,18 @@ import DAG matches this Part, *and* the deletions hold, *and*
 `lake build Meno` is green with zero `sorry`/`axiom`/warnings, *and*
 substantive review finds the derivation routes direct.
 
-**`Basic.lean`'s position** (rule-3 amendment, standing): it is not
-*moved* downstream — it is an upstream **pure interface** (abstract
-complexity classes and pullback combinatorics, no analytics), and the
-"not a parallel theory" requirement is discharged by C9's realization
-theorems (`uniformAction` computes its `C`; `gravity_complexity`
-realizes its `gravity`), not by file motion.
+**`Basic.lean`'s position** (rule-3 amendment, revised review #21):
+it is not *moved* downstream — it is the upstream home of **the one
+gravity engine** (`algebraic_gravity`, no analytics), and the "not a
+parallel theory" requirement is discharged by **derivation, not by
+bridge theorems**: `SGD.gravity` (counting),
+`SectorAction.complexity_gravity` (pricing), and
+`GroupoidObj.shared_component_identity` (groupoid) are all
+`algebraic_gravity` at their instances. Review #21 found the prior
+form of this claim false — the physics headline was proved by direct
+computation and the abstract layer was kept alive by bridge theorems
+with no consumers ("the abstract framework has been inverted") — and
+prescribed this inversion's repair, not the layer's excision.
 
 **The import flow (current — rewritten Phase 52, review #16).** The
 layer order matches the import DAG with no residue and no
@@ -967,10 +997,14 @@ inverse-temperature scaling and fluctuation–dissipation, downstream
 of `SiegelPoisson` **and** `Fluctuation`; `BasisIndependence` —
 unimodular relatedness, graph `partFn`, the bundled carrier
 `classQuadAction`, its scaling as a bundle specialization) →
-Matter/Binding → Realizations (`Basic`, `Instances`, `UniformAction`)
+Matter/Binding → Realizations (`Basic`, `Instances`, `UniformAction`
+— the engine, its counting instance, and the pricing instance)
 → Information on the carrier (`InfoRatchet` — downstream of
-`SectorAction` since Phase 48: the generic Gibbs entropy split
-`H = K + ⟨E⟩`, the priced constructions, the Gibbs inequality, and
+`SectorAction` since Phase 48 and of `UniformAction` since Phase 57
+(review #21: the priced gravity identity is `algebraic_gravity` at
+the pricing instance, whose free sectors are uniform actions): the
+generic Gibbs entropy split `H = K + ⟨E⟩`, the priced constructions,
+the Gibbs inequality, and
 conditional entropy live there; `ResolutionCount` — downstream of
 `BasisIndependence` since Phase 45: the Gibbs residue distribution,
 the residue action, the modal bound, the resolution tower, and its
@@ -4950,3 +4984,45 @@ goals CLOSED; the closure conjunction holds. Cumulative: twenty
 reviews, eighty-eight findings, eighty-eight confirmed and repaired.
 `lake build Meno`: build green (3350 jobs, 34 source files), zero
 `sorry`, zero `axiom`, zero warnings.
+
+## Phase 57 addendum: twenty-first external review (the gatekeeper) — four findings, four confirmed, four repaired; THE ONE ENGINE (2026-07-19)
+
+Review #21 — the gatekeeper — returned **REJECT** against the
+Phase-56 state: nothing above weakened a theorem; what was rejected
+was **the architecture's truthfulness about itself**. Per the
+Phase-56 amendment the closure conjunction **reopened at receipt**
+(every finding touches Part-I files). All four findings verified
+against source before repair; all four CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | **The abstract framework had been inverted**: "invoked, not paralleled" was false — the physics headline (`SectorAction.partFn_gravity`/`complexity_gravity`/`entropy_gravity`/`sectionCost_uniformLift`, carrier `carrier_gravity_*`) was proved by direct computation on the priced calculus and neither used nor could use `SGD.gravity` (which prices types by cardinality alone); the identical proposition was proved twice (`carrier_gravity_complexity` at ResolutionCount:812 via the SGD bridge vs `carrier_gravity_complexity_of_entropy` at :1953 via the priced calculus — both decomposing the same pullback over the same base fibers) under the "independent corroboration" disguise the Phase-54 amendment condemns; the deletion test succeeded — stripping the class hierarchy, `SGD.gravity`, `refactoring_bound`, the `Instances.lean` instance, and the bridge theorems left every README physical claim standing | **CONFIRMED** | **The one engine** (as prescribed — generalized, not excised): (1) `SGD.gravity` is now a corollary of `AdditiveComplexityOn.algebraic_gravity` at `instAdditiveComplexityOnType`, the sigma-fiber equivalences supplying `Pullback f g ≃ D × (F × G)`, `A ≃ D × F`, `B ≃ D × G`; `gravity_logCard` invokes it unchanged. (2) **The pricing instance** `instAdditiveComplexityOnSectorAction` (`Meno/UniformAction.lean`): C = `complexity`, equiv = the new `SectorAction.EnergyEquiv` (energy-preserving relabeling, with `partFn_congr`/`complexity_congr`), prod = `SectorAction.prod`, unit = `uniformAction PUnit` — `congr` and `prod_add` are the Phase-1 facts; the decompositions the coupling computed in unstructured form are proved (`uniformLift_energyEquiv : lift ≈ A ⊗ free`, `coupling_energyEquiv : coupling ≈ A ⊗ (free ⊗ free)`, against any sector type of the right cardinality via `Finite.card_eq`); `SectorAction.complexity_gravity` is now `algebraic_gravity` **invoked** at this instance — and the engine route sheds `[Fintype A.Λ]`, a strictly stronger statement; `partFn_gravity` is its exponential; `entropy_gravity` remains its Gibbs-split corollary. `InfoRatchet` imports `UniformAction` (DAG updated in Part I). (3) The SGD-route carrier proof **deleted**; one `carrier_gravity_complexity` remains, proved once by the priced route — nothing left to corroborate. (4) C9/C12 and README rewritten: **one abstract gravity theorem, two physical instances — counting and pricing** (and the groupoid third) |
+| 2 | **Dead abstraction violating the closure discipline (1b, 1c)**: zero consumers anywhere for `AdditiveComplexityOn` (all four theorems, both instances), `SGD.Contractible`, `Pullback.equivProdOfSubsingleton`, `SGD.gravity_uniform` (docstrings only), `gravity_uniform_complexity` (not even a certificate field); Groupoid.lean:686 claimed the laws "apply through this instance" — nothing applied them | **CONFIRMED** | Finding 1 makes `AdditiveComplexityOn`, `algebraic_gravity`, and all three instances load-bearing. The advertised groupoid consumer now exists: `GroupoidObj.shared_component_identity` — `algebraic_gravity` invoked at `instAdditiveComplexityOnGroupoidObj` — cited from the instance docstring. **Deleted**: `SGD.Contractible`, `equivProdOfSubsingleton`, `SGD.gravity_uniform`, `gravity_uniform_complexity`, the `Nonempty` pullback instance (UniformAction:190), and `SGD.fstFiberEquiv` (no consumer remained). **Deleted beyond the prescription, under the review's own 1b/1c standard** (each with zero consumers after the rewire): the three `AdditiveComplexityOn` convenience lemmas `prod_unit_right`/`prod_unit_left`/`prod_comm_C` (the repair makes the engine load-bearing, not these), and the uniform-action numeric shadows `gravity_partFn`/`gravity_complexity`/`card_pullback_mul_card_base`/`card_pullback_eq_sum`/`uniform_refactoring_bound`/`pullback_nonempty`/`uniformAction_prod_partFn` — their gravity content lives in `gravity_logCard` (certificate field `type_gravity`) and the priced identities; keeping them would have rebuilt the bridge-theorem scaffolding under new names |
+| 3 | **README overclaim on the invocation discipline**: "occurs once globally" — false; `duality_real` (SiegelPoisson:1353) and `scalarPartFn_duality_via_poisson` (:1485) invoke `QuadraticAction.duality` directly, in the defining file; the PLAN carries the qualified statement, the README dropped the qualifier | **CONFIRMED** | README sentence takes the PLAN's form: **outside its defining file**, exactly once — inside `QuadLatticeAction.duality` — with the in-file scalar/real corollaries named as upstream |
+| 4 | **Packaging defects inside the certificate**: 14 of `CodingGravityLaws`' 23 fields (`sections_count` … `priced_time`) never mention `G` — each generic law "certified" once per graph, vacuously quantified; `ResolutionTowerLaws.deficit_mono` quantified a `c` its conclusion never uses (`q' = c*q` duplicating `q ∣ q'`), `cost_add` took `c, c'` its conclusion ignores | **CONFIRMED** | **Split** (as prescribed): the 9 graph-dependent fields (`k1` … `recovery`) keep the parameter as **`ResolutionCodingLaws (G)`** with derivation `resolutionCodingLaws`; the 14 generic fields form the unparameterized **`CodingGravityLaws : Prop`** with derivation `codingGravityLaws`; `MenoSemanticCompletion` carries the former quantified over `G` and the latter as a single unquantified field — matching `InformationLaws`/`ThermalDualityLaws`. **Dead parameters shed at the source**: `residueDefect_mono (hdvd : q ∣ q')` and `sectionCost_h1TowerMap_trans (h₁) (h₂)` now obtain their ratio witnesses internally from divisibility; the certificate fields `deficit_mono`/`cost_add` restate without them; the theta consumer updated (`theta_tower_price_triangle` passes `2 4 8` and the two divisibility proofs); the strengthened priced fields drop `[Fintype A.Λ]` — the certificate pins the statements the proofs actually earn |
+
+**Rule-3 amendments.** (1) **One gravity engine**: any gravity-shaped
+identity (a merge saving exactly the shared component) must be
+derived by invoking `algebraic_gravity` at an instance, never proved
+by parallel computation; a new domain gets a new instance, not a new
+theorem. (2) **No vacuous quantifiers in certificate packages**: a
+law package's parameter must appear in every field; generic laws
+live in unparameterized packages. Certificate fields pin the
+statements the proofs earn — no dead binders, no redundant
+hypotheses. (3) The Phase-56 amendment operated as designed: the
+conjunction reopened at receipt. After this phase the four
+machine-checked legs hold again — certificate recompiled against the
+split packages, import DAG matches the updated Part I
+(`InfoRatchet → UniformAction` added), deletions recorded, build
+green — and the **substantive-review leg pends resubmission** to the
+gatekeeper, per its closing instruction.
+
+**Discipline check.** C9 and C12 REOPENED at review #21 receipt,
+RECLOSED this phase by the one-engine rewire and certificate
+re-derivation — with the review leg of the closure conjunction
+honestly recorded as pending. No mathematical statement weakened;
+two strengthened (`complexity_gravity`/`partFn_gravity` without
+base finiteness). `lake build Meno`: green (3350 jobs, 34 source
+files), zero `sorry`, zero `axiom`, zero warnings. Cumulative:
+twenty-one reviews, ninety-two findings, ninety-two confirmed and
+repaired.

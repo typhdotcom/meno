@@ -37,14 +37,6 @@ def Pullback.equivSigmaFiber {A B D : Type u} (f : A → D) (g : B → D) :
   left_inv _ := Subtype.ext rfl
   right_inv := fun ⟨_, ⟨_, ha⟩, ⟨_, hb⟩⟩ => by subst ha; rfl
 
-/-- When D is a subsingleton, pullback ≃ product. -/
-def Pullback.equivProdOfSubsingleton {A B D : Type u} [Subsingleton D]
-    (f : A → D) (g : B → D) : Pullback f g ≃ A × B where
-  toFun p := p.val
-  invFun p := ⟨p, Subsingleton.elim _ _⟩
-  left_inv _ := Subtype.ext rfl
-  right_inv _ := rfl
-
 /-- The fiber of the pullback's base map over `d` is the product of
 the two fibers over `d` (review #10 — the counting engine of the
 shared-base coupling). -/
@@ -177,62 +169,25 @@ theorem refactoring_bound
 
 end RefactoringBound
 
-/-! ## Gravity (Uniform Fiber Case) -/
+/-! ## Domain-Generic Additive Complexity — THE ONE GRAVITY ENGINE
 
-section Gravity
-
-variable {M : Type*} [AddCommMonoid M] [PartialOrder M]
-variable [SupSet M] [inst : AdditiveComplexity M]
-
-/-- **Gravity**: for any maps f : A → D, g : B → D with uniform fibers
-    (all fibers of f isomorphic to F, all fibers of g isomorphic to G),
-    the pullback saves exactly C(D).
-
-    Proof: A ≃ D × F and B ≃ D × G via sigma-fiber decomposition,
-    Pullback f g ≃ D × F × G via the same on fiber products.
-    Then C(D×F×G) + C(D) = C(D×F) + C(D×G) by additivity. -/
-theorem gravity {A B D F G : Type u} (f : A → D) (g : B → D)
-    (ef : ∀ d, Fiber f d ≃ F) (eg : ∀ d, Fiber g d ≃ G) :
-    inst.C (Pullback f g) + inst.C D = inst.C A + inst.C B := by
-  have hA : inst.C A = inst.C D + inst.C F :=
-    (inst.congr ((Equiv.sigmaFiberEquiv f).symm.trans
-        ((Equiv.sigmaCongrRight ef).trans (Equiv.sigmaEquivProd D F)))).trans (inst.prod_eq D F)
-  have hB : inst.C B = inst.C D + inst.C G :=
-    (inst.congr ((Equiv.sigmaFiberEquiv g).symm.trans
-        ((Equiv.sigmaCongrRight eg).trans (Equiv.sigmaEquivProd D G)))).trans (inst.prod_eq D G)
-  have hP : inst.C (Pullback f g) = inst.C D + (inst.C F + inst.C G) := by
-    rw [inst.congr ((Pullback.equivSigmaFiber f g).trans
-        ((Equiv.sigmaCongrRight (fun d => Equiv.prodCongr (ef d) (eg d))).trans
-         (Equiv.sigmaEquivProd D (F × G)))),
-        inst.prod_eq D (F × G), inst.prod_eq F G]
-  rw [hA, hB, hP]; abel
-
-/-- Fiber of first projection π₁ : D × F → D over d is isomorphic to F. -/
-def fstFiberEquiv (D F : Type u) (d : D) : Fiber (fun p : D × F => p.1) d ≃ F where
-  toFun x := x.val.2
-  invFun f := ⟨(d, f), rfl⟩
-  left_inv x := by ext; exact x.property.symm; rfl
-  right_inv _ := rfl
-
-/-- Corollary: the original product-projection case. -/
-theorem gravity_uniform (D F G : Type u) :
-    inst.C (Pullback (fun p : D × F => p.1) (fun p : D × G => p.1)) + inst.C D =
-    inst.C (D × F) + inst.C (D × G) :=
-  gravity _ _ (fstFiberEquiv D F) (fstFiberEquiv D G)
-
-end Gravity
-
-/-! ## Domain-Generic Additive Complexity
-
-The algebraic core shared by all additive complexity measures:
-a unit, equivalence, product, and the laws that make C a monoid
-homomorphism into (M, +). The type-level hierarchy specializes this
-to D = Type u (adding sigma bounds and pullback infrastructure).
-Groupoid complexity instantiates it on GroupoidObj. -/
+The algebraic core shared by all additive complexity measures: a
+unit, equivalence, product, and the laws that make C a monoid
+homomorphism into (M, +). **`algebraic_gravity` below is the one
+gravity theorem of the program** (review #21): the type-level
+`gravity` is its corollary at the counting instance
+(`instAdditiveComplexityOnType`), the priced
+`SectorAction.complexity_gravity` (`Meno/InfoRatchet.lean`) is its
+corollary at the pricing instance
+(`instAdditiveComplexityOnSectorAction`,
+`Meno/UniformAction.lean`), and the groupoid shared-component
+identity (`Meno/Groupoid.lean`) is its corollary at the groupoid
+instance. -/
 
 /-- Additive complexity on a domain D, valued in M.
     Captures the algebraic fragment common to the type-level hierarchy
-    (AdditiveComplexity, which adds sigma bounds) and groupoid complexity. -/
+    (AdditiveComplexity, which adds sigma bounds), the priced sector
+    calculus, and groupoid complexity. -/
 class AdditiveComplexityOn (D : Type*) (M : Type*) [AddCommMonoid M] where
   C : D → M
   unit : D
@@ -256,33 +211,50 @@ noncomputable instance instAdditiveComplexityOnType
   congr h := inst.congr h.some
   prod_add := inst.prod_eq
 
-section AdditiveComplexityOn
-variable {D M : Type*} [AddCommMonoid M] [inst : AdditiveComplexityOn D M]
-
-theorem AdditiveComplexityOn.prod_unit_right (a : D) :
-    inst.C (inst.prod a inst.unit) = inst.C a := by
-  rw [inst.prod_add, inst.unit_zero, add_zero]
-
-theorem AdditiveComplexityOn.prod_unit_left (a : D) :
-    inst.C (inst.prod inst.unit a) = inst.C a := by
-  rw [inst.prod_add, inst.unit_zero, zero_add]
-
-theorem AdditiveComplexityOn.prod_comm_C (a b : D) :
-    inst.C (inst.prod a b) = inst.C (inst.prod b a) := by
-  rw [inst.prod_add, inst.prod_add, add_comm]
-
-/-- **Algebraic gravity**: merging two structures sharing a component d saves C(d).
-    This is the domain-generic shadow of the type-level gravity theorem. -/
-theorem AdditiveComplexityOn.algebraic_gravity (d f g : D) :
+/-- **ALGEBRAIC GRAVITY — the one gravity engine** (review #21):
+merging two structures sharing a component d saves exactly C(d).
+Every gravity identity of the program is this theorem at an
+instance: counting (`gravity`, at `instAdditiveComplexityOnType`),
+pricing (`SectorAction.complexity_gravity`), groupoid
+(`GroupoidObj.shared_component_identity`). -/
+theorem AdditiveComplexityOn.algebraic_gravity {D M : Type*}
+    [AddCommMonoid M] [inst : AdditiveComplexityOn D M] (d f g : D) :
     inst.C (inst.prod d (inst.prod f g)) + inst.C d =
     inst.C (inst.prod d f) + inst.C (inst.prod d g) := by
   simp only [inst.prod_add]; abel
 
-end AdditiveComplexityOn
+/-! ## Gravity (Uniform Fiber Case) -/
 
-/-! ## Contractibility -/
+section Gravity
 
-def Contractible (A : Type u) : Prop := Nonempty (A ≃ PUnit.{u+1})
+variable {M : Type*} [AddCommMonoid M] [PartialOrder M]
+variable [SupSet M] [inst : AdditiveComplexity M]
+
+/-- **Gravity at the counting instance** (review #21): for any maps
+f : A → D, g : B → D with uniform fibers (all fibers of f isomorphic
+to F, all fibers of g isomorphic to G), the pullback saves exactly
+C(D). The sigma-fiber decompositions supply
+`Pullback f g ≃ D × (F × G)`, `A ≃ D × F`, `B ≃ D × G`; the identity
+itself is `algebraic_gravity` at `instAdditiveComplexityOnType` —
+**invoked, not reproved**. -/
+theorem gravity {A B D F G : Type u} (f : A → D) (g : B → D)
+    (ef : ∀ d, Fiber f d ≃ F) (eg : ∀ d, Fiber g d ≃ G) :
+    inst.C (Pullback f g) + inst.C D = inst.C A + inst.C B := by
+  have hA : inst.C A = inst.C (D × F) :=
+    inst.congr ((Equiv.sigmaFiberEquiv f).symm.trans
+      ((Equiv.sigmaCongrRight ef).trans (Equiv.sigmaEquivProd D F)))
+  have hB : inst.C B = inst.C (D × G) :=
+    inst.congr ((Equiv.sigmaFiberEquiv g).symm.trans
+      ((Equiv.sigmaCongrRight eg).trans (Equiv.sigmaEquivProd D G)))
+  have hP : inst.C (Pullback f g) = inst.C (D × (F × G)) :=
+    inst.congr ((Pullback.equivSigmaFiber f g).trans
+      ((Equiv.sigmaCongrRight (fun d => Equiv.prodCongr (ef d) (eg d))).trans
+        (Equiv.sigmaEquivProd D (F × G))))
+  rw [hA, hB, hP]
+  exact AdditiveComplexityOn.algebraic_gravity
+    (inst := instAdditiveComplexityOnType M) D F G
+
+end Gravity
 
 /-! ## The arrow of time — moved
 

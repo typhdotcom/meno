@@ -55,10 +55,12 @@ certificate enforces **statement coverage** (deleting an acceptance
 theorem breaks the derivation); proof provenance is enforced by the
 direct-assignment discipline and review, and the import-DAG and
 deletion constraints are repository invariants checked by the build
-and by review — closure is that whole conjunction. Every leg of the
-conjunction has been discharged: the certificate compiles, the DAG
-and deletions hold, the build is green, and the substantive review
-of the derivation routes returned no findings.
+and by review — closure is that whole conjunction. The conjunction
+was discharged at review #20 and **reopened by review #21** (the
+gatekeeper: the abstract gravity framework had been bridged, not
+load-bearing); the one-engine rewire re-established the four
+machine-checked legs — certificate, import DAG, deletions, clean
+build — and the substantive-review leg awaits re-review.
 
 ## What is proved
 
@@ -109,9 +111,11 @@ the coordinate dual at the standard dual basis — so the coordinate
 duality statement is a corollary of the intrinsic one
 (`QuadraticAction.duality_via_lattice`), the categorical duality
 consumes the corollary (`dualVia_partFn_duality`,
-`Meno/SectorPresentation.lean`), and the direct analytic invocation
-of `QuadraticAction.duality` occurs once globally — inside
-`QuadLatticeAction.duality`. And **duality is temperature,
+`Meno/SectorPresentation.lean`), and outside its defining file the
+direct analytic invocation of `QuadraticAction.duality` occurs
+exactly once — inside `QuadLatticeAction.duality` (its in-file
+scalar/real corollaries in `Meno/SiegelPoisson.lean` sit upstream of
+the bundle in the import order). And **duality is temperature,
 inverted**: scaling multiplies the discriminant by `β^rank`
 (`disc_scale`) and the dual of the scaled bundle *is* the
 inverse-scaled dual — `(β·Q)∨ = β⁻¹·(Q∨)` (`scale_dual`, an equality
@@ -250,14 +254,32 @@ of the generic priced time law
 `SectorAction.sectionCost_uniformLift`) — time's arrow priced
 against the action, not only against counts.
 
-**Gravity.** A finite type is a sector lattice with zero energy:
-`Z = |A|`, `K = log|A|` (`uniformAction`, `Meno/UniformAction.lean`).
-Type-level gravity is then a partition-function identity: for uniform
-fibers, `Z(A ×_D B) · Z(D) = Z(A) · Z(B)` (`gravity_partFn`) —
-sharing a base is worth exactly one copy of it — with the complexity
-form `K(P) + K(D) = K(A) + K(B)` (`gravity_complexity`) realizing the
-abstract `SGD.gravity` of `Meno/Basic.lean`, and the refactoring bound
-`K(P) ≤ K(D) + log(max fiber product)` (`uniform_refactoring_bound`).
+**Gravity.** There is **one gravity theorem** (review #21): merging
+two structures sharing a component saves exactly the shared
+component's complexity —
+`SGD.AdditiveComplexityOn.algebraic_gravity` (`Meno/Basic.lean`),
+stated on any domain with a unit, an equivalence, and an additive
+product. Every gravity identity in the program is that theorem at an
+instance. **Counting**: a finite type is a sector lattice with zero
+energy — `Z = |A|`, `K = log|A|` (`uniformAction`,
+`Meno/UniformAction.lean`) — and `SGD.gravity` is the engine's
+corollary at the type-level `logCard` instance, the sigma-fiber
+decompositions supplying `A ×_D B ≃ D × (F × G)`, `A ≃ D × F`,
+`B ≃ D × G`; `gravity_logCard` and `refactoring_bound_logCard`
+invoke the abstract theorems, bridged to the priced world by
+`logCard_eq_uniformComplexity`. **Pricing**: the priced gravity
+identity `K(coupling) + K(base) = K(lift) + K(lift)`
+(`SectorAction.complexity_gravity`, `Meno/InfoRatchet.lean`) is the
+engine's corollary at the sector-action instance
+(`instAdditiveComplexityOnSectorAction` — complexity,
+energy-preserving equivalence, independent product), the
+decompositions `coupling ≈ base ⊗ (free ⊗ free)` and
+`lift ≈ base ⊗ free` (`coupling_energyEquiv`,
+`uniformLift_energyEquiv`) supplying the shapes, with the
+partition-function form its exponential (`partFn_gravity`). The
+**groupoid** shared-component identity
+(`GroupoidObj.shared_component_identity`, `Meno/Groupoid.lean`)
+consumes the same engine at the groupoid instance.
 On the graph carrier gravity is **priced by the action**, at the
 level of the actions themselves (`Meno/InfoRatchet.lean`,
 `Meno/ResolutionCount.lean`). The residue distribution is the Gibbs
@@ -291,9 +313,9 @@ priced calculus** (`SectorAction.entropy_gravity` — the four Gibbs
 entropy splits, complexity gravity, and the expectation transports —
 instantiated at the residue action, `carrier_gravity_entropy`), with
 the uniform complexity identity the priced identity plus the common
-deficit (`carrier_gravity_complexity_of_entropy`; the SGD-bridge
-derivation `carrier_gravity_complexity` stands as independent
-corroboration). Pricing and counting are **numerically bridged** by
+deficit (`carrier_gravity_complexity` — proved **once**; review #21
+deleted the parallel SGD-bridge proof of the same statement, both
+routes now flowing through the one engine). Pricing and counting are **numerically bridged** by
 the uniform entropy defect `Δ(P) = log|X| − H(P)` (`FinDist.defect`
 — nonnegative by the maximum entropy theorem, zero exactly at the
 uniform distribution, preserved by lifting and coupling), and the
@@ -463,9 +485,9 @@ Meno/
 ├── Matter.lean                MatterSector = nonzero H¹ class; mass, positivity, trapped paradox
 ├── Binding.lean               2-complexes; the induced map; binding kills matter; exact spectral decomposition
 ├── ThetaBinding.lean          Binding at the theta graph: kill, rank drop `2 → 1`, removed weight
-├── Basic.lean                 Abstract complexity hierarchy; pullback gravity (interface layer)
+├── Basic.lean                 Abstract complexity hierarchy; THE ONE GRAVITY ENGINE (algebraic_gravity); gravity at the counting instance
 ├── Instances.lean             Log-cardinality instance of the abstract hierarchy
-├── UniformAction.lean         Type-level gravity realized on the uniform sector action
+├── UniformAction.lean         The uniform sector action; the pricing instance of the gravity engine; the logCard bridge
 ├── InfoRatchet.lean           Fiber information; the coding theorem; finite distributions and entropy gravity
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
