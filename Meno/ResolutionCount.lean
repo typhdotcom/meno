@@ -938,6 +938,168 @@ theorem residueMass_chart {n : ℕ}
   rw [LinearEquiv.apply_symm_apply] at h
   exact h.symm
 
+/-! ### The zero class is strictly modal (review #12)
+
+The residue distribution is not merely positive and normalized — the
+quadratic action **concentrates** it: the zero class carries strictly
+more mass than every other class. In a lattice chart the fiber over a
+class is a coset `k₀ + q·ℤⁿ`, its Boltzmann sum is the Gaussian
+periodization of the harmonic Gram at the fractional shift `k₀/q`
+(`residueMass_mk_eq_periodization`), and a nonzero class forces a
+non-integer coordinate of the shift — where the strict modal bound of
+the shifted Fourier expansion applies
+(`periodization_lt_periodization_zero`, `Meno/SiegelPoisson.lean`). -/
+
+/-- The residue mass of a charted class is the Gaussian periodization
+of the scaled harmonic Gram at the fractional shift of any integer
+representative, over the graph's partition function. -/
+private lemma residueMass_mk_eq_periodization {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (k₀ : Fin n → ℤ) :
+    G.residueMass q
+        (Submodule.Quotient.mk ((G.latticeQuotEquiv B).symm k₀))
+      = periodization
+          ((((q : ℕ) : ℝ) ^ 2 / Real.pi) • (gramOf (G.cyclesR B))⁻¹)
+          (fun i => (k₀ i : ℝ) / ((q : ℕ) : ℝ)) / G.partFn := by
+  classical
+  rw [G.residueMass_chart q B]
+  congr 1
+  -- membership of the coset translates
+  have hmem : ∀ c : Fin n → ℤ,
+      (Submodule.Quotient.mk
+          ((G.latticeQuotEquiv B).symm (k₀ + (q : ℤ) • c))
+        : H1Reduction G q)
+        = Submodule.Quotient.mk ((G.latticeQuotEquiv B).symm k₀) := by
+    intro c
+    rw [Submodule.Quotient.eq]
+    refine LinearMap.mem_range.mpr ⟨(G.latticeQuotEquiv B).symm c, ?_⟩
+    rw [LinearMap.smul_apply, LinearMap.id_apply, map_add, map_smul]
+    abel
+  -- the coset reindex `c ↦ k₀ + q·c` is a bijection onto the fiber
+  have hbij : Function.Bijective (fun c : Fin n → ℤ =>
+      (⟨k₀ + (q : ℤ) • c, hmem c⟩ : {k : Fin n → ℤ //
+        (Submodule.Quotient.mk ((G.latticeQuotEquiv B).symm k)
+          : H1Reduction G q)
+          = Submodule.Quotient.mk ((G.latticeQuotEquiv B).symm k₀)})) := by
+    constructor
+    · intro c c' hcc'
+      have h2 : (q : ℤ) • c = (q : ℤ) • c' :=
+        add_left_cancel (congrArg Subtype.val hcc')
+      exact smul_right_injective _
+        (by exact_mod_cast (NeZero.ne q) : (q : ℤ) ≠ 0) h2
+    · rintro ⟨k, hk⟩
+      rw [Submodule.Quotient.eq] at hk
+      obtain ⟨y, hy⟩ := LinearMap.mem_range.mp hk
+      rw [LinearMap.smul_apply, LinearMap.id_apply] at hy
+      refine ⟨G.latticeQuotEquiv B y, ?_⟩
+      apply Subtype.ext
+      show k₀ + (q : ℤ) • (G.latticeQuotEquiv B) y = k
+      have h3 := congrArg (G.latticeQuotEquiv B) hy
+      rw [map_smul, map_sub, LinearEquiv.apply_symm_apply,
+        LinearEquiv.apply_symm_apply] at h3
+      rw [h3]
+      abel
+  rw [← Equiv.tsum_eq (Equiv.ofBijective _ hbij)]
+  simp only [periodization]
+  refine tsum_congr fun c => ?_
+  set A : Matrix (Fin n) (Fin n) ℝ := (gramOf (G.cyclesR B))⁻¹ with hA
+  set y : Fin n → ℝ :=
+    (fun i => (k₀ i : ℝ) / ((q : ℕ) : ℝ)) + fun i => (c i : ℝ) with hy
+  have hqR : ((q : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne q)
+  have hvec : (fun i => (((k₀ + (q : ℤ) • c) i : ℤ) : ℝ))
+      = ((q : ℕ) : ℝ) • y := by
+    funext i
+    show (((k₀ + (q : ℤ) • c) i : ℤ) : ℝ)
+      = ((q : ℕ) : ℝ) * ((k₀ i : ℝ) / ((q : ℕ) : ℝ) + (c i : ℝ))
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    push_cast
+    field_simp
+  have henergy : (G.basisGramData B).energy
+        ((Equiv.ofBijective _ hbij c).val)
+      = (((q : ℕ) : ℝ) • y) ⬝ᵥ A.mulVec (((q : ℕ) : ℝ) • y) := by
+    have h1 : (G.basisGramData B).energy (k₀ + (q : ℤ) • c)
+        = (fun i => (((k₀ + (q : ℤ) • c) i : ℤ) : ℝ)) ⬝ᵥ
+            A.mulVec (fun i => (((k₀ + (q : ℤ) • c) i : ℤ) : ℝ)) := by
+      show ∑ i, ∑ j, A i j * (((k₀ + (q : ℤ) • c) i : ℤ) : ℝ)
+          * (((k₀ + (q : ℤ) • c) j : ℤ) : ℝ) = _
+      exact quadForm_dotProduct A _
+    rw [show (Equiv.ofBijective _ hbij c).val = k₀ + (q : ℤ) • c from rfl,
+      h1, hvec]
+  show Real.exp (-(G.basisGramData B).energy ((Equiv.ofBijective _ hbij c).val))
+    = gaussian ((((q : ℕ) : ℝ) ^ 2 / Real.pi) • A)
+        ((fun i => (k₀ i : ℝ) / ((q : ℕ) : ℝ)) + fun i => (c i : ℝ))
+  rw [henergy]
+  show Real.exp (-((((q : ℕ) : ℝ) • y) ⬝ᵥ A.mulVec (((q : ℕ) : ℝ) • y)))
+    = Real.exp (-Real.pi
+        * (y ⬝ᵥ (((((q : ℕ) : ℝ) ^ 2 / Real.pi) • A).mulVec y)))
+  congr 1
+  rw [smul_dotProduct, Matrix.mulVec_smul, dotProduct_smul,
+    Matrix.smul_mulVec, dotProduct_smul]
+  simp only [smul_eq_mul]
+  field_simp
+
+/-- **The zero class is strictly modal** (review #12): every nonzero
+finite sector carries strictly less residue mass than the zero
+sector — the quadratic action genuinely concentrates the residue
+distribution. -/
+theorem residueMass_lt_residueMass_zero {ξ : H1Reduction G q}
+    (hξ : ξ ≠ 0) : G.residueMass q ξ < G.residueMass q 0 := by
+  classical
+  obtain ⟨κ₀, hκ₀⟩ := Submodule.Quotient.mk_surjective _ ξ
+  set k₀ : Fin G.b1 → ℤ := G.latticeQuotEquiv G.cycleBasis κ₀ with hk₀
+  have hmkξ : (Submodule.Quotient.mk
+      ((G.latticeQuotEquiv G.cycleBasis).symm k₀) : H1Reduction G q) = ξ := by
+    rw [hk₀, LinearEquiv.symm_apply_apply, hκ₀]
+  -- a nonzero class has a representative coordinate `q` does not divide
+  have hcoord : ∃ i, ¬ ((q : ℤ) ∣ k₀ i) := by
+    by_contra hall
+    push_neg at hall
+    apply hξ
+    choose f hf using fun i => hall i
+    have hk : k₀ = (q : ℤ) • f := funext fun i => by
+      rw [Pi.smul_apply, smul_eq_mul]; exact hf i
+    rw [← hmkξ, hk, map_smul, Submodule.Quotient.mk_eq_zero]
+    exact LinearMap.mem_range.mpr
+      ⟨(G.latticeQuotEquiv G.cycleBasis).symm f, by
+        rw [LinearMap.smul_apply, LinearMap.id_apply]⟩
+  obtain ⟨i₀, hi₀⟩ := hcoord
+  have hq0 : (0 : ℝ) < ((q : ℕ) : ℝ) :=
+    Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne q))
+  set A : Matrix (Fin G.b1) (Fin G.b1) ℝ :=
+    (gramOf (G.cyclesR G.cycleBasis))⁻¹ with hA
+  have hApos : A.PosDef := posDef_inv (G.gramOf_cyclesR_posDef G.cycleBasis)
+  have hMq : ((((q : ℕ) : ℝ) ^ 2 / Real.pi) • A).PosDef :=
+    posDef_smul' hApos (div_pos (pow_pos hq0 2) Real.pi_pos)
+  -- both masses, as periodizations
+  have hmass0 : G.residueMass q 0
+      = periodization ((((q : ℕ) : ℝ) ^ 2 / Real.pi) • A) 0 / G.partFn := by
+    have h := G.residueMass_mk_eq_periodization q G.cycleBasis 0
+    rw [map_zero] at h
+    rw [show (Submodule.Quotient.mk (0 : (G.E → ℤ) ⧸
+        LinearMap.range (G.gradLin ℤ)) : H1Reduction G q) = 0 from rfl] at h
+    simp only [Pi.zero_apply, Int.cast_zero, zero_div] at h
+    exact h
+  have hmassξ : G.residueMass q ξ
+      = periodization ((((q : ℕ) : ℝ) ^ 2 / Real.pi) • A)
+          (fun i => (k₀ i : ℝ) / ((q : ℕ) : ℝ)) / G.partFn := by
+    have h := G.residueMass_mk_eq_periodization q G.cycleBasis k₀
+    rw [hmkξ] at h
+    exact h
+  -- the fractional shift misses the integers at `i₀`
+  have hx : ∀ z : ℤ, (fun i => (k₀ i : ℝ) / ((q : ℕ) : ℝ)) i₀ ≠ (z : ℝ) := by
+    intro z hz
+    apply hi₀
+    refine ⟨z, ?_⟩
+    have h1 : (k₀ i₀ : ℝ) = (z : ℝ) * ((q : ℕ) : ℝ) :=
+      (div_eq_iff (ne_of_gt hq0)).mp hz
+    exact_mod_cast h1.trans (mul_comm _ _)
+  -- the graph's partition function is positive
+  have hZ : 0 < G.partFn := by
+    have h := (G.classSectorAction).partFn_pos
+    rwa [G.classSectorAction_partFn] at h
+  rw [hmassξ, hmass0]
+  exact (div_lt_div_iff_of_pos_right hZ).mpr
+    (periodization_lt_periodization_zero hMq hx)
+
 /-- **The residue distribution, bundled** (review #10): nonnegativity
 and normalization carried by the structure, not asserted at use
 sites. -/
@@ -948,6 +1110,29 @@ noncomputable def residueDist : FinDist (H1Reduction G q) where
 
 @[simp] theorem residueDist_mass :
     (G.residueDist q).mass = G.residueMass q := rfl
+
+/-- **The residue distribution is genuinely non-uniform** (review #12):
+on any graph with cycles, at any resolution `1 < q`, the quadratic
+action concentrates residue mass on the zero class — the Gibbs law is
+never the counting law. -/
+theorem residueDist_ne_uniform (hb : 0 < G.b1) (hq : 1 < q) :
+    G.residueDist q ≠ FinDist.uniform (H1Reduction G q) := by
+  intro h
+  have hcard : 1 < Nat.card (H1Reduction G q) := by
+    rw [G.card_H1Reduction q]
+    exact Nat.one_lt_pow hb.ne' hq
+  haveI : Nontrivial (H1Reduction G q) :=
+    Finite.one_lt_card_iff_nontrivial.mp hcard
+  obtain ⟨ξ, hξ⟩ := exists_ne (0 : H1Reduction G q)
+  have hlt := G.residueMass_lt_residueMass_zero q hξ
+  have hmass := congrArg FinDist.mass h
+  have hξ0 : G.residueMass q ξ = G.residueMass q 0 := by
+    have h1 := congrFun hmass ξ
+    have h2 := congrFun hmass 0
+    rw [residueDist_mass] at h1 h2
+    rw [h1, h2]
+    rfl
+  exact absurd hξ0 (ne_of_lt hlt)
 
 theorem card_carrierCompression_fiber (ξ : H1Reduction G q) :
     Nat.card {ω : G.E → ZMod q // G.carrierCompression q ω = ξ}
@@ -1139,6 +1324,18 @@ finite reduction. Nonnegative (`FinDist.defect_nonneg`); zero exactly
 when the Gibbs law is uniform (`FinDist.defect_eq_zero_iff`). -/
 noncomputable def residueDefect : ℝ := (G.residueDist q).defect
 
+/-- **The deficit is strictly positive** (review #12): on any graph
+with cycles, at any resolution `1 < q`, the quadratic action genuinely
+changes finite-resolution information — the maximum-entropy bound is
+never attained, because the Gibbs residue law concentrates on the zero
+class (`residueDist_ne_uniform`, through the strict modal bound of the
+shifted Gaussian Fourier expansion). -/
+theorem residueDefect_pos (hb : 0 < G.b1) (hq : 1 < q) :
+    0 < G.residueDefect q := by
+  refine lt_of_le_of_ne (FinDist.defect_nonneg _) fun h => ?_
+  exact G.residueDist_ne_uniform q hb hq
+    ((FinDist.defect_eq_zero_iff _).mp h.symm)
+
 /-- `K_uniform(residue) = H(residue) + Δ`. -/
 theorem uniformComplexity_residue_split :
     (uniformAction (H1Reduction G q)).complexity
@@ -1189,6 +1386,108 @@ theorem uniformComplexity_pair_split :
     ring
   rw [h2]
   exact congrArg₂ (· + ·) rfl h
+
+/-! ### The residue action: pricing on the finite reduction (review #12)
+
+The `K_uniform = H + Δ` splits above become a genuine *pricing* bridge
+once the residue distribution is exhibited as the Gibbs law of an
+action. The **residue action** is the normalized finite sector action
+induced by the coset Boltzmann weights: its energy is the log-ratio
+against the modal zero class (nonnegative by the strict modal bound,
+vanishing at the ground state `0`), its Gibbs mass **is** the residue
+distribution (`residueAction_gibbsMass`), the Gibbs entropy split
+gives `H(residue) = K + ⟨E⟩` (`residueAction_entropy_split`), and the
+uniform complexity decomposes as
+`K_uniform = K(residueAction) + ⟨E⟩ + Δ`
+(`uniformComplexity_residue_bridge`) — complexity `log Z` and expected
+energy on one side, maximal ignorance on the other, the deficit
+between them. -/
+
+/-- The residue mass is maximal at the zero class — the weak form of
+the strict modal bound. -/
+theorem residueMass_le_residueMass_zero (ξ : H1Reduction G q) :
+    G.residueMass q ξ ≤ G.residueMass q 0 := by
+  by_cases hξ : ξ = 0
+  · rw [hξ]
+  · exact (G.residueMass_lt_residueMass_zero q hξ).le
+
+/-- **The residue action** (review #12): the normalized finite sector
+action induced by the coset Boltzmann weights — energy is the
+log-ratio of residue masses against the modal zero class, so the zero
+class is the ground state and every energy is nonnegative by the
+strict modal bound. -/
+noncomputable def residueAction : SectorAction.{v} where
+  Λ := H1Reduction G q
+  E ξ := Real.log (G.residueMass q 0) - Real.log (G.residueMass q ξ)
+  E_zero := ⟨0, sub_self _⟩
+  E_nonneg ξ := sub_nonneg.mpr (Real.log_le_log
+    (G.residueMass_pos q ξ) (G.residueMass_le_residueMass_zero q ξ))
+  summable := (hasSum_fintype _).summable
+
+/-- The residue action's Boltzmann weight is the mass ratio against
+the modal class. -/
+theorem residueAction_weight (ξ : H1Reduction G q) :
+    (G.residueAction q).weight ξ
+      = G.residueMass q ξ / G.residueMass q 0 := by
+  show Real.exp (-(Real.log (G.residueMass q 0)
+      - Real.log (G.residueMass q ξ))) = _
+  rw [neg_sub, Real.exp_sub, Real.exp_log (G.residueMass_pos q ξ),
+    Real.exp_log (G.residueMass_pos q 0)]
+
+/-- The residue action's partition function is the reciprocal modal
+mass. -/
+theorem residueAction_partFn :
+    (G.residueAction q).partFn = (G.residueMass q 0)⁻¹ := by
+  show (∑' ξ : H1Reduction G q, (G.residueAction q).weight ξ) = _
+  rw [tsum_fintype, Finset.sum_congr rfl fun ξ _ => G.residueAction_weight q ξ,
+    ← Finset.sum_div, G.residueMass_sum q, one_div]
+
+/-- **The residue action's Gibbs mass is the residue distribution**
+(review #12): the normalization cancels, leaving exactly the coset
+Boltzmann masses. -/
+theorem residueAction_gibbsMass :
+    (G.residueAction q).gibbsMass = G.residueMass q := by
+  funext ξ
+  show (G.residueAction q).weight ξ / (G.residueAction q).partFn
+    = G.residueMass q ξ
+  rw [G.residueAction_weight q ξ, G.residueAction_partFn q]
+  have h0 : G.residueMass q 0 ≠ 0 := ne_of_gt (G.residueMass_pos q 0)
+  field_simp
+
+/-- The residue action's complexity, in closed form: `-log` of the
+modal mass. -/
+theorem residueAction_complexity :
+    (G.residueAction q).complexity = -Real.log (G.residueMass q 0) := by
+  show Real.log (G.residueAction q).partFn = _
+  rw [G.residueAction_partFn q, Real.log_inv]
+
+/-- **`H(residue) = K(residueAction) + ⟨E⟩`** (review #12): the Gibbs
+entropy split of `Meno/InfoRatchet.lean`, instantiated at the residue
+action — the residue entropy *is* complexity plus expected energy. -/
+theorem residueAction_entropy_split :
+    shannonEntropy (G.residueMass q)
+      = (G.residueAction q).complexity
+        + (G.residueAction q).gibbsExpect (G.residueAction q).E := by
+  have h := @SectorAction.entropy_gibbs (G.residueAction q)
+    (inferInstanceAs (Fintype (H1Reduction G q)))
+  rw [G.residueAction_gibbsMass q] at h
+  exact h
+
+/-- **THE PRICING–COUNTING BRIDGE** (review #12): uniform complexity
+on the finite reduction is the residue action's complexity plus its
+expected energy plus the deficit —
+
+    K_uniform = K(residueAction) + ⟨E_residue⟩ + Δ
+
+— the harmonic action's pricing (`log Z` and expected energy) on one
+side, maximal ignorance on the other, and the strictly positive
+deficit (`residueDefect_pos`) between them. -/
+theorem uniformComplexity_residue_bridge :
+    (uniformAction (H1Reduction G q)).complexity
+      = (G.residueAction q).complexity
+        + (G.residueAction q).gibbsExpect (G.residueAction q).E
+        + G.residueDefect q := by
+  rw [G.uniformComplexity_residue_split q, G.residueAction_entropy_split q]
 
 /-- **The time face, as conditional entropy** (review #9): the
 per-sector gauge-fixing cost of `carrierCompression` is exactly the

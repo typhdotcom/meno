@@ -965,6 +965,143 @@ theorem tsum_gaussian_eq (hM : M.PosDef) :
   refine tsum_congr (fun m => ?_)
   rw [hone m, smul_eq_mul, mul_one, hcoeff m]
 
+/-- **The strict modal bound for the Gaussian periodization**
+(review #12): away from the integer lattice, the periodized Gaussian
+sits strictly below its value at the origin. Every torus Fourier
+coefficient of the periodization is a **positive** shifted Gaussian
+(`mFourierCoeff_torusPeriodization`, `integral_charGauss_eq`), and a
+shift with a non-integer coordinate breaks the alignment of at least
+one character. -/
+theorem periodization_lt_periodization_zero (hM : M.PosDef)
+    {x : Fin d → ℝ} {i₀ : Fin d} (hx : ∀ k : ℤ, x i₀ ≠ (k : ℝ)) :
+    periodization M x < periodization M 0 := by
+  classical
+  set G : C(UnitAddTorus (Fin d), ℂ) :=
+    ⟨fun z => ((torusPeriodization M z : ℝ) : ℂ),
+      Complex.continuous_ofReal.comp (continuous_torusPeriodization hM)⟩
+    with hGdef
+  -- the Fourier coefficients, as positive reals
+  set c : (Fin d → ℤ) → ℝ := fun m =>
+    M.det⁻¹ ^ ((1 : ℝ) / 2)
+      * Real.exp (-Real.pi * (∑ i, ∑ j, M⁻¹ i j * (m i : ℝ) * (m j : ℝ)))
+    with hcdef
+  have hdet : (0 : ℝ) ≤ M.det⁻¹ := (inv_pos.mpr hM.det_pos).le
+  have hcpos : ∀ m, 0 < c m := fun m =>
+    mul_pos (Real.rpow_pos_of_pos (inv_pos.mpr hM.det_pos) _) (Real.exp_pos _)
+  have hcoeff : ∀ m : Fin d → ℤ, mFourierCoeff (⇑G) m = ((c m : ℝ) : ℂ) := by
+    intro m
+    have h1 : mFourierCoeff (⇑G) m
+        = mFourierCoeff (fun z => ((torusPeriodization M z : ℝ) : ℂ)) m := rfl
+    rw [h1, mFourierCoeff_torusPeriodization hM m, integral_charGauss_eq hM m,
+      hcdef]
+    push_cast [Complex.ofReal_cpow hdet]
+    norm_num
+  have hMinv_pos : (Real.pi • M⁻¹).PosDef :=
+    posDef_smul' (posDef_inv hM) Real.pi_pos
+  have hsumc : Summable c := by
+    refine Summable.mul_left _ ?_
+    refine (summable_exp_neg_quadForm hMinv_pos).congr (fun m => ?_)
+    congr 1
+    rw [neg_mul, neg_inj, Finset.mul_sum]
+    refine Finset.sum_congr rfl (fun i _ => ?_)
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    rw [Matrix.smul_apply, smul_eq_mul]
+    ring
+  have hsummable : Summable (mFourierCoeff (⇑G)) := by
+    refine Summable.congr ?_ (fun m => (hcoeff m).symm)
+    exact_mod_cast hsumc
+  -- the Fourier series converges to the periodization at both points
+  have hGmk : ∀ y : Fin d → ℝ,
+      G (torusMk y) = ((periodization M y : ℝ) : ℂ) := by
+    intro y
+    show ((torusPeriodization M (torusMk y) : ℝ) : ℂ) = _
+    rw [torusPeriodization_mk]
+  have hsx : HasSum (fun m => ((c m : ℝ) : ℂ) * mFourier m (torusMk x))
+      ((periodization M x : ℝ) : ℂ) := by
+    have h := hasSum_mFourier_series_apply_of_summable hsummable (torusMk x)
+    rw [hGmk x] at h
+    simpa only [hcoeff, smul_eq_mul] using h
+  have hs0 : HasSum
+      (fun m => ((c m : ℝ) : ℂ) * mFourier m (torusMk (0 : Fin d → ℝ)))
+      ((periodization M 0 : ℝ) : ℂ) := by
+    have h := hasSum_mFourier_series_apply_of_summable hsummable
+      (torusMk (0 : Fin d → ℝ))
+    rw [hGmk 0] at h
+    simpa only [hcoeff, smul_eq_mul] using h
+  -- every character is 1 at the origin
+  have hone : ∀ m : Fin d → ℤ,
+      mFourier m (torusMk (0 : Fin d → ℝ)) = 1 := by
+    intro m
+    show (∏ i, fourier (m i) (torusMk (0 : Fin d → ℝ) i)) = 1
+    have hz : ∀ i : Fin d, torusMk (0 : Fin d → ℝ) i = 0 := by
+      intro i
+      show (((0 : ℝ)) : UnitAddCircle) = 0
+      exact QuotientAddGroup.mk_zero _
+    rw [Finset.prod_congr rfl (fun i _ => by rw [hz i, fourier_eval_zero])]
+    exact Finset.prod_const_one
+  -- real parts: the two lattice sums, with cosine-weighted coefficients
+  have hre_x : HasSum (fun m => c m * (mFourier m (torusMk x)).re)
+      (periodization M x) := by
+    have h := Complex.hasSum_re hsx
+    rw [Complex.ofReal_re] at h
+    simpa only [Complex.re_ofReal_mul] using h
+  have hre_0 : HasSum c (periodization M 0) := by
+    have h := Complex.hasSum_re hs0
+    rw [Complex.ofReal_re] at h
+    simp only [hone, mul_one, Complex.ofReal_re] at h
+    exact h
+  -- every term is dominated by its coefficient …
+  have hle : ∀ m : Fin d → ℤ,
+      c m * (mFourier m (torusMk x)).re ≤ c m := by
+    intro m
+    have hn : ‖mFourier m (torusMk x)‖ = 1 := by
+      show ‖∏ i, fourier (m i) (torusMk x i)‖ = 1
+      rw [norm_prod]
+      refine Finset.prod_eq_one (fun i _ => ?_)
+      rw [fourier_apply]
+      exact Circle.norm_coe _
+    have hre1 : (mFourier m (torusMk x)).re ≤ 1 := by
+      have h := Complex.re_le_norm (mFourier m (torusMk x))
+      rwa [hn] at h
+    calc c m * (mFourier m (torusMk x)).re ≤ c m * 1 :=
+          mul_le_mul_of_nonneg_left hre1 (hcpos m).le
+      _ = c m := mul_one _
+  -- … and the character at the non-integer coordinate is strictly
+  -- misaligned
+  have hstrict : c (Pi.single i₀ 1) * (mFourier (Pi.single i₀ 1)
+      (torusMk x)).re < c (Pi.single i₀ 1) := by
+    have hval : mFourier (Pi.single i₀ 1) (torusMk x)
+        = fourier 1 ((x i₀ : ℝ) : UnitAddCircle) := by
+      rw [mFourier_single]
+      rfl
+    have hre : (mFourier (Pi.single i₀ 1) (torusMk x)).re
+        = Real.cos (2 * Real.pi * x i₀) := by
+      rw [hval, fourier_coe_apply]
+      have harg : 2 * (Real.pi : ℂ) * Complex.I * ((1 : ℤ) : ℂ)
+          * ((x i₀ : ℝ) : ℂ) / ((1 : ℝ) : ℂ)
+          = ((2 * Real.pi * x i₀ : ℝ) : ℂ) * Complex.I := by
+        push_cast
+        ring
+      rw [harg, Complex.exp_ofReal_mul_I_re]
+    have hcos : Real.cos (2 * Real.pi * x i₀) < 1 := by
+      rcases lt_or_eq_of_le (Real.cos_le_one (2 * Real.pi * x i₀)) with h | h
+      · exact h
+      · exfalso
+        obtain ⟨k, hk⟩ := (Real.cos_eq_one_iff _).mp h
+        refine hx k ?_
+        have h2π : (2 * Real.pi : ℝ) ≠ 0 :=
+          mul_ne_zero two_ne_zero Real.pi_ne_zero
+        have hk' : 2 * Real.pi * x i₀ = 2 * Real.pi * (k : ℝ) := by
+          rw [← hk]; ring
+        exact mul_left_cancel₀ h2π hk'
+    calc c (Pi.single i₀ 1) * (mFourier (Pi.single i₀ 1) (torusMk x)).re
+        = c (Pi.single i₀ 1) * Real.cos (2 * Real.pi * x i₀) := by rw [hre]
+      _ < c (Pi.single i₀ 1) * 1 :=
+          mul_lt_mul_of_pos_left hcos (hcpos _)
+      _ = c (Pi.single i₀ 1) := mul_one _
+  exact hasSum_lt hle hstrict hre_x hre_0
+
 end Poisson
 
 /-! ## The general dual and the Siegel–Poisson duality -/

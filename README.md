@@ -70,16 +70,28 @@ keystone), the transported form is `π²` times the unit-edge chain
 pairing, and the duality reads `Z(priced cycles) =
 √(disc/π^{b₁})·Z(harmonic classes)` (`cycle_harmonic_duality`,
 `Meno/BasisIndependence.lean`). The form-preserving equivalences are
-a calculus (`refl`/`trans`/`symm`/`dual` with laws and dual-double
-naturality), giving the symmetric statement `classQuadAction ≃q
-cycleAction.dual` (`classActionEquivCycleDual`); the two duality
-prefactors multiply to one as a named theorem
-(`dual_prefactor_mul_one`). **The concrete dualities flow through the
+a calculus: `refl`/`trans`/`symm`/`dual` with identity and
+associativity laws, the inverse laws `e ⬝ e⁻¹ = refl` and
+`e⁻¹ ⬝ e = refl` (`trans_symm`, `symm_trans`), contravariant
+functoriality of the dual — `(e ⬝ e')^∨ = e'^∨ ⬝ e^∨`,
+`(refl)^∨ = refl`, `(e⁻¹)^∨ = (e^∨)⁻¹` (`dual_trans`, `dual_refl`,
+`dual_symm`) — and dual-double naturality, giving the symmetric
+statement `classQuadAction ≃q cycleAction.dual`
+(`classActionEquivCycleDual`); the two duality prefactors multiply to
+one as a named theorem (`dual_prefactor_mul_one`). **The concrete dualities flow through the
 topological theorem**: the theta duality and the cycle-graph
 T-duality are `cycle_harmonic_duality` read in the concrete lattice
 bases (`theta_siegelPoisson_duality`,
-`partitionFn_T_duality_via_spine`) — the coordinate duality is
-consumed once, inside the intrinsic proof.
+`partitionFn_T_duality_via_spine`). A coordinate action itself embeds
+canonically — `ofQuadraticAction` equips `ℤʳ` with the Gram form,
+charts back to the original at the standard basis, and dualizes to
+the coordinate dual at the standard dual basis — so the coordinate
+duality statement is a corollary of the intrinsic one
+(`QuadraticAction.duality_via_lattice`), the categorical duality
+consumes the corollary (`dualVia_partFn_duality`,
+`Meno/SectorPresentation.lean`), and the direct analytic invocation
+of `QuadraticAction.duality` occurs once globally — inside
+`QuadLatticeAction.duality`.
 
 **Topology, intrinsically.** Every finite multigraph
 (`IncidenceGraph`) carries an intrinsic integral cycle lattice
@@ -87,9 +99,12 @@ consumed once, inside the intrinsic proof.
 A presentation **is** a lattice basis
 `Module.Basis (Fin n) ℤ G.cycleLattice` — no presentation structure,
 no stored fields: closedness, real/integer independence, period
-realizability, integral potentials, spanning, the positive-definite
-unit-edge Gram, and the keystone equivalences are all *theorems* of
-any basis (`Meno/GraphHomology.lean`). The fundamental basis
+realizability, integral potentials, spanning, and the keystone
+equivalences are all *theorems* of any basis
+(`Meno/GraphHomology.lean`); the positive-definite unit-edge Gram is
+a theorem of the **priced** layer (`gramOf_cyclesR_posDef`,
+`Meno/PeriodHarmonic.lean`) — the topology layer itself is
+deliberately unpriced. The fundamental basis
 (`IncidenceGraph.cycleBasis`) equips *every* finite graph with one,
 via a saturation argument, the PID structure theorem, and a
 walk-integration engine. Consequences for every finite graph:
@@ -211,7 +226,24 @@ coupling): the *same* action-induced deficit separates every uniform
 complexity from its Gibbs entropy — `K_uniform = H + Δ` for residue,
 description, and pair alike (`uniformComplexity_residue_split`,
 `uniformComplexity_description_split`, `uniformComplexity_pair_split`,
-`Meno/ResolutionCount.lean`).
+`Meno/ResolutionCount.lean`). The bridge genuinely contains
+**pricing**: the residue distribution is the Gibbs law of the
+**residue action** — the normalized finite sector action of the coset
+Boltzmann weights (`residueAction`, `residueAction_gibbsMass`) — so
+its entropy splits as complexity plus expected energy,
+`H(residue) = K + ⟨E⟩` (`SectorAction.entropy_gibbs`,
+`residueAction_entropy_split`), and the full identity reads
+`K_uniform = K(residueAction) + ⟨E_residue⟩ + Δ`
+(`uniformComplexity_residue_bridge`). And the deficit is **strictly
+positive** wherever there is anything to price: the zero class is
+strictly modal — every nonzero sector carries strictly less residue
+mass (`residueMass_lt_residueMass_zero`, through the positive shifted
+Gaussian Fourier coefficients underlying Siegel–Poisson:
+`periodization_lt_periodization_zero`, `Meno/SiegelPoisson.lean`) —
+so the Gibbs law is never uniform and `0 < Δ` on every graph with
+cycles at every resolution `1 < q` (`residueDist_ne_uniform`,
+`residueDefect_pos`), concretely at the theta graph with `q = 2`
+(`theta_residueDefect_pos`).
 
 **Uncertainty.** The Gibbs state's fluctuations are the model's
 uncertainty, and they are theorems, not vocabulary: the variance of

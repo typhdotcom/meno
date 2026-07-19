@@ -1,6 +1,7 @@
 import Meno.LoopKernel
 import Meno.QuadraticAction
 import Meno.SiegelPoisson
+import Meno.LatticeAction
 
 /-! # Sector Presentation: connecting categorical and quadratic layers
 
@@ -112,7 +113,11 @@ categorical dual is transport: same category, same basepoint, energy
 pulled back from the dual quadratic action `π²·Q⁻¹` through the same
 coordinates. The **same** `coord` then presents the dual object as the
 dual action, and the categorical duality theorem is a two-line
-consequence of `QuadraticAction.duality`. -/
+consequence of `QuadraticAction.duality_via_lattice` — the coordinate
+duality re-derived through the canonical embedding into
+`QuadLatticeAction` (review #12), so the direct analytic invocation of
+`QuadraticAction.duality` occurs once globally, inside
+`QuadLatticeAction.duality`. -/
 
 /-- The dual loop kernel through a presentation: energy is the dual
 quadratic action's energy in the presentation's coordinates. -/
@@ -150,12 +155,14 @@ theorem dualVia_partFn (P : SectorPresentation L r) :
 /-- **Categorical Siegel–Poisson duality**: the partition function of
 the dual loop kernel is `√(det Q / π^r)` times the original's, for any
 loop kernel admitting a presentation — at any rank, any Gram form.
-Phase 6's `dualVia_partFn` target, now at full generality. -/
+Phase 6's `dualVia_partFn` target, now at full generality — derived
+through the canonical embedding into `QuadLatticeAction`
+(review #12). -/
 theorem dualVia_partFn_duality (P : SectorPresentation L r) :
     ((LoopKernelObj.dualVia P).partFn : ℂ)
       = ↑(P.Q.det / Real.pi ^ r : ℝ) ^ ((1 : ℂ) / 2) * ↑L.partFn := by
   rw [dualVia_partFn P, P.partFn_eq]
-  exact P.toQuadraticAction.duality
+  exact P.toQuadraticAction.duality_via_lattice
 
 end SectorPresentation
 

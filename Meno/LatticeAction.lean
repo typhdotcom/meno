@@ -779,6 +779,19 @@ theorem trans_assoc (e : Q.Equiv Q') (e' : Q'.Equiv Q'')
     (e.trans e').trans e'' = e.trans (e'.trans e'') :=
   ext (by ext x; rfl)
 
+/-- **The inverse law** (review #12): an equivalence composed with its
+inverse is the identity. -/
+@[simp] theorem trans_symm (e : Q.Equiv Q') : e.trans e.symm = refl Q :=
+  ext (by ext x; exact e.toLinearEquiv.symm_apply_apply x)
+
+/-- **The inverse law, other side** (review #12). -/
+@[simp] theorem symm_trans (e : Q.Equiv Q') : e.symm.trans e = refl Q' :=
+  ext (by ext x; exact e.toLinearEquiv.apply_symm_apply x)
+
+/-- Inversion is an involution. -/
+@[simp] theorem symm_symm (e : Q.Equiv Q') : e.symm.symm = e :=
+  ext (by ext x; rfl)
+
 /-- **Rank invariance.** -/
 theorem rank_eq (e : Q.Equiv Q') : Q.rank = Q'.rank := by
   show Module.finrank ℤ Q.Λ = Module.finrank ℤ Q'.Λ
@@ -849,6 +862,23 @@ noncomputable def dual (e : Q.Equiv Q') : (Q'.dual).Equiv (Q.dual) where
       rw [Q.dualForm_dualBasis (Module.finBasis ℤ Q.Λ) i j,
         Q'.dualForm_dualBasis ((Module.finBasis ℤ Q.Λ).map e.toLinearEquiv) i j,
         e.gram_map (Module.finBasis ℤ Q.Λ)]
+
+/-- **Dualization preserves the identity** (review #12):
+`(refl Q)^∨ = refl Q^∨`. -/
+@[simp] theorem dual_refl (Q : QuadLatticeAction.{u}) :
+    (refl Q).dual = refl Q.dual :=
+  ext LinearEquiv.dualMap_refl
+
+/-- **Dualization is contravariantly functorial** (review #12):
+`(e ⬝ e')^∨ = e'^∨ ⬝ e^∨`. -/
+theorem dual_trans (e : Q.Equiv Q') (e' : Q'.Equiv Q'') :
+    (e.trans e').dual = e'.dual.trans e.dual :=
+  ext (LinearEquiv.dualMap_trans e.toLinearEquiv e'.toLinearEquiv).symm
+
+/-- **Dualization commutes with inversion** (review #12):
+`(e⁻¹)^∨ = (e^∨)⁻¹`. -/
+theorem dual_symm (e : Q.Equiv Q') : e.symm.dual = e.dual.symm :=
+  ext LinearEquiv.dualMap_symm.symm
 
 end Equiv
 
@@ -923,6 +953,120 @@ theorem duality_dualDual :
       = ↑(Q.toSectorAction.partFn) := by
   rw [Q.dual.duality, Q.duality, ← mul_assoc, Q.dual_prefactor_mul_one,
     one_mul]
+
+/-! ## The canonical embedding of a coordinate action (review #12)
+
+A `QuadraticAction` **is** a quadratic-lattice action on the standard
+lattice `ℤʳ`: the canonical embedding equips `Fin r → ℤ` with the Gram
+form. The chart at the standard basis recovers the coordinate action
+(`ofQuadraticAction_chartAction`), partition functions, rank, and
+discriminant transport (`ofQuadraticAction_partFn`,
+`ofQuadraticAction_rank`, `ofQuadraticAction_disc`), and the dual
+charts at the standard dual basis as the coordinate dual
+(`ofQuadraticAction_dual_chartAction`). The coordinate Siegel–Poisson
+duality is then a **corollary** of the intrinsic one
+(`QuadraticAction.duality_via_lattice`) — the analytic invocation of
+`QuadraticAction.duality` happens once globally, inside
+`QuadLatticeAction.duality`. -/
+
+/-- **The canonical embedding** (review #12): a coordinate quadratic
+action, as a quadratic-lattice action on the standard lattice
+`ℤʳ`. Positive-definiteness of the real extension is discharged from
+the Gram chart at the standard basis. -/
+noncomputable def ofQuadraticAction {r : ℕ} (A : QuadraticAction r) :
+    QuadLatticeAction.{0} where
+  Λ := Fin r → ℤ
+  form k l := ∑ i, ∑ j, A.Q i j * (k i : ℝ) * (l j : ℝ)
+  form_comm k l := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun j _ => Finset.sum_congr rfl fun i _ => ?_
+    rw [show A.Q i j = A.Q j i from Matrix.IsSymm.apply A.Q_symm j i]
+    ring
+  form_add_left a₁ a₂ b := by
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    show A.Q i j * ((a₁ i + a₂ i : ℤ) : ℝ) * (b j : ℝ) = _
+    push_cast
+    ring
+  posDef_baseChange := by
+    refine bilinBaseChange_posDef_of_gram _ _ _ (Pi.basisFun ℤ (Fin r)) ?_
+    have hmat : (Matrix.of fun i j => ∑ k, ∑ l,
+          A.Q k l * ((Pi.basisFun ℤ (Fin r) i) k : ℝ)
+            * ((Pi.basisFun ℤ (Fin r) j) l : ℝ)) = A.Q := by
+      ext i j
+      rw [Matrix.of_apply]
+      simp [Pi.basisFun_apply, Pi.single_apply]
+    rw [hmat]
+    exact A.Q_posDef
+
+/-- The chart of the embedding at the standard basis is the original
+coordinate action. -/
+theorem ofQuadraticAction_chartAction {r : ℕ} (A : QuadraticAction r) :
+    (ofQuadraticAction A).chartAction (Pi.basisFun ℤ (Fin r)) = A :=
+  QuadraticAction.eq_of_Q_eq (by
+    rw [chartAction_Q]
+    ext i j
+    rw [gram_apply]
+    show (∑ k, ∑ l, A.Q k l * ((Pi.basisFun ℤ (Fin r) i) k : ℝ)
+      * ((Pi.basisFun ℤ (Fin r) j) l : ℝ)) = A.Q i j
+    simp [Pi.basisFun_apply, Pi.single_apply])
+
+/-- The embedding preserves the partition function. -/
+theorem ofQuadraticAction_partFn {r : ℕ} (A : QuadraticAction r) :
+    (ofQuadraticAction A).toSectorAction.partFn
+      = A.toSectorAction.partFn := by
+  rw [← (ofQuadraticAction A).partFn_chartAction (Pi.basisFun ℤ (Fin r)),
+    ofQuadraticAction_chartAction]
+
+/-- The embedding's rank is the coordinate rank. -/
+theorem ofQuadraticAction_rank {r : ℕ} (A : QuadraticAction r) :
+    (ofQuadraticAction A).rank = r :=
+  ((ofQuadraticAction A).card_eq_rank (Pi.basisFun ℤ (Fin r))).symm
+
+/-- The embedding's discriminant is the Gram determinant. -/
+theorem ofQuadraticAction_disc {r : ℕ} (A : QuadraticAction r) :
+    (ofQuadraticAction A).disc = A.Q.det := by
+  rw [(ofQuadraticAction A).disc_eq (Pi.basisFun ℤ (Fin r))]
+  congr 1
+  ext i j
+  rw [gram_apply]
+  show (∑ k, ∑ l, A.Q k l * ((Pi.basisFun ℤ (Fin r) i) k : ℝ)
+    * ((Pi.basisFun ℤ (Fin r) j) l : ℝ)) = A.Q i j
+  simp [Pi.basisFun_apply, Pi.single_apply]
+
+/-- **The dual-chart identity** (review #12): the dual of the
+embedding charts at the standard dual basis as the coordinate dual. -/
+theorem ofQuadraticAction_dual_chartAction {r : ℕ} (A : QuadraticAction r) :
+    (ofQuadraticAction A).dual.chartAction
+        (Pi.basisFun ℤ (Fin r)).dualBasis = A.dual := by
+  rw [(ofQuadraticAction A).chartAction_dual (Pi.basisFun ℤ (Fin r)),
+    ofQuadraticAction_chartAction]
+
+/-- The embedding's dual has the coordinate dual's partition
+function. -/
+theorem ofQuadraticAction_dual_partFn {r : ℕ} (A : QuadraticAction r) :
+    (ofQuadraticAction A).dual.toSectorAction.partFn
+      = A.dual.toSectorAction.partFn := by
+  rw [← (ofQuadraticAction A).dual.partFn_chartAction
+      (Pi.basisFun ℤ (Fin r)).dualBasis,
+    ofQuadraticAction_dual_chartAction]
+
+/-- **The coordinate Siegel–Poisson duality, as a corollary of the
+intrinsic one** (review #12): the statement of
+`QuadraticAction.duality`, re-derived through the canonical
+embedding — so the direct analytic invocation of the coordinate
+theorem occurs once globally, inside `QuadLatticeAction.duality`. -/
+theorem _root_.Meno.QuadraticAction.duality_via_lattice {r : ℕ}
+    (A : QuadraticAction r) :
+    (↑(A.dual.toSectorAction.partFn) : ℂ)
+      = ↑(A.Q.det / Real.pi ^ r : ℝ) ^ ((1 : ℂ) / 2)
+        * ↑(A.toSectorAction.partFn) := by
+  have h := (ofQuadraticAction A).duality
+  rw [ofQuadraticAction_partFn, ofQuadraticAction_dual_partFn,
+    ofQuadraticAction_disc, ofQuadraticAction_rank] at h
+  exact h
 
 end QuadLatticeAction
 

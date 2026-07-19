@@ -411,4 +411,14 @@ theorem theta_gauge_count (q : ℕ) [NeZero q] :
     simp
   rw [thetaGraph.card_gauge thetaLatticeBasis q, hexp]
 
+/-- **The deficit, concretely positive** (review #12): at resolution
+`q = 2` the theta graph's Gibbs residue law is strictly below maximal
+ignorance — the quadratic action genuinely prices the four finite
+sectors, through the strict modal bound of the shifted Gaussian
+Fourier expansion (`residueDefect_pos`). -/
+theorem theta_residueDefect_pos : 0 < thetaGraph.residueDefect 2 := by
+  refine thetaGraph.residueDefect_pos 2 ?_ (by norm_num)
+  rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
+  norm_num
+
 end Meno

@@ -1,4 +1,5 @@
 import Meno.Basic
+import Meno.SectorAction
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Set.Card
@@ -464,6 +465,42 @@ theorem card_eq_card_mul_of_fiber {X D : Type u} [Fintype X] [Fintype D]
       rw [← Fintype.card_subtype, ← Nat.card_eq_fintype_card]
       exact hfib d)]
   rw [Finset.sum_const, Finset.card_univ, smul_eq_mul]
+
+/-! ## The Gibbs entropy split: pricing meets entropy (review #12)
+
+For a finite sector action the Shannon entropy of its Gibbs
+distribution splits as complexity plus expected energy,
+`H(μ) = log Z + ⟨E⟩` — the identity that puts *pricing* (the action's
+`log Z` and its energy expectation) inside every entropy statement
+about a Gibbs law. Pointwise, `-log μ(k) = E k + log Z`; summing
+against `μ` gives the split. -/
+
+/-- **The Gibbs entropy split** (review #12): for a finite sector
+action, `H(gibbsMass) = K + ⟨E⟩`. -/
+theorem SectorAction.entropy_gibbs (A : SectorAction.{u}) [Fintype A.Λ] :
+    shannonEntropy A.gibbsMass = A.complexity + A.gibbsExpect A.E := by
+  have hlog : ∀ k, Real.log (A.gibbsMass k) = -A.E k - A.complexity := by
+    intro k
+    show Real.log (A.weight k / A.partFn) = _
+    rw [Real.log_div (ne_of_gt (A.weight_pos k)) (ne_of_gt A.partFn_pos)]
+    show Real.log (Real.exp (-A.E k)) - Real.log A.partFn = _
+    rw [Real.log_exp]
+    rfl
+  have hexpect : A.gibbsExpect A.E = ∑ k, A.E k * A.gibbsMass k := by
+    show (∑' k, A.E k * A.gibbsMass k) = _
+    rw [tsum_fintype]
+  have hsum : ∑ k, A.gibbsMass k = 1 := by
+    have h := A.tsum_gibbsMass_eq_one
+    rwa [tsum_fintype] at h
+  have hterm : ∀ k, A.gibbsMass k * Real.log (A.gibbsMass k)
+      = -(A.E k * A.gibbsMass k) - A.complexity * A.gibbsMass k := by
+    intro k
+    rw [hlog k]
+    ring
+  show -∑ k, A.gibbsMass k * Real.log (A.gibbsMass k) = _
+  rw [Finset.sum_congr rfl fun k _ => hterm k, Finset.sum_sub_distrib,
+    Finset.sum_neg_distrib, ← Finset.mul_sum, hsum, hexpect]
+  ring
 
 /-! ## Finite distributions (review #10)
 

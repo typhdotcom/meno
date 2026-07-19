@@ -256,20 +256,36 @@ the transported dual form is `π²` times the unit-edge chain pairing
 (`cycleActionEquivDual`), and Siegel–Poisson duality holds directly
 between harmonic `H¹` sectors and priced `H₁` cycles
 (`cycle_harmonic_duality`). The equivalence layer is a **calculus**
-(review #11): `Equiv.refl`/`trans`/`dual` with identity, composition,
-and associativity laws and dual-double naturality
-(`dualDual_naturality`), yielding the symmetric topological statement
-`classQuadAction ≃q cycleAction.dual` (`classActionEquivCycleDual`);
-the analytic cancellation is the named theorem
-`dual_prefactor_mul_one` (the two duality prefactors multiply to one),
-through which `duality_dualDual` is derived. **The concrete flagships
-flow through the topological theorem** (review #11):
+(reviews #11, #12): `Equiv.refl`/`trans`/`symm`/`dual` with identity,
+composition, and associativity laws, the **inverse laws**
+`trans_symm`/`symm_trans` (with `symm_symm`), **contravariant
+functoriality** of the dual — `dual_trans :
+(e ⬝ e')^∨ = e'^∨ ⬝ e^∨`, `dual_refl`, `dual_symm` — and dual-double
+naturality (`dualDual_naturality`), yielding the symmetric
+topological statement `classQuadAction ≃q cycleAction.dual`
+(`classActionEquivCycleDual`); the analytic cancellation is the named
+theorem `dual_prefactor_mul_one` (the two duality prefactors multiply
+to one), through which `duality_dualDual` is derived. **The concrete
+flagships flow through the topological theorem** (review #11):
 `theta_siegelPoisson_duality` and `partitionFn_T_duality_via_spine`
 are `cycle_harmonic_duality` at the theta and cycle graphs, read in
 the `thetaLatticeBasis`/`cycleLatticeBasis` charts
-(`cycleAction_gram`, `classQuadAction_disc`, `classQuadAction_partFn`);
-direct coordinate duality calls remain only inside the generic
-intrinsic proof. Consumed by C4.
+(`cycleAction_gram`, `classQuadAction_disc`, `classQuadAction_partFn`).
+**A coordinate action embeds canonically** (review #12):
+`ofQuadraticAction` equips `ℤʳ` with the Gram form (positivity
+discharged from the standard-basis chart), charts back to the
+original (`ofQuadraticAction_chartAction`) with partition function,
+rank, and discriminant transported, and dualizes to the coordinate
+dual at the standard dual basis
+(`ofQuadraticAction_dual_chartAction`) — so the coordinate duality
+statement is a corollary of the intrinsic one
+(`QuadraticAction.duality_via_lattice`), the categorical duality
+consumes the corollary (`dualVia_partFn_duality`,
+`Meno/SectorPresentation.lean`), and outside its defining file the
+direct analytic invocation of `QuadraticAction.duality` occurs
+exactly once — inside `QuadLatticeAction.duality` (its in-file
+scalar/real corollaries in `Meno/SiegelPoisson.lean` sit upstream of
+the bundle in the import order). Consumed by C4.
 
 ### C4 -- General harmonic theory for every finite graph — CLOSED (Phase 30)
 
@@ -584,6 +600,30 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   `uniformComplexity_description_split`,
   `uniformComplexity_pair_split`) — the uniform gravity identity is
   the Gibbs entropy gravity plus the same deficit on both sides.
+  The bridge **contains pricing** (review #12): the residue
+  distribution is the Gibbs law of the **residue action** — the
+  normalized finite sector action of the coset Boltzmann weights,
+  ground state at the zero class (`residueAction`,
+  `residueAction_gibbsMass`) — the generic Gibbs entropy split
+  `H(μ) = K + ⟨E⟩` (`SectorAction.entropy_gibbs`,
+  `Meno/InfoRatchet.lean`) instantiates to
+  `H(residue) = K(residueAction) + ⟨E⟩`
+  (`residueAction_entropy_split`), and the full bridge reads
+  `K_uniform = K(residueAction) + ⟨E_residue⟩ + Δ`
+  (`uniformComplexity_residue_bridge`). The deficit is **strictly
+  positive** (review #12): the zero class is strictly modal —
+  `residueMass_lt_residueMass_zero`, via the coset-periodization
+  chart (`residueMass_mk_eq_periodization`) and the strict modal
+  bound of the shifted Gaussian Fourier expansion
+  (`periodization_lt_periodization_zero`,
+  `Meno/SiegelPoisson.lean` — every torus Fourier coefficient of the
+  periodized Gaussian is a positive Gaussian; a non-integer shift
+  coordinate strictly breaks one character's alignment) — so the
+  Gibbs law is never uniform and `0 < Δ` on every graph with cycles
+  at every resolution `1 < q` (`residueDist_ne_uniform`,
+  `residueDefect_pos`), instantiated concretely at the theta graph
+  with `q = 2` (`theta_residueDefect_pos`,
+  `Meno/ThetaHarmonic.lean`).
 
 The falsified endofunction-kernel design (Phase 17) stands
 falsified; its
@@ -624,23 +664,24 @@ Three standing requirements, all met:
 3. **README.** The README describes the actual architecture, and every
    physical claim in it cites the theorem that proves it.
 
-**Acceptance (enforced check, Phase 44 — in the toolchain, not a
-shell script).** The canonical signoff command is
+**Acceptance (rule-3 amendment, review #12 — the checker is
+retired).** The canonical signoff command is
 
 ```
-lake build Meno && lake exe check
+lake build Meno
 ```
 
-`lake exe check` (`Check.lean`, a Lean executable) is fail-closed and
-**repository-root-only** (review #9: Lake itself refuses to start
-outside the root, so the executable verifies the working directory
-and fails closed rather than pretending to search — the unreachable
-root-walk is deleted): it requires **exactly one** Part II marker in
-`PLAN.md`, sweeps Part I, `README.md`, `Meno.lean`, and every `.lean`
-source under `Meno/` — **recursively** — for the retired-identifier
-blacklist, and exits nonzero on any hit or any I/O failure. Run it
-every phase; record the result in the phase addendum. The build being
-green is the acceptance for the import-flow claim.
+The former `lake exe check` (`Check.lean`, a token-blacklist sweep) is
+**deleted without replacement**: a handwritten blacklist provides
+false confidence — it passes on semantic errors and misses claims it
+was never taught — while adding an extra executable, its conventions,
+and its maintenance. Semantic acceptance is carried by **theorem
+statements plus substantive review**: the build being green (zero
+`sorry`, zero `axiom`, zero warnings) is the acceptance for the
+import-flow claim, and documentation claims are verified against the
+code in each review cycle's ledger, not by a token scan. (This
+retires the Phase-44 vehicle; the Phase-44 principle — no shell
+script — stands, since nothing replaces the checker.)
 
 **`Basic.lean`'s position** (rule-3 amendment, standing): it is not
 *moved* downstream — it is an upstream **pure interface** (abstract
@@ -664,11 +705,15 @@ charts and intrinsic dual, on the analytic spine downstream of
 `SiegelPoisson`; `BasisIndependence` — unimodular relatedness, graph
 `partFn`, the bundled carrier `classQuadAction`) →
 Matter/Binding → Realizations (`Basic`, `Instances`, `UniformAction`)
-→ Information on the carrier (`InfoRatchet`, `ResolutionCount` — the
-latter downstream of `BasisIndependence` since Phase 45: the Gibbs
-residue distribution lives there) →
-Concrete consumers (`WedgePresentation`, `ThetaHarmonic`,
-`ThetaBinding`) → Corroborating models. `GraphInstances` imports only
+→ Information on the carrier (`InfoRatchet` — downstream of
+`SectorAction` since Phase 48: the generic Gibbs entropy split
+`H = K + ⟨E⟩` lives there; `ResolutionCount` — downstream of
+`BasisIndependence` since Phase 45: the Gibbs residue distribution
+and, since Phase 48, the residue action and the modal bound live
+there) → Concrete consumers (`WedgePresentation`, `ThetaHarmonic`,
+`ThetaBinding`) → Corroborating models. `SectorPresentation` imports
+`LatticeAction` since Phase 48 — the categorical duality consumes the
+coordinate duality's re-derivation through the bundle. `GraphInstances` imports only
 the topology layer, so `Meno.lean`'s "unpriced topology" grouping is
 true by construction (review #5, finding 1). The correction history —
 the Phase 37–40 sequence of inversions found and repaired — lives in
@@ -4248,3 +4293,41 @@ distributions through their API, equivalences through their calculus.
 All twelve items remain CLOSED.
 `lake build Meno && lake exe check`: build green (3348 jobs), zero
 `sorry`, zero `axiom`, zero warnings; check PASS.
+
+## Phase 48 addendum: twelfth external review — five findings, five confirmed, five repaired (2026-07-19)
+
+Review #12 arrived against the Phase-47 state. Every claim verified
+against the code before repair; all five CONFIRMED — including the
+sub-claim that `README.md` attributed the positive-definite unit-edge
+Gram to the unpriced topology layer (`gramOf_cyclesR_posDef` is
+proved in `Meno/PeriodHarmonic.lean`, not `Meno/GraphHomology.lean`).
+The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | The "pricing–counting bridge" contained no pricing: `uniformComplexity_residue_split` was literally `log\|X\| = H + (log\|X\| − H)` closed by `ring` — neither `log Z` nor expected energy appeared, though those are the project's definitions of pricing | **CONFIRMED** — the three splits were tautological rearrangements; `SectorAction.complexity`/`gibbsExpect` appeared nowhere in them | **The residue action** (`residueAction`, `Meno/ResolutionCount.lean`): the normalized finite `SectorAction` of the coset Boltzmann weights — `E ξ = log(residueMass 0) − log(residueMass ξ)`, ground state the zero class, `E ≥ 0` by the modal bound (finding 2's theorem). Its Gibbs mass **is** the residue distribution (`residueAction_gibbsMass` — the normalization cancels), with weight/partFn/complexity charts (`residueAction_weight`, `residueAction_partFn = (residueMass 0)⁻¹`, `residueAction_complexity = −log(residueMass 0)`). The **generic Gibbs entropy split** `H(gibbsMass) = K + ⟨E⟩` proved once for every finite `SectorAction` (`SectorAction.entropy_gibbs`, `Meno/InfoRatchet.lean` — pointwise `−log μ = E + log Z`, summed against `μ`), instantiated to `residueAction_entropy_split`, and **the real bridge**: `K_uniform = K(residueAction) + ⟨E_residue⟩ + Δ` (`uniformComplexity_residue_bridge`) |
+| 2 | The deficit had no proved nontrivial instance: `residueDefect` was never shown nonzero anywhere — nothing formalized showed the quadratic action changes finite-resolution information at any resolution | **CONFIRMED** — `residueDefect_pos` did not exist; at `q = 1` the defect necessarily vanishes and no other case was addressed | **The strict modal bound of the shifted Fourier expansion** (`periodization_lt_periodization_zero`, `Meno/SiegelPoisson.lean`): for positive-definite `M` and a shift with a non-integer coordinate, `periodization M x < periodization M 0` — the Fourier series of the periodized Gaussian converges pointwise (`hasSum_mFourier_series_apply_of_summable`, real parts extracted through `Complex.hasSum_re`), every coefficient is a **positive** shifted Gaussian (`mFourierCoeff_torusPeriodization` + `integral_charGauss_eq`), and the character at `Pi.single i₀ 1` is strictly misaligned (`Real.cos_eq_one_iff`); `hasSum_lt` closes. On the carrier: the fiber over a charted class is the coset `k₀ + q·ℤⁿ`, its Boltzmann sum the periodization of `(q²/π)·(gramOf cyclesR)⁻¹` at shift `k₀/q` (`residueMass_mk_eq_periodization` — coset reindex by `c ↦ k₀ + q·c`), a nonzero class forces a coordinate `q ∤ k₀ i₀`, hence **`residueMass_lt_residueMass_zero`** (the zero class is strictly modal), **`residueDist_ne_uniform`**, and **`residueDefect_pos`**: `0 < Δ` for `0 < b1`, `1 < q`. Concrete instance: **`theta_residueDefect_pos`** (`0 < thetaGraph.residueDefect 2`, `Meno/ThetaHarmonic.lean`) |
+| 3 | `Equiv.dual` was called contravariant without contravariant laws: only identity and associativity for `trans` existed — no inverse laws, no `dual_refl`/`dual_trans`/`dual_symm`, so `README.md`'s "calculus" claim overstated | **CONFIRMED** | Six laws added (`Meno/LatticeAction.lean`): the **inverse laws** `trans_symm : e ⬝ e⁻¹ = refl` and `symm_trans : e⁻¹ ⬝ e = refl` (with `symm_symm`), and the **contravariant laws** `dual_refl : (refl Q)^∨ = refl Q^∨`, `dual_trans : (e ⬝ e')^∨ = e'^∨ ⬝ e^∨`, `dual_symm : (e⁻¹)^∨ = (e^∨)⁻¹` — the latter three transported from `LinearEquiv.dualMap_refl`/`dualMap_trans`/`dualMap_symm` through `Equiv.ext`. README's calculus claim now names the laws it has |
+| 4 | Coordinate duality was still consumed twice: `SectorPresentation.lean:158` invoked `P.toQuadraticAction.duality` directly, contradicting the "consumed once, inside the intrinsic proof" claim | **CONFIRMED** | **The canonical embedding** (`QuadLatticeAction.ofQuadraticAction`, `Meno/LatticeAction.lean`): `ℤʳ` with the Gram form — symmetry from `Q_posDef`, positivity discharged from the standard-basis chart via `bilinBaseChange_posDef_of_gram`. Chart identities: `ofQuadraticAction_chartAction` (the standard-basis chart is the original), `ofQuadraticAction_partFn`/`_rank`/`_disc`, and the dual-chart identity `ofQuadraticAction_dual_chartAction` (the dual charts at the standard dual basis as the coordinate dual). **`QuadraticAction.duality_via_lattice`** re-derives the coordinate statement through `QuadLatticeAction.duality`; `dualVia_partFn_duality` (`Meno/SectorPresentation.lean`, now importing `Meno.LatticeAction`) consumes it. Outside `Meno/SiegelPoisson.lean`, the direct analytic invocation of `QuadraticAction.duality` now occurs exactly once — `Meno/LatticeAction.lean:684`, inside `QuadLatticeAction.duality` (the primitive's own in-file scalar/real corollaries sit upstream of the bundle in the import order and cannot flow through it without an import cycle) |
+| 5 | The checker provided false confidence and retained unwanted surface: `lake exe check` passed despite the semantic errors above, missed the README misattribution, and its handwritten blacklist is maintenance without enforcement | **CONFIRMED** — token-blacklist scans cannot see semantic errors by construction; the README:84 attribution error was live and unflagged (`gramOf_cyclesR_posDef` lives in `Meno/PeriodHarmonic.lean`) | **`Check.lean` deleted without replacement**; the `[[lean_exe]]` target removed from `lakefile.toml`. Canonical signoff amended (rule 3, Part I): `lake build Meno` — semantic acceptance is carried by theorem statements plus substantive review, with documentation claims verified against code in each review cycle's ledger. (The Phase-44 principle — no shell script — stands, since nothing replaces the checker.) The README attribution corrected: the positive-definite unit-edge Gram is a theorem of the priced layer (`Meno/PeriodHarmonic.lean`); the topology layer is deliberately unpriced |
+
+**Rule-3 amendments.** (1) C12's acceptance vehicle: the enforced
+token-blacklist checker (Phase 44, hardened Phase 45) is retired at
+review #12's direction; acceptance = green build (zero `sorry`, zero
+`axiom`, zero warnings) + theorem statements + per-review
+verification ledgers. (2) C9's pricing account now runs through the
+residue action; the tautological splits stand as corollaries of the
+bridge, not as its content.
+
+**Discipline check.** No goal reopens. Finding 2 is the phase's
+mathematical center: the first strict inequality of the program —
+everything before it was equality bookkeeping; the shifted-Gaussian
+Fourier argument turns Siegel–Poisson's *machinery* (not just its
+statement) into a consumer-facing theorem. Finding 1 then uses
+finding 2's modal bound to make the residue action well-formed (its
+`E_nonneg` **is** the modal bound), so pricing and positivity arrive
+as one package. Findings 3–4 finish the calculus and the
+single-consumption claim; finding 5 removes the surface that
+pretended to enforce what only review can. All twelve items remain
+CLOSED. `lake build Meno`: build green (3348 jobs), zero `sorry`,
+zero `axiom`, zero warnings.
