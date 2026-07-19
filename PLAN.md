@@ -851,7 +851,8 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   consumed on theta (`theta_gibbsVariance_T_dual`) — and the whole
   is bundled in the **derived certificates**
   `QuadLatticeAction.ThermalDualityLaws`, `FinDist.InformationLaws`,
-  `IncidenceGraph.ResolutionTowerLaws`, and `MenoCompletion`
+  `IncidenceGraph.ResolutionTowerLaws`, and — since Phase 55 renamed
+  and completed to full Part-I coverage — `MenoSemanticCompletion`
   (`Meno/Completion.lean`), each with one derivation.
 
 The falsified endofunction-kernel design (Phase 17) stands
@@ -912,18 +913,29 @@ code in each review cycle's ledger, not by a token scan. (This
 retires the Phase-44 vehicle; the Phase-44 principle — no shell
 script — stands, since nothing replaces the checker.)
 
-**The completion certificate (rule-3 amendment, review #18).**
-Completion is a **Lean object**, not a prose ledger:
-`Meno.MenoCompletion` (`Meno/Completion.lean`) bundles the three
-generic law certificates — `QuadLatticeAction.ThermalDualityLaws`,
-`FinDist.InformationLaws`, `IncidenceGraph.ResolutionTowerLaws`, each
-a **derived** `Prop` structure, never a field on a core object — with
-the flagship concrete consumers (cycle, wedge, theta, binding,
-gravity, geodesic), and `menoCompletion` is its one derivation.
-`lake build Meno` compiles it, so the canonical signoff now *includes*
-the certificate: acceptance inspects the certificate statements and
-their derivation routes; a goal is CLOSED exactly when its fields
-compile.
+**The semantic completion certificate (rule-3 amendments, reviews
+#18, #19).** Completion is a **Lean object**, not a prose ledger:
+`Meno.MenoSemanticCompletion` (`Meno/Completion.lean`) is derived
+**mechanically from this Part** — every C1–C10 acceptance signature
+is a field in exactly one law package: `GraphTopologyLaws` (C1–C2),
+`HarmonicCarrierLaws` (C3–C4), `MatterBindingLaws` (C6–C7),
+`CodingGravityLaws` (C8–C9 generic), the three spine certificates
+`ThermalDualityLaws`/`InformationLaws`/`ResolutionTowerLaws`
+(defined with their subjects), and `FlagshipLaws` (C5 + the concrete
+cycle/wedge/theta/binding/geodesic consumers) — all **derived**
+`Prop` structures, never fields on core objects, with the one
+derivation `menoSemanticCompletion` by **direct named-theorem
+assignment only**. Scope, honestly (review #19): the certificate
+enforces **statement coverage** — deleting an underlying acceptance
+theorem breaks the derivation as written; proof **provenance** is
+enforced by the direct-assignment discipline, module boundaries, and
+substantive review, since Lean's kernel does not distinguish routes;
+and C11's deletion state and C12's import-DAG/no-duplication
+constraints are **repository invariants** outside the kernel.
+**Closure means**: the semantic certificate compiles, *and* the
+import DAG matches this Part, *and* the deletions hold, *and*
+`lake build Meno` is green with zero `sorry`/`axiom`/warnings, *and*
+substantive review finds the derivation routes direct.
 
 **`Basic.lean`'s position** (rule-3 amendment, standing): it is not
 *moved* downstream — it is an upstream **pure interface** (abstract
@@ -4800,7 +4812,13 @@ law is not closed until it composes: entropies must add, costs must
 add, and increments must telescope — one-step theorems are
 intermediate state.
 
-**Discipline check.** No goal reopens: review #17's findings are
+**Discipline check.** *(Corrected, review #19: the sentence "No goal
+reopens" below was false as a discipline claim — review #17 as
+issued instructed "C9 and C12 must reopen"; the excerpt processed
+here omitted its closing paragraph. The reopening this phase owed is
+recorded at Phase 54, where C9 and C12 were reopened at review
+receipt and reclosed by certificate.)* No goal reopens: review #17's
+findings are
 again refinements — structures present but disconnected (1),
 one-step instead of compositional (2), generalized but not
 subsuming (3), specialized but replayed (4). Finding 1 is the
@@ -4831,7 +4849,7 @@ four CONFIRMED. The ledger:
 | 1 | `relativeEntropy` admitted mathematically invalid inputs: with mutually singular distributions, Lean's totalized division and `Real.log 0 = 0` make `D(P‖Q) = 0` despite `P ≠ Q` | **CONFIRMED** (Boolean counterexample checks: `1·log(1/0) = 1·log 0 = 0`) | **`FinDist.FullSupport`** (`Meno/InfoRatchet.lean`) with `uniform_fullSupport`, `FullSupport.map` (surjections preserve full support), `FullSupport.uniformLiftMap`; **the support proof is required by the definition** — `relativeEntropy (P Q) (_ : Q.FullSupport)` — so the invalid expression is **unstatable**; propagated through `relativeEntropy_nonneg`/`_pos`/`_eq_zero_iff`, `defect_eq_relativeEntropy`, `relativeEntropy_uniformLift_map`, `condEntropy_le_log`/`_lt_log`, with the congruence helper `relativeEntropy_congr_right` |
 | 2 | Thermal duality not closed under fluctuation–dissipation: the generic FDT theorem and the temperature-duality FE were adjacent independent endpoints; differentiating the FE forces a variance transformation | **CONFIRMED** | **`gibbsVariance_T_dual`** (`Meno/LatticeAction.lean`): `Var_Q(β) + 2β⁻³·⟨E⟩_{Q∨}(β⁻¹) − β⁻⁴·Var_{Q∨}(β⁻¹) = rank/(2β²)` — proved by differentiating the established FE with the two established derivative theorems (`hasDerivAt_meanEnergy_eq_neg_gibbsVariance` at `Q` and at `Q∨∘inv`), **no new lattice-sum differentiation**; **`meanEnergy_self_dual`**: `Q ≃q Q∨ → ⟨E⟩(1) = rank/4`; variance `≃q`-invariance (`Equiv.scaledSector_gibbsVariance_eq`); both transported to harmonic `H¹` vs priced `H₁` (`classGibbsVariance_T_dual`, `classMeanEnergy_self_dual`, `Meno/BasisIndependence.lean`); the variance law consumed on theta (`theta_gibbsVariance_T_dual` — `= 1/β²`, `Meno/ThetaHarmonic.lean`) |
 | 3 | The information algebra had two chain-rule engines: the entropy chain rule carried an unnecessary full-support hypothesis and a termwise proof, while `condEntropy_comp` repeated the logarithmic decomposition | **CONFIRMED** | **One engine**: `entropy_eq_map_add_condEntropy` is now **unconditional** (zero-mass sectors drop; a zero-mass fiber has only zero-mass members); `condEntropy_id` and `condEntropy_comp` are three-line **corollaries** of it plus `map_id`/`map_comp` — the second termwise engine **deleted**. **The relative-entropy algebra completed**: data processing under surjective maps (`relativeEntropy_map_le` — termwise `log t ≤ t − 1` with both correction sums regrouping to `1`; `defect_map_le` at the uniform reference), tower-deficit monotonicity derived from it (`residueDefect_mono` — the Fourier modal argument retained **solely for strictness**), and the resolution certificate includes **zero price at identity** (`residue_tower_price_id`, `sectionCost_h1TowerMap_id`) alongside the composition theorems |
-| 4 | Completion remained a prose ledger instead of a Lean object — no declaration whose unfinished fields expose missing coherence; the mechanism producing endless review | **CONFIRMED** (structural claim; precision note: the sub-claim that a reopen instruction was defied is inexact — review #17 contained no reopen instruction, review #15 did; Phase 53's "No goal reopens" was accurate when written) | **The normalization**: derived `Prop` certificates, never fields on core objects — **`QuadLatticeAction.ThermalDualityLaws`** (scale algebra, disc scaling, moment `≃q`-invariance, dual involution, `scale_dual`, partition/mean/variance equations, self-dual fixed point; derivation `thermalDualityLaws`), **`FinDist.InformationLaws`** (support-aware KL, map identity/composition, unconditional entropy chain, conditional identity/composition, data processing; derivation `informationLaws`), **`IncidenceGraph.ResolutionTowerLaws`** (map/distribution/action identity and composition, zero identity price and cost, additive price and cost, telescoping deficit, deficit monotonicity, strict refinement; derivation `resolutionTowerLaws`), and **`MenoCompletion`** (`Meno/Completion.lean`, new file): the three generic certificates **plus** the cycle, wedge, theta, binding, gravity, and geodesic consumers, with the one derivation **`menoCompletion`**. C9 and C12 recorded REOPENED at review receipt, RECLOSED on certificate compile |
+| 4 | Completion remained a prose ledger instead of a Lean object — no declaration whose unfinished fields expose missing coherence; the mechanism producing endless review | **CONFIRMED** — in full. *(Correction, review #19: this cell originally carried a "precision note" disputing the reopen-instruction sub-claim. That note was itself false — review #17 as issued instructed "C9 and C12 must reopen"; the excerpt processed in Phase 53 omitted its closing paragraph, and Phase 53's "No goal reopens" therefore contradicted the instruction. The dispute is withdrawn without qualification.)* | **The normalization**: derived `Prop` certificates, never fields on core objects — **`QuadLatticeAction.ThermalDualityLaws`** (scale algebra, disc scaling, moment `≃q`-invariance, dual involution, `scale_dual`, partition/mean/variance equations, self-dual fixed point; derivation `thermalDualityLaws`), **`FinDist.InformationLaws`** (support-aware KL, map identity/composition, unconditional entropy chain, conditional identity/composition, data processing; derivation `informationLaws`), **`IncidenceGraph.ResolutionTowerLaws`** (map/distribution/action identity and composition, zero identity price and cost, additive price and cost, telescoping deficit, deficit monotonicity, strict refinement; derivation `resolutionTowerLaws`), and **`MenoCompletion`** (`Meno/Completion.lean`, new file): the three generic certificates **plus** the cycle, wedge, theta, binding, gravity, and geodesic consumers, with the one derivation **`menoCompletion`**. C9 and C12 recorded REOPENED at review receipt, RECLOSED on certificate compile |
 
 **Rule-3 amendments.** (1) **Completion is the certificate**: a goal
 is CLOSED exactly when its `MenoCompletion` fields compile;
@@ -4857,3 +4875,42 @@ proof that they all hold at once; findings 1–3 are what its
 compilation forced (a lawful KL, a single chain-rule engine, the
 closed thermal circle). `lake build Meno`: build green (3350 jobs,
 34 source files), zero `sorry`, zero `axiom`, zero warnings.
+
+## Phase 55 addendum: nineteenth external review — three findings, three confirmed, three repaired; THE FINITE CLOSEOUT (2026-07-19)
+
+Review #19 arrived against the Phase-54 state: the certificate did
+not certify the Completion Path it claimed to certify (C1–C8's
+acceptance families absent), its docstring overclaimed what the
+kernel enforces, and Phase 54's "precision note" was itself false.
+All three CONFIRMED; the false note and Phase 53's false discipline
+sentence are corrected **in place, without qualification** (see the
+correction markers at both sites). The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | `MenoCompletion` omitted the C1–C8 acceptance families — deleting `harmonicEnergy_isLeast` or `partFn_add_killed` would not have invalidated the derivation; "the certificate's fields are the program's claims" was falsified | **CONFIRMED** | **The finite closeout** (`Meno/Completion.lean`, rewritten): four new law packages derived mechanically from Part I — **`GraphTopologyLaws`** (C1–C2: `finrank_gauge`, Euler `b1_eq`, the fundamental basis, both keystones, `periods_onto`/`periodsR_onto`, `integral_potentials`, exactness, `cast_independent`, `spanning_of_card_eq_b1`, `exists_int_coords`), **`HarmonicCarrierLaws`** (C3–C4: `card_eq_b1`, `exists_unimodular_relating`, `basisGramData_partFn`, `harmonicEnergy_isLeast`, `energy_eq_harmonicEnergy`, `harmonicEnergy_pos`), **`MatterBindingLaws`** (C6–C7: mass positivity/leastness/chart, `not_gradient`, `annihilation`, `exists_matter`, `restrict_injective`/`range_restrict`, `attach_h1`, `finrank_attach_h1Homology`, `binding_kills_matter`, `energy_isLeast`, **`partFn_add_killed`**, `attach_partFn_add_le`, `attach_partFn_lt`), **`CodingGravityLaws`** (C8–C9 generic: K1–K3, `card_gauge`, `card_sections`, the coding theorem, the `ℝ≥0∞` boundary (`sectionCostE_eq_top_iff`/`_eq_zero_iff`), `descriptionCost_eq`, compression counts and costs, `uniformAction` realization with `logCard_eq_uniformComplexity`/`gravity_logCard`/`refactoring_bound_logCard`, and the priced gravity/time laws `partFn_gravity`/`complexity_gravity`/`entropy_gravity`/`sectionCost_uniformLift`); concrete cycle/wedge/theta/binding/geodesic results consolidated in **`FlagshipLaws`** (C5's unimodular relatings, closed-form Grams and masses, `b₁` corroborations, theta counts, `theta_removed_weight`, `theta_attach_finrank`, plus the Phase-54 consumer fields). Assembled in **`MenoSemanticCompletion`** with the three spine certificates; one derivation `menoSemanticCompletion`, every field a direct named-theorem assignment |
+| 2 | The certificate enforces statements, not derivation routes — Lean would accept an independently replayed proof; "an incoherent route cannot compile" was too strong | **CONFIRMED** | Docstring and Part I rewritten to the honest scope: the certificate enforces **statement coverage**; proof **provenance** is enforced by the direct-assignment discipline of the file, module boundaries, and substantive review. Direct assignments kept (and extended to every new field — no lambdas beyond constructor wrapping); no superseded engines remained to delete this phase |
+| 3 | Phase 54's precision correction was itself false: review #17 as issued said "C9 and C12 must reopen", so Phase 53's "No goal reopens" did contradict the instruction | **CONFIRMED** (the excerpt processed in Phase 53 omitted the review's closing paragraph; the review as issued is authoritative) | Phase 54's ledger cell corrected in place — the dispute **withdrawn without qualification**; Phase 53's discipline check corrected in place with the same correction marker; the Phase-54 reopen–reclose record of C9/C12 stands as the honest account |
+
+**Rule-3 amendments.** (1) The certificate is renamed
+**`MenoSemanticCompletion`**: "semantic" marks the boundary of what
+the kernel certifies — propositions — from the repository invariants
+(C11 deletion state, C12 import DAG and no-duplication) that only
+the source tree can witness. Closure is the conjunction: semantic
+certificate + import DAG + deletions + clean build + substantive
+review of derivation routes. (2) Certificate coverage is
+**mechanical**: every Part-I acceptance signature has a field in
+exactly one law package; a new acceptance theorem is not accepted
+until its field exists. (3) When a review corrects the record about
+its own text, the review as issued is authoritative over the excerpt
+processed — corrections land without qualification.
+
+**Discipline check.** C9 and C12 remain CLOSED (Phase 54's
+reopen–reclose record stands); no goal reopens in this phase — the
+findings were about the certificate's coverage and description and
+about ledger honesty, not about Part I's mathematics (review #19:
+"The Phase 54 mathematical repairs themselves are correct"). The
+certificate now covers C1–C10 mechanically; C11/C12's repository
+invariants are named as such. `lake build Meno`: build green
+(3350 jobs, 34 source files), zero `sorry`, zero `axiom`, zero
+warnings.

@@ -1,30 +1,57 @@
 import Meno.ThetaHarmonic
 import Meno.ThetaBinding
 import Meno.CycleHarmonic
+import Meno.WedgePresentation
+import Meno.UniformAction
 import Meno.Groupoid
 
-/-! # The completion certificate (review #18)
+/-! # The semantic completion certificate (reviews #18, #19)
 
-**Completion as a Lean object, not a prose ledger.** `MenoCompletion`
-bundles the three generic law certificates — thermal duality
-(`QuadLatticeAction.ThermalDualityLaws`), information
-(`FinDist.InformationLaws`), and the resolution tower
-(`IncidenceGraph.ResolutionTowerLaws`) — together with the flagship
-concrete consumers: the cycle graph's T-duality through the spine,
-the wedge's matter sector, and the theta graph's Siegel–Poisson
-duality, binding, priced gravity/time faces, tower prices, and
-thermal circle, closing with the geodesic–harmonic duality.
+**Completion as a Lean object.** `MenoSemanticCompletion` is derived
+**mechanically from Part I**: every Part-I acceptance signature of
+C1–C10 appears as a field in exactly one law package —
 
-`menoCompletion` is its **one derivation**. Every field is a `Prop`
-proved from the existing engines; an unfinished or incoherent field
-would fail to compile. Acceptance inspects this statement and its
-derivation routes — the certificate is what "the program is closed"
-*means* in Lean.
+* `GraphTopologyLaws` (C1–C2): gauge, Euler, the fundamental basis,
+  the ℤ/ℝ keystones, period surjectivity, integral potentials,
+  exactness, independence, spanning, integral coordinates;
+* `HarmonicCarrierLaws` (C3–C4): rank well-definedness, unimodular
+  transport, the graph partition function, the variational identity,
+  chart independence, positive energy;
+* `MatterBindingLaws` (C6–C7): mass positivity/leastness/charts, the
+  trapped paradox, annihilation, existence, the restriction image,
+  attached rank, the kill theorem, exact surviving energies, the
+  exact spectral decomposition, strict weight loss;
+* `CodingGravityLaws` (C8–C9 generic): K1–K3, gauge counting, the
+  coding theorem with its `ℝ≥0∞` boundary, compression costs, the
+  `logCard` realization, and the priced gravity/time laws;
+* `ThermalDualityLaws`, `InformationLaws`, `ResolutionTowerLaws`
+  (C9/C12 analytic, information, and resolution spines — defined
+  with their subjects);
+* `FlagshipLaws` (C5 + consumers): the concrete cycle, wedge, theta,
+  binding, and geodesic results.
+
+`menoSemanticCompletion` is the **one derivation**, by direct
+named-theorem assignment only.
+
+**Scope, honestly stated** (review #19). The certificate enforces
+**statement coverage**: every acceptance signature is a field, so
+deleting an underlying theorem breaks the derivation as written.
+Proof **provenance** — that each field is proved by the named engine
+rather than an independently replayed proof — is enforced by this
+file's direct-assignment discipline, module boundaries, and
+substantive review; Lean's kernel does not distinguish routes.
+Repository invariants are outside the kernel entirely: C11's
+deletion state and C12's import-DAG and no-duplication constraints
+are facts about the source tree. **Closure therefore means**: this
+semantic certificate compiles, *and* the import DAG matches Part I,
+*and* the deletions hold, *and* `lake build Meno` is green with zero
+`sorry`/`axiom`/warnings, *and* substantive source review finds the
+derivation routes direct.
 -/
 
 namespace Meno
 
-universe u v
+universe u v w
 
 /- `thetaGraph` is reducible, so its projections reduce to concrete
 types in instance goals and the generic instances' graph
@@ -64,44 +91,394 @@ local instance :
       (thetaGraph.carrierCompression 2)) :=
   thetaGraph.carrierPullbackNonempty 2
 
-/-- **THE COMPLETION CERTIFICATE** (review #18): the generic law
-certificates and the flagship consumers, as one derived `Prop`.
+/-! ## C1–C2: the topology laws -/
 
-* `thermal` — the thermal-duality laws of **every** bundled lattice
-  action (duality, temperature, response: the C9/C12 analytic spine);
-* `information` — the information laws of **every** finite
-  distribution (the C9 information algebra);
-* `tower` — the resolution-tower laws of **every** graph (the C9
-  resolution calculus);
-* `cycle_T_duality` — the cycle graph's T-duality through the spine
-  (C1–C5's keystone consumers, C8);
-* `wedge_matter` — the wedge carries matter (C6);
-* `theta_binding` — attaching the face kills theta's matter (C7);
-* `theta_duality` — the theta graph's non-diagonal Siegel–Poisson
-  duality (C8);
-* `gravity_time_faces` — gravity, time, all three bridge packages,
-  and all three strict variances, priced on theta (C9);
-* `theta_tower_prices` — the complete priced composition law on the
-  theta tower `8 → 4 → 2` (C9);
-* `theta_mean_equation`, `theta_variance_equation` — the
-  temperature–duality circle on theta's non-diagonal carrier;
-* `geodesic_duality` — the geodesic–harmonic duality on the cycle
-  (C10). -/
-structure MenoCompletion : Prop where
-  thermal : ∀ Q : QuadLatticeAction.{u},
-    QuadLatticeAction.ThermalDualityLaws Q
-  information : ∀ {X : Type u} [Fintype X] [DecidableEq X]
-    (P : FinDist X), FinDist.InformationLaws P
-  tower : ∀ G : IncidenceGraph.{u, v},
-    IncidenceGraph.ResolutionTowerLaws G
+/-- **The graph-topology laws** (C1–C2): every Part-I acceptance
+signature of the foundation and the intrinsic integral topology. -/
+structure GraphTopologyLaws (G : IncidenceGraph.{u, v}) : Prop where
+  gauge : Module.finrank ℝ (LinearMap.ker (G.gradLin ℝ))
+    = G.componentCard
+  euler : (G.b1 : ℤ)
+    = (Fintype.card G.E : ℤ) - Fintype.card G.V + G.componentCard
+  basis_exists : Nonempty (Module.Basis (Fin G.b1) ℤ G.cycleLattice)
+  keystone_int :
+    Nonempty (((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
+      ≃ₗ[ℤ] (Fin G.b1 → ℤ))
+  keystone_real :
+    Nonempty (((G.E → ℝ) ⧸ LinearMap.range (G.gradLin ℝ))
+      ≃ₗ[ℝ] (Fin G.b1 → ℝ))
+  cochainQuot_rank :
+    Module.finrank ℝ ((G.E → ℝ) ⧸ LinearMap.range (G.gradLin ℝ))
+      = G.b1
+  cycle_rank : Module.finrank ℝ (LinearMap.ker (G.boundaryLin ℝ))
+    = G.b1
+  periods_onto : ∀ {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (k : Fin n → ℤ),
+    ∃ τ : G.E → ℤ, ∀ j, τ ⬝ᵥ G.cyclesZ B j = k j
+  periodsR_onto : ∀ {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (k : Fin n → ℝ),
+    ∃ ω : G.E → ℝ, ∀ j, ω ⬝ᵥ G.cyclesR B j = k j
+  integral_potentials : ∀ {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (ω : G.E → ℤ),
+    (∀ j, ω ⬝ᵥ G.cyclesZ B j = 0) → ∃ g : G.V → ℤ, G.grad g = ω
+  exactness : ∀ {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (ω : G.E → ℝ),
+    (∀ i, ω ⬝ᵥ G.cyclesR B i = 0) ↔ ∃ f : G.V → ℝ, G.grad f = ω
+  independence : ∀ {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (x : Fin n → ℝ),
+    (fun e => ∑ i, x i * G.cyclesR B i e) = 0 → x = 0
+  spanning : ∀ {r : ℕ}, r = G.b1 → ∀ (c : Fin r → G.E → ℝ),
+    (∀ i v, G.boundary (c i) v = 0) →
+    (∀ x : Fin r → ℝ, (fun e => ∑ i, x i * c i e) = 0 → x = 0) →
+    ∀ (ω : G.E → ℝ), (∀ v, G.boundary ω v = 0) →
+    ∃ a : Fin r → ℝ, ω = fun e => ∑ i, a i * c i e
+  int_coords : ∀ {r : ℕ} (c : Fin r → G.E → ℤ),
+    (∀ ω : G.E → ℝ, (∀ v, G.boundary ω v = 0) →
+      ∃ a : Fin r → ℝ, ω = fun e => ∑ i, a i * ((c i e : ℤ) : ℝ)) →
+    (∀ k : Fin r → ℤ, ∃ τ : G.E → ℤ, ∀ j, τ ⬝ᵥ c j = k j) →
+    ∀ {x : G.E → ℤ}, x ∈ G.cycleLattice →
+    ∃ a : Fin r → ℤ, x = fun e => ∑ i, a i * c i e
+
+/-- **Every graph satisfies the topology laws** — direct
+assignments. -/
+theorem graphTopologyLaws (G : IncidenceGraph.{u, v}) :
+    GraphTopologyLaws G where
+  gauge := G.finrank_gauge
+  euler := G.b1_eq
+  basis_exists := ⟨G.cycleBasis⟩
+  keystone_int := ⟨G.h1QuotEquiv⟩
+  keystone_real := ⟨G.cochainQuotEquivR⟩
+  cochainQuot_rank := G.finrank_cochainQuotR
+  cycle_rank := G.finrank_ker_boundaryLin
+  periods_onto := G.periods_onto
+  periodsR_onto := G.periodsR_onto
+  integral_potentials := G.integral_potentials
+  exactness := G.period_eq_zero_iff_exists_grad
+  independence := G.cast_independent
+  spanning := G.spanning_of_card_eq_b1
+  int_coords := G.exists_int_coords
+
+/-! ## C3–C4: the harmonic-carrier laws -/
+
+/-- **The harmonic-carrier laws** (C3–C4): rank well-definedness,
+unimodular basis transport, the basis-free partition function, the
+variational identity, chart independence, and positive energy. -/
+structure HarmonicCarrierLaws (G : IncidenceGraph.{u, v}) : Prop where
+  rank_well_defined : ∀ {n : ℕ},
+    Module.Basis (Fin n) ℤ G.cycleLattice → n = G.b1
+  unimodular : ∀ {n : ℕ}
+    (B B' : Module.Basis (Fin n) ℤ G.cycleLattice),
+    ∃ U : Matrix (Fin n) (Fin n) ℤ, IsUnit U.det ∧
+      ∀ j, G.cyclesZ B' j = fun e => ∑ i, U i j * G.cyclesZ B i e
+  partFn_graph : ∀ {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice),
+    (G.basisGramData B).toQuadraticAction.toSectorAction.partFn
+      = G.partFn
+  energy_least : ∀ κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
+    IsLeast {E : ℝ | ∃ ω : G.E → ℝ,
+        (∀ j, ω ⬝ᵥ G.fundCyclesR j = ((G.h1QuotEquiv κ j : ℤ) : ℝ))
+          ∧ E = ω ⬝ᵥ ω}
+      (G.harmonicEnergy κ)
+  chart_energy : ∀ {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice) (τ : G.E → ℤ),
+    (G.basisGramData B).energy (fun j => τ ⬝ᵥ G.cyclesZ B j)
+      = G.harmonicEnergy (Submodule.Quotient.mk τ)
+  energy_pos :
+    ∀ {κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)}, κ ≠ 0 →
+    0 < G.harmonicEnergy κ
+
+/-- **Every graph satisfies the harmonic-carrier laws** — direct
+assignments. -/
+theorem harmonicCarrierLaws (G : IncidenceGraph.{u, v}) :
+    HarmonicCarrierLaws G where
+  rank_well_defined := G.card_eq_b1
+  unimodular := G.exists_unimodular_relating
+  partFn_graph := G.basisGramData_partFn
+  energy_least := G.harmonicEnergy_isLeast
+  chart_energy := G.energy_eq_harmonicEnergy
+  energy_pos := G.harmonicEnergy_pos
+
+/-! ## C6–C7: the matter-binding laws -/
+
+/-- **The matter-binding laws** (C6–C7): the intrinsic matter facts
+and the generic geometric-binding theorems on 2-complexes. -/
+structure MatterBindingLaws (G : IncidenceGraph.{u, v}) : Prop where
+  mass_pos : ∀ m : MatterSector G, 0 < m.mass
+  mass_least : ∀ m : MatterSector G,
+    IsLeast {E : ℝ | ∃ ω : G.E → ℝ,
+        (∀ j, ω ⬝ᵥ G.fundCyclesR j = ((G.h1QuotEquiv m.val) j : ℝ))
+          ∧ E = ω ⬝ᵥ ω} m.mass
+  mass_chart : ∀ (m : MatterSector G) {n : ℕ}
+    (B : Module.Basis (Fin n) ℤ G.cycleLattice),
+    (G.basisGramData B).energy (G.latticeQuotEquiv B m.val) = m.mass
+  trapped : ∀ (m : MatterSector G) (ω : G.E → ℝ),
+    (∀ j, ω ⬝ᵥ G.fundCyclesR j = ((G.h1QuotEquiv m.val) j : ℝ)) →
+    ¬ ∃ f : G.V → ℝ, G.grad f = ω
+  annihilation : ∀ m : MatterSector G,
+    (G.basisGramData G.cycleBasis).bindingEnergy
+      (G.h1QuotEquiv m.val) (G.h1QuotEquiv m.neg.val) = 2 * m.mass
+  matter_exists : 0 < G.b1 → Nonempty (MatterSector G)
+  restrict_inj : ∀ X : TwoComplex.{u, v, w} G,
+    Function.Injective X.restrict
+  restrict_range : ∀ X : TwoComplex.{u, v, w} G,
+    LinearMap.range X.restrict = X.survivors
+  kills : ∀ (X : TwoComplex.{u, v, w} G) (m : MatterSector G)
+    (i : X.Faces),
+    G.classPairing (X.face i) (X.face_mem i) m.val ≠ 0 →
+    ¬ ∃ κ' : X.h1, X.restrict κ' = m.val
+  attach_equiv : ∀ (c : G.E → ℤ) (hc : c ∈ G.cycleLattice),
+    Nonempty ((G.attach c hc : TwoComplex.{u, v, w} G).h1Homology
+      ≃ₗ[ℤ] (↥G.cycleLattice ⧸ (ℤ ∙ (⟨c, hc⟩ : G.cycleLattice))))
+  attach_rank : ∀ (c : G.E → ℤ) (hc : c ∈ G.cycleLattice)
+    (τ : G.E → ℤ), c ⬝ᵥ τ = 1 →
+    Module.finrank ℤ
+        (G.attach c hc : TwoComplex.{u, v, w} G).h1Homology
+      = G.b1 - 1
+  survivor_energy : ∀ (X : TwoComplex.{u, v, w} G) (κ' : X.h1),
+    IsLeast {E : ℝ | ∃ ω : G.E → ℝ,
+        ((∀ j, ω ⬝ᵥ G.fundCyclesR j
+            = ((G.h1QuotEquiv (X.restrict κ')) j : ℝ))
+          ∧ ∀ i, ω ⬝ᵥ (fun e => ((X.face i e : ℤ) : ℝ)) = 0)
+        ∧ E = ω ⬝ᵥ ω}
+      (G.harmonicEnergy (X.restrict κ'))
+  spectral : ∀ X : TwoComplex.{u, v, w} G,
+    X.partFn + (∑' κ : ↥((X.survivors :
+        Set ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))ᶜ,
+      Real.exp (-G.harmonicEnergy κ.val)) = G.classPartFn
+  weight_bound : ∀ (X : TwoComplex.{u, v, w} G) (m : MatterSector G)
+    (i : X.Faces),
+    G.classPairing (X.face i) (X.face_mem i) m.val ≠ 0 →
+    X.partFn + Real.exp (-m.mass) ≤ G.classPartFn
+  partFn_strict : ∀ (X : TwoComplex.{u, v, w} G) (m : MatterSector G)
+    (i : X.Faces),
+    G.classPairing (X.face i) (X.face_mem i) m.val ≠ 0 →
+    X.partFn < G.classPartFn
+
+/-- **Every graph satisfies the matter-binding laws** — direct
+assignments. -/
+theorem matterBindingLaws (G : IncidenceGraph.{u, v}) :
+    MatterBindingLaws.{u, v, w} G where
+  mass_pos := MatterSector.mass_pos
+  mass_least := MatterSector.mass_isLeast
+  mass_chart := MatterSector.mass_chart
+  trapped := MatterSector.not_gradient
+  annihilation := MatterSector.annihilation
+  matter_exists := exists_matter G
+  restrict_inj := TwoComplex.restrict_injective
+  restrict_range := TwoComplex.range_restrict
+  kills := TwoComplex.binding_kills_matter
+  attach_equiv := fun c hc => ⟨attach_h1 c hc⟩
+  attach_rank := finrank_attach_h1Homology
+  survivor_energy := TwoComplex.energy_isLeast
+  spectral := TwoComplex.partFn_add_killed
+  weight_bound := TwoComplex.attach_partFn_add_le
+  partFn_strict := TwoComplex.attach_partFn_lt
+
+/-! ## C8–C9 generic: the coding-gravity laws -/
+
+/-- **The coding-gravity laws** (C8 and the generic C9 gravity/time
+laws): K1–K3 at every modulus, gauge counting, the coding theorem
+with its honest `ℝ≥0∞` boundary, compression costs, the `logCard`
+realization of the abstract hierarchy, and the priced gravity and
+time identities of sector actions. -/
+structure CodingGravityLaws (G : IncidenceGraph.{u, v}) : Prop where
+  k1 : ∀ {n : ℕ}, Module.Basis (Fin n) ℤ G.cycleLattice →
+    ∀ (q : ℕ) [NeZero q],
+    Nat.card ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+      = q ^ n
+  k1_intrinsic : ∀ (q : ℕ) [NeZero q],
+    Nat.card ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+      = q ^ G.b1
+  k1_reduction : ∀ (q : ℕ) [NeZero q],
+    Nat.card (IncidenceGraph.H1Reduction G q) = q ^ G.b1
+  k2 : ∀ {n : ℕ}, Module.Basis (Fin n) ℤ G.cycleLattice →
+    ∀ (q : ℕ) [NeZero q],
+    Real.log (Nat.card (G.E → ZMod q))
+      = Real.log (Nat.card (LinearMap.range (G.gradLin (ZMod q))))
+        + n * Real.log q
+  k3 : ∀ (q : ℕ)
+    (x : (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))),
+    Nat.card {y : G.E → ZMod q //
+        (Submodule.Quotient.mk y :
+          (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) = x}
+      = Nat.card (LinearMap.range (G.gradLin (ZMod q)))
+  gauge_count : ∀ {n : ℕ}, Module.Basis (Fin n) ℤ G.cycleLattice →
+    ∀ (q : ℕ) [NeZero q],
+    Nat.card (LinearMap.range (G.gradLin (ZMod q)))
+      = q ^ (Fintype.card G.E - n)
+  compression_sections : ∀ {n : ℕ},
+    Module.Basis (Fin n) ℤ G.cycleLattice → ∀ (q : ℕ) [NeZero q],
+    Nat.card {s : ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
+        → (G.E → ZMod q) //
+        ∀ x, (Submodule.Quotient.mk (s x) :
+          (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) = x}
+      = Nat.card (LinearMap.range (G.gradLin (ZMod q))) ^ (q ^ n)
+  compression_cost : ∀ {n : ℕ},
+    Module.Basis (Fin n) ℤ G.cycleLattice → ∀ (q : ℕ) [NeZero q],
+    sectionCost (fun y : G.E → ZMod q =>
+        (Submodule.Quotient.mk y :
+          (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))))
+      = (q : ℝ) ^ n
+        * Real.log (Nat.card (LinearMap.range (G.gradLin (ZMod q))))
+  recovery : ∀ (q : ℕ) [NeZero q]
+    (x : (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))),
+    recoveryCost (fun y : G.E → ZMod q =>
+        (Submodule.Quotient.mk y :
+          (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))) x
+      = Real.log (Nat.card (LinearMap.range (G.gradLin (ZMod q))))
+  sections_count : ∀ {A B : Type u} [Finite A] [Fintype B]
+    (f : A → B),
+    Nat.card {s : B → A // ∀ b, f (s b) = b}
+      = ∏ b : B, Nat.card (f ⁻¹' {b})
+  coding : ∀ {A B : Type u} [Fintype A] [Fintype B] [DecidableEq B]
+    {f : A → B}, Function.Surjective f →
+    sectionCost f = fiberInfoCost f
+  cost_top : ∀ {A B : Type u} [Finite A] [Finite B] (f : A → B),
+    sectionCostE f = ⊤ ↔ ¬ Function.Surjective f
+  cost_zero : ∀ {A B : Type u} [Fintype A] [Fintype B] [DecidableEq B]
+    (f : A → B), sectionCostE f = 0 ↔ Function.Bijective f
+  forward_cost : ∀ {A B : Type u} [Fintype A] [Fintype B] (f : A → B),
+    descriptionCost f = Real.log (Nat.card (A → B))
+  uniform_partFn : ∀ (A : Type u) [Fintype A] [Nonempty A],
+    (uniformAction A).partFn = Fintype.card A
+  uniform_complexity : ∀ (A : Type u) [Fintype A] [Nonempty A],
+    (uniformAction A).complexity = Real.log (Fintype.card A)
+  logCard_bridge : ∀ (A : Type u) [Fintype A] [Nonempty A],
+    SGD.logCard A = ENNReal.ofReal (uniformAction A).complexity
+  type_gravity : ∀ {A B D W₁ W₂ : Type u} (f : A → D) (g : B → D),
+    (∀ d, SGD.Fiber f d ≃ W₁) → (∀ d, SGD.Fiber g d ≃ W₂) →
+    SGD.logCard (SGD.Pullback f g) + SGD.logCard D
+      = SGD.logCard A + SGD.logCard B
+  refactoring : ∀ {A B D : Type u} (f : A → D) (g : B → D),
+    Nonempty D →
+    SGD.logCard (SGD.Pullback f g)
+      ≤ SGD.logCard D + (⨆ d, SGD.logCard (SGD.Fiber f d))
+        + ⨆ d, SGD.logCard (SGD.Fiber g d)
+  priced_gravity_partFn : ∀ (A : SectorAction.{u}) [Fintype A.Λ]
+    {X Y : Type u} [Fintype X] [Fintype Y]
+    (f : X → A.Λ) (g : Y → A.Λ) [Fintype (SGD.Pullback f g)]
+    {m m' : ℕ} (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m'),
+    (A.coupling f g hm hm' hf hg).partFn * A.partFn
+      = (A.uniformLift f hm hf).partFn
+        * (A.uniformLift g hm' hg).partFn
+  priced_gravity_complexity : ∀ (A : SectorAction.{u}) [Fintype A.Λ]
+    {X Y : Type u} [Fintype X] [Fintype Y]
+    (f : X → A.Λ) (g : Y → A.Λ) [Fintype (SGD.Pullback f g)]
+    {m m' : ℕ} (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m'),
+    (A.coupling f g hm hm' hf hg).complexity + A.complexity
+      = (A.uniformLift f hm hf).complexity
+        + (A.uniformLift g hm' hg).complexity
+  priced_gravity_entropy : ∀ (A : SectorAction.{u}) [Fintype A.Λ]
+    {X Y : Type u} [Fintype X] [Fintype Y]
+    (f : X → A.Λ) (g : Y → A.Λ) [Fintype (SGD.Pullback f g)]
+    {m m' : ℕ} (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m'),
+    shannonEntropy (A.coupling f g hm hm' hf hg).gibbsMass
+        + shannonEntropy A.gibbsMass
+      = shannonEntropy (A.uniformLift f hm hf).gibbsMass
+        + shannonEntropy (A.uniformLift g hm' hg).gibbsMass
+  priced_time : ∀ (A : SectorAction.{u}) [Fintype A.Λ]
+    {X : Type u} [Fintype X] (f : X → A.Λ) {m : ℕ} (hm : 0 < m)
+    (hfib : ∀ d, Nat.card {x : X // f x = d} = m),
+    sectionCost f / Fintype.card A.Λ
+      = (A.uniformLift f hm hfib).complexity - A.complexity
+
+/-- **Every graph satisfies the coding-gravity laws** — direct
+assignments. -/
+theorem codingGravityLaws (G : IncidenceGraph.{u, v}) :
+    CodingGravityLaws G where
+  k1 := G.card_quotient
+  k1_intrinsic := G.card_quotient_eq
+  k1_reduction := G.card_H1Reduction
+  k2 := G.log_card_split
+  k3 := G.card_fiber
+  gauge_count := G.card_gauge
+  compression_sections := G.card_compression_sections
+  compression_cost := G.sectionCost_compression
+  recovery := G.recoveryCost_compression
+  sections_count := card_sections
+  coding := sectionCost_eq_fiberInfoCost
+  cost_top := sectionCostE_eq_top_iff
+  cost_zero := sectionCostE_eq_zero_iff
+  forward_cost := descriptionCost_eq
+  uniform_partFn := uniformAction_partFn
+  uniform_complexity := uniformAction_complexity
+  logCard_bridge := logCard_eq_uniformComplexity
+  type_gravity := gravity_logCard
+  refactoring := refactoring_bound_logCard
+  priced_gravity_partFn := SectorAction.partFn_gravity
+  priced_gravity_complexity := SectorAction.complexity_gravity
+  priced_gravity_entropy := SectorAction.entropy_gravity
+  priced_time := SectorAction.sectionCost_uniformLift
+
+/-! ## C5 and the flagship consumers -/
+
+/-- **The flagship laws** (C5 + consumers): the concrete cycle,
+wedge, theta, binding, and geodesic results — hand-built bases
+unimodularly related to fundamental ones, closed-form Grams and
+masses, `b₁` corroborations, the theta counts, dualities, priced
+faces, tower prices, the thermal circle, and the geodesic–harmonic
+duality. -/
+structure FlagshipLaws : Prop where
+  cycle_b1 : ∀ (n : ℕ) (hn : 0 < n), (cycleGraph n hn).b1 = 1
+  theta_b1 : thetaGraph.b1 = 2
+  wedge_b1 : ∀ (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂),
+    (wedgeGraph n₁ n₂ h₁ h₂).b1 = 2
+  cycle_basis_unimodular : ∀ (n : ℕ) (hn : 0 < n),
+    ∃ U : Matrix (Fin (cycleGraph n hn).b1) (Fin (cycleGraph n hn).b1) ℤ,
+      IsUnit U.det ∧
+      ∀ j, (cycleGraph n hn).cyclesZ
+          ((cycleLatticeBasis n hn).reindex
+            (finCongr ((cycleGraph n hn).card_eq_b1
+              (cycleLatticeBasis n hn)))) j
+        = fun e => ∑ i, U i j
+            * (cycleGraph n hn).cyclesZ (cycleGraph n hn).cycleBasis i e
+  theta_basis_unimodular :
+    ∃ U : Matrix (Fin thetaGraph.b1) (Fin thetaGraph.b1) ℤ,
+      IsUnit U.det ∧
+      ∀ j, thetaGraph.cyclesZ
+          (thetaLatticeBasis.reindex
+            (finCongr (thetaGraph.card_eq_b1 thetaLatticeBasis))) j
+        = fun e => ∑ i, U i j * thetaGraph.cyclesZ thetaGraph.cycleBasis i e
+  wedge_basis_unimodular : ∀ (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂),
+    ∃ U : Matrix (Fin (wedgeGraph n₁ n₂ h₁ h₂).b1)
+        (Fin (wedgeGraph n₁ n₂ h₁ h₂).b1) ℤ,
+      IsUnit U.det ∧
+      ∀ j, (wedgeGraph n₁ n₂ h₁ h₂).cyclesZ
+          ((wedgeLatticeBasis n₁ n₂ h₁ h₂).reindex
+            (finCongr ((wedgeGraph n₁ n₂ h₁ h₂).card_eq_b1
+              (wedgeLatticeBasis n₁ n₂ h₁ h₂)))) j
+        = fun e => ∑ i, U i j
+            * (wedgeGraph n₁ n₂ h₁ h₂).cyclesZ
+                (wedgeGraph n₁ n₂ h₁ h₂).cycleBasis i e
+  theta_gram : (thetaGraph.basisGramData thetaLatticeBasis).gram
+    = !![1/3, -(1/6); -(1/6), 1/3]
+  theta_matter_mass : thetaMatter.mass = 1/3
+  wedge_matter_mass : ∀ (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3),
+    (wedgeMatter₁ n₁ n₂ h₁ h₂).mass = 1 / n₁
+  wedge_matter : ∀ (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3),
+    Nonempty (MatterSector (wedgeGraph n₁ n₂ (by omega) (by omega)))
+  theta_residue_count : ∀ (q : ℕ) [NeZero q],
+    Nat.card ((Fin 6 → ZMod q)
+        ⧸ LinearMap.range (thetaGraph.gradLin (ZMod q)))
+      = q ^ 2
+  theta_gauge_count : ∀ (q : ℕ) [NeZero q],
+    Nat.card (LinearMap.range (thetaGraph.gradLin (ZMod q))) = q ^ 4
+  theta_binding :
+    ¬ ∃ κ' : thetaFilled.h1, thetaFilled.restrict κ' = thetaMatter.val
+  theta_attach_rank : Module.finrank ℤ thetaFilled.h1Homology = 1
+  theta_removed_weight :
+    thetaFilled.partFn + Real.exp (-(1/3 : ℝ))
+      ≤ thetaGraph.classPartFn
   cycle_T_duality : ∀ (n : ℕ) (hn : n ≥ 3),
     (↑(QuadraticAction.scalarPartFn (Real.pi ^ 2 * n)) : ℂ)
       = ↑((1 / (n : ℝ)) / Real.pi) ^ ((1 : ℂ) / 2)
         * ↑(Simplicial.partitionFn n hn)
-  wedge_matter : ∀ (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3),
-    Nonempty (MatterSector (wedgeGraph n₁ n₂ (by omega) (by omega)))
-  theta_binding :
-    ¬ ∃ κ' : thetaFilled.h1, thetaFilled.restrict κ' = thetaMatter.val
   theta_duality :
     (↑(thetaHarmonicGramData.toQuadraticAction.dual.toSectorAction.partFn)
         : ℂ)
@@ -187,21 +564,68 @@ structure MenoCompletion : Prop where
     Geodesic.length (Simplicial.canonicalLoop n hn)
       * (cyclePeriodData n (by omega)).energy ![1] = 1
 
-/-- **THE PROGRAM IS CLOSED** (review #18): the completion
-certificate, derived. Every field routes through the named engines —
-no field re-proves anything. -/
-theorem menoCompletion : MenoCompletion.{u, v} where
-  thermal := QuadLatticeAction.thermalDualityLaws
-  information := fun P => FinDist.informationLaws P
-  tower := IncidenceGraph.resolutionTowerLaws
-  cycle_T_duality := partitionFn_T_duality_via_spine
+/-- **The flagship laws hold** — direct assignments. -/
+theorem flagshipLaws : FlagshipLaws where
+  cycle_b1 := cycleGraph_b1'
+  theta_b1 := thetaGraph_b1'
+  wedge_b1 := wedgeGraph_b1'
+  cycle_basis_unimodular := cycleLatticeBasis_unimodular_related
+  theta_basis_unimodular := thetaLatticeBasis_unimodular_related
+  wedge_basis_unimodular := wedgeLatticeBasis_unimodular_related
+  theta_gram := basisGramData_theta_gram
+  theta_matter_mass := thetaMatter_mass
+  wedge_matter_mass := wedgeMatter₁_mass
   wedge_matter := wedge_exists_matter
+  theta_residue_count := Meno.theta_residue_count
+  theta_gauge_count := Meno.theta_gauge_count
   theta_binding := theta_binding_kills
+  theta_attach_rank := theta_attach_finrank
+  theta_removed_weight := Meno.theta_removed_weight
+  cycle_T_duality := partitionFn_T_duality_via_spine
   theta_duality := theta_siegelPoisson_duality
   gravity_time_faces := theta_priced_faces
   theta_tower_prices := theta_tower_price_triangle
-  theta_mean_equation := fun β hβ => theta_classMeanEnergy_T_dual β hβ
-  theta_variance_equation := fun β hβ => theta_gibbsVariance_T_dual β hβ
+  theta_mean_equation := theta_classMeanEnergy_T_dual
+  theta_variance_equation := theta_gibbsVariance_T_dual
   geodesic_duality := Simplicial.geodesic_harmonic_duality
+
+/-! ## The semantic completion certificate -/
+
+/-- **THE SEMANTIC COMPLETION CERTIFICATE** (reviews #18, #19):
+every Part-I acceptance family, one field each, assembled — the four
+Part-I law packages, the three generic spine certificates, and the
+flagship consumers. "Semantic": Lean's kernel certifies these
+propositions; C11's deletion state and C12's import-DAG and
+duplication constraints are repository invariants checked by the
+build and by review, not by the kernel. -/
+structure MenoSemanticCompletion : Prop where
+  topology : ∀ G : IncidenceGraph.{u, v}, GraphTopologyLaws G
+  harmonic : ∀ G : IncidenceGraph.{u, v}, HarmonicCarrierLaws G
+  matter_binding : ∀ G : IncidenceGraph.{u, v},
+    MatterBindingLaws.{u, v, w} G
+  coding_gravity : ∀ G : IncidenceGraph.{u, v}, CodingGravityLaws G
+  thermal : ∀ Q : QuadLatticeAction.{u},
+    QuadLatticeAction.ThermalDualityLaws Q
+  information : ∀ {X : Type u} [Fintype X] [DecidableEq X]
+    (P : FinDist X), FinDist.InformationLaws P
+  tower : ∀ G : IncidenceGraph.{u, v},
+    IncidenceGraph.ResolutionTowerLaws G
+  flagship : FlagshipLaws
+
+/-- **THE PROGRAM IS SEMANTICALLY CLOSED** (reviews #18, #19): the
+certificate, derived — every field a direct named-theorem
+assignment. Closure in full is this certificate **plus** the
+repository invariants: the import DAG of Part I, the recorded
+deletions, `lake build Meno` green with zero `sorry`/`axiom`/
+warnings, and substantive source review of the derivation routes. -/
+theorem menoSemanticCompletion : MenoSemanticCompletion.{u, v, w} where
+  topology := graphTopologyLaws
+  harmonic := harmonicCarrierLaws
+  matter_binding := matterBindingLaws
+  coding_gravity := codingGravityLaws
+  thermal := QuadLatticeAction.thermalDualityLaws
+  information := FinDist.informationLaws
+  tower := IncidenceGraph.resolutionTowerLaws
+  flagship := flagshipLaws
 
 end Meno

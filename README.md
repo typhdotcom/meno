@@ -42,15 +42,20 @@ Everything below is a checked theorem — zero `sorry`, zero `axiom`
 declarations, ~3300 build jobs green against Lean 4.26.0 / Mathlib.
 The program, its completion discipline, and the per-goal ledger live in
 [`PLAN.md`](PLAN.md); all twelve goals of the Completion Path are
-closed, and the closure itself is a **Lean object**: the completion
-certificate `MenoCompletion` (`Meno/Completion.lean`) bundles the
-generic law certificates — `ThermalDualityLaws` for every bundled
-lattice action, `InformationLaws` for every finite distribution,
-`ResolutionTowerLaws` for every graph — with the flagship concrete
-consumers (cycle, wedge, theta, binding, gravity, geodesic), and
-`menoCompletion` is its one derivation. Acceptance inspects that
-statement and its derivation routes; an unfinished field would not
-compile.
+closed, and the closure itself is a **Lean object**: the semantic
+completion certificate `MenoSemanticCompletion`
+(`Meno/Completion.lean`) is derived mechanically from the plan's
+Part I — every C1–C10 acceptance signature is a field in exactly one
+law package (`GraphTopologyLaws`, `HarmonicCarrierLaws`,
+`MatterBindingLaws`, `CodingGravityLaws`, `ThermalDualityLaws`,
+`InformationLaws`, `ResolutionTowerLaws`, `FlagshipLaws`), and
+`menoSemanticCompletion` is its one derivation, by direct
+named-theorem assignment. Its scope is stated honestly: the
+certificate enforces **statement coverage** (deleting an acceptance
+theorem breaks the derivation); proof provenance is enforced by the
+direct-assignment discipline and review, and the import-DAG and
+deletion constraints are repository invariants checked by the build
+and by review — closure is that whole conjunction.
 
 ## What is proved
 
@@ -467,7 +472,7 @@ Meno/
 ├── Hodge.lean                 Graph partition functions (identified with the spine)
 ├── Duality.lean               Groupoid-facing duality wrappers (identified with the spine)
 ├── Zeta.lean                  Riemann functional equation through the spine's theta identification
-└── Completion.lean            THE COMPLETION CERTIFICATE: the law certificates + flagship consumers, as one Prop
+└── Completion.lean            THE SEMANTIC COMPLETION CERTIFICATE: every Part-I acceptance signature, one field each, one derivation
 ```
 
 The legacy layer (`Simplicial`–`Zeta`) is retained deliberately: it is
