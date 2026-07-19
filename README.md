@@ -55,7 +55,10 @@ certificate enforces **statement coverage** (deleting an acceptance
 theorem breaks the derivation); proof provenance is enforced by the
 direct-assignment discipline and review, and the import-DAG and
 deletion constraints are repository invariants checked by the build
-and by review — closure is that whole conjunction.
+and by review — closure is that whole conjunction. Every leg of the
+conjunction has been discharged: the certificate compiles, the DAG
+and deletions hold, the build is green, and the substantive review
+of the derivation routes returned no findings.
 
 ## What is proved
 
