@@ -47,3 +47,4 @@ import Meno.CycleHarmonic
 import Meno.Hodge
 import Meno.Duality
 import Meno.Zeta
+import Meno.Completion

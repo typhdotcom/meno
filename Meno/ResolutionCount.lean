@@ -2259,6 +2259,22 @@ theorem h1TowerMap_surjective (hdvd : q ∣ q') :
   obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
   exact ⟨Submodule.Quotient.mk κ, rfl⟩
 
+/-- **Zero price at the identity** (review #18): the identity tower
+step forgets nothing — its Gibbs conditional entropy vanishes, by
+`condEntropy_id`. -/
+theorem residue_tower_price_id :
+    (G.residueDist q).condEntropy (⇑(G.h1TowerMap q q dvd_rfl)) = 0 := by
+  rw [G.h1TowerMap_id q, LinearMap.id_coe]
+  exact FinDist.condEntropy_id _
+
+/-- **Zero cost at the identity** (review #18): the identity tower
+map is injective, so its section cost vanishes. -/
+theorem sectionCost_h1TowerMap_id :
+    sectionCost (⇑(G.h1TowerMap q q dvd_rfl)) = 0 := by
+  refine sectionCost_eq_zero_of_injective ?_
+  rw [G.h1TowerMap_id q, LinearMap.id_coe]
+  exact fun a b h => h
+
 end Tower
 
 section TowerComp
@@ -2419,7 +2435,6 @@ theorem residue_tower_entropy_chain (hdvd : q ∣ q') :
         + (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd)) := by
   have h := FinDist.entropy_eq_map_add_condEntropy
     (⇑(G.h1TowerMap q q' hdvd)) (G.residueDist q')
-    (fun η => G.residueMass_pos q' η)
   rw [G.residueDist_tower q q' hdvd] at h
   exact h
 
@@ -2545,6 +2560,31 @@ theorem residue_tower_price_strict (hb : 0 < G.b1) (hc : 1 < c)
   have hid := G.residue_tower_condEntropy_eq_defect q q' c hdvd hq'
   exact ⟨hpos, hlt, by linarith⟩
 
+/-- **Deficit monotonicity along the tower** (review #18): refining
+the resolution can only grow the deficit — pure **data processing**
+at the uniform reference (`FinDist.defect_map_le`), since the tower
+map pushes the fine Gibbs law to the coarse one and the uniform
+distribution to the uniform distribution. The strict growth for
+`b₁ > 0`, `c > 1` (`residue_tower_price_strict`) retains its Fourier
+modal argument; this weak form needs none of it. -/
+theorem residueDefect_mono (hdvd : q ∣ q') (hq' : q' = c * q) :
+    G.residueDefect q ≤ G.residueDefect q' := by
+  classical
+  have hc : c ≠ 0 := by
+    rintro rfl
+    exact (NeZero.ne q') (by rw [hq', zero_mul])
+  have hm : 0 < c ^ G.b1 := pow_pos (Nat.pos_of_ne_zero hc) _
+  have huni : (FinDist.uniform (H1Reduction G q')).map
+      (⇑(G.h1TowerMap q q' hdvd))
+      = FinDist.uniform (H1Reduction G q) := by
+    rw [← FinDist.uniformLift_uniform (⇑(G.h1TowerMap q q' hdvd)) hm
+        (G.card_h1TowerMap_fiber q q' c hdvd hq'),
+      FinDist.map_uniformLift]
+  have h := FinDist.defect_map_le (⇑(G.h1TowerMap q q' hdvd))
+    (G.h1TowerMap_surjective q q' hdvd) huni (G.residueDist q')
+  rw [G.residueDist_tower q q' hdvd] at h
+  exact h
+
 end TowerCost
 
 /-! ### The priced composition law (review #17)
@@ -2622,6 +2662,115 @@ theorem residue_tower_price_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'')
   ring
 
 end TowerPriceComp
+
+/-! ### The resolution-tower certificate (review #18)
+
+The tower's laws, bundled as one **derived** `Prop` certificate per
+graph — a statement acceptance can inspect whole, with one
+derivation (`resolutionTowerLaws`). Never a field of
+`IncidenceGraph`. -/
+
+/-- **The resolution-tower laws** of a graph (review #18): the tower
+maps form a category (identity, witness-independence, composition,
+surjectivity); distributions and actions push forward, with the
+identity and composition laws; the identity step has zero price and
+zero cost; prices and costs add; deficits telescope and are
+monotone; and genuine refinements are strictly priced. -/
+structure ResolutionTowerLaws (G : IncidenceGraph.{u, v}) : Prop where
+  map_id : ∀ (q : ℕ) [NeZero q],
+    G.h1TowerMap q q dvd_rfl = LinearMap.id
+  map_proof_irrel : ∀ (q q' : ℕ) [NeZero q] [NeZero q']
+    (h₁ h₂ : q ∣ q'), G.h1TowerMap q q' h₁ = G.h1TowerMap q q' h₂
+  map_comp : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    (G.h1TowerMap q q' h₁).comp (G.h1TowerMap q' q'' h₂)
+      = G.h1TowerMap q q'' (h₁.trans h₂)
+  map_surjective : ∀ (q q' : ℕ) [NeZero q] [NeZero q'] (h : q ∣ q'),
+    Function.Surjective (G.h1TowerMap q q' h)
+  dist_push : ∀ (q q' : ℕ) [NeZero q] [NeZero q'] (h : q ∣ q'),
+    (G.residueDist q').map (⇑(G.h1TowerMap q q' h)) = G.residueDist q
+  dist_comp : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    ((G.residueDist q'').map (⇑(G.h1TowerMap q' q'' h₂))).map
+        (⇑(G.h1TowerMap q q' h₁))
+      = (G.residueDist q'').map (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+  action_push : ∀ (q q' : ℕ) [NeZero q] [NeZero q'] (h : q ∣ q'),
+    (G.residueAction q').coarseGrain (⇑(G.h1TowerMap q q' h)) 0
+        (G.residueAction_tower_weight_pos q q' h)
+        (G.residueAction_tower_weight_le q q' h)
+      = G.residueAction q
+  action_comp : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    (G.residueAction q').coarseGrain (⇑(G.h1TowerMap q q' h₁)) 0
+        (G.residueAction_tower_weight_pos q q' h₁)
+        (G.residueAction_tower_weight_le q q' h₁)
+      = (G.residueAction q'').coarseGrain
+          (⇑(G.h1TowerMap q q'' (h₁.trans h₂))) 0
+          (G.residueAction_tower_weight_pos q q'' (h₁.trans h₂))
+          (G.residueAction_tower_weight_le q q'' (h₁.trans h₂))
+  price_id : ∀ (q : ℕ) [NeZero q],
+    (G.residueDist q).condEntropy (⇑(G.h1TowerMap q q dvd_rfl)) = 0
+  cost_id : ∀ (q : ℕ) [NeZero q],
+    sectionCost (⇑(G.h1TowerMap q q dvd_rfl)) = 0
+  price_add : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    (G.residueDist q'').condEntropy
+        (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+      = (G.residueDist q'').condEntropy (⇑(G.h1TowerMap q' q'' h₂))
+        + (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' h₁))
+  cost_add : ∀ (q q' q'' c c' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''), q' = c * q → q'' = c' * q' →
+    sectionCost (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+        / Nat.card (H1Reduction G q)
+      = sectionCost (⇑(G.h1TowerMap q' q'' h₂))
+            / Nat.card (H1Reduction G q')
+        + sectionCost (⇑(G.h1TowerMap q q' h₁))
+            / Nat.card (H1Reduction G q)
+  deficit_telescope : ∀ (q q' q'' c c' : ℕ) [NeZero q] [NeZero q']
+    [NeZero q''] (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    q' = c * q → q'' = c' * q' →
+    (G.residueDist q'').condEntropy
+        (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+      = G.b1 * Real.log ((c' * c : ℕ))
+        - (G.residueDefect q'' - G.residueDefect q)
+  deficit_mono : ∀ (q q' c : ℕ) [NeZero q] [NeZero q'],
+    q ∣ q' → q' = c * q →
+    G.residueDefect q ≤ G.residueDefect q'
+  price_strict : ∀ (q q' c : ℕ) [NeZero q] [NeZero q'],
+    0 < G.b1 → 1 < c → ∀ (hdvd : q ∣ q'), q' = c * q →
+    0 < (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
+      ∧ (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
+          < G.b1 * Real.log c
+      ∧ G.residueDefect q < G.residueDefect q'
+
+/-- **Every graph satisfies the resolution-tower laws** (review #18)
+— one derivation, assembled from the proved tower theorems. -/
+theorem resolutionTowerLaws (G : IncidenceGraph.{u, v}) :
+    ResolutionTowerLaws G where
+  map_id := fun q _ => G.h1TowerMap_id q
+  map_proof_irrel := fun q q' _ _ h₁ h₂ =>
+    G.h1TowerMap_proof_irrel q q' h₁ h₂
+  map_comp := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.h1TowerMap_comp q q' q'' h₁ h₂
+  map_surjective := fun q q' _ _ h => G.h1TowerMap_surjective q q' h
+  dist_push := fun q q' _ _ h => G.residueDist_tower q q' h
+  dist_comp := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.residueDist_tower_trans q q' q'' h₁ h₂
+  action_push := fun q q' _ _ h => G.residueAction_tower q q' h
+  action_comp := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.residueAction_tower_trans q q' q'' h₁ h₂
+  price_id := fun q _ => G.residue_tower_price_id q
+  cost_id := fun q _ => G.sectionCost_h1TowerMap_id q
+  price_add := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.residue_tower_condEntropy_trans q q' q'' h₁ h₂
+  cost_add := fun q q' q'' c c' _ _ _ h₁ h₂ hq' hq'' =>
+    G.sectionCost_h1TowerMap_trans q q' q'' c c' h₁ h₂ hq' hq''
+  deficit_telescope := fun q q' q'' c c' _ _ _ h₁ h₂ hq' hq'' =>
+    G.residue_tower_price_trans q q' q'' c c' h₁ h₂ hq' hq''
+  deficit_mono := fun q q' c _ _ h hq' =>
+    G.residueDefect_mono q q' c h hq'
+  price_strict := fun q q' c _ _ hb hc hdvd hq' =>
+    G.residue_tower_price_strict q q' c hb hc hdvd hq'
 
 end IncidenceGraph
 

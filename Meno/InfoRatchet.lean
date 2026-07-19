@@ -847,20 +847,73 @@ the bridge from action-priced entropies to uniform counting. -/
 noncomputable def defect [Nonempty X] (P : FinDist X) : ℝ :=
   Real.log (Fintype.card X) - P.entropy
 
-/-! #### The relative entropy (review #17)
+/-! #### Full support and the relative entropy (reviews #17, #18)
 
-`D(P ‖ Q) = ∑ₓ p(x)·log(p(x)/q(x))` against a fully supported
-reference. The Gibbs inequality (`relativeEntropy_nonneg`, strict
+`D(P ‖ Q) = ∑ₓ p(x)·log(p(x)/q(x))` is meaningful only against a
+fully supported reference — with a vanishing reference mass, Lean's
+totalized division and `Real.log 0 = 0` would silently zero the
+divergent term, making mutually singular distributions "agree". So
+the definition **requires the support proof**
+(`FinDist.FullSupport`): the invalid expression is unstatable
+(review #18). The Gibbs inequality (`relativeEntropy_nonneg`, strict
 form `relativeEntropy_pos`, characterization
 `relativeEntropy_eq_zero_iff`) is proved **once**, here; the uniform
 entropy defect is the special case `Q = uniform`
-(`defect_eq_relativeEntropy`), and the conditional-entropy gap along
-a constant-fiber map is the special case `Q = fiber-uniformization`
-(`relativeEntropy_uniformLift_map`, below). -/
+(`defect_eq_relativeEntropy`), the conditional-entropy gap along a
+constant-fiber map is the special case `Q = fiber-uniformization`
+(`relativeEntropy_uniformLift_map`, below), and pushforward can only
+lose relative entropy (`relativeEntropy_map_le` — data processing,
+below). -/
 
-/-- **The relative entropy** of `P` against a reference `Q`. -/
-noncomputable def relativeEntropy (P Q : FinDist X) : ℝ :=
+/-- **Full support**: every mass is strictly positive. The
+admissibility certificate for relative-entropy references
+(review #18). -/
+def FullSupport (P : FinDist X) : Prop := ∀ x, 0 < P.mass x
+
+/-- The uniform distribution is fully supported. -/
+theorem uniform_fullSupport (X : Type u) [Fintype X] [Nonempty X] :
+    (uniform X).FullSupport := fun _ =>
+  inv_pos.mpr (by exact_mod_cast Fintype.card_pos)
+
+/-- **Pushforward along a surjection preserves full support**: every
+fiber is nonempty, so every pushforward mass bounds a positive mass
+below. -/
+theorem FullSupport.map [DecidableEq D] {P : FinDist X}
+    (hP : P.FullSupport) (f : X → D) (hf : Function.Surjective f) :
+    (P.map f).FullSupport := by
+  intro d
+  obtain ⟨x, hx⟩ := hf d
+  refine Finset.sum_pos' (fun y _ => P.nonneg y) ⟨x, ?_, hP x⟩
+  exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, hx⟩
+
+/-- The fiber-uniformization of the pushforward of a fully supported
+distribution is fully supported. -/
+theorem FullSupport.uniformLiftMap [DecidableEq D] {P : FinDist X}
+    (hP : P.FullSupport) (f : X → D) {m : ℕ} (hm : 0 < m)
+    (hfib : ∀ d, Nat.card {x : X // f x = d} = m) :
+    (((P.map f)).uniformLift f hm hfib).FullSupport := by
+  intro x
+  have hmap : 0 < (P.map f).mass (f x) :=
+    lt_of_lt_of_le (hP x) (mass_le_map f P x)
+  show 0 < (P.map f).mass (f x) / m
+  positivity
+
+/-- **The relative entropy** of `P` against a fully supported
+reference `Q` — the support proof is part of the definition
+(review #18), so the expression cannot be formed against an invalid
+reference. -/
+noncomputable def relativeEntropy (P Q : FinDist X)
+    (_ : Q.FullSupport) : ℝ :=
   ∑ x, P.mass x * Real.log (P.mass x / Q.mass x)
+
+/-- The relative entropy depends only on the distributions — proof
+irrelevance in the support certificate, congruence in the
+reference. -/
+theorem relativeEntropy_congr_right (P : FinDist X) {Q Q' : FinDist X}
+    (h : Q = Q') (hQ : Q.FullSupport) :
+    P.relativeEntropy Q hQ = P.relativeEntropy Q' (h ▸ hQ) := by
+  subst h
+  rfl
 
 private lemma gibbs_term_le (P Q : FinDist X) (hQ : ∀ x, 0 < Q.mass x)
     (x : X) :
@@ -887,8 +940,8 @@ private lemma gibbs_term_le (P Q : FinDist X) (hQ : ∀ x, 0 < Q.mass x)
 of a distribution against a fully supported reference is
 nonnegative. -/
 theorem relativeEntropy_nonneg (P Q : FinDist X)
-    (hQ : ∀ x, 0 < Q.mass x) :
-    0 ≤ P.relativeEntropy Q := by
+    (hQ : Q.FullSupport) :
+    0 ≤ P.relativeEntropy Q hQ := by
   show (0 : ℝ) ≤ ∑ x, P.mass x * Real.log (P.mass x / Q.mass x)
   calc (0 : ℝ) = ∑ x, (P.mass x - Q.mass x) := by
         rw [Finset.sum_sub_distrib, P.sum_one, Q.sum_one]
@@ -898,9 +951,9 @@ theorem relativeEntropy_nonneg (P Q : FinDist X)
 
 /-- **The strict Gibbs inequality** (reviews #16, #17): distinct
 distributions have strictly positive relative entropy. -/
-theorem relativeEntropy_pos (P Q : FinDist X) (hQ : ∀ x, 0 < Q.mass x)
+theorem relativeEntropy_pos (P Q : FinDist X) (hQ : Q.FullSupport)
     (hne : P ≠ Q) :
-    0 < P.relativeEntropy Q := by
+    0 < P.relativeEntropy Q hQ := by
   have hx : ∃ x, P.mass x ≠ Q.mass x := by
     by_contra hall
     push_neg at hall
@@ -938,8 +991,8 @@ theorem relativeEntropy_pos (P Q : FinDist X) (hQ : ∀ x, 0 < Q.mass x)
 
 /-- **Zero relative entropy characterizes equality** (review #17). -/
 theorem relativeEntropy_eq_zero_iff (P Q : FinDist X)
-    (hQ : ∀ x, 0 < Q.mass x) :
-    P.relativeEntropy Q = 0 ↔ P = Q := by
+    (hQ : Q.FullSupport) :
+    P.relativeEntropy Q hQ = 0 ↔ P = Q := by
   constructor
   · intro h0
     by_contra hne
@@ -953,7 +1006,7 @@ theorem relativeEntropy_eq_zero_iff (P Q : FinDist X)
 entropy defect is exactly the relative entropy against the uniform
 distribution — `Δ(P) = D(P ‖ uniform)`. -/
 theorem defect_eq_relativeEntropy [Nonempty X] (P : FinDist X) :
-    P.defect = P.relativeEntropy (uniform X) := by
+    P.defect = P.relativeEntropy (uniform X) (uniform_fullSupport X) := by
   have hN : (0 : ℝ) < Fintype.card X := by exact_mod_cast Fintype.card_pos
   have hterm : ∀ x, P.mass x * Real.log (P.mass x / (uniform X).mass x)
       = P.mass x * Real.log (P.mass x)
@@ -977,18 +1030,14 @@ theorem defect_eq_relativeEntropy [Nonempty X] (P : FinDist X) :
 (review #17). -/
 theorem defect_nonneg [Nonempty X] (P : FinDist X) : 0 ≤ P.defect := by
   rw [P.defect_eq_relativeEntropy]
-  refine relativeEntropy_nonneg P (uniform X) fun x => ?_
-  show (0 : ℝ) < (Fintype.card X : ℝ)⁻¹
-  exact inv_pos.mpr (by exact_mod_cast Fintype.card_pos)
+  exact relativeEntropy_nonneg P (uniform X) (uniform_fullSupport X)
 
 /-- **Zero defect characterizes the uniform distribution.** A special
 case of `relativeEntropy_eq_zero_iff` (review #17). -/
 theorem defect_eq_zero_iff [Nonempty X] (P : FinDist X) :
     P.defect = 0 ↔ P = uniform X := by
   rw [P.defect_eq_relativeEntropy]
-  refine relativeEntropy_eq_zero_iff P (uniform X) fun x => ?_
-  show (0 : ℝ) < (Fintype.card X : ℝ)⁻¹
-  exact inv_pos.mpr (by exact_mod_cast Fintype.card_pos)
+  exact relativeEntropy_eq_zero_iff P (uniform X) (uniform_fullSupport X)
 
 /-- **Uniform fiber lifting preserves the defect** (review #11): the
 lift adds `log m` to the entropy and `log m` to the log-cardinality. -/
@@ -1010,31 +1059,27 @@ noncomputable def condEntropy [DecidableEq D] (f : X → D)
     (P : FinDist X) : ℝ :=
   -∑ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x))
 
-/-- **The entropy chain rule along a map** (review #15): for a fully
-supported distribution, `H(P) = H(f_*P) + H(P | f)` — entropy is the
-pushforward's entropy plus the conditional entropy of the fibers. -/
+/-- **THE ENTROPY CHAIN RULE** (reviews #15, #18):
+`H(P) = H(f_*P) + H(P | f)` — **unconditionally**: zero-mass sectors
+drop from every term, and a zero-mass fiber has only zero-mass
+members. The single chain-rule engine; the conditional identity and
+composition laws are corollaries. -/
 theorem entropy_eq_map_add_condEntropy [DecidableEq D] (f : X → D)
-    (P : FinDist X) (hpos : ∀ x, 0 < P.mass x) :
+    (P : FinDist X) :
     P.entropy = (P.map f).entropy + P.condEntropy f := by
-  have hmap_pos : ∀ x, 0 < (P.map f).mass (f x) := by
-    intro x
-    refine Finset.sum_pos' (fun y _ => P.nonneg y) ⟨x, ?_, hpos x⟩
-    exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
   have hterm : ∀ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x))
       = P.mass x * Real.log (P.mass x)
         - P.mass x * Real.log ((P.map f).mass (f x)) := by
     intro x
-    rw [Real.log_div (hpos x).ne' (hmap_pos x).ne']
-    ring
+    rcases eq_or_lt_of_le (P.nonneg x) with h0 | hp
+    · rw [← h0, zero_mul, zero_mul, zero_mul, sub_zero]
+    · have hF : 0 < (P.map f).mass (f x) :=
+        lt_of_lt_of_le hp (mass_le_map f P x)
+      rw [Real.log_div hp.ne' hF.ne']
+      ring
   have hgroup : ∑ x, P.mass x * Real.log ((P.map f).mass (f x))
-      = ∑ d, (P.map f).mass d * Real.log ((P.map f).mass d) := by
-    rw [← Finset.sum_fiberwise Finset.univ f
-      (fun x => P.mass x * Real.log ((P.map f).mass (f x)))]
-    refine Finset.sum_congr rfl fun d _ => ?_
-    rw [Finset.sum_congr rfl (fun x hx => by
-        rw [(Finset.mem_filter.mp hx).2]),
-      ← Finset.sum_mul]
-    rfl
+      = ∑ d, (P.map f).mass d * Real.log ((P.map f).mass d) :=
+    sum_mass_mul_comp f P (fun d => Real.log ((P.map f).mass d))
   show -∑ x, P.mass x * Real.log (P.mass x)
     = (-∑ d, (P.map f).mass d * Real.log ((P.map f).mass d))
       + -∑ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x))
@@ -1042,38 +1087,27 @@ theorem entropy_eq_map_add_condEntropy [DecidableEq D] (f : X → D)
     ← hgroup]
   ring
 
+/-- **Zero conditional entropy at the identity** (review #18): a
+corollary of the chain rule and `map_id`. -/
+theorem condEntropy_id [DecidableEq X] (P : FinDist X) :
+    P.condEntropy id = 0 := by
+  have h := entropy_eq_map_add_condEntropy id P
+  rw [map_id] at h
+  linarith
+
 /-- **The conditional-entropy chain rule along a composition**
-(review #17): `H(P | g ∘ f) = H(P | f) + H(f_*P | g)` — with **no
-support hypothesis**: zero-mass sectors drop from every term. -/
+(reviews #17, #18): `H(P | g ∘ f) = H(P | f) + H(f_*P | g)` — a
+corollary of the unconditional entropy chain rule and `map_comp`,
+not a second termwise engine. -/
 theorem condEntropy_comp {E : Type u} [Fintype E] [DecidableEq D]
     [DecidableEq E] (f : X → D) (g : D → E) (P : FinDist X) :
     P.condEntropy (g ∘ f)
       = P.condEntropy f + (P.map f).condEntropy g := by
-  have hterm : ∀ x,
-      P.mass x * Real.log (P.mass x / ((P.map f).map g).mass (g (f x)))
-        = P.mass x * Real.log (P.mass x / (P.map f).mass (f x))
-          + P.mass x * Real.log ((P.map f).mass (f x)
-              / ((P.map f).map g).mass (g (f x))) := by
-    intro x
-    rcases eq_or_lt_of_le (P.nonneg x) with h0 | hp
-    · rw [← h0, zero_mul, zero_mul, zero_mul, add_zero]
-    · have hF : 0 < (P.map f).mass (f x) :=
-        lt_of_lt_of_le hp (mass_le_map f P x)
-      have hGF : 0 < ((P.map f).map g).mass (g (f x)) :=
-        lt_of_lt_of_le hF (mass_le_map g (P.map f) (f x))
-      rw [Real.log_div hp.ne' hGF.ne', Real.log_div hp.ne' hF.ne',
-        Real.log_div hF.ne' hGF.ne']
-      ring
-  show -∑ x, P.mass x
-      * Real.log (P.mass x / (P.map (g ∘ f)).mass (g (f x)))
-    = (-∑ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x)))
-      + -∑ d, (P.map f).mass d
-          * Real.log ((P.map f).mass d / ((P.map f).map g).mass (g d))
-  rw [map_comp f g P, Finset.sum_congr rfl fun x _ => hterm x,
-    Finset.sum_add_distrib,
-    sum_mass_mul_comp f P
-      (fun d => Real.log ((P.map f).mass d / ((P.map f).map g).mass (g d)))]
-  ring
+  have h1 := entropy_eq_map_add_condEntropy (g ∘ f) P
+  have h2 := entropy_eq_map_add_condEntropy f P
+  have h3 := entropy_eq_map_add_condEntropy g (P.map f)
+  rw [map_comp f g P] at h1
+  linarith
 
 /-- **Conditional entropy is nonnegative** (review #16): each mass is
 at most its fiber's total. -/
@@ -1144,8 +1178,9 @@ fiber-uniformization of the pushforward —
 theorem relativeEntropy_uniformLift_map [DecidableEq D] (f : X → D)
     {m : ℕ} (hm : 0 < m)
     (hfib : ∀ d, Nat.card {x : X // f x = d} = m) (P : FinDist X)
-    (hpos : ∀ x, 0 < P.mass x) :
+    (hpos : P.FullSupport) :
     P.relativeEntropy ((P.map f).uniformLift f hm hfib)
+        (hpos.uniformLiftMap f hm hfib)
       = Real.log m - P.condEntropy f := by
   have hmap_pos : ∀ x, 0 < (P.map f).mass (f x) := by
     intro x
@@ -1176,17 +1211,10 @@ is at most the fiber log — with the gap the relative entropy against
 the fiber-uniformized distribution. -/
 theorem condEntropy_le_log [DecidableEq D] (f : X → D) {m : ℕ}
     (hm : 0 < m) (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
-    (P : FinDist X) (hpos : ∀ x, 0 < P.mass x) :
+    (P : FinDist X) (hpos : P.FullSupport) :
     P.condEntropy f ≤ Real.log m := by
-  have hQpos : ∀ x, 0 < ((P.map f).uniformLift f hm hfib).mass x := by
-    intro x
-    have hmap_pos : 0 < (P.map f).mass (f x) := by
-      refine Finset.sum_pos' (fun y _ => P.nonneg y) ⟨x, ?_, hpos x⟩
-      exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
-    show 0 < (P.map f).mass (f x) / m
-    positivity
   have h := relativeEntropy_nonneg P
-    ((P.map f).uniformLift f hm hfib) hQpos
+    ((P.map f).uniformLift f hm hfib) (hpos.uniformLiftMap f hm hfib)
   rw [relativeEntropy_uniformLift_map f hm hfib P hpos] at h
   linarith
 
@@ -1194,20 +1222,110 @@ theorem condEntropy_le_log [DecidableEq D] (f : X → D) {m : ℕ}
 the distribution is its own fiber-uniformization. -/
 theorem condEntropy_lt_log [DecidableEq D] (f : X → D) {m : ℕ}
     (hm : 0 < m) (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
-    (P : FinDist X) (hpos : ∀ x, 0 < P.mass x)
+    (P : FinDist X) (hpos : P.FullSupport)
     (hne : P ≠ (P.map f).uniformLift f hm hfib) :
     P.condEntropy f < Real.log m := by
-  have hQpos : ∀ x, 0 < ((P.map f).uniformLift f hm hfib).mass x := by
-    intro x
-    have hmap_pos : 0 < (P.map f).mass (f x) := by
-      refine Finset.sum_pos' (fun y _ => P.nonneg y) ⟨x, ?_, hpos x⟩
-      exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
-    show 0 < (P.map f).mass (f x) / m
-    positivity
   have h := relativeEntropy_pos P
-    ((P.map f).uniformLift f hm hfib) hQpos hne
+    ((P.map f).uniformLift f hm hfib) (hpos.uniformLiftMap f hm hfib) hne
   rw [relativeEntropy_uniformLift_map f hm hfib P hpos] at h
   linarith
+
+/-- **DATA PROCESSING** (review #18): pushforward along a surjection
+can only lose relative entropy — `D(f_*P ‖ f_*Q) ≤ D(P ‖ Q)`.
+Termwise: for `p(x) > 0`,
+`p·log(p/q) − p·log(F∘f/G∘f) ≥ p − q·(F∘f)/(G∘f)` by
+`log t ≤ t − 1`, and both correction sums regroup to `1`. -/
+theorem relativeEntropy_map_le [DecidableEq D] (f : X → D)
+    (hf : Function.Surjective f) (P Q : FinDist X)
+    (hQ : Q.FullSupport) :
+    (P.map f).relativeEntropy (Q.map f) (hQ.map f hf)
+      ≤ P.relativeEntropy Q hQ := by
+  have hG : ∀ d, 0 < (Q.map f).mass d := hQ.map f hf
+  have hkey : ∀ x,
+      P.mass x - Q.mass x * ((P.map f).mass (f x) / (Q.map f).mass (f x))
+        ≤ P.mass x * Real.log (P.mass x / Q.mass x)
+          - P.mass x * Real.log ((P.map f).mass (f x)
+              / (Q.map f).mass (f x)) := by
+    intro x
+    rcases eq_or_lt_of_le (P.nonneg x) with h0 | hp
+    · rw [← h0, zero_mul, zero_mul, zero_sub, sub_zero]
+      refine neg_nonpos.mpr (mul_nonneg (Q.nonneg x) ?_)
+      exact div_nonneg ((P.map f).nonneg (f x)) (hG (f x)).le
+    · have hqx := hQ x
+      have hF : 0 < (P.map f).mass (f x) :=
+        lt_of_lt_of_le hp (mass_le_map f P x)
+      have hGf := hG (f x)
+      have hlog := Real.log_le_sub_one_of_pos
+        (show 0 < Q.mass x * (P.map f).mass (f x)
+            / (P.mass x * (Q.map f).mass (f x)) from by positivity)
+      have h2 : P.mass x * Real.log (Q.mass x * (P.map f).mass (f x)
+          / (P.mass x * (Q.map f).mass (f x)))
+          ≤ P.mass x * (Q.mass x * (P.map f).mass (f x)
+              / (P.mass x * (Q.map f).mass (f x)) - 1) :=
+        mul_le_mul_of_nonneg_left hlog hp.le
+      have h3 : P.mass x * (Q.mass x * (P.map f).mass (f x)
+          / (P.mass x * (Q.map f).mass (f x)) - 1)
+          = Q.mass x * ((P.map f).mass (f x) / (Q.map f).mass (f x))
+            - P.mass x := by
+        field_simp
+      have h4 : P.mass x * Real.log (P.mass x / Q.mass x)
+          - P.mass x * Real.log ((P.map f).mass (f x)
+              / (Q.map f).mass (f x))
+          = -(P.mass x * Real.log (Q.mass x * (P.map f).mass (f x)
+              / (P.mass x * (Q.map f).mass (f x)))) := by
+        rw [Real.log_div hp.ne' hqx.ne', Real.log_div hF.ne' hGf.ne',
+          Real.log_div (by positivity) (by positivity),
+          Real.log_mul hqx.ne' hF.ne', Real.log_mul hp.ne' hGf.ne']
+        ring
+      linarith
+  have hgroup1 : ∑ x, P.mass x
+      * Real.log ((P.map f).mass (f x) / (Q.map f).mass (f x))
+      = ∑ d, (P.map f).mass d
+          * Real.log ((P.map f).mass d / (Q.map f).mass d) :=
+    sum_mass_mul_comp f P
+      (fun d => Real.log ((P.map f).mass d / (Q.map f).mass d))
+  have hgroup2 : ∑ x, Q.mass x
+      * ((P.map f).mass (f x) / (Q.map f).mass (f x))
+      = ∑ d, (Q.map f).mass d * ((P.map f).mass d / (Q.map f).mass d) :=
+    sum_mass_mul_comp f Q
+      (fun d => (P.map f).mass d / (Q.map f).mass d)
+  have hsum2 : ∑ d, (Q.map f).mass d
+      * ((P.map f).mass d / (Q.map f).mass d) = 1 := by
+    rw [Finset.sum_congr rfl fun d _ =>
+      mul_div_cancel₀ ((P.map f).mass d) (hG d).ne']
+    exact (P.map f).sum_one
+  have hsum : (∑ x, (P.mass x
+        - Q.mass x * ((P.map f).mass (f x) / (Q.map f).mass (f x))))
+      ≤ ∑ x, (P.mass x * Real.log (P.mass x / Q.mass x)
+          - P.mass x * Real.log ((P.map f).mass (f x)
+              / (Q.map f).mass (f x))) :=
+    Finset.sum_le_sum fun x _ => hkey x
+  rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, P.sum_one,
+    hgroup1, hgroup2, hsum2] at hsum
+  show ∑ d, (P.map f).mass d
+      * Real.log ((P.map f).mass d / (Q.map f).mass d)
+    ≤ ∑ x, P.mass x * Real.log (P.mass x / Q.mass x)
+  linarith
+
+/-- **Pushforward can only lose defect** (review #18): data
+processing at the uniform reference, given that the uniform
+distribution pushes to the uniform distribution. -/
+theorem defect_map_le [Nonempty X] [Nonempty D] [DecidableEq D]
+    (f : X → D) (hf : Function.Surjective f)
+    (huni : (uniform X).map f = uniform D) (P : FinDist X) :
+    (P.map f).defect ≤ P.defect := by
+  rw [defect_eq_relativeEntropy, defect_eq_relativeEntropy]
+  have h := relativeEntropy_map_le f hf P (uniform X)
+    (uniform_fullSupport X)
+  calc (P.map f).relativeEntropy (uniform D) (uniform_fullSupport D)
+      = (P.map f).relativeEntropy ((uniform X).map f)
+          ((uniform_fullSupport X).map f hf) := by
+        show (∑ d, (P.map f).mass d
+            * Real.log ((P.map f).mass d / (uniform D).mass d))
+          = ∑ d, (P.map f).mass d
+              * Real.log ((P.map f).mass d / ((uniform X).map f).mass d)
+        rw [huni]
+    _ ≤ P.relativeEntropy (uniform X) (uniform_fullSupport X) := h
 
 omit [Fintype X] [Fintype Y] in
 /-- **Shared-base coupling preserves the defect** (review #11): the
@@ -1227,6 +1345,51 @@ theorem defect_coupling [DecidableEq D] [Nonempty D] (f : X → D)
         (Fintype.card D : ℝ) ≠ 0)
       (by exact_mod_cast (Nat.mul_pos hm hm').ne' : ((m * m' : ℕ) : ℝ) ≠ 0)]
   ring
+
+/-! #### The information-law certificate (review #18)
+
+The laws of the information algebra, bundled as one **derived**
+`Prop` certificate per distribution — a statement acceptance can
+inspect whole, with one derivation (`informationLaws`), instead of a
+trail of scattered theorems. Never a field of `FinDist`. -/
+
+/-- **The information laws** of a finite distribution (review #18):
+pushforward functoriality, the unconditional entropy chain rule with
+its conditional corollaries, the support-aware Gibbs inequality with
+its characterization, and data processing. -/
+structure InformationLaws [DecidableEq X] (P : FinDist X) : Prop where
+  map_id : P.map id = P
+  map_comp : ∀ {D E : Type u} [Fintype D] [Fintype E] [DecidableEq D]
+    [DecidableEq E] (f : X → D) (g : D → E),
+    P.map (g ∘ f) = (P.map f).map g
+  entropy_chain : ∀ {D : Type u} [Fintype D] [DecidableEq D]
+    (f : X → D), P.entropy = (P.map f).entropy + P.condEntropy f
+  condEntropy_id : P.condEntropy id = 0
+  condEntropy_comp : ∀ {D E : Type u} [Fintype D] [Fintype E]
+    [DecidableEq D] [DecidableEq E] (f : X → D) (g : D → E),
+    P.condEntropy (g ∘ f) = P.condEntropy f + (P.map f).condEntropy g
+  relEntropy_nonneg : ∀ (Q : FinDist X) (hQ : Q.FullSupport),
+    0 ≤ P.relativeEntropy Q hQ
+  relEntropy_eq_zero_iff : ∀ (Q : FinDist X) (hQ : Q.FullSupport),
+    P.relativeEntropy Q hQ = 0 ↔ P = Q
+  dataProcessing : ∀ {D : Type u} [Fintype D] [DecidableEq D]
+    (f : X → D) (hf : Function.Surjective f) (Q : FinDist X)
+    (hQ : Q.FullSupport),
+    (P.map f).relativeEntropy (Q.map f) (hQ.map f hf)
+      ≤ P.relativeEntropy Q hQ
+
+/-- **Every finite distribution satisfies the information laws**
+(review #18) — one derivation, assembled from the proved engine. -/
+theorem informationLaws [DecidableEq X] (P : FinDist X) :
+    InformationLaws P where
+  map_id := P.map_id
+  map_comp := fun f g => map_comp f g P
+  entropy_chain := fun f => entropy_eq_map_add_condEntropy f P
+  condEntropy_id := P.condEntropy_id
+  condEntropy_comp := fun f g => condEntropy_comp f g P
+  relEntropy_nonneg := fun Q hQ => relativeEntropy_nonneg P Q hQ
+  relEntropy_eq_zero_iff := fun Q hQ => relativeEntropy_eq_zero_iff P Q hQ
+  dataProcessing := fun f hf Q hQ => relativeEntropy_map_le f hf P Q hQ
 
 end FinDist
 

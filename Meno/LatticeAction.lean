@@ -1655,6 +1655,145 @@ theorem _root_.Meno.QuadraticAction.meanEnergy_T_dual {r : ℕ}
     ofQuadraticAction_rank] at h
   exact h
 
+/-! ### Closing the thermal circle: variance transformation and the
+self-dual fixed point (review #18) -/
+
+/-- **Variance invariance under equivalence** (review #18): the
+scaled-sector energy variance is a `≃q`-invariant — all three scaled
+moments are. -/
+theorem Equiv.scaledSector_gibbsVariance_eq
+    {Q Q' : QuadLatticeAction.{u}} (e : Q.Equiv Q') (β : ℝ)
+    (hβ : 0 < β) :
+    (Q'.scaledSector β hβ).gibbsVariance (fun a => Q'.form a a)
+      = (Q.scaledSector β hβ).gibbsVariance (fun a => Q.form a a) := by
+  rw [Q'.scaledSector_gibbsVariance_energy β hβ,
+    Q.scaledSector_gibbsVariance_energy β hβ, e.scaledMoment2_eq β,
+    e.scaledPartFn_eq β, e.meanEnergy_eq]
+
+/-- **THE VARIANCE TRANSFORMATION LAW** (review #18): differentiating
+the temperature–duality functional equation once more — with the two
+established derivative theorems and **no new lattice-sum
+differentiation** —
+`Var_Q(β) + 2β⁻³·⟨E⟩_{Q∨}(β⁻¹) − β⁻⁴·Var_{Q∨}(β⁻¹) = rank/(2β²)`.
+Fluctuation–dissipation and temperature–duality are one closed
+circle: the FE's derivative is forced to be an identity between the
+two variances. -/
+theorem gibbsVariance_T_dual (β : ℝ) (hβ : 0 < β) :
+    (Q.scaledSector β hβ).gibbsVariance (fun a => Q.form a a)
+      + 2 * β⁻¹ ^ 3 * Q.dual.meanEnergy β⁻¹
+      - β⁻¹ ^ 4 * ((Q.dual.scaledSector β⁻¹
+          (inv_pos.mpr hβ)).gibbsVariance (fun φ => Q.dual.form φ φ))
+      = Q.rank / (2 * β ^ 2) := by
+  have hβinv : 0 < β⁻¹ := inv_pos.mpr hβ
+  have h_eventually : Q.meanEnergy =ᶠ[nhds β]
+      (fun γ => (Q.rank : ℝ) / (2 * γ)
+        - γ⁻¹ ^ 2 * Q.dual.meanEnergy γ⁻¹) := by
+    filter_upwards [eventually_gt_nhds hβ] with γ hγ
+    have h := Q.meanEnergy_T_dual γ hγ
+    linarith
+  have hE := Q.hasDerivAt_meanEnergy_eq_neg_gibbsVariance β hβ
+  have h_inv : HasDerivAt (fun γ : ℝ => γ⁻¹) (-(β ^ 2)⁻¹) β :=
+    hasDerivAt_inv hβ.ne'
+  have h_comp : HasDerivAt (fun γ : ℝ => Q.dual.meanEnergy γ⁻¹)
+      ((-((Q.dual.scaledSector β⁻¹ hβinv).gibbsVariance
+          (fun φ => Q.dual.form φ φ))) * (-(β ^ 2)⁻¹)) β :=
+    (Q.dual.hasDerivAt_meanEnergy_eq_neg_gibbsVariance β⁻¹
+      hβinv).comp β h_inv
+  have h_pow : HasDerivAt (fun γ : ℝ => γ⁻¹ ^ 2)
+      (2 * β⁻¹ ^ 1 * -(β ^ 2)⁻¹) β := h_inv.pow 2
+  have h_prod := h_pow.mul h_comp
+  have h_const : HasDerivAt (fun γ : ℝ => (Q.rank : ℝ) / (2 * γ))
+      (-((Q.rank : ℝ) / (2 * β ^ 2))) β := by
+    have h := (hasDerivAt_inv hβ.ne').const_mul ((Q.rank : ℝ) / 2)
+    have hfun : (fun γ : ℝ => (Q.rank : ℝ) / 2 * γ⁻¹)
+        = fun γ : ℝ => (Q.rank : ℝ) / (2 * γ) := by
+      funext γ
+      rw [← div_eq_mul_inv, div_div]
+    have hval : (Q.rank : ℝ) / 2 * -(β ^ 2)⁻¹
+        = -((Q.rank : ℝ) / (2 * β ^ 2)) := by
+      rw [mul_neg, ← div_eq_mul_inv, div_div]
+    rw [hfun, hval] at h
+    exact h
+  have hRHS := h_const.sub h_prod
+  have heq := (hRHS.congr_of_eventuallyEq h_eventually).unique hE
+  rw [show ((β ^ 2)⁻¹ : ℝ) = β⁻¹ ^ 2 from (inv_pow β 2).symm] at heq
+  linear_combination heq
+
+/-- **The self-dual fixed point** (review #18): a bundle
+form-equivalent to its own dual has Gibbs mean energy exactly
+`rank/4` at `β = 1` — the two terms of the functional equation
+coalesce. -/
+theorem meanEnergy_self_dual (e : Q.Equiv Q.dual) :
+    Q.meanEnergy 1 = Q.rank / 4 := by
+  have h := Q.meanEnergy_T_dual 1 one_pos
+  rw [inv_one, e.meanEnergy_eq, one_pow, one_mul, mul_one] at h
+  linarith
+
+/-! ### The thermal-duality certificate (review #18)
+
+The laws connecting temperature, duality, and response, bundled as
+one **derived** `Prop` certificate per bundled lattice action — a
+statement acceptance can inspect whole, with one derivation
+(`thermalDualityLaws`). Never a field of `QuadLatticeAction`. -/
+
+/-- **The thermal-duality laws** of a bundled lattice action
+(review #18): the scale algebra, the scaling of the discriminant,
+equivalence invariance of the scaled moments, the dual involution,
+the inversion of temperature through the dual, and the partition,
+mean-energy, and variance functional equations with the self-dual
+fixed point. -/
+structure ThermalDualityLaws (Q : QuadLatticeAction.{u}) : Prop where
+  scale_one : Q.scale 1 one_pos = Q
+  scale_scale : ∀ (β β' : ℝ) (hβ : 0 < β) (hβ' : 0 < β'),
+    (Q.scale β hβ).scale β' hβ' = Q.scale (β' * β) (mul_pos hβ' hβ)
+  disc_scale : ∀ (β : ℝ) (hβ : 0 < β),
+    (Q.scale β hβ).disc = β ^ Q.rank * Q.disc
+  moments_equiv : ∀ {Q' : QuadLatticeAction.{u}}, Q.Equiv Q' →
+    ∀ β : ℝ,
+    Q'.scaledPartFn β = Q.scaledPartFn β
+      ∧ Q'.scaledMoment β = Q.scaledMoment β
+      ∧ Q'.scaledMoment2 β = Q.scaledMoment2 β
+      ∧ Q'.meanEnergy = Q.meanEnergy
+  dual_involution : ∀ x y : Q.Λ,
+    Q.dual.dual.form (Module.evalEquiv ℤ Q.Λ x)
+        (Module.evalEquiv ℤ Q.Λ y)
+      = Q.form x y
+  scale_dual : ∀ (β : ℝ) (hβ : 0 < β),
+    (Q.scale β hβ).dual = Q.dual.scale β⁻¹ (inv_pos.mpr hβ)
+  partFn_equation : ∀ (β : ℝ), 0 < β →
+    Q.dual.scaledPartFn β⁻¹
+      = (β ^ Q.rank * Q.disc / Real.pi ^ Q.rank) ^ ((1 : ℝ) / 2)
+        * Q.scaledPartFn β
+  mean_equation : ∀ (β : ℝ), 0 < β →
+    Q.meanEnergy β + β⁻¹ ^ 2 * Q.dual.meanEnergy β⁻¹
+      = Q.rank / (2 * β)
+  variance_equation : ∀ (β : ℝ) (hβ : 0 < β),
+    (Q.scaledSector β hβ).gibbsVariance (fun a => Q.form a a)
+      + 2 * β⁻¹ ^ 3 * Q.dual.meanEnergy β⁻¹
+      - β⁻¹ ^ 4 * ((Q.dual.scaledSector β⁻¹
+          (inv_pos.mpr hβ)).gibbsVariance (fun φ => Q.dual.form φ φ))
+      = Q.rank / (2 * β ^ 2)
+  selfDual_fixed : Nonempty (Q.Equiv Q.dual) →
+    Q.meanEnergy 1 = Q.rank / 4
+
+/-- **Every bundled lattice action satisfies the thermal-duality
+laws** (review #18) — one derivation, assembled from the proved
+engine. -/
+theorem thermalDualityLaws (Q : QuadLatticeAction.{u}) :
+    ThermalDualityLaws Q where
+  scale_one := Q.scale_one
+  scale_scale := fun β β' hβ hβ' => Q.scale_scale β β' hβ hβ'
+  disc_scale := fun β hβ => Q.disc_scale β hβ
+  moments_equiv := fun e β =>
+    ⟨e.scaledPartFn_eq β, e.scaledMoment_eq β, e.scaledMoment2_eq β,
+      e.meanEnergy_eq⟩
+  dual_involution := fun x y => Q.dual_dual x y
+  scale_dual := fun β hβ => Q.scale_dual β hβ
+  partFn_equation := fun β hβ => Q.scaled_duality β hβ
+  mean_equation := fun β hβ => Q.meanEnergy_T_dual β hβ
+  variance_equation := fun β hβ => Q.gibbsVariance_T_dual β hβ
+  selfDual_fixed := fun ⟨e⟩ => Q.meanEnergy_self_dual e
+
 end QuadLatticeAction
 
 /-- Notation for form-preserving equivalences of quadratic-lattice

@@ -42,7 +42,15 @@ Everything below is a checked theorem — zero `sorry`, zero `axiom`
 declarations, ~3300 build jobs green against Lean 4.26.0 / Mathlib.
 The program, its completion discipline, and the per-goal ledger live in
 [`PLAN.md`](PLAN.md); all twelve goals of the Completion Path are
-closed.
+closed, and the closure itself is a **Lean object**: the completion
+certificate `MenoCompletion` (`Meno/Completion.lean`) bundles the
+generic law certificates — `ThermalDualityLaws` for every bundled
+lattice action, `InformationLaws` for every finite distribution,
+`ResolutionTowerLaws` for every graph — with the flagship concrete
+consumers (cycle, wedge, theta, binding, gravity, geodesic), and
+`menoCompletion` is its one derivation. Acceptance inspects that
+statement and its derivation routes; an unfinished field would not
+compile.
 
 ## What is proved
 
@@ -113,7 +121,16 @@ self-dual value `⟨k²⟩_π = 1/(4π)` are its unit instance
 `⟨E⟩_{H¹}(β) + β⁻²·⟨E⟩_{H₁}(β⁻¹) = b₁/(2β)`
 (`classMeanEnergy_T_dual`, `Meno/BasisIndependence.lean`) — and the
 non-diagonal theta carrier consumes it
-(`theta_classMeanEnergy_T_dual`: `= 1/β`).
+(`theta_classMeanEnergy_T_dual`: `= 1/β`). The circle closes under
+response (review #18): differentiating the functional equation once
+more — with the established derivative theorems, no new lattice-sum
+differentiation — forces the **variance transformation law**
+`Var_Q(β) + 2β⁻³·⟨E⟩_{Q∨}(β⁻¹) − β⁻⁴·Var_{Q∨}(β⁻¹) = rank/(2β²)`
+(`gibbsVariance_T_dual`), a self-dual bundle sits at the fixed point
+`⟨E⟩(1) = rank/4` (`meanEnergy_self_dual`), and both transport to
+harmonic `H¹` versus priced `H₁` (`classGibbsVariance_T_dual`,
+`classMeanEnergy_self_dual`) with the variance law consumed on theta
+(`theta_gibbsVariance_T_dual`: `= 1/β²`).
 
 **Topology, intrinsically.** Every finite multigraph
 (`IncidenceGraph`) carries an intrinsic integral cycle lattice
@@ -330,13 +347,25 @@ add along the tower by the unconditional chain rule
 (`sectionCost_h1TowerMap_trans`), and the deficit increments
 telescope (`residue_tower_price_trans`), with the full triangle
 consumed on theta (`theta_tower_price_triangle`:
-`H(8|2) = H(8|4) + H(4|2) = 2·log 4 − (Δ(8) − Δ(2))`). The engine
+`H(8|2) = H(8|4) + H(4|2) = 2·log 4 − (Δ(8) − Δ(2))`); the identity
+step has zero price and zero cost (`residue_tower_price_id`,
+`sectionCost_h1TowerMap_id`). The engine
 behind every such bound is one definition — the **relative entropy**
-(`FinDist.relativeEntropy`): nonnegative against any fully supported
-reference, strict for distinct distributions, zero exactly at
-equality, with the maximum-entropy defect its uniform special case
-(`defect_eq_relativeEntropy`) and the conditional-entropy gap its
-fiber-uniformization case (`relativeEntropy_uniformLift_map`). One
+(`FinDist.relativeEntropy`), whose admissibility condition is part
+of the definition: the reference's full support
+(`FinDist.FullSupport`) is a required argument, so the
+mathematically invalid expression is unstatable. It is nonnegative,
+strict for distinct distributions, zero exactly at equality, the
+maximum-entropy defect is its uniform special case
+(`defect_eq_relativeEntropy`), the conditional-entropy gap its
+fiber-uniformization case (`relativeEntropy_uniformLift_map`), and
+**data processing** holds: pushforward along a surjection can only
+lose relative entropy (`relativeEntropy_map_le`), which makes the
+tower deficit monotone (`residueDefect_mono`) with the Fourier modal
+argument needed only for strictness. The entropy chain rule is one
+unconditional engine (`entropy_eq_map_add_condEntropy`), its
+conditional identity and composition laws corollaries
+(`condEntropy_id`, `condEntropy_comp`). One
 theorem carries the whole priced package on one explicit graph
 (`theta_priced_faces`): partition-function gravity, complexity
 gravity, priced time, the **complete residue, description, and pair
@@ -437,7 +466,8 @@ Meno/
 ├── ThetaHarmonic.lean         The theta graph: non-diagonal Gram derived from topology
 ├── Hodge.lean                 Graph partition functions (identified with the spine)
 ├── Duality.lean               Groupoid-facing duality wrappers (identified with the spine)
-└── Zeta.lean                  Riemann functional equation through the spine's theta identification
+├── Zeta.lean                  Riemann functional equation through the spine's theta identification
+└── Completion.lean            THE COMPLETION CERTIFICATE: the law certificates + flagship consumers, as one Prop
 ```
 
 The legacy layer (`Simplicial`–`Zeta`) is retained deliberately: it is

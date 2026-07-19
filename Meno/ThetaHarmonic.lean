@@ -702,6 +702,25 @@ theorem theta_classMeanEnergy_T_dual (β : ℝ) (hβ : 0 < β) :
   rw [h, div_eq_div_iff (by positivity) hβ.ne']
   ring
 
+/-- **The variance transformation law on theta** (review #18):
+`Var_{H¹}(β) + 2β⁻³·⟨E⟩_{H₁}(β⁻¹) − β⁻⁴·Var_{H₁}(β⁻¹) = 1/β²`, with
+`b₁ = 2` — fluctuation–dissipation and temperature–duality closed
+into one circle on a genuinely non-diagonal carrier. -/
+theorem theta_gibbsVariance_T_dual (β : ℝ) (hβ : 0 < β) :
+    (thetaGraph.classSectorActionβ β hβ).gibbsVariance
+        thetaGraph.harmonicEnergy
+      + 2 * β⁻¹ ^ 3 * (thetaGraph.cycleAction).meanEnergy β⁻¹
+      - β⁻¹ ^ 4 * (((thetaGraph.cycleAction).scaledSector β⁻¹
+          (inv_pos.mpr hβ)).gibbsVariance
+          (fun c => (thetaGraph.cycleAction).form c c))
+      = 1 / β ^ 2 := by
+  have h := thetaGraph.classGibbsVariance_T_dual β hβ
+  rw [show ((thetaGraph.b1 : ℕ) : ℝ) = 2 from by
+      rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
+      norm_num] at h
+  rw [h, div_eq_div_iff (by positivity) (by positivity)]
+  ring
+
 /-- The theta tower's conditional entropy is the difference of the
 two residue actions' `K + ⟨E⟩` decompositions (review #15). -/
 theorem theta_tower_condEntropy_eq :

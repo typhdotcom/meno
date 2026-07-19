@@ -928,6 +928,34 @@ theorem classMeanEnergy_T_dual (β : ℝ) (hβ : 0 < β) :
   rw [(G.cycleActionEquivDual).meanEnergy_eq, G.classQuadAction_rank] at h
   exact h
 
+/-- **The variance transformation law between harmonic `H¹` and
+priced `H₁`** (review #18): the bundle law at the intrinsic carrier,
+with the dual's mean energy and variance transported to the priced
+cycle lattice —
+`Var_{H¹}(β) + 2β⁻³·⟨E⟩_{H₁}(β⁻¹) − β⁻⁴·Var_{H₁}(β⁻¹) = b₁/(2β²)`. -/
+theorem classGibbsVariance_T_dual (β : ℝ) (hβ : 0 < β) :
+    (G.classSectorActionβ β hβ).gibbsVariance G.harmonicEnergy
+      + 2 * β⁻¹ ^ 3 * (G.cycleAction).meanEnergy β⁻¹
+      - β⁻¹ ^ 4 * (((G.cycleAction).scaledSector β⁻¹
+          (inv_pos.mpr hβ)).gibbsVariance
+          (fun c => (G.cycleAction).form c c))
+      = G.b1 / (2 * β ^ 2) := by
+  have h := (G.classQuadAction).gibbsVariance_T_dual β hβ
+  rw [(G.cycleActionEquivDual).meanEnergy_eq,
+    (G.cycleActionEquivDual).scaledSector_gibbsVariance_eq β⁻¹
+      (inv_pos.mpr hβ),
+    G.classQuadAction_rank] at h
+  exact h
+
+/-- **The self-dual fixed point on the carrier** (review #18): a
+graph whose carrier is form-equivalent to its own dual has intrinsic
+mean energy exactly `b₁/4` at `β = 1`. -/
+theorem classMeanEnergy_self_dual
+    (e : (G.classQuadAction).Equiv (G.classQuadAction).dual) :
+    G.classMeanEnergy 1 = G.b1 / 4 := by
+  have h := (G.classQuadAction).meanEnergy_self_dual e
+  rwa [G.classQuadAction_rank] at h
+
 /-! ### Chart interfaces for concrete consumers (review #11)
 
 The flagship graphs re-derive their coordinate dualities from
