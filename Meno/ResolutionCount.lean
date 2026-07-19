@@ -2547,6 +2547,82 @@ theorem residue_tower_price_strict (hb : 0 < G.b1) (hc : 1 < c)
 
 end TowerCost
 
+/-! ### The priced composition law (review #17)
+
+The price is not only a one-step theorem: conditional entropies add
+along the tower by the generic chain rule
+(`residue_tower_condEntropy_trans` — `H(q″|q) = H(q″|q′) + H(q′|q)`),
+section costs add (`sectionCost_h1TowerMap_trans`), and the deficit
+increments telescope, so the two-step price identity is exactly the
+sum of the one-step identities (`residue_tower_price_trans`). -/
+
+section TowerPriceComp
+
+variable (q' q'' c c' : ℕ) [NeZero q'] [NeZero q'']
+
+/-- **Conditional entropies add along the tower** (review #17):
+`H(q″|q) = H(q″|q′) + H(q′|q)` — the generic chain rule
+`FinDist.condEntropy_comp` specialized to the tower maps, with the
+intermediate pushforward identified as the intermediate residue
+distribution. -/
+theorem residue_tower_condEntropy_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
+    (G.residueDist q'').condEntropy (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+      = (G.residueDist q'').condEntropy (⇑(G.h1TowerMap q' q'' h₂))
+        + (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' h₁)) := by
+  have hcomp : ⇑(G.h1TowerMap q q'' (h₁.trans h₂))
+      = ⇑(G.h1TowerMap q q' h₁) ∘ ⇑(G.h1TowerMap q' q'' h₂) := by
+    rw [← G.h1TowerMap_comp q q' q'' h₁ h₂]
+    rfl
+  rw [hcomp, FinDist.condEntropy_comp, G.residueDist_tower q' q'' h₂]
+
+/-- **Section costs add along the tower** (review #17): reversing two
+resolution steps costs the sum of the one-step ratchet costs. -/
+theorem sectionCost_h1TowerMap_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'')
+    (hq' : q' = c * q) (hq'' : q'' = c' * q') :
+    sectionCost (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+        / Nat.card (H1Reduction G q)
+      = sectionCost (⇑(G.h1TowerMap q' q'' h₂))
+            / Nat.card (H1Reduction G q')
+        + sectionCost (⇑(G.h1TowerMap q q' h₁))
+            / Nat.card (H1Reduction G q) := by
+  have hc : c ≠ 0 := by
+    rintro rfl
+    exact (NeZero.ne q') (by rw [hq', zero_mul])
+  have hc' : c' ≠ 0 := by
+    rintro rfl
+    exact (NeZero.ne q'') (by rw [hq'', zero_mul])
+  have hqcomp : q'' = (c' * c) * q := by rw [hq'', hq', mul_assoc]
+  rw [G.sectionCost_h1TowerMap q q' c h₁ hq',
+    G.sectionCost_h1TowerMap q' q'' c' h₂ hq'',
+    G.sectionCost_h1TowerMap q q'' (c' * c) (h₁.trans h₂) hqcomp,
+    Nat.cast_mul,
+    Real.log_mul (by exact_mod_cast hc') (by exact_mod_cast hc)]
+  ring
+
+/-- **The deficit increments telescope** (review #17): the two-step
+price identity is the sum of the one-step identities — the chain rule
+adds the conditional entropies, the section costs add, and
+`(Δ(q″) − Δ(q′)) + (Δ(q′) − Δ(q)) = Δ(q″) − Δ(q)`. -/
+theorem residue_tower_price_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'')
+    (hq' : q' = c * q) (hq'' : q'' = c' * q') :
+    (G.residueDist q'').condEntropy (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+      = G.b1 * Real.log ((c' * c : ℕ))
+        - (G.residueDefect q'' - G.residueDefect q) := by
+  have hc : c ≠ 0 := by
+    rintro rfl
+    exact (NeZero.ne q') (by rw [hq', zero_mul])
+  have hc' : c' ≠ 0 := by
+    rintro rfl
+    exact (NeZero.ne q'') (by rw [hq'', zero_mul])
+  rw [G.residue_tower_condEntropy_trans q q' q'' h₁ h₂,
+    G.residue_tower_condEntropy_eq_defect q q' c h₁ hq',
+    G.residue_tower_condEntropy_eq_defect q' q'' c' h₂ hq'',
+    Nat.cast_mul,
+    Real.log_mul (by exact_mod_cast hc') (by exact_mod_cast hc)]
+  ring
+
+end TowerPriceComp
+
 end IncidenceGraph
 
 

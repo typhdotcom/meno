@@ -623,6 +623,46 @@ theorem theta_tower_price :
   rw [hb2] at h2
   exact ⟨hid, h1, h2, h3⟩
 
+noncomputable local instance :
+    DecidableEq (IncidenceGraph.H1Reduction thetaGraph 4) :=
+  thetaGraph.h1ReductionDecEq 4
+
+/-- **The complete priced composition law on theta** (review #17):
+along `8 → 4 → 2` the conditional entropies add
+(`H(8|2) = H(8|4) + H(4|2)`), the section costs add, and the
+telescoped two-step price identity holds —
+`H(8|2) = 2·log 4 − (Δ(8) − Δ(2))`. -/
+theorem theta_tower_price_triangle :
+    ((thetaGraph.residueDist 8).condEntropy
+          (⇑(thetaGraph.h1TowerMap 2 8 (by norm_num)))
+        = (thetaGraph.residueDist 8).condEntropy
+              (⇑(thetaGraph.h1TowerMap 4 8 (by norm_num)))
+          + (thetaGraph.residueDist 4).condEntropy
+              (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num))))
+      ∧ sectionCost (⇑(thetaGraph.h1TowerMap 2 8 (by norm_num)))
+            / Nat.card (IncidenceGraph.H1Reduction thetaGraph 2)
+          = sectionCost (⇑(thetaGraph.h1TowerMap 4 8 (by norm_num)))
+                / Nat.card (IncidenceGraph.H1Reduction thetaGraph 4)
+            + sectionCost (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num)))
+                / Nat.card (IncidenceGraph.H1Reduction thetaGraph 2)
+      ∧ (thetaGraph.residueDist 8).condEntropy
+            (⇑(thetaGraph.h1TowerMap 2 8 (by norm_num)))
+          = 2 * Real.log 4
+            - (thetaGraph.residueDefect 8 - thetaGraph.residueDefect 2) := by
+  have hb2 : ((thetaGraph.b1 : ℕ) : ℝ) = 2 := by
+    rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
+    norm_num
+  have hchain := thetaGraph.residue_tower_condEntropy_trans 2 4 8
+    (by norm_num) (by norm_num)
+  have hcost := thetaGraph.sectionCost_h1TowerMap_trans 2 4 8 2 2
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+  have hprice := thetaGraph.residue_tower_price_trans 2 4 8 2 2
+    (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+  rw [hb2] at hprice
+  refine ⟨hchain, hcost, ?_⟩
+  rw [hprice]
+  norm_num
+
 /-! ### Fluctuation–dissipation on theta (review #16)
 
 The theta graph's harmonic Gram is genuinely **non-diagonal** — its
@@ -646,6 +686,21 @@ theorem theta_classMeanEnergy_strictAntiOn :
   refine thetaGraph.classMeanEnergy_strictAntiOn ?_
   rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
   norm_num
+
+/-- **Temperature–duality on a non-diagonal carrier** (review #17):
+theta's harmonic `H¹` mean energy and its priced `H₁` cycle mean
+energy at reciprocal temperatures —
+`⟨E⟩_{H¹}(β) + β⁻²·⟨E⟩_{H₁}(β⁻¹) = 1/β`, with `b₁ = 2`. -/
+theorem theta_classMeanEnergy_T_dual (β : ℝ) (hβ : 0 < β) :
+    thetaGraph.classMeanEnergy β
+        + β⁻¹ ^ 2 * (thetaGraph.cycleAction).meanEnergy β⁻¹
+      = 1 / β := by
+  have h := thetaGraph.classMeanEnergy_T_dual β hβ
+  rw [show ((thetaGraph.b1 : ℕ) : ℝ) = 2 from by
+      rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
+      norm_num] at h
+  rw [h, div_eq_div_iff (by positivity) hβ.ne']
+  ring
 
 /-- The theta tower's conditional entropy is the difference of the
 two residue actions' `K + ⟨E⟩` decompositions (review #15). -/

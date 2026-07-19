@@ -753,9 +753,11 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   resolution loss are identified**:
   `H(q'|q) = b₁·log c − (Δ(q') − Δ(q))`
   (`residue_tower_condEntropy_eq_defect` — via the generic Gibbs
-  inequality `sum_mul_log_div_nonneg`/`_pos`, conditional-entropy
-  nonnegativity and the constant-fiber bound `condEntropy_le_log`
-  with gap the relative entropy against the fiber-uniformization,
+  inequality (since review #17 bundled as `FinDist.relativeEntropy`:
+  `relativeEntropy_nonneg`/`relativeEntropy_pos`),
+  conditional-entropy nonnegativity and the constant-fiber bound
+  `condEntropy_le_log` with gap the relative entropy against the
+  fiber-uniformization (`relativeEntropy_uniformLift_map`),
   `Meno/InfoRatchet.lean`), strictly for `b₁ > 0 < c − 1`:
   `0 < H(q'|q) < b₁·log c` and `Δ(q) < Δ(q')`
   (`residue_tower_price_strict`), on theta at `4 → 2`
@@ -784,6 +786,49 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   `quadraticObj_gibbsVariance_pos` — through `meanEnergy_unit` and
   the groupoid-variance identification), with the Cauchy–Schwarz
   route retained as named corroboration (`M2_sq_lt_Z_mul_M4`).
+  Since review #17 the price has its **composition laws**: the
+  unconditional conditional-entropy chain rule
+  (`FinDist.condEntropy_comp` — `H(P|g∘f) = H(P|f) + H(f_*P|g)`,
+  no support hypothesis; with `FinDist.map_id`, `FinDist.map_comp`,
+  `mass_le_map`) specializes to `H(q″|q) = H(q″|q′) + H(q′|q)`
+  (`residue_tower_condEntropy_trans`), section costs add
+  (`sectionCost_h1TowerMap_trans`), and the deficit increments
+  telescope — the two-step price identity is the sum of the one-step
+  identities (`residue_tower_price_trans`) — consumed on theta along
+  the full triangle `8 → 4 → 2` (`theta_tower_price_triangle`:
+  `H(8|2) = H(8|4) + H(4|2) = 2·log 4 − (Δ(8) − Δ(2))`). The Gibbs
+  inequality is **one engine** (review #17):
+  `FinDist.relativeEntropy` with
+  `relativeEntropy_nonneg`/`_pos`/`_eq_zero_iff` proved once; the
+  defect is its uniform special case (`defect_eq_relativeEntropy` —
+  the old termwise proof deleted) and the conditional-entropy gap
+  its fiber-uniformization case (`relativeEntropy_uniformLift_map`).
+  **Temperature and duality are one structure** (review #17):
+  scaling multiplies the discriminant by `β^rank` (`disc_scale`) and
+  inverts through the intrinsic dual — `(β·Q)∨ = β⁻¹·(Q∨)`
+  (`scale_dual`, an **equality of bundles**, proved basis-free
+  through the sharp map); the Siegel–Poisson duality at the scaled
+  bundle gives `Z_{Q∨}(β⁻¹) = √(β^rank·disc/π^rank)·Z_Q(β)`
+  (`scaled_duality`, via the real form `duality_real`), whose
+  logarithmic derivative is the **temperature–duality functional
+  equation** `⟨E⟩_Q(β) + β⁻²·⟨E⟩_{Q∨}(β⁻¹) = rank/(2β)`
+  (`meanEnergy_T_dual`) — once for every bundled lattice action; the
+  scalar functional equation and self-dual value are its unit
+  instance (`quadraticMeanEnergy_T_dual`,
+  `quadraticMeanEnergy_self_dual` — no independent differentiation
+  of the scalar functional equation remains), the carrier transports
+  it through period evaluation to **harmonic `H¹` against priced
+  `H₁`** (`classMeanEnergy_T_dual` —
+  `⟨E⟩_{H¹}(β) + β⁻²·⟨E⟩_{H₁}(β⁻¹) = b₁/(2β)`, via
+  `Equiv.meanEnergy_eq` and `cycleActionEquivDual`), and theta
+  consumes it non-diagonally (`theta_classMeanEnergy_T_dual` —
+  `= 1/β`). `β = 1` recovery holds once on the bundle
+  (`scaledSector_one`, `scaledPartFn_one`,
+  `scaledSector_one_gibbsMass`, `meanEnergy_one`,
+  `scaledSector_one_gibbsVariance`), the scaled moments are
+  `≃q`-invariants (`Equiv.scaledPartFn_eq`, `Equiv.scaledMoment_eq`,
+  `Equiv.scaledMoment2_eq`, `Equiv.meanEnergy_eq`), and all five
+  graph recovery theorems are direct specializations.
 
 The falsified endofunction-kernel design (Phase 17) stands
 falsified; its
@@ -4684,3 +4729,49 @@ response theory now lives at all three levels — coordinate chart,
 bundle, carrier — each a specialization of the last. All twelve
 items remain CLOSED. `lake build Meno`: build green (3349 jobs),
 zero `sorry`, zero `axiom`, zero warnings.
+
+## Phase 53 addendum: seventeenth external review — four findings, four confirmed, four repaired (2026-07-19)
+
+Review #17 arrived against the Phase-52 state: temperature and the
+intrinsic dual coexisting in the bundle with no theorem relating
+them, the tower price proved one step at a time with no composition
+law, the claimed Gibbs generalization leaving the old
+uniform-specific defect proof in place unsubsumed, and the `β = 1`
+recovery laws replayed as manually expanded carrier proofs. Every
+claim verified against the code before repair; all four CONFIRMED.
+The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | Temperature and intrinsic duality remained disconnected: `scale` and `dual` coexisted in `Meno/LatticeAction.lean` with no theorem relating them, and `quadraticMeanEnergy_T_dual` still differentiated the scalar functional equation independently | **CONFIRMED** | **The scaling laws of the dual** (`Meno/LatticeAction.lean`): `scale_gram`, `scale_rank`, **`disc_scale`** (`disc(β·Q) = β^rank·disc(Q)`), and **`scale_dual`** — `(β·Q)∨ = β⁻¹·(Q∨)`, an **equality of bundles** (stronger than the required `≃q`), proved basis-free through the sharp map (`formExt_scale`: the real extension scales by `β`, so the sharp map scales by `β⁻¹`, and the dual form by `β·β⁻²  = β⁻¹` — private `dualForm_scale`). **The scaled duality** `Z_{Q∨}(β⁻¹) = √(β^rank·disc/π^rank)·Z_Q(β)` (`scaled_duality` — the intrinsic duality applied to the scaled bundle, via the new real form `duality_real`), differentiated once on the bundle (`scaledPartFn_pos`, `hasDerivAt_scaledPartFn`, `hasDerivAt_log_scaledPartFn`): **`meanEnergy_T_dual`** — `⟨E⟩_Q(β) + β⁻²·⟨E⟩_{Q∨}(β⁻¹) = rank/(2β)` for every bundled lattice action. Transported through the canonical embedding (`ofQuadraticAction_meanEnergy`, `ofQuadraticAction_dual_meanEnergy`, `QuadraticAction.meanEnergy_T_dual`); **the scalar theorems re-proved from it**: `quadraticMeanEnergy_T_dual` is the unit instance (the unit dual's mean energy identified as `π²·⟨k²⟩_{π²·α⁻¹}`, `unitDual_meanEnergy`) and `quadraticMeanEnergy_self_dual` falls out of the functional equation at `α = π` — the scalar derivative proof deleted. **Carrier transport**: `classMeanEnergy_T_dual` — `⟨E⟩_{H¹}(β) + β⁻²·⟨E⟩_{H₁}(β⁻¹) = b₁/(2β)` through `cycleActionEquivDual` and `Equiv.meanEnergy_eq` (`Meno/BasisIndependence.lean`); **theta as the non-diagonal consumer**: `theta_classMeanEnergy_T_dual` — `⟨E⟩_{H¹}(β) + β⁻²·⟨E⟩_{H₁}(β⁻¹) = 1/β` (`Meno/ThetaHarmonic.lean`) |
+| 2 | The price had one-step theorems, not tower laws: maps, distributions, and actions composed, while conditional entropy and its deficit price were proved for one step only | **CONFIRMED** | **The generic laws** (`Meno/InfoRatchet.lean`): `FinDist.map_id`, **`FinDist.map_comp`**, `mass_le_map`, and **the unconditional chain rule** `condEntropy_comp` — `H(P\|g∘f) = H(P\|f) + H(f_*P\|g)` with **no support hypothesis** (zero-mass sectors drop from every term). **The tower specialization** (`Meno/ResolutionCount.lean`, section `TowerPriceComp`): `residue_tower_condEntropy_trans` (`H(q″\|q) = H(q″\|q′) + H(q′\|q)`, the intermediate pushforward identified as the intermediate residue distribution), **`sectionCost_h1TowerMap_trans`** (section costs add), and **`residue_tower_price_trans`** — the deficit increments telescope: the two-step price identity is exactly the sum of the one-step identities. **Theta consumes the complete priced composition law**: `theta_tower_price_triangle` — along `8 → 4 → 2`, `H(8\|2) = H(8\|4) + H(4\|2)`, the section costs add, and `H(8\|2) = 2·log 4 − (Δ(8) − Δ(2))` |
+| 3 | The claimed Gibbs generalization retained the old duplicate engine: `defect_nonneg`/`defect_eq_zero_iff` still ran the uniform-specific termwise development, never subsumed by the general inequalities | **CONFIRMED** | **`FinDist.relativeEntropy`** (`Meno/InfoRatchet.lean`): the displayed sum bundled as a definition, with `relativeEntropy_nonneg`, `relativeEntropy_pos`, and **`relativeEntropy_eq_zero_iff`** (`= 0 ↔ P = Q`) proved **once** (subsuming the former `sum_mul_log_div_nonneg`/`_pos`, now with the characterization). **The defect is the special case `Q = uniform`**: `defect_eq_relativeEntropy`, with `defect_nonneg` and `defect_eq_zero_iff` re-derived through it and **the old termwise development deleted** (`defect_term_nonneg`, `defect_term_eq_zero`, `defect_eq_sum` — gone). **The conditional-entropy gap through the same definition**: `relativeEntropy_uniformLift_map` — `D(P ‖ (f_*P)↑) = log m − H(P\|f)` (the former private split, now public and stated as a relative entropy), consumed by `condEntropy_le_log`/`condEntropy_lt_log` |
+| 4 | The analytic `β = 1` laws were graph-specific replay: the bundle defined scaled moments, but the identity-temperature laws existed only as manually expanded carrier proofs | **CONFIRMED** | **The recovery laws once on the bundle** (`Meno/LatticeAction.lean`): `scaledSector_one`, `scaledPartFn_one`, `scaledSector_one_gibbsMass`, `meanEnergy_one`, `scaledSector_one_gibbsVariance` — `β = 1` recovers the sector action, partition function, Gibbs mass, expectation, and variance for every bundled lattice action. **Scaled-moment invariance under `≃q`**: `Equiv.scaledPartFn_eq`, `Equiv.scaledMoment_eq`, `Equiv.scaledMoment2_eq`, `Equiv.meanEnergy_eq`. **All five graph recovery theorems reduced to direct specializations** (`Meno/BasisIndependence.lean`): `classQuadActionβ_one`/`classSectorActionβ_one` already specialized `scale_one`; `classScaledPartFn_one`, `classMeanEnergy_one`, `classSectorActionβ_one_gibbsVariance` reduced from manually expanded tsum proofs to one-line applications closing by pure definitional unfolding of `classQuadActionβ := classQuadAction.scale` (plus the Gibbs-mass recovery `classSectorActionβ_one_gibbsMass`, now public) |
+
+**Rule-3 amendments.** (1) The dual is anti-equivariant for
+temperature: `(β·Q)∨ = β⁻¹·(Q∨)` is the canonical statement of
+"T-duality inverts temperature", and every functional equation —
+the scalar one included — is the bundle equation specialized, never
+re-differentiated. (2) The relative entropy is the single
+information engine: the defect and the conditional-entropy gap are
+its `Q = uniform` and `Q = fiber-uniformization` special cases, and
+new information inequalities must route through it. (3) A priced
+law is not closed until it composes: entropies must add, costs must
+add, and increments must telescope — one-step theorems are
+intermediate state.
+
+**Discipline check.** No goal reopens: review #17's findings are
+again refinements — structures present but disconnected (1),
+one-step instead of compositional (2), generalized but not
+subsuming (3), specialized but replayed (4). Finding 1 is the
+phase's center: temperature (review #16) and the intrinsic dual
+(review #9) are now one structure, and the scalar functional
+equation that seeded the analytic program is a specialization of a
+bundle theorem — the differentiation happens exactly once, at every
+rank, with no basis. Note on names: the Phase-52 ledger's
+`sum_mul_log_div_nonneg`/`condEntropy_log_split` were renamed this
+phase (`relativeEntropy_nonneg`/`relativeEntropy_uniformLift_map`);
+the historical entries stand, Part I's C9 account carries the
+current names. All twelve items remain CLOSED. `lake build Meno`:
+build green (3349 jobs), zero `sorry`, zero `axiom`, zero
+warnings.

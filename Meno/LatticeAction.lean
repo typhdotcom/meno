@@ -1325,6 +1325,336 @@ theorem meanEnergy_strictAntiOn (h : ∃ a, Q.form a a ≠ 0) :
   rw [Q.chart_energy_equivFun (Module.finBasis ℤ Q.Λ) a₀]
   exact ha₀
 
+/-! ### Identity-temperature recovery and equivalence invariance
+(review #17)
+
+`β = 1` recovers the unscaled bundle **once, on the bundle**: the
+sector action (`scaledSector_one`), the partition function
+(`scaledPartFn_one`), the Gibbs mass (`scaledSector_one_gibbsMass`),
+the Gibbs expectation (`meanEnergy_one`), and the Gibbs variance
+(`scaledSector_one_gibbsVariance`). The scaled moments are invariant
+under form-preserving equivalence (`Equiv.scaledPartFn_eq`,
+`Equiv.scaledMoment_eq`, `Equiv.scaledMoment2_eq`,
+`Equiv.meanEnergy_eq`). Graph carriers consume these as direct
+specializations (`Meno/BasisIndependence.lean`). -/
+
+/-- **`β = 1` recovers the sector action** (review #17). -/
+theorem scaledSector_one : Q.scaledSector 1 one_pos = Q.toSectorAction :=
+  congrArg QuadLatticeAction.toSectorAction Q.scale_one
+
+/-- **`β = 1` recovers the partition function** (review #17). -/
+theorem scaledPartFn_one : Q.scaledPartFn 1 = Q.toSectorAction.partFn := by
+  rw [show Q.scaledPartFn 1 = (Q.scaledSector 1 one_pos).partFn from rfl,
+    Q.scaledSector_one]
+
+/-- **`β = 1` recovers the Gibbs mass** (review #17). -/
+theorem scaledSector_one_gibbsMass :
+    (Q.scaledSector 1 one_pos).gibbsMass = Q.toSectorAction.gibbsMass := by
+  funext a
+  show Real.exp (-((1 : ℝ) * Q.form a a)) / (Q.scaledSector 1 one_pos).partFn
+    = Real.exp (-(Q.form a a)) / Q.toSectorAction.partFn
+  rw [one_mul,
+    show (Q.scaledSector 1 one_pos).partFn = Q.toSectorAction.partFn from
+      Q.scaledPartFn_one]
+
+/-- **`β = 1` recovers the Gibbs expectation** (review #17): the mean
+energy at identity temperature is the unscaled Gibbs mean of the
+energy. -/
+theorem meanEnergy_one :
+    Q.meanEnergy 1
+      = Q.toSectorAction.gibbsExpect (fun a => Q.form a a) := by
+  rw [show Q.meanEnergy 1 = Q.scaledMoment 1 / Q.scaledPartFn 1 from rfl,
+    ← Q.scaledSector_gibbsExpect_energy 1 one_pos]
+  show (∑' a, Q.form a a * (Q.scaledSector 1 one_pos).gibbsMass a)
+    = ∑' a, Q.form a a * Q.toSectorAction.gibbsMass a
+  rw [Q.scaledSector_one_gibbsMass]
+
+/-- **`β = 1` recovers the Gibbs variance** (review #17). -/
+theorem scaledSector_one_gibbsVariance :
+    (Q.scaledSector 1 one_pos).gibbsVariance (fun a => Q.form a a)
+      = Q.toSectorAction.gibbsVariance (fun a => Q.form a a) := by
+  show (∑' a, Q.form a a ^ 2 * (Q.scaledSector 1 one_pos).gibbsMass a)
+      - (∑' a, Q.form a a * (Q.scaledSector 1 one_pos).gibbsMass a) ^ 2
+    = (∑' a, Q.form a a ^ 2 * Q.toSectorAction.gibbsMass a)
+      - (∑' a, Q.form a a * Q.toSectorAction.gibbsMass a) ^ 2
+  rw [Q.scaledSector_one_gibbsMass]
+
+/-- **Scaled-moment invariance under equivalence** (review #17): a
+form-preserving equivalence preserves the β-scaled partition
+function. -/
+theorem Equiv.scaledPartFn_eq {Q Q' : QuadLatticeAction.{u}}
+    (e : Q.Equiv Q') (β : ℝ) :
+    Q'.scaledPartFn β = Q.scaledPartFn β := by
+  show ∑' a' : Q'.Λ, Real.exp (-(β * Q'.form a' a'))
+    = ∑' a : Q.Λ, Real.exp (-(β * Q.form a a))
+  rw [← _root_.Equiv.tsum_eq e.toLinearEquiv.toEquiv
+    (fun a' => Real.exp (-(β * Q'.form a' a')))]
+  exact tsum_congr fun a => by
+    rw [show (e.toLinearEquiv.toEquiv a : Q'.Λ) = e.toLinearEquiv a from rfl,
+      e.energy_eq a]
+
+/-- **Scaled-moment invariance under equivalence** (review #17): the
+first β-scaled moment. -/
+theorem Equiv.scaledMoment_eq {Q Q' : QuadLatticeAction.{u}}
+    (e : Q.Equiv Q') (β : ℝ) :
+    Q'.scaledMoment β = Q.scaledMoment β := by
+  show ∑' a' : Q'.Λ, Q'.form a' a' * Real.exp (-(β * Q'.form a' a'))
+    = ∑' a : Q.Λ, Q.form a a * Real.exp (-(β * Q.form a a))
+  rw [← _root_.Equiv.tsum_eq e.toLinearEquiv.toEquiv
+    (fun a' => Q'.form a' a' * Real.exp (-(β * Q'.form a' a')))]
+  exact tsum_congr fun a => by
+    rw [show (e.toLinearEquiv.toEquiv a : Q'.Λ) = e.toLinearEquiv a from rfl,
+      e.energy_eq a]
+
+/-- **Scaled-moment invariance under equivalence** (review #17): the
+second β-scaled moment. -/
+theorem Equiv.scaledMoment2_eq {Q Q' : QuadLatticeAction.{u}}
+    (e : Q.Equiv Q') (β : ℝ) :
+    Q'.scaledMoment2 β = Q.scaledMoment2 β := by
+  show ∑' a' : Q'.Λ, Q'.form a' a' ^ 2 * Real.exp (-(β * Q'.form a' a'))
+    = ∑' a : Q.Λ, Q.form a a ^ 2 * Real.exp (-(β * Q.form a a))
+  rw [← _root_.Equiv.tsum_eq e.toLinearEquiv.toEquiv
+    (fun a' => Q'.form a' a' ^ 2 * Real.exp (-(β * Q'.form a' a')))]
+  exact tsum_congr fun a => by
+    rw [show (e.toLinearEquiv.toEquiv a : Q'.Λ) = e.toLinearEquiv a from rfl,
+      e.energy_eq a]
+
+/-- **Mean-energy invariance under equivalence** (review #17). -/
+theorem Equiv.meanEnergy_eq {Q Q' : QuadLatticeAction.{u}}
+    (e : Q.Equiv Q') :
+    Q'.meanEnergy = Q.meanEnergy := by
+  funext β
+  show Q'.scaledMoment β / Q'.scaledPartFn β
+    = Q.scaledMoment β / Q.scaledPartFn β
+  rw [e.scaledMoment_eq β, e.scaledPartFn_eq β]
+
+/-! ### Duality at temperature (review #17)
+
+Temperature and the intrinsic dual are one structure. Scaling
+multiplies the discriminant by `β^rank` (`disc_scale`) and inverts
+through the dual — **the dual of the scaled bundle is the
+inverse-scaled dual bundle** (`scale_dual`, an equality of bundles).
+Applying the intrinsic Siegel–Poisson duality to the scaled bundle
+gives the **scaled duality**
+`Z_{Q∨}(β⁻¹) = √(β^rank·disc/π^rank)·Z_Q(β)` (`scaled_duality`), and
+differentiating its logarithm gives the **temperature–duality
+functional equation for mean energy**
+`⟨E⟩_Q(β) + β⁻²·⟨E⟩_{Q∨}(β⁻¹) = rank/(2β)` (`meanEnergy_T_dual`) —
+once, for every bundled lattice action. -/
+
+/-- The scaled bundle's Gram is the scaled Gram, in matrix form. -/
+theorem scale_gram {n : ℕ} (b : Module.Basis (Fin n) ℤ Q.Λ) (β : ℝ)
+    (hβ : 0 < β) : (Q.scale β hβ).gram b = β • Q.gram b :=
+  Q.scale_chartAction b β hβ
+
+/-- Scaling preserves the rank. -/
+theorem scale_rank (β : ℝ) (hβ : 0 < β) :
+    (Q.scale β hβ).rank = Q.rank := rfl
+
+/-- **Scaling multiplies the discriminant by `β^rank`**
+(review #17). -/
+theorem disc_scale (β : ℝ) (hβ : 0 < β) :
+    (Q.scale β hβ).disc = β ^ Q.rank * Q.disc := by
+  rw [(Q.scale β hβ).disc_eq (Module.finBasis ℤ Q.Λ),
+    Q.scale_gram (Module.finBasis ℤ Q.Λ) β hβ, Matrix.det_smul,
+    Fintype.card_fin]
+  rfl
+
+/-- **Real form of the intrinsic Siegel–Poisson duality**
+(review #17): the complex duality with the real `rpow` prefactor. -/
+theorem duality_real :
+    Q.dual.toSectorAction.partFn
+      = (Q.disc / Real.pi ^ Q.rank) ^ ((1 : ℝ) / 2)
+        * Q.toSectorAction.partFn := by
+  have h := Q.duality
+  have hnn : (0 : ℝ) ≤ Q.disc / Real.pi ^ Q.rank :=
+    (div_pos Q.disc_pos (pow_pos Real.pi_pos _)).le
+  apply Complex.ofReal_inj.mp
+  rw [Complex.ofReal_mul, Complex.ofReal_cpow hnn]
+  convert h using 2
+  push_cast
+  ring
+
+private lemma formExt_scale (β : ℝ) (hβ : 0 < β) (x y : ℝ ⊗[ℤ] Q.Λ) :
+    (Q.scale β hβ).formExt x y = β * Q.formExt x y := by
+  show bilinBaseChange (fun a b => β * Q.form a b) _ _ x y
+    = β * bilinBaseChange Q.form Q.form_comm Q.form_add_left x y
+  rw [bilinBaseChange_apply_equivFun (fun a b => β * Q.form a b) _ _
+      (Module.finBasis ℤ Q.Λ) x y,
+    bilinBaseChange_apply_equivFun Q.form Q.form_comm Q.form_add_left
+      (Module.finBasis ℤ Q.Λ) x y, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  ring
+
+private lemma dualForm_scale (β : ℝ) (hβ : 0 < β)
+    (φ ψ : Module.Dual ℤ Q.Λ) :
+    (Q.scale β hβ).dualForm φ ψ = β⁻¹ * Q.dualForm φ ψ := by
+  have hβ0 : β ≠ 0 := hβ.ne'
+  -- the scaled sharp map is the inverse-scaled sharp map
+  have hsharp : ∀ ξ : Module.Dual ℝ (ℝ ⊗[ℤ] Q.Λ),
+      (Q.scale β hβ).flatEquiv.symm ξ = β⁻¹ • Q.flatEquiv.symm ξ := by
+    intro ξ
+    apply (Q.scale β hβ).flatEquiv.injective
+    rw [LinearEquiv.apply_symm_apply]
+    refine LinearMap.ext fun y => ?_
+    show ξ y = (Q.scale β hβ).formExt (β⁻¹ • Q.flatEquiv.symm ξ) y
+    rw [Q.formExt_scale β hβ, map_smul, LinearMap.smul_apply,
+      smul_eq_mul,
+      show Q.formExt (Q.flatEquiv.symm ξ) y
+        = (Q.flatEquiv (Q.flatEquiv.symm ξ)) y from rfl,
+      LinearEquiv.apply_symm_apply, ← mul_assoc, mul_inv_cancel₀ hβ0,
+      one_mul]
+  show Real.pi ^ 2 * (Q.scale β hβ).formExt
+      ((Q.scale β hβ).flatEquiv.symm ((Q.scale β hβ).dualCastHom φ))
+      ((Q.scale β hβ).flatEquiv.symm ((Q.scale β hβ).dualCastHom ψ))
+    = β⁻¹ * (Real.pi ^ 2 * Q.formExt
+        (Q.flatEquiv.symm (Q.dualCastHom φ))
+        (Q.flatEquiv.symm (Q.dualCastHom ψ)))
+  rw [show (Q.scale β hβ).dualCastHom φ = Q.dualCastHom φ from rfl,
+    show (Q.scale β hβ).dualCastHom ψ = Q.dualCastHom ψ from rfl,
+    hsharp (Q.dualCastHom φ), hsharp (Q.dualCastHom ψ),
+    Q.formExt_scale β hβ, map_smul, map_smul, LinearMap.smul_apply,
+    smul_eq_mul, smul_eq_mul, ← mul_assoc β β⁻¹, mul_inv_cancel₀ hβ0,
+    one_mul]
+  ring
+
+/-- **THE DUAL OF THE SCALED BUNDLE IS THE INVERSE-SCALED DUAL**
+(review #17): `(β·Q)∨ = β⁻¹·(Q∨)` — an equality of bundled lattice
+actions. Temperature inverts through the intrinsic dual. -/
+theorem scale_dual (β : ℝ) (hβ : 0 < β) :
+    (Q.scale β hβ).dual = Q.dual.scale β⁻¹ (inv_pos.mpr hβ) :=
+  mk_eq_mk (funext fun φ => funext fun ψ => Q.dualForm_scale β hβ φ ψ)
+
+/-- **THE SCALED DUALITY** (review #17):
+`Z_{Q∨}(β⁻¹) = √(β^rank·disc(Q)/π^rank)·Z_Q(β)` — the intrinsic
+Siegel–Poisson duality applied to the scaled bundle, with the
+discriminant and dual transported by `disc_scale` and `scale_dual`. -/
+theorem scaled_duality (β : ℝ) (hβ : 0 < β) :
+    Q.dual.scaledPartFn β⁻¹
+      = (β ^ Q.rank * Q.disc / Real.pi ^ Q.rank) ^ ((1 : ℝ) / 2)
+        * Q.scaledPartFn β := by
+  have h := (Q.scale β hβ).duality_real
+  rw [show (Q.scale β hβ).dual.toSectorAction.partFn
+      = Q.dual.scaledPartFn β⁻¹ from by rw [Q.scale_dual β hβ]; rfl,
+    show (Q.scale β hβ).toSectorAction.partFn = Q.scaledPartFn β from rfl,
+    Q.disc_scale β hβ, Q.scale_rank β hβ] at h
+  exact h
+
+/-- The scaled partition function is positive at positive inverse
+temperature — through the canonical chart. -/
+theorem scaledPartFn_pos (β : ℝ) (hβ : 0 < β) : 0 < Q.scaledPartFn β := by
+  rw [Q.scaledPartFn_chart (Module.finBasis ℤ Q.Λ) β]
+  exact (Q.chartAction (Module.finBasis ℤ Q.Λ)).scaledPartFn_pos hβ
+
+/-- The bundle's partition function differentiates to minus the first
+moment — through the canonical chart of the rank-generic engine. -/
+theorem hasDerivAt_scaledPartFn (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt Q.scaledPartFn (-Q.scaledMoment β) β := by
+  have hfun : Q.scaledPartFn
+      = (Q.chartAction (Module.finBasis ℤ Q.Λ)).scaledPartFn :=
+    funext fun γ => Q.scaledPartFn_chart (Module.finBasis ℤ Q.Λ) γ
+  rw [hfun, Q.scaledMoment_chart (Module.finBasis ℤ Q.Λ) β]
+  exact (Q.chartAction (Module.finBasis ℤ Q.Λ)).hasDerivAt_scaledPartFn hβ
+
+/-- The log-partition function differentiates to minus the mean
+energy. -/
+theorem hasDerivAt_log_scaledPartFn (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt (fun γ => Real.log (Q.scaledPartFn γ))
+      (-Q.meanEnergy β) β := by
+  have h := (Q.hasDerivAt_scaledPartFn β hβ).log
+    (Q.scaledPartFn_pos β hβ).ne'
+  have heq : -Q.scaledMoment β / Q.scaledPartFn β = -Q.meanEnergy β := by
+    rw [show Q.meanEnergy β = Q.scaledMoment β / Q.scaledPartFn β from rfl]
+    ring
+  rwa [heq] at h
+
+/-- **THE TEMPERATURE–DUALITY FUNCTIONAL EQUATION** (review #17): for
+every bundled lattice action,
+`⟨E⟩_Q(β) + β⁻²·⟨E⟩_{Q∨}(β⁻¹) = rank/(2β)` — the logarithm of the
+scaled duality, differentiated in `β`. T-duality constrains the mean
+energy of the dual at inverse temperature by the mean energy of the
+original, at every rank, with no basis. -/
+theorem meanEnergy_T_dual (β : ℝ) (hβ : 0 < β) :
+    Q.meanEnergy β + β⁻¹ ^ 2 * Q.dual.meanEnergy β⁻¹
+      = Q.rank / (2 * β) := by
+  have hβinv : 0 < β⁻¹ := inv_pos.mpr hβ
+  have h_log_eventually :
+      (fun γ : ℝ => Real.log (Q.dual.scaledPartFn γ⁻¹)) =ᶠ[nhds β]
+        (fun γ => (Q.rank / 2 : ℝ) * Real.log γ
+          + (1/2 : ℝ) * Real.log (Q.disc / Real.pi ^ Q.rank)
+          + Real.log (Q.scaledPartFn γ)) := by
+    filter_upwards [eventually_gt_nhds hβ] with γ hγ
+    have hZ : 0 < Q.scaledPartFn γ := Q.scaledPartFn_pos γ hγ
+    have hpre : 0 < γ ^ Q.rank * Q.disc / Real.pi ^ Q.rank :=
+      div_pos (mul_pos (pow_pos hγ _) Q.disc_pos)
+        (pow_pos Real.pi_pos _)
+    rw [Q.scaled_duality γ hγ,
+      Real.log_mul (Real.rpow_pos_of_pos hpre _).ne' hZ.ne',
+      Real.log_rpow hpre,
+      show γ ^ Q.rank * Q.disc / Real.pi ^ Q.rank
+        = γ ^ Q.rank * (Q.disc / Real.pi ^ Q.rank) from by ring,
+      Real.log_mul (pow_pos hγ _).ne'
+        (div_pos Q.disc_pos (pow_pos Real.pi_pos _)).ne',
+      Real.log_pow]
+    ring
+  have h_inv : HasDerivAt (fun γ : ℝ => γ⁻¹) (-(β ^ 2)⁻¹) β :=
+    hasDerivAt_inv hβ.ne'
+  have hLHS : HasDerivAt
+      (fun γ : ℝ => Real.log (Q.dual.scaledPartFn γ⁻¹))
+      ((-Q.dual.meanEnergy β⁻¹) * (-(β ^ 2)⁻¹)) β :=
+    (Q.dual.hasDerivAt_log_scaledPartFn β⁻¹ hβinv).comp β h_inv
+  have h_rank_log : HasDerivAt
+      (fun γ : ℝ => (Q.rank / 2 : ℝ) * Real.log γ)
+      ((Q.rank : ℝ) / (2 * β)) β := by
+    have h := (Real.hasDerivAt_log hβ.ne').const_mul ((Q.rank : ℝ) / 2)
+    have heq : ((Q.rank : ℝ) / 2) * β⁻¹ = (Q.rank : ℝ) / (2 * β) := by
+      field_simp
+    rwa [heq] at h
+  have hRHS : HasDerivAt
+      (fun γ : ℝ => (Q.rank / 2 : ℝ) * Real.log γ
+        + (1/2 : ℝ) * Real.log (Q.disc / Real.pi ^ Q.rank)
+        + Real.log (Q.scaledPartFn γ))
+      ((Q.rank : ℝ) / (2 * β) + -Q.meanEnergy β) β :=
+    (h_rank_log.add_const _).add (Q.hasDerivAt_log_scaledPartFn β hβ)
+  have heq := (hLHS.congr_of_eventuallyEq
+    h_log_eventually.symm).unique hRHS
+  have hsimp : (-Q.dual.meanEnergy β⁻¹) * (-(β ^ 2)⁻¹)
+      = β⁻¹ ^ 2 * Q.dual.meanEnergy β⁻¹ := by
+    rw [inv_pow]
+    ring
+  rw [hsimp] at heq
+  linarith
+
+/-- The embedding preserves the Gibbs mean energy (review #17). -/
+theorem ofQuadraticAction_meanEnergy {r : ℕ} (A : QuadraticAction r) :
+    (ofQuadraticAction A).meanEnergy = A.meanEnergy := by
+  rw [(ofQuadraticAction A).meanEnergy_chart (Pi.basisFun ℤ (Fin r)),
+    ofQuadraticAction_chartAction]
+
+/-- The embedding's dual has the coordinate dual's mean energy
+(review #17). -/
+theorem ofQuadraticAction_dual_meanEnergy {r : ℕ}
+    (A : QuadraticAction r) :
+    (ofQuadraticAction A).dual.meanEnergy = A.dual.meanEnergy := by
+  rw [(ofQuadraticAction A).dual.meanEnergy_chart
+      (Pi.basisFun ℤ (Fin r)).dualBasis,
+    ofQuadraticAction_dual_chartAction]
+
+/-- **The coordinate temperature–duality functional equation**
+(review #17): the bundle functional equation `meanEnergy_T_dual`,
+transported through the canonical embedding — for every coordinate
+quadratic action, `⟨E⟩_A(β) + β⁻²·⟨E⟩_{A∨}(β⁻¹) = r/(2β)`. -/
+theorem _root_.Meno.QuadraticAction.meanEnergy_T_dual {r : ℕ}
+    (A : QuadraticAction r) (β : ℝ) (hβ : 0 < β) :
+    A.meanEnergy β + β⁻¹ ^ 2 * A.dual.meanEnergy β⁻¹
+      = r / (2 * β) := by
+  have h := (ofQuadraticAction A).meanEnergy_T_dual β hβ
+  rw [ofQuadraticAction_meanEnergy, ofQuadraticAction_dual_meanEnergy,
+    ofQuadraticAction_rank] at h
+  exact h
+
 end QuadLatticeAction
 
 /-- Notation for form-preserving equivalences of quadratic-lattice

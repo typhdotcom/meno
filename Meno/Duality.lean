@@ -622,20 +622,6 @@ the T-duality relation pins the second moment at its fixed point. -/
 noncomputable def quadraticMeanEnergy (α : ℝ) : ℝ :=
   (∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)) / quadraticPartFn α
 
-/-- At the self-dual coupling α = π, the mean of `k²` is `1/(4π)`.
-
-    Direct corollary of `quadraticPartFn_moment_self_dual`:
-    `Z(π) = 4π · M` gives `M / Z(π) = 1/(4π)`. -/
-theorem quadraticMeanEnergy_self_dual :
-    quadraticMeanEnergy Real.pi = 1 / (4 * Real.pi) := by
-  unfold quadraticMeanEnergy
-  have hπ := Real.pi_pos
-  have hZπ_ne : quadraticPartFn Real.pi ≠ 0 :=
-    ne_of_gt (lt_trans one_pos (quadraticPartFn_gt_one Real.pi hπ))
-  have h4π_ne : (4 * Real.pi) ≠ 0 := by positivity
-  rw [div_eq_div_iff hZπ_ne h4π_ne]
-  linarith [quadraticPartFn_moment_self_dual]
-
 /-- **Bridge to the Gibbs density.** `quadraticMeanEnergy α` is the Gibbs
     expectation of the squared canonical winding on the canonical quadratic
     `GroupoidObj` at coupling `α`.  So the analytic mean energy *is* the second
@@ -839,64 +825,107 @@ theorem log_quadraticPartFn_strictConvexOn :
     rw [hdα.deriv, hdβ.deriv]
     exact neg_lt_neg (quadraticMeanEnergy_strictAntiOn hα hβ hlt)
 
+private lemma unitDual_energy (k : Fin 1 → ℤ) :
+    unitQuadAction.dual.energy k = Real.pi ^ 2 * ((k 0 : ℝ)) ^ 2 := by
+  have hinv : (!![(1 : ℝ)])⁻¹ = !![(1 : ℝ)] :=
+    Matrix.inv_eq_right_inv (by
+      ext i j
+      fin_cases i
+      fin_cases j
+      simp [Matrix.mul_apply])
+  have h : unitQuadAction.dual.Q 0 0 = Real.pi ^ 2 := by
+    rw [show unitQuadAction.dual.Q = Real.pi ^ 2 • (!![(1 : ℝ)])⁻¹ from
+        Meno.QuadraticAction.dual_Q unitQuadAction,
+      hinv, Matrix.smul_apply, show (!![(1 : ℝ)]) 0 0 = 1 from rfl,
+      smul_eq_mul, mul_one]
+  show ∑ i, ∑ j, unitQuadAction.dual.Q i j * (k i : ℝ) * (k j : ℝ) = _
+  rw [Fin.sum_univ_one, Fin.sum_univ_one, h]
+  ring
+
+private lemma unitDual_scaledPartFn (γ : ℝ) :
+    unitQuadAction.dual.scaledPartFn γ
+      = quadraticPartFn (Real.pi ^ 2 * γ) := by
+  refine (Equiv.tsum_eq zEquiv.symm
+    (fun k : Fin 1 → ℤ =>
+      Real.exp (-(γ * unitQuadAction.dual.energy k)))).symm.trans ?_
+  refine tsum_congr fun n => ?_
+  rw [unitDual_energy]
+  show Real.exp (-(γ * (Real.pi ^ 2 * (n : ℝ) ^ 2)))
+    = Real.exp (-(Real.pi ^ 2 * γ) * (n : ℝ) ^ 2)
+  rw [show -(γ * (Real.pi ^ 2 * (n : ℝ) ^ 2))
+      = -(Real.pi ^ 2 * γ) * (n : ℝ) ^ 2 from by ring]
+
+/-- The unit dual's mean energy is `π²` times the canonical mean
+energy at the `π²`-rescaled coupling (review #17). -/
+private lemma unitDual_meanEnergy (γ : ℝ) :
+    unitQuadAction.dual.meanEnergy γ
+      = Real.pi ^ 2 * quadraticMeanEnergy (Real.pi ^ 2 * γ) := by
+  have hmom : unitQuadAction.dual.scaledMoment γ
+      = Real.pi ^ 2 * ∑' k : ℤ, (k : ℝ) ^ 2
+          * Real.exp (-(Real.pi ^ 2 * γ) * (k : ℝ) ^ 2) := by
+    rw [← tsum_mul_left]
+    refine (Equiv.tsum_eq zEquiv.symm
+      (fun k : Fin 1 → ℤ => unitQuadAction.dual.energy k
+        * Real.exp (-(γ * unitQuadAction.dual.energy k)))).symm.trans ?_
+    refine tsum_congr fun n => ?_
+    rw [unitDual_energy]
+    show Real.pi ^ 2 * (n : ℝ) ^ 2
+        * Real.exp (-(γ * (Real.pi ^ 2 * (n : ℝ) ^ 2)))
+      = Real.pi ^ 2 * ((n : ℝ) ^ 2
+          * Real.exp (-(Real.pi ^ 2 * γ) * (n : ℝ) ^ 2))
+    rw [show -(γ * (Real.pi ^ 2 * (n : ℝ) ^ 2))
+        = -(Real.pi ^ 2 * γ) * (n : ℝ) ^ 2 from by ring]
+    ring
+  show unitQuadAction.dual.scaledMoment γ
+      / unitQuadAction.dual.scaledPartFn γ = _
+  rw [hmom, unitDual_scaledPartFn γ, mul_div_assoc]
+  rfl
+
 /-- T-duality functional equation for mean energy:
     `(π²/α²)·⟨k²⟩_{π²/α} + ⟨k²⟩_α = 1/(2α)`.
 
-    Obtained by differentiating `log Z(π²/α) = (1/2)·log(α/π) + log Z(α)` in α.
-    At α = π the two mean-energy terms coalesce into `2·⟨k²⟩_π = 1/(2π)`,
-    recovering `quadraticMeanEnergy_self_dual`. The full FE says T-duality
-    constrains the second moment as a function of α, not just at the fixed
-    point: `⟨k²⟩_{π²/α}` is a rational function of α and `⟨k²⟩_α`. -/
+    **The bundle temperature–duality functional equation**
+    (`QuadLatticeAction.meanEnergy_T_dual`, review #17) **at the unit
+    action**: `⟨E⟩(α) + α⁻²·⟨E⟩∨(α⁻¹) = 1/(2α)`, with the unit dual's
+    mean energy identified as `π²·⟨k²⟩_{π²·α⁻¹}`
+    (`unitDual_meanEnergy`). The scalar theorem no longer
+    differentiates its own functional equation — the differentiation
+    happens once, on the bundle. At α = π the two mean-energy terms
+    coalesce into `2·⟨k²⟩_π = 1/(2π)`, giving
+    `quadraticMeanEnergy_self_dual`. -/
 theorem quadraticMeanEnergy_T_dual (α : ℝ) (hα : 0 < α) :
     (Real.pi ^ 2 / α ^ 2) * quadraticMeanEnergy (Real.pi ^ 2 / α) +
       quadraticMeanEnergy α = 1 / (2 * α) := by
+  have h := unitQuadAction.meanEnergy_T_dual α hα
+  rw [show unitQuadAction.meanEnergy α = quadraticMeanEnergy α from
+      congrFun meanEnergy_unit α,
+    unitDual_meanEnergy α⁻¹,
+    show Real.pi ^ 2 * α⁻¹ = Real.pi ^ 2 / α from by
+      rw [div_eq_mul_inv],
+    Nat.cast_one] at h
+  have heq : α⁻¹ ^ 2 * (Real.pi ^ 2 * quadraticMeanEnergy (Real.pi ^ 2 / α))
+      = (Real.pi ^ 2 / α ^ 2) * quadraticMeanEnergy (Real.pi ^ 2 / α) := by
+    rw [inv_pow, div_eq_mul_inv]
+    ring
+  rw [heq] at h
+  linarith
+
+/-- At the self-dual coupling α = π, the mean of `k²` is `1/(4π)` —
+    **from the functional equation** (review #17): at `α = π` the two
+    mean-energy terms of `quadraticMeanEnergy_T_dual` coalesce into
+    `2·⟨k²⟩_π = 1/(2π)`. -/
+theorem quadraticMeanEnergy_self_dual :
+    quadraticMeanEnergy Real.pi = 1 / (4 * Real.pi) := by
   have hπ := Real.pi_pos
-  have hπα : 0 < Real.pi ^ 2 / α := div_pos (sq_pos_of_pos hπ) hα
-  have hαπ : 0 < α / Real.pi := div_pos hα hπ
-  have h_log_eventually :
-      (fun β : ℝ => Real.log (quadraticPartFn (Real.pi ^ 2 / β))) =ᶠ[nhds α]
-        (fun β => (1/2 : ℝ) * Real.log (β / Real.pi) +
-          Real.log (quadraticPartFn β)) := by
-    filter_upwards [eventually_gt_nhds hα] with β hβ
-    have hβπ : 0 < β / Real.pi := div_pos hβ hπ
-    have hZβ : 0 < quadraticPartFn β :=
-      lt_trans one_pos (quadraticPartFn_gt_one β hβ)
-    have hrpow : 0 < (β / Real.pi) ^ ((1:ℝ)/2) := Real.rpow_pos_of_pos hβπ _
-    rw [quadraticPartFn_duality_real β hβ,
-        Real.log_mul (ne_of_gt hrpow) (ne_of_gt hZβ),
-        Real.log_rpow hβπ]
-  have hLogZ_πα := hasDerivAt_log_quadraticPartFn (Real.pi ^ 2 / α) hπα
-  have h_inv : HasDerivAt (fun β : ℝ => Real.pi ^ 2 / β)
-      (-(Real.pi ^ 2) / α ^ 2) α := by
-    have h := (hasDerivAt_const α (Real.pi ^ 2)).div
-              (hasDerivAt_id α) (ne_of_gt hα)
-    simp only [id] at h
-    convert h using 1
+  have h := quadraticMeanEnergy_T_dual Real.pi hπ
+  rw [show Real.pi ^ 2 / Real.pi = Real.pi from by
+      rw [pow_two, mul_div_assoc, div_self hπ.ne', mul_one],
+    show Real.pi ^ 2 / Real.pi ^ 2 = (1 : ℝ) from
+      div_self (by positivity), one_mul] at h
+  have h2 : (1 : ℝ) / (2 * Real.pi) = 2 * (1 / (4 * Real.pi)) := by
+    rw [mul_one_div, div_eq_div_iff (by positivity) (by positivity)]
     ring
-  have hLHS : HasDerivAt (fun β => Real.log (quadraticPartFn (Real.pi ^ 2 / β)))
-      ((- quadraticMeanEnergy (Real.pi ^ 2 / α)) * (-(Real.pi ^ 2) / α ^ 2)) α :=
-    hLogZ_πα.comp α h_inv
-  have h_div : HasDerivAt (fun β : ℝ => β / Real.pi) (1 / Real.pi) α := by
-    simpa using (hasDerivAt_id α).div_const Real.pi
-  have h_log_div : HasDerivAt (fun β => Real.log (β / Real.pi)) (1 / α) α := by
-    have := h_div.log (ne_of_gt hαπ)
-    convert this using 1
-    field_simp
-  have h_halflog : HasDerivAt (fun β : ℝ => (1/2 : ℝ) * Real.log (β / Real.pi))
-      (1 / (2 * α)) α := by
-    have := h_log_div.const_mul ((1:ℝ)/2)
-    convert this using 1
-    ring
-  have hLogZ_α := hasDerivAt_log_quadraticPartFn α hα
-  have hRHS : HasDerivAt (fun β : ℝ => (1/2 : ℝ) * Real.log (β / Real.pi) +
-      Real.log (quadraticPartFn β))
-      (1 / (2 * α) + (- quadraticMeanEnergy α)) α :=
-    h_halflog.add hLogZ_α
-  have heq := (hLHS.congr_of_eventuallyEq h_log_eventually.symm).unique hRHS
-  have hsimp : (- quadraticMeanEnergy (Real.pi ^ 2 / α)) *
-      (-(Real.pi ^ 2) / α ^ 2) =
-      (Real.pi ^ 2 / α ^ 2) * quadraticMeanEnergy (Real.pi ^ 2 / α) := by ring
-  rw [hsimp] at heq
+  rw [h2] at h
   linarith
 
 /-- **Structural bridge.** On any `GroupoidObj` carrying quadratic energy

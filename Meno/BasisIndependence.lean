@@ -559,49 +559,33 @@ theorem classSectorActionβ_gibbsExpect_energy (β : ℝ) (hβ : 0 < β) :
       = G.classScaledMoment β / G.classScaledPartFn β :=
   (G.classQuadAction).scaledSector_gibbsExpect_energy β hβ
 
-/-- **`β = 1` recovers the partition function** (review #16). -/
+/-- **`β = 1` recovers the partition function** (review #16) — the
+bundle recovery law `scaledPartFn_one`, specialized (review #17). -/
 theorem classScaledPartFn_one :
-    G.classScaledPartFn 1 = (G.classSectorAction).partFn := by
-  show (∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
-      Real.exp (-((1 : ℝ) * G.harmonicEnergy κ)))
-    = ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
-      Real.exp (-G.harmonicEnergy κ)
-  exact tsum_congr fun κ => by rw [one_mul]
+    G.classScaledPartFn 1 = (G.classSectorAction).partFn :=
+  (G.classQuadAction).scaledPartFn_one
 
-private lemma classSectorActionβ_one_gibbsMass :
+/-- **`β = 1` recovers the Gibbs mass** (review #17) — the bundle
+recovery law `scaledSector_one_gibbsMass`, specialized. -/
+theorem classSectorActionβ_one_gibbsMass :
     (G.classSectorActionβ 1 one_pos).gibbsMass
-      = (G.classSectorAction).gibbsMass := by
-  funext κ
-  show Real.exp (-((1 : ℝ) * G.harmonicEnergy κ))
-      / (G.classSectorActionβ 1 one_pos).partFn
-    = Real.exp (-G.harmonicEnergy κ) / (G.classSectorAction).partFn
-  rw [one_mul,
-    show (G.classSectorActionβ 1 one_pos).partFn
-      = (G.classSectorAction).partFn from G.classScaledPartFn_one]
+      = (G.classSectorAction).gibbsMass :=
+  (G.classQuadAction).scaledSector_one_gibbsMass
 
-/-- **`β = 1` recovers the Gibbs expectation** (review #16). -/
+/-- **`β = 1` recovers the Gibbs expectation** (review #16) — the
+bundle recovery law `meanEnergy_one`, specialized (review #17). -/
 theorem classMeanEnergy_one :
     G.classMeanEnergy 1
-      = (G.classSectorAction).gibbsExpect G.harmonicEnergy := by
-  rw [show G.classMeanEnergy 1
-      = G.classScaledMoment 1 / G.classScaledPartFn 1 from rfl,
-    ← G.classSectorActionβ_gibbsExpect_energy 1 one_pos]
-  show (∑' κ, G.harmonicEnergy κ
-      * (G.classSectorActionβ 1 one_pos).gibbsMass κ)
-    = ∑' κ, G.harmonicEnergy κ * (G.classSectorAction).gibbsMass κ
-  rw [G.classSectorActionβ_one_gibbsMass]
+      = (G.classSectorAction).gibbsExpect G.harmonicEnergy :=
+  (G.classQuadAction).meanEnergy_one
 
-/-- **`β = 1` recovers the Gibbs variance** (review #16). -/
+/-- **`β = 1` recovers the Gibbs variance** (review #16) — the bundle
+recovery law `scaledSector_one_gibbsVariance`, specialized
+(review #17). -/
 theorem classSectorActionβ_one_gibbsVariance :
     (G.classSectorActionβ 1 one_pos).gibbsVariance G.harmonicEnergy
-      = (G.classSectorAction).gibbsVariance G.harmonicEnergy := by
-  show (∑' κ, G.harmonicEnergy κ ^ 2
-        * (G.classSectorActionβ 1 one_pos).gibbsMass κ)
-      - (∑' κ, G.harmonicEnergy κ
-        * (G.classSectorActionβ 1 one_pos).gibbsMass κ) ^ 2
-    = (∑' κ, G.harmonicEnergy κ ^ 2 * (G.classSectorAction).gibbsMass κ)
-      - (∑' κ, G.harmonicEnergy κ * (G.classSectorAction).gibbsMass κ) ^ 2
-  rw [G.classSectorActionβ_one_gibbsMass]
+      = (G.classSectorAction).gibbsVariance G.harmonicEnergy :=
+  (G.classQuadAction).scaledSector_one_gibbsVariance
 
 /-- The carrier's β-scaled partition function is the chart's. -/
 theorem classScaledPartFn_eq (β : ℝ) :
@@ -927,6 +911,22 @@ dualized period-evaluation equivalence. -/
 noncomputable def classActionEquivCycleDual :
     (G.classQuadAction).Equiv (G.cycleAction).dual :=
   ((G.classQuadAction).dualDual.symm).trans (G.cycleActionEquivDual).dual
+
+/-- **TEMPERATURE–DUALITY BETWEEN HARMONIC `H¹` AND PRICED `H₁`**
+(review #17): the bundle temperature–duality functional equation
+(`QuadLatticeAction.meanEnergy_T_dual`) at the intrinsic carrier,
+with the dual's mean energy transported to the priced cycle lattice
+through the period-evaluation equivalence (`cycleActionEquivDual`) —
+`⟨E⟩_{H¹}(β) + β⁻²·⟨E⟩_{H₁}(β⁻¹) = b₁/(2β)`. The mean harmonic
+energy of cohomology sectors and the mean energy of priced homology
+cycles are locked together at reciprocal temperatures, by the
+graph's first Betti number. -/
+theorem classMeanEnergy_T_dual (β : ℝ) (hβ : 0 < β) :
+    G.classMeanEnergy β + β⁻¹ ^ 2 * (G.cycleAction).meanEnergy β⁻¹
+      = G.b1 / (2 * β) := by
+  have h := (G.classQuadAction).meanEnergy_T_dual β hβ
+  rw [(G.cycleActionEquivDual).meanEnergy_eq, G.classQuadAction_rank] at h
+  exact h
 
 /-! ### Chart interfaces for concrete consumers (review #11)
 

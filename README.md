@@ -95,7 +95,25 @@ duality statement is a corollary of the intrinsic one
 consumes the corollary (`dualVia_partFn_duality`,
 `Meno/SectorPresentation.lean`), and the direct analytic invocation
 of `QuadraticAction.duality` occurs once globally — inside
-`QuadLatticeAction.duality`.
+`QuadLatticeAction.duality`. And **duality is temperature,
+inverted**: scaling multiplies the discriminant by `β^rank`
+(`disc_scale`) and the dual of the scaled bundle *is* the
+inverse-scaled dual — `(β·Q)∨ = β⁻¹·(Q∨)` (`scale_dual`, an equality
+of bundles). The duality at the scaled bundle is the **scaled
+duality** `Z_{Q∨}(β⁻¹) = √(β^rank·disc/π^rank)·Z_Q(β)`
+(`scaled_duality`), and its logarithmic derivative is the
+**temperature–duality functional equation**
+`⟨E⟩_Q(β) + β⁻²·⟨E⟩_{Q∨}(β⁻¹) = rank/(2β)`
+(`QuadLatticeAction.meanEnergy_T_dual`) — differentiated once, for
+every bundled lattice action. The scalar functional equation and the
+self-dual value `⟨k²⟩_π = 1/(4π)` are its unit instance
+(`quadraticMeanEnergy_T_dual`, `quadraticMeanEnergy_self_dual`,
+`Meno/Duality.lean`); on a graph it locks harmonic `H¹` to priced
+`H₁` at reciprocal temperatures —
+`⟨E⟩_{H¹}(β) + β⁻²·⟨E⟩_{H₁}(β⁻¹) = b₁/(2β)`
+(`classMeanEnergy_T_dual`, `Meno/BasisIndependence.lean`) — and the
+non-diagonal theta carrier consumes it
+(`theta_classMeanEnergy_T_dual`: `= 1/β`).
 
 **Topology, intrinsically.** Every finite multigraph
 (`IncidenceGraph`) carries an intrinsic integral cycle lattice
@@ -305,7 +323,20 @@ inequality and the constant-fiber conditional-entropy bounds,
 `0 < H(q'|q) < b₁·log c` and `Δ(q) < Δ(q')`
 (`residue_tower_price_strict`; on theta at `4 → 2`: fibers of `4`,
 cost `2·log 2`, `H(4|2) = 2·log 2 − (Δ(4) − Δ(2))` strict,
-`theta_tower_price`). One
+`theta_tower_price`). The price **composes**: conditional entropies
+add along the tower by the unconditional chain rule
+(`FinDist.condEntropy_comp`, `residue_tower_condEntropy_trans` —
+`H(q″|q) = H(q″|q′) + H(q′|q)`), section costs add
+(`sectionCost_h1TowerMap_trans`), and the deficit increments
+telescope (`residue_tower_price_trans`), with the full triangle
+consumed on theta (`theta_tower_price_triangle`:
+`H(8|2) = H(8|4) + H(4|2) = 2·log 4 − (Δ(8) − Δ(2))`). The engine
+behind every such bound is one definition — the **relative entropy**
+(`FinDist.relativeEntropy`): nonnegative against any fully supported
+reference, strict for distinct distributions, zero exactly at
+equality, with the maximum-entropy defect its uniform special case
+(`defect_eq_relativeEntropy`) and the conditional-entropy gap its
+fiber-uniformization case (`relativeEntropy_uniformLift_map`). One
 theorem carries the whole priced package on one explicit graph
 (`theta_priced_faces`): partition-function gravity, complexity
 gravity, priced time, the **complete residue, description, and pair
@@ -346,8 +377,10 @@ computing through every chart and fluctuation–dissipation stated
 (`QuadLatticeAction.hasDerivAt_meanEnergy_eq_neg_gibbsVariance`,
 `QuadLatticeAction.meanEnergy_strictAntiOn`). The intrinsic carrier
 is a direct specialization (`classQuadActionβ :=
-classQuadAction.scale`, with `β = 1` recovering the carrier, its
-partition function, expectation, and variance): `d⟨E⟩/dβ = −Var`
+classQuadAction.scale`, with `β = 1` recovery proved **once on the
+bundle** — sector action, partition function, Gibbs mass,
+expectation, variance — and the scaled moments invariant under
+`≃q`): `d⟨E⟩/dβ = −Var`
 holds intrinsically
 (`hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance`), on any graph
 with cycles the Gibbs mean energy strictly falls
