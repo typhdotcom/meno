@@ -3,6 +3,7 @@ import Meno.IncidenceGraph
 import Meno.SectorAction
 import Meno.QuadraticAction
 import Meno.SiegelPoisson
+import Meno.Fluctuation
 import Meno.LatticeAction
 import Meno.LoopKernel
 import Meno.Geodesic

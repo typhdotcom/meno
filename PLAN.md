@@ -712,8 +712,44 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   (`uniformComplexity_description_bridge_pos`,
   `uniformComplexity_pair_bridge_pos`), and the theta graph at
   `q = 2` carries the full priced package — partition-function
-  gravity, complexity gravity, priced time, strict bridge terms,
-  strict energy variance (`theta_priced_faces`).
+  gravity, complexity gravity, priced time, **all three complete
+  bridge packages** and **all three strict energy variances**
+  (`theta_priced_faces`, review #15). The tower has its **laws**
+  (review #15): identity (`h1TowerMap_id`), composition
+  (`h1TowerMap_comp`), proof-witness independence
+  (`h1TowerMap_proof_irrel`), surjectivity
+  (`h1TowerMap_surjective`), with weights, distributions, and
+  actions composing across it (`residueWeight_tower_trans`,
+  `residueDist_tower_trans`, `residueAction_tower_trans`) and the
+  commuting triangle `8 → 4 → 2` on theta
+  (`theta_towerMap_triangle`). **Resolution loss is priced**
+  (review #15): each step `q' = c·q` merges `c^{b₁}` classes per
+  coarse class (`card_h1TowerMap_fiber`), reversing it costs
+  `b₁·log c` per sector (`sectionCost_h1TowerMap`), the Gibbs
+  conditional-entropy chain runs across the tower
+  (`FinDist.condEntropy`, `entropy_eq_map_add_condEntropy`,
+  `residue_tower_entropy_chain`), and the lost information is the
+  difference of the two `K + ⟨E⟩` decompositions
+  (`residue_tower_condEntropy_eq`) — all consumed on theta at
+  `4 → 2` (`theta_tower_fiber_card`, `theta_tower_sectionCost`,
+  `theta_tower_entropy_chain`, `theta_tower_condEntropy_eq`).
+  **Fluctuation–dissipation is intrinsic at every rank**
+  (review #15, `Meno/Fluctuation.lean`): the inverse-temperature
+  scaling of any quadratic action has summable energy moments at
+  every `β > 0`, differentiable partition function and mean energy
+  (`hasDerivAt_scaledPartFn`, `hasDerivAt_scaledMoment` — dominated
+  at half temperature), **`d⟨E⟩/dβ = −Var_β(E)`**
+  (`hasDerivAt_meanEnergy_eq_neg_gibbsVariance`), and strict
+  dissipation from any nonzero-energy sector
+  (`meanEnergy_strictAntiOn`). The intrinsic carrier consumes it
+  through the cycle-basis chart (`classQuadActionβ`,
+  `classSectorActionβ`, `classMeanEnergy`,
+  `hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance`,
+  `classMeanEnergy_strictAntiOn` for `0 < b₁`,
+  `Meno/BasisIndependence.lean`), and the legacy scalar family is
+  the rank-one instance — its differentiation engine re-derived
+  through the chart `(Fin 1 → ℤ) ≃ ℤ` (`unitQuadAction`,
+  `Meno/Duality.lean`).
 
 The falsified endofunction-kernel design (Phase 17) stands
 falsified; its
@@ -4501,7 +4537,15 @@ demanded from callers) is no longer cited as the completed
 specialization; the energy-observable theorems (unconditional,
 strict) carry the claim.
 
-**Discipline check.** No goal reopens. The phase's center is
+**Discipline check.** *(Corrected in Phase 51, review #15
+finding 5: this check originally said "No goal reopens." That was
+dishonest by the Phase-49 precedent: review #14's findings 1–2 showed
+C9's account ahead of the code and C12's citations false, so both
+were effectively OPEN at receipt and should have been recorded as
+reopened. Review #15's findings 1–2 moreover show both still OPEN at
+Phase 50's end — the tower described as coherent without its laws,
+the promised strict consumers absent. The reopening is recorded
+here; both items' re-closure is Phase 51's.)* The phase's center is
 coherence: finding 1 makes the two gravity derivations one theorem
 apart, finding 3 makes the resolutions one tower instead of a family
 of snapshots — both were places where the formalization had the
@@ -4510,6 +4554,48 @@ of snapshots — both were places where the formalization had the
 bounds are the first place the program prices a polynomial against
 its own Gaussian decay. Findings 4–5 finish the pattern of
 reviews #13–14: every face generic, every strictness cashed, one
-graph carrying all of it. All twelve items remain CLOSED.
+graph carrying all of it.
 `lake build Meno`: build green (3348 jobs), zero `sorry`, zero
 `axiom`, zero warnings.
+
+## Phase 51 addendum: fifteenth external review — five findings, five confirmed, five repaired (2026-07-19)
+
+Review #15 arrived against the Phase-50 state: the tower without its
+laws, the theta consumer partial, fluctuation–dissipation still
+rank-one, resolution loss unpriced, and the Phase-50 discipline check
+dishonest. Every claim verified against the code before repair; all
+five CONFIRMED (finding 5 with one precision note recorded in its
+row). The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | The resolution maps did not yet form a tower: `h1TowerMap` and its projection equation existed, but no identity law, composition law, or named surjectivity theorem — the Part-I account was ahead of the code | **CONFIRMED** — `rg` found none of the three | **The tower's laws** (`Meno/ResolutionCount.lean`): `h1TowerMap_id` (the map at `q ∣ q` is `LinearMap.id`), `h1TowerMap_comp` (composition along divisibility — both by quotient induction, closing `rfl`), `h1TowerMap_proof_irrel` (witness independence, definitional), `h1TowerMap_surjective`. **Composition laws for the priced data**: `residueWeight_tower_trans` (two-step iterated coset sums equal the one-step sums), `residueDist_tower_trans` (two-step pushforward equals one-step — all three equal the coarse residue distribution), `residueAction_tower_trans` (coarse-graining from the intermediate and from the finest resolution agree). **The commuting triangle on theta**: `theta_towerMap_triangle` (`8 → 4 → 2`, `Meno/ThetaHarmonic.lean`) |
+| 2 | The promised concrete consumer for description and pair strictness was not delivered: `theta_priced_faces` carried only the residue terms, never invoked the description/pair bridge-positivity theorems, and omitted the bridge equalities — those theorems had no downstream consumer | **CONFIRMED** | **`theta_priced_faces` completed** (`Meno/ThetaHarmonic.lean`): the priced partition-function and complexity gravity identities, the priced time identity, the **complete residue, description, and pair bridge packages** (each bridge equality with its three strictly positive terms, via `uniformComplexity_residue_bridge_pos`/`…description…`/`…pair…`), and **all three transported strict energy variances**. The theta statement forced naming the carrier's instances: `h1ReductionDecEq`, `carrierPullbackNonempty`, `carrierPullbackFintype` (`Meno/ResolutionCount.lean`) applied by name at the reducible `thetaGraph` |
+| 3 | Uncertainty consumed the carrier statically; fluctuation–dissipation still lived in the legacy rank-one model — the response theorem was formulated only for the scalar `GroupoidObj` family | **CONFIRMED** | **`Meno/Fluctuation.lean`** (new): the inverse-temperature scaling of any `QuadraticAction` — summable energy moments at every `β > 0` (the polynomial-times-Gaussian bounds against the half-temperature weight, `β·Q` still positive definite), **`Z′ = −M₁`** and **`M₁′ = −M₂`** (`hasDerivAt_tsum_of_isPreconnected`, dominated at half temperature), the β-scaled sector action (`scaledSector`) with its Gibbs variance in moment form, **`d⟨E⟩/dβ = −Var_β(E)` at every rank** (`hasDerivAt_meanEnergy_eq_neg_gibbsVariance`), strict variance from any nonzero-energy sector, and **strict dissipation** (`meanEnergy_strictAntiOn`). **The carrier consumes it** (`Meno/BasisIndependence.lean`): `classQuadActionβ` (the positive inverse-temperature scaling of `classQuadAction`), `classSectorActionβ`, the carrier's β-scaled partition function and mean energy identified with the chart's, `hasDerivAt_classScaledPartFn`, **`hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance`** (intrinsic), and **`classMeanEnergy_strictAntiOn`** for `0 < b₁` (witness `Pi.single`). **The scalar theorem re-derived through the chart** (`Meno/Duality.lean`): `unitQuadAction` (`k ↦ k²`, rank one), its scaling identified with `quadraticPartFn`/`quadraticMeanEnergy`, and the four private engine lemmas (`summable_sq_mul_exp`, `summable_pow4_mul_exp`, `hasDerivAt_quadraticPartFn`, `hasDerivAt_M₂`) replaced by chart readings of the general engine — the scalar `hasDerivAt_exp_neg_mul_sq` deleted; one differentiation engine, every rank |
+| 4 | Resolution loss was unpriced: no theorem computed the tower map's fiber cardinality, section cost, or conditional entropy — the coherent resolutions did not connect to the time/ratchet face | **CONFIRMED** | For `q' = c·q` (`Meno/ResolutionCount.lean`): **`card_h1TowerMap_fiber`** — every tower fiber has exactly `c^{b₁}` classes (fibers equinumerous with the kernel by translation, counted against `card_H1Reduction` at both resolutions); **`sectionCost_h1TowerMap`** — the normalized section cost of the tower map is `b₁·log c` (the ratchet along the tower); **`FinDist.condEntropy`** with the chain rule `entropy_eq_map_add_condEntropy` for fully supported distributions (`Meno/InfoRatchet.lean`), instantiated as **`residue_tower_entropy_chain`** (the Gibbs conditional-entropy chain across the tower) and **`residue_tower_condEntropy_eq`** (the loss is the difference of the two residue actions' `K + ⟨E⟩` decompositions). Consumed on theta at `4 → 2`: `theta_tower_fiber_card` (`= 4`), `theta_tower_sectionCost` (`= 2·log 2`), `theta_tower_entropy_chain`, `theta_tower_condEntropy_eq` |
+| 5 | The discipline ledger was historically false: Phase 50 said "No goal reopens" although C9 and C12 should have returned to OPEN, and both remained OPEN at Phase 50's end | **CONFIRMED** in substance — the Phase-49 precedent required recording the reopenings, and review #15's own findings 1–2 show both items still ahead of/behind the code at Phase 50's end. (Precision note: review #14's text did not *explicitly* demand OPEN status — the requirement follows from the discipline itself; recorded here so the ledger claims exactly what the record supports) | The Phase-50 discipline check **corrected in place** (the false sentence replaced by the correction note, following the Phase-48/49 precedent): C9 and C12 effectively OPEN at review #14's receipt, still OPEN at Phase 50's end. **Both re-closed by this phase**: finding 1 supplies the tower's laws C9's account claimed, finding 2 supplies the consumers C12's completeness claims needed; the C9 account now describes exactly what the code has |
+
+**Rule-3 amendments.** (1) The fluctuation face's route: the response
+theory lives in the rank-generic engine (`Meno/Fluctuation.lean`);
+the carrier and the legacy scalar family are both chart instances of
+it — the scalar differentiation engine is retired in favor of the
+chart reading. (2) The tower is now part of C9's *content*, not just
+its prose: laws, pricing, and the conditional-entropy chain are
+theorems with theta consumers.
+
+**Discipline check.** Two reopenings this phase, both recorded and
+both re-closed: **C9** (OPEN at Phase-50 end — the tower's
+functoriality was prose; closed by finding 1's laws and finding 4's
+pricing) and **C12** (OPEN at Phase-50 end — completeness claims
+without consumers; closed by finding 2's completed
+`theta_priced_faces` and the honest Phase-50 correction of
+finding 5). Finding 3 is the phase's mathematical center: the first
+differentiation theorems of the program at general rank —
+`hasDerivAt` under a `b₁`-dimensional lattice sum, dominated at half
+temperature by the same polynomial-times-Gaussian bounds that
+Phase 50 introduced for the static moments; response now equals
+fluctuation intrinsically, and the scalar model that carried this
+face since Phase 27 becomes its rank-one chart. All twelve items
+CLOSED at phase end. `lake build Meno`: build green (3349 jobs — one
+new module, `Meno/Fluctuation.lean`), zero `sorry`, zero `axiom`,
+zero warnings.

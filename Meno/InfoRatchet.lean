@@ -903,6 +903,45 @@ theorem defect_uniformLift [DecidableEq D] [Nonempty D] [Nonempty X]
       (by exact_mod_cast hm.ne' : (m : ℝ) ≠ 0)]
   ring
 
+/-- **Conditional entropy along a map** (review #15): the expected
+information remaining in `x` once `f x` is known —
+`H(P | f) = −∑ₓ p(x)·log(p(x)/p(f x))`. -/
+noncomputable def condEntropy [DecidableEq D] (f : X → D)
+    (P : FinDist X) : ℝ :=
+  -∑ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x))
+
+/-- **The entropy chain rule along a map** (review #15): for a fully
+supported distribution, `H(P) = H(f_*P) + H(P | f)` — entropy is the
+pushforward's entropy plus the conditional entropy of the fibers. -/
+theorem entropy_eq_map_add_condEntropy [DecidableEq D] (f : X → D)
+    (P : FinDist X) (hpos : ∀ x, 0 < P.mass x) :
+    P.entropy = (P.map f).entropy + P.condEntropy f := by
+  have hmap_pos : ∀ x, 0 < (P.map f).mass (f x) := by
+    intro x
+    refine Finset.sum_pos' (fun y _ => P.nonneg y) ⟨x, ?_, hpos x⟩
+    exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
+  have hterm : ∀ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x))
+      = P.mass x * Real.log (P.mass x)
+        - P.mass x * Real.log ((P.map f).mass (f x)) := by
+    intro x
+    rw [Real.log_div (hpos x).ne' (hmap_pos x).ne']
+    ring
+  have hgroup : ∑ x, P.mass x * Real.log ((P.map f).mass (f x))
+      = ∑ d, (P.map f).mass d * Real.log ((P.map f).mass d) := by
+    rw [← Finset.sum_fiberwise Finset.univ f
+      (fun x => P.mass x * Real.log ((P.map f).mass (f x)))]
+    refine Finset.sum_congr rfl fun d _ => ?_
+    rw [Finset.sum_congr rfl (fun x hx => by
+        rw [(Finset.mem_filter.mp hx).2]),
+      ← Finset.sum_mul]
+    rfl
+  show -∑ x, P.mass x * Real.log (P.mass x)
+    = (-∑ d, (P.map f).mass d * Real.log ((P.map f).mass d))
+      + -∑ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x))
+  rw [Finset.sum_congr rfl fun x _ => hterm x, Finset.sum_sub_distrib,
+    ← hgroup]
+  ring
+
 omit [Fintype X] [Fintype Y] in
 /-- **Shared-base coupling preserves the defect** (review #11): the
 coupling adds `log(m·m')` to both sides. -/

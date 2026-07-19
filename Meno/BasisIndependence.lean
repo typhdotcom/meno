@@ -1,5 +1,6 @@
 import Meno.HarmonicClass
 import Meno.LatticeAction
+import Meno.Fluctuation
 import Mathlib.LinearAlgebra.Matrix.Basis
 
 /-! # Basis Independence (C3)
@@ -367,40 +368,6 @@ variance is **unconditionally** nonnegative
 positive on any graph with cycles
 (`classSectorAction_gibbsVariance_energy_pos`). -/
 
-private lemma mul_exp_neg_le (x : ℝ) :
-    x * Real.exp (-x) ≤ 2 * Real.exp (-(x / 2)) := by
-  have h1 : x ≤ 2 * Real.exp (x / 2) := by
-    have h := Real.add_one_le_exp (x / 2)
-    nlinarith [Real.exp_pos (x / 2)]
-  calc x * Real.exp (-x) ≤ 2 * Real.exp (x / 2) * Real.exp (-x) :=
-        mul_le_mul_of_nonneg_right h1 (Real.exp_pos _).le
-    _ = 2 * Real.exp (-(x / 2)) := by
-        rw [mul_assoc, ← Real.exp_add]
-        congr 2
-        ring
-
-private lemma sq_mul_exp_neg_le {x : ℝ} (hx : 0 ≤ x) :
-    x ^ 2 * Real.exp (-x) ≤ 16 * Real.exp (-(x / 2)) := by
-  have h1 : x ≤ 4 * Real.exp (x / 4) := by
-    have h := Real.add_one_le_exp (x / 4)
-    nlinarith [Real.exp_pos (x / 4)]
-  have h2 : x ^ 2 ≤ 16 * Real.exp (x / 2) := by
-    have h3 := mul_le_mul h1 h1 hx (by positivity)
-    calc x ^ 2 = x * x := sq x
-      _ ≤ 4 * Real.exp (x / 4) * (4 * Real.exp (x / 4)) := h3
-      _ = 16 * Real.exp (x / 2) := by
-          rw [show (4 : ℝ) * Real.exp (x / 4) * (4 * Real.exp (x / 4))
-              = 16 * (Real.exp (x / 4) * Real.exp (x / 4)) from by ring,
-            ← Real.exp_add]
-          congr 2
-          ring
-  calc x ^ 2 * Real.exp (-x) ≤ 16 * Real.exp (x / 2) * Real.exp (-x) :=
-        mul_le_mul_of_nonneg_right h2 (Real.exp_pos _).le
-    _ = 16 * Real.exp (-(x / 2)) := by
-        rw [mul_assoc, ← Real.exp_add]
-        congr 2
-        ring
-
 private lemma summable_exp_neg_half_energy :
     Summable (fun k : Fin G.b1 → ℤ =>
       Real.exp (-((G.basisGramData G.cycleBasis).energy k / 2))) := by
@@ -521,6 +488,260 @@ theorem classSectorAction_gibbsVariance_energy_pos (hb : 0 < G.b1) :
     show G.harmonicEnergy 0 ≠ _
     rw [G.harmonicEnergy_zero]
     exact fun h => hc h.symm
+
+/-! ### Fluctuation–dissipation on the intrinsic carrier (review #15)
+
+The inverse-temperature scaling of the intrinsic carrier
+(`classQuadActionβ` — `β·classForm`, positive definite for `β > 0`),
+its sector action (`classSectorActionβ`), and the response theory:
+the carrier's β-scaled partition function and mean energy are the
+cycle-basis chart's (`classScaledPartFn_eq`, `classMeanEnergy_eq`),
+so the rank-generic engine of `Meno/Fluctuation.lean` differentiates
+them (`hasDerivAt_classScaledPartFn`), gives
+**`d⟨E⟩/dβ = −Var_β(E)` intrinsically**
+(`hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance`), and the strict
+carrier variance makes the mean energy **strictly decreasing** on
+any graph with cycles (`classMeanEnergy_strictAntiOn`). -/
+
+/-- **The inverse-temperature scaling of the intrinsic carrier**
+(review #15): the quadratic-lattice action with form `β·classForm`,
+positive definite for `β > 0`. -/
+noncomputable def classQuadActionβ (β : ℝ) (hβ : 0 < β) :
+    QuadLatticeAction.{v} where
+  Λ := (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)
+  form κ κ' := β * G.classForm κ κ'
+  form_comm κ κ' := by rw [G.classForm_comm]
+  form_add_left κ₁ κ₂ κ' := by rw [G.classForm_add_left]; ring
+  posDef_baseChange := by
+    refine bilinBaseChange_posDef_of_gram _ _ _ (G.h1Basis G.cycleBasis) ?_
+    have hmat : (Matrix.of fun i j =>
+          β * G.classForm (G.h1Basis G.cycleBasis i)
+            (G.h1Basis G.cycleBasis j))
+        = β • (G.basisGramData G.cycleBasis).gram := by
+      ext i j
+      rw [Matrix.of_apply, Matrix.smul_apply, smul_eq_mul]
+      congr 1
+      exact G.classForm_h1Basis G.cycleBasis i j
+    rw [hmat]
+    exact posDef_smul' (G.basisGramData G.cycleBasis).gram_posDef hβ
+
+/-- The β-scaled carrier as a sector action: `E = β·harmonicEnergy`. -/
+noncomputable def classSectorActionβ (β : ℝ) (hβ : 0 < β) :
+    SectorAction.{v} :=
+  (G.classQuadActionβ β hβ).toSectorAction
+
+/-- The scaled carrier's energy is the scaled harmonic energy —
+definitionally. -/
+theorem classSectorActionβ_E (β : ℝ) (hβ : 0 < β) :
+    (G.classSectorActionβ β hβ).E = fun κ => β * G.harmonicEnergy κ := rfl
+
+/-- The carrier's β-scaled partition function. -/
+noncomputable def classScaledPartFn (β : ℝ) : ℝ :=
+  ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
+    Real.exp (-(β * G.harmonicEnergy κ))
+
+/-- The carrier's first β-scaled energy moment. -/
+noncomputable def classScaledMoment (β : ℝ) : ℝ :=
+  ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
+    G.harmonicEnergy κ * Real.exp (-(β * G.harmonicEnergy κ))
+
+/-- The carrier's second β-scaled energy moment. -/
+noncomputable def classScaledMoment2 (β : ℝ) : ℝ :=
+  ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
+    G.harmonicEnergy κ ^ 2 * Real.exp (-(β * G.harmonicEnergy κ))
+
+/-- The carrier's Gibbs mean energy at inverse temperature `β`. -/
+noncomputable def classMeanEnergy (β : ℝ) : ℝ :=
+  G.classScaledMoment β / G.classScaledPartFn β
+
+/-- The carrier's β-scaled partition function is the chart's. -/
+theorem classScaledPartFn_eq (β : ℝ) :
+    G.classScaledPartFn β
+      = (G.basisGramData G.cycleBasis).toQuadraticAction.scaledPartFn β := by
+  rw [show (G.basisGramData G.cycleBasis).toQuadraticAction.scaledPartFn β
+      = ∑' k : Fin G.b1 → ℤ, Real.exp
+          (-(β * (G.basisGramData G.cycleBasis).toQuadraticAction.energy k))
+      from rfl,
+    ← Equiv.tsum_eq (G.latticeQuotEquiv G.cycleBasis).toEquiv
+      (fun k : Fin G.b1 → ℤ => Real.exp
+        (-(β * (G.basisGramData G.cycleBasis).toQuadraticAction.energy k)))]
+  refine tsum_congr fun κ => ?_
+  show Real.exp (-(β * G.harmonicEnergy κ))
+    = Real.exp (-(β * (G.basisGramData G.cycleBasis).toQuadraticAction.energy
+        (G.latticeQuotEquiv G.cycleBasis κ)))
+  rw [show (G.basisGramData G.cycleBasis).toQuadraticAction.energy
+      (G.latticeQuotEquiv G.cycleBasis κ) = G.harmonicEnergy κ from
+    G.basisGramData_energy_latticeQuot G.cycleBasis κ]
+
+/-- The carrier's first β-scaled moment is the chart's. -/
+theorem classScaledMoment_eq (β : ℝ) :
+    G.classScaledMoment β
+      = (G.basisGramData G.cycleBasis).toQuadraticAction.scaledMoment β := by
+  rw [show (G.basisGramData G.cycleBasis).toQuadraticAction.scaledMoment β
+      = ∑' k : Fin G.b1 → ℤ,
+          (G.basisGramData G.cycleBasis).toQuadraticAction.energy k
+            * Real.exp
+              (-(β * (G.basisGramData G.cycleBasis).toQuadraticAction.energy k))
+      from rfl,
+    ← Equiv.tsum_eq (G.latticeQuotEquiv G.cycleBasis).toEquiv
+      (fun k : Fin G.b1 → ℤ =>
+        (G.basisGramData G.cycleBasis).toQuadraticAction.energy k
+          * Real.exp
+            (-(β * (G.basisGramData G.cycleBasis).toQuadraticAction.energy k)))]
+  refine tsum_congr fun κ => ?_
+  show G.harmonicEnergy κ * Real.exp (-(β * G.harmonicEnergy κ))
+    = (G.basisGramData G.cycleBasis).toQuadraticAction.energy
+        (G.latticeQuotEquiv G.cycleBasis κ)
+      * Real.exp (-(β * (G.basisGramData G.cycleBasis).toQuadraticAction.energy
+          (G.latticeQuotEquiv G.cycleBasis κ)))
+  rw [show (G.basisGramData G.cycleBasis).toQuadraticAction.energy
+      (G.latticeQuotEquiv G.cycleBasis κ) = G.harmonicEnergy κ from
+    G.basisGramData_energy_latticeQuot G.cycleBasis κ]
+
+/-- The carrier's second β-scaled moment is the chart's. -/
+theorem classScaledMoment2_eq (β : ℝ) :
+    G.classScaledMoment2 β
+      = (G.basisGramData G.cycleBasis).toQuadraticAction.scaledMoment2 β := by
+  rw [show (G.basisGramData G.cycleBasis).toQuadraticAction.scaledMoment2 β
+      = ∑' k : Fin G.b1 → ℤ,
+          (G.basisGramData G.cycleBasis).toQuadraticAction.energy k ^ 2
+            * Real.exp
+              (-(β * (G.basisGramData G.cycleBasis).toQuadraticAction.energy k))
+      from rfl,
+    ← Equiv.tsum_eq (G.latticeQuotEquiv G.cycleBasis).toEquiv
+      (fun k : Fin G.b1 → ℤ =>
+        (G.basisGramData G.cycleBasis).toQuadraticAction.energy k ^ 2
+          * Real.exp
+            (-(β * (G.basisGramData G.cycleBasis).toQuadraticAction.energy k)))]
+  refine tsum_congr fun κ => ?_
+  show G.harmonicEnergy κ ^ 2 * Real.exp (-(β * G.harmonicEnergy κ))
+    = (G.basisGramData G.cycleBasis).toQuadraticAction.energy
+        (G.latticeQuotEquiv G.cycleBasis κ) ^ 2
+      * Real.exp (-(β * (G.basisGramData G.cycleBasis).toQuadraticAction.energy
+          (G.latticeQuotEquiv G.cycleBasis κ)))
+  rw [show (G.basisGramData G.cycleBasis).toQuadraticAction.energy
+      (G.latticeQuotEquiv G.cycleBasis κ) = G.harmonicEnergy κ from
+    G.basisGramData_energy_latticeQuot G.cycleBasis κ]
+
+/-- The carrier's Gibbs mean energy is the chart's. -/
+theorem classMeanEnergy_eq :
+    G.classMeanEnergy
+      = (G.basisGramData G.cycleBasis).toQuadraticAction.meanEnergy := by
+  funext β
+  show G.classScaledMoment β / G.classScaledPartFn β = _
+  rw [G.classScaledMoment_eq β, G.classScaledPartFn_eq β]
+  rfl
+
+/-- **The carrier's partition function differentiates**
+(review #15): `Z′ = −M₁` at every `β > 0`. -/
+theorem hasDerivAt_classScaledPartFn (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt G.classScaledPartFn (-G.classScaledMoment β) β := by
+  rw [show G.classScaledPartFn
+      = (G.basisGramData G.cycleBasis).toQuadraticAction.scaledPartFn from
+    funext G.classScaledPartFn_eq, G.classScaledMoment_eq β]
+  exact (G.basisGramData G.cycleBasis).toQuadraticAction.hasDerivAt_scaledPartFn hβ
+
+/-- The scaled carrier's Gibbs variance of the harmonic energy, in
+moment form. -/
+theorem classSectorActionβ_gibbsVariance_energy (β : ℝ) (hβ : 0 < β) :
+    (G.classSectorActionβ β hβ).gibbsVariance G.harmonicEnergy
+      = G.classScaledMoment2 β / G.classScaledPartFn β
+        - G.classMeanEnergy β ^ 2 := by
+  have h1 : (G.classSectorActionβ β hβ).gibbsExpect G.harmonicEnergy
+      = G.classScaledMoment β / G.classScaledPartFn β := by
+    have hterm : ∀ κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
+        G.harmonicEnergy κ * (G.classSectorActionβ β hβ).gibbsMass κ
+          = G.harmonicEnergy κ * Real.exp (-(β * G.harmonicEnergy κ))
+            / G.classScaledPartFn β := by
+      intro κ
+      show G.harmonicEnergy κ * ((G.classSectorActionβ β hβ).weight κ
+        / (G.classSectorActionβ β hβ).partFn) = _
+      rw [mul_div_assoc]
+      rfl
+    show (∑' κ, G.harmonicEnergy κ
+      * (G.classSectorActionβ β hβ).gibbsMass κ) = _
+    rw [tsum_congr hterm, tsum_div_const]
+    rfl
+  have h2 : (G.classSectorActionβ β hβ).gibbsExpect
+        (fun κ => G.harmonicEnergy κ ^ 2)
+      = G.classScaledMoment2 β / G.classScaledPartFn β := by
+    have hterm : ∀ κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
+        G.harmonicEnergy κ ^ 2 * (G.classSectorActionβ β hβ).gibbsMass κ
+          = G.harmonicEnergy κ ^ 2 * Real.exp (-(β * G.harmonicEnergy κ))
+            / G.classScaledPartFn β := by
+      intro κ
+      show G.harmonicEnergy κ ^ 2 * ((G.classSectorActionβ β hβ).weight κ
+        / (G.classSectorActionβ β hβ).partFn) = _
+      rw [mul_div_assoc]
+      rfl
+    show (∑' κ, G.harmonicEnergy κ ^ 2
+      * (G.classSectorActionβ β hβ).gibbsMass κ) = _
+    rw [tsum_congr hterm, tsum_div_const]
+    rfl
+  show (G.classSectorActionβ β hβ).gibbsExpect
+        (fun κ => G.harmonicEnergy κ ^ 2)
+      - (G.classSectorActionβ β hβ).gibbsExpect G.harmonicEnergy ^ 2 = _
+  rw [h1, h2]
+  rfl
+
+/-- The scaled carrier's energy variance is the chart's. -/
+theorem classSectorActionβ_gibbsVariance_eq (β : ℝ) (hβ : 0 < β) :
+    (G.classSectorActionβ β hβ).gibbsVariance G.harmonicEnergy
+      = ((G.basisGramData G.cycleBasis).toQuadraticAction.scaledSector β
+          hβ).gibbsVariance
+          (G.basisGramData G.cycleBasis).toQuadraticAction.energy := by
+  rw [G.classSectorActionβ_gibbsVariance_energy β hβ,
+    (G.basisGramData G.cycleBasis).toQuadraticAction.scaledSector_gibbsVariance_energy
+      β hβ,
+    G.classScaledMoment2_eq β, G.classScaledPartFn_eq β,
+    show G.classMeanEnergy β
+      = (G.basisGramData G.cycleBasis).toQuadraticAction.meanEnergy β from
+    congrFun G.classMeanEnergy_eq β]
+
+/-- **FLUCTUATION–DISSIPATION ON THE INTRINSIC CARRIER**
+(review #15): the derivative of the carrier's Gibbs mean energy in
+the inverse temperature is minus the Gibbs variance of the harmonic
+energy — response equals fluctuation, intrinsically, at every
+rank. -/
+theorem hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance (β : ℝ)
+    (hβ : 0 < β) :
+    HasDerivAt G.classMeanEnergy
+      (-((G.classSectorActionβ β hβ).gibbsVariance G.harmonicEnergy)) β := by
+  rw [G.classMeanEnergy_eq, G.classSectorActionβ_gibbsVariance_eq β hβ]
+  exact (G.basisGramData G.cycleBasis).toQuadraticAction.hasDerivAt_meanEnergy_eq_neg_gibbsVariance
+    β hβ
+
+/-- **The scaled carrier's energy variance is strictly positive** on
+any graph with cycles, at every inverse temperature (review #15). -/
+theorem classSectorActionβ_gibbsVariance_energy_pos (hb : 0 < G.b1)
+    (β : ℝ) (hβ : 0 < β) :
+    0 < (G.classSectorActionβ β hβ).gibbsVariance G.harmonicEnergy := by
+  rw [G.classSectorActionβ_gibbsVariance_eq β hβ]
+  obtain ⟨i⟩ : Nonempty (Fin G.b1) := ⟨⟨0, hb⟩⟩
+  refine (G.basisGramData G.cycleBasis).toQuadraticAction.scaledSector_gibbsVariance_energy_pos
+    β hβ (k₀ := (Pi.single i 1 : Fin G.b1 → ℤ)) ?_
+  have hne : (Pi.single i 1 : Fin G.b1 → ℤ) ≠ 0 := by
+    intro h0
+    have h3 := congrFun h0 i
+    rw [Pi.single_eq_same, Pi.zero_apply] at h3
+    exact one_ne_zero h3
+  exact ((G.basisGramData G.cycleBasis).energy_pos_of_ne_zero _ hne).ne'
+
+/-- **STRICT DISSIPATION ON THE INTRINSIC CARRIER** (review #15): on
+any graph with cycles, the Gibbs mean energy strictly decreases in
+the inverse temperature — `d⟨E⟩/dβ = −Var < 0`. -/
+theorem classMeanEnergy_strictAntiOn (hb : 0 < G.b1) :
+    StrictAntiOn G.classMeanEnergy (Set.Ioi 0) := by
+  rw [G.classMeanEnergy_eq]
+  obtain ⟨i⟩ : Nonempty (Fin G.b1) := ⟨⟨0, hb⟩⟩
+  refine (G.basisGramData G.cycleBasis).toQuadraticAction.meanEnergy_strictAntiOn
+    ⟨(Pi.single i 1 : Fin G.b1 → ℤ), ?_⟩
+  have hne : (Pi.single i 1 : Fin G.b1 → ℤ) ≠ 0 := by
+    intro h0
+    have h3 := congrFun h0 i
+    rw [Pi.single_eq_same, Pi.zero_apply] at h3
+    exact one_ne_zero h3
+  exact ((G.basisGramData G.cycleBasis).energy_pos_of_ne_zero _ hne).ne'
 
 /-! ## The intrinsic dual identified with graph homology (review #10)
 

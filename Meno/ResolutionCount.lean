@@ -791,11 +791,18 @@ noncomputable def carrierFiberEquivGauge (ξ : H1Reduction G q) :
 theorem card_H1Reduction : Nat.card (H1Reduction G q) = q ^ G.b1 := by
   rw [Nat.card_congr (G.h1ResQuotEquiv q).toEquiv, G.card_quotient_eq q]
 
-noncomputable instance : DecidableEq (H1Reduction G q) := Classical.decEq _
+noncomputable instance h1ReductionDecEq : DecidableEq (H1Reduction G q) :=
+  Classical.decEq _
 
-instance : Nonempty (SGD.Pullback (G.carrierCompression q)
-    (G.carrierCompression q)) :=
+instance carrierPullbackNonempty :
+    Nonempty (SGD.Pullback (G.carrierCompression q)
+      (G.carrierCompression q)) :=
   ⟨⟨(0, 0), rfl⟩⟩
+
+noncomputable instance carrierPullbackFintype :
+    Fintype (SGD.Pullback (G.carrierCompression q)
+      (G.carrierCompression q)) :=
+  inferInstance
 
 /-- **GRAVITY ON THE CARRIER** (review #7): `gravity_complexity`
 applied to the self-pullback of `carrierCompression` — pairs of
@@ -2224,7 +2231,214 @@ theorem classPartFn_tower (hdvd : q ∣ q') :
     G.residueWeight_factor_trans q q' hdvd]
   ring
 
+/-! #### The tower's laws (review #15)
+
+The reduction maps genuinely form a tower: identity, composition,
+independence of the divisibility witness, and surjectivity — with
+the corresponding composition laws for residue weights,
+distributions, and actions. -/
+
+/-- **Identity law** (review #15): the tower map at `q ∣ q` is the
+identity. -/
+theorem h1TowerMap_id :
+    G.h1TowerMap q q dvd_rfl = LinearMap.id := by
+  refine LinearMap.ext fun ξ => ?_
+  obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
+  rfl
+
+/-- **Proof-witness independence** (review #15): the tower map does
+not depend on the divisibility witness. -/
+theorem h1TowerMap_proof_irrel (h₁ h₂ : q ∣ q') :
+    G.h1TowerMap q q' h₁ = G.h1TowerMap q q' h₂ := rfl
+
+/-- **Surjectivity** (review #15): every coarse class is hit — both
+reductions are quotients of the same carrier. -/
+theorem h1TowerMap_surjective (hdvd : q ∣ q') :
+    Function.Surjective (G.h1TowerMap q q' hdvd) := by
+  intro ξ
+  obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
+  exact ⟨Submodule.Quotient.mk κ, rfl⟩
+
 end Tower
+
+section TowerComp
+
+variable (q' q'' : ℕ) [NeZero q'] [NeZero q'']
+
+/-- **Composition law** (review #15): tower maps compose along
+divisibility. -/
+theorem h1TowerMap_comp (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
+    (G.h1TowerMap q q' h₁).comp (G.h1TowerMap q' q'' h₂)
+      = G.h1TowerMap q q'' (h₁.trans h₂) := by
+  refine LinearMap.ext fun ξ => ?_
+  obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
+  rfl
+
+/-- **Residue weights compose across the tower** (review #15):
+pushing the finest weights forward in two steps agrees with the one
+step — both compute the coarse coset weight. -/
+theorem residueWeight_tower_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'')
+    (ξ : H1Reduction G q) :
+    ∑' η : {η : H1Reduction G q' // G.h1TowerMap q q' h₁ η = ξ},
+      (∑' ζ : {ζ : H1Reduction G q'' //
+          G.h1TowerMap q' q'' h₂ ζ = η.val},
+        G.residueWeight q'' ζ.val)
+      = ∑' ζ : {ζ : H1Reduction G q'' //
+          G.h1TowerMap q q'' (h₁.trans h₂) ζ = ξ},
+          G.residueWeight q'' ζ.val :=
+  calc ∑' η : {η : H1Reduction G q' // G.h1TowerMap q q' h₁ η = ξ},
+        (∑' ζ : {ζ : H1Reduction G q'' //
+            G.h1TowerMap q' q'' h₂ ζ = η.val},
+          G.residueWeight q'' ζ.val)
+      = ∑' η : {η : H1Reduction G q' // G.h1TowerMap q q' h₁ η = ξ},
+          G.residueWeight q' η.val :=
+        tsum_congr fun η => (G.residueWeight_tower q' q'' h₂ η.val).symm
+    _ = G.residueWeight q ξ := (G.residueWeight_tower q q' h₁ ξ).symm
+    _ = ∑' ζ : {ζ : H1Reduction G q'' //
+          G.h1TowerMap q q'' (h₁.trans h₂) ζ = ξ},
+          G.residueWeight q'' ζ.val :=
+        G.residueWeight_tower q q'' (h₁.trans h₂) ξ
+
+/-- **Residue distributions compose across the tower** (review #15):
+the two-step pushforward of the finest Gibbs law equals the one-step
+pushforward — both are the coarse residue distribution. -/
+theorem residueDist_tower_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
+    ((G.residueDist q'').map (⇑(G.h1TowerMap q' q'' h₂))).map
+        (⇑(G.h1TowerMap q q' h₁))
+      = (G.residueDist q'').map (⇑(G.h1TowerMap q q'' (h₁.trans h₂))) := by
+  rw [G.residueDist_tower q' q'' h₂, G.residueDist_tower q q' h₁,
+    G.residueDist_tower q q'' (h₁.trans h₂)]
+
+/-- **Residue actions compose across the tower** (review #15):
+coarse-graining the intermediate residue action and coarse-graining
+the finest one agree at the coarse resolution — both are the coarse
+residue action. -/
+theorem residueAction_tower_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
+    (G.residueAction q').coarseGrain (⇑(G.h1TowerMap q q' h₁)) 0
+        (G.residueAction_tower_weight_pos q q' h₁)
+        (G.residueAction_tower_weight_le q q' h₁)
+      = (G.residueAction q'').coarseGrain
+          (⇑(G.h1TowerMap q q'' (h₁.trans h₂))) 0
+          (G.residueAction_tower_weight_pos q q'' (h₁.trans h₂))
+          (G.residueAction_tower_weight_le q q'' (h₁.trans h₂)) := by
+  rw [G.residueAction_tower q q' h₁, G.residueAction_tower q q'' (h₁.trans h₂)]
+
+end TowerComp
+
+/-! ### The price of resolution loss (review #15)
+
+The tower is not free: dropping from resolution `q' = c·q` to
+resolution `q` merges `c^{b₁}` fine classes into each coarse class
+(`card_h1TowerMap_fiber`), reversing the merge costs `b₁·log c` per
+coarse sector (`sectionCost_h1TowerMap` — the ratchet along the
+tower), and under the Gibbs law the lost information is exactly the
+conditional entropy of the tower map
+(`residue_tower_entropy_chain`), which the two entropy splits read
+as the difference of the `K + ⟨E⟩` decompositions
+(`residue_tower_condEntropy_eq`). -/
+
+section TowerCost
+
+variable (q' c : ℕ) [NeZero q']
+
+private noncomputable def towerFiberEquivKer (hdvd : q ∣ q') (ξ : H1Reduction G q)
+    (η₀ : H1Reduction G q') (hη₀ : G.h1TowerMap q q' hdvd η₀ = ξ) :
+    {η : H1Reduction G q' // G.h1TowerMap q q' hdvd η = ξ}
+      ≃ {η : H1Reduction G q' // G.h1TowerMap q q' hdvd η = 0} where
+  toFun η := ⟨η.val - η₀, by rw [map_sub, η.prop, hη₀, sub_self]⟩
+  invFun η := ⟨η.val + η₀, by rw [map_add, η.prop, hη₀, zero_add]⟩
+  left_inv η := Subtype.ext (sub_add_cancel _ _)
+  right_inv η := Subtype.ext (add_sub_cancel_right _ _)
+
+/-- **Every tower fiber has `c^{b₁}` classes** (review #15): dropping
+one resolution step `q' = c·q` merges exactly `c^{b₁}` fine classes
+into each coarse class. -/
+theorem card_h1TowerMap_fiber (hdvd : q ∣ q') (hq' : q' = c * q)
+    (ξ : H1Reduction G q) :
+    Nat.card {η : H1Reduction G q' // G.h1TowerMap q q' hdvd η = ξ}
+      = c ^ G.b1 := by
+  classical
+  have hfib : ∀ ζ : H1Reduction G q,
+      Nat.card {η : H1Reduction G q' // G.h1TowerMap q q' hdvd η = ζ}
+        = Nat.card {η : H1Reduction G q' //
+            G.h1TowerMap q q' hdvd η = 0} := by
+    intro ζ
+    obtain ⟨η₁, hη₁⟩ := G.h1TowerMap_surjective q q' hdvd ζ
+    exact Nat.card_congr (G.towerFiberEquivKer q q' hdvd ζ η₁ hη₁)
+  have htot := card_eq_card_mul_of_fiber
+    (fun η : H1Reduction G q' => G.h1TowerMap q q' hdvd η) hfib
+  have hq : Nat.card (H1Reduction G q) = q ^ G.b1 := G.card_H1Reduction q
+  have hq'' : Nat.card (H1Reduction G q') = q' ^ G.b1 :=
+    G.card_H1Reduction q'
+  rw [Nat.card_eq_fintype_card] at hq hq''
+  rw [hq'', hq] at htot
+  have hpow : q' ^ G.b1 = c ^ G.b1 * q ^ G.b1 := by
+    rw [hq', mul_pow]
+  have hqpos : 0 < q ^ G.b1 :=
+    pow_pos (Nat.pos_of_ne_zero (NeZero.ne q)) _
+  have hm : Nat.card {η : H1Reduction G q' //
+      G.h1TowerMap q q' hdvd η = 0} = c ^ G.b1 := by
+    refine Nat.eq_of_mul_eq_mul_left hqpos ?_
+    calc q ^ G.b1 * Nat.card {η : H1Reduction G q' //
+          G.h1TowerMap q q' hdvd η = 0}
+        = q' ^ G.b1 := htot.symm
+      _ = c ^ G.b1 * q ^ G.b1 := hpow
+      _ = q ^ G.b1 * c ^ G.b1 := mul_comm _ _
+  rw [hfib ξ, hm]
+
+/-- **The ratchet along the tower** (review #15): reversing one
+resolution step costs `b₁·log c` per coarse sector — the section
+cost of the tower map, normalized. -/
+theorem sectionCost_h1TowerMap (hdvd : q ∣ q') (hq' : q' = c * q) :
+    sectionCost (⇑(G.h1TowerMap q q' hdvd)) / Nat.card (H1Reduction G q)
+      = G.b1 * Real.log c := by
+  classical
+  have hcost : sectionCost (⇑(G.h1TowerMap q q' hdvd))
+      = Fintype.card (H1Reduction G q) * Real.log ((c : ℝ) ^ G.b1) := by
+    rw [sectionCost_eq_fiberInfoCost (G.h1TowerMap_surjective q q' hdvd)]
+    unfold fiberInfoCost
+    rw [Finset.sum_congr rfl fun ξ _ => by
+      rw [show (Nat.card (⇑(G.h1TowerMap q q' hdvd) ⁻¹' {ξ}) : ℕ)
+          = c ^ G.b1 from G.card_h1TowerMap_fiber q q' c hdvd hq' ξ]]
+    rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    push_cast
+    ring
+  have hcard : (0 : ℝ) < Fintype.card (H1Reduction G q) := by
+    exact_mod_cast Fintype.card_pos
+  rw [Nat.card_eq_fintype_card, hcost,
+    mul_div_cancel_left₀ _ hcard.ne', Real.log_pow]
+
+/-- **The Gibbs conditional-entropy chain across the tower**
+(review #15): the fine residue entropy is the coarse residue entropy
+plus the conditional entropy of the tower map under the fine Gibbs
+law — what one resolution step forgets, priced by the Gibbs
+distribution. -/
+theorem residue_tower_entropy_chain (hdvd : q ∣ q') :
+    shannonEntropy (G.residueMass q')
+      = shannonEntropy (G.residueMass q)
+        + (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd)) := by
+  have h := FinDist.entropy_eq_map_add_condEntropy
+    (⇑(G.h1TowerMap q q' hdvd)) (G.residueDist q')
+    (fun η => G.residueMass_pos q' η)
+  rw [G.residueDist_tower q q' hdvd] at h
+  exact h
+
+/-- **The lost information, priced** (review #15): the tower's
+conditional entropy is the difference of the two residue actions'
+`K + ⟨E⟩` decompositions — resolution loss is a difference of
+pricings. -/
+theorem residue_tower_condEntropy_eq (hdvd : q ∣ q') :
+    (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
+      = ((G.residueAction q').complexity
+          + (G.residueAction q').gibbsExpect (G.residueAction q').E)
+        - ((G.residueAction q).complexity
+          + (G.residueAction q).gibbsExpect (G.residueAction q).E) := by
+  have h1 := G.residueAction_entropy_split q
+  have h2 := G.residueAction_entropy_split q'
+  have h3 := G.residue_tower_entropy_chain q q' hdvd
+  linarith
+
+end TowerCost
 
 end IncidenceGraph
 

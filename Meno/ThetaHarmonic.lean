@@ -468,39 +468,142 @@ theorem theta_residueAction_tower :
       = thetaGraph.residueAction 2 :=
   thetaGraph.residueAction_tower 2 4 (by norm_num)
 
-/-- **The priced faces on the theta graph at `q = 2`** (review #14):
-the priced partition-function gravity identity, the priced complexity
-gravity identity, the priced time identity, the three strictly
-positive bridge terms, and the strictly positive energy variance —
-every face of the program, priced and strict, on one explicit
-graph. -/
+noncomputable local instance :
+    DecidableEq (IncidenceGraph.H1Reduction thetaGraph 2) :=
+  thetaGraph.h1ReductionDecEq 2
+
+noncomputable local instance :
+    Fintype (SGD.Pullback (thetaGraph.carrierCompression 2)
+      (thetaGraph.carrierCompression 2)) :=
+  thetaGraph.carrierPullbackFintype 2
+
+local instance :
+    Nonempty (SGD.Pullback (thetaGraph.carrierCompression 2)
+      (thetaGraph.carrierCompression 2)) :=
+  thetaGraph.carrierPullbackNonempty 2
+
+/-- **The priced faces on the theta graph at `q = 2`** (reviews #14,
+#15): the priced partition-function and complexity gravity
+identities, the priced time identity, the **complete residue,
+description, and pair bridge packages** — each bridge equality with
+its three strictly positive terms — and all **three transported
+strict energy variances**. Every face of the program, priced and
+strict, on one explicit graph. -/
 theorem theta_priced_faces :
-    (thetaGraph.pairAction 2).partFn * (thetaGraph.residueAction 2).partFn
+    ((thetaGraph.pairAction 2).partFn * (thetaGraph.residueAction 2).partFn
         = (thetaGraph.descriptionAction 2).partFn
-          * (thetaGraph.descriptionAction 2).partFn
-      ∧ (thetaGraph.pairAction 2).complexity
+          * (thetaGraph.descriptionAction 2).partFn)
+      ∧ ((thetaGraph.pairAction 2).complexity
             + (thetaGraph.residueAction 2).complexity
           = (thetaGraph.descriptionAction 2).complexity
-            + (thetaGraph.descriptionAction 2).complexity
-      ∧ sectionCost (thetaGraph.carrierCompression 2)
+            + (thetaGraph.descriptionAction 2).complexity)
+      ∧ (sectionCost (thetaGraph.carrierCompression 2)
             / Nat.card (IncidenceGraph.H1Reduction thetaGraph 2)
           = (thetaGraph.descriptionAction 2).complexity
-            - (thetaGraph.residueAction 2).complexity
-      ∧ 0 < (thetaGraph.residueAction 2).complexity
-      ∧ 0 < (thetaGraph.residueAction 2).gibbsExpect
-          (thetaGraph.residueAction 2).E
-      ∧ 0 < thetaGraph.residueDefect 2
+            - (thetaGraph.residueAction 2).complexity)
+      ∧ ((uniformAction (IncidenceGraph.H1Reduction thetaGraph 2)).complexity
+            = (thetaGraph.residueAction 2).complexity
+              + (thetaGraph.residueAction 2).gibbsExpect
+                  (thetaGraph.residueAction 2).E
+              + thetaGraph.residueDefect 2
+          ∧ 0 < (thetaGraph.residueAction 2).complexity
+          ∧ 0 < (thetaGraph.residueAction 2).gibbsExpect
+              (thetaGraph.residueAction 2).E
+          ∧ 0 < thetaGraph.residueDefect 2)
+      ∧ ((uniformAction (thetaGraph.E → ZMod 2)).complexity
+            = (thetaGraph.descriptionAction 2).complexity
+              + (thetaGraph.descriptionAction 2).gibbsExpect
+                  (thetaGraph.descriptionAction 2).E
+              + thetaGraph.residueDefect 2
+          ∧ 0 < (thetaGraph.descriptionAction 2).complexity
+          ∧ 0 < (thetaGraph.descriptionAction 2).gibbsExpect
+              (thetaGraph.descriptionAction 2).E
+          ∧ 0 < thetaGraph.residueDefect 2)
+      ∧ ((uniformAction (SGD.Pullback (thetaGraph.carrierCompression 2)
+              (thetaGraph.carrierCompression 2))).complexity
+            = (thetaGraph.pairAction 2).complexity
+              + (thetaGraph.pairAction 2).gibbsExpect
+                  (thetaGraph.pairAction 2).E
+              + thetaGraph.residueDefect 2
+          ∧ 0 < (thetaGraph.pairAction 2).complexity
+          ∧ 0 < (thetaGraph.pairAction 2).gibbsExpect
+              (thetaGraph.pairAction 2).E
+          ∧ 0 < thetaGraph.residueDefect 2)
       ∧ 0 < (thetaGraph.residueAction 2).gibbsVariance
-          (thetaGraph.residueAction 2).E := by
+          (thetaGraph.residueAction 2).E
+      ∧ 0 < (thetaGraph.descriptionAction 2).gibbsVariance
+          (thetaGraph.descriptionAction 2).E
+      ∧ 0 < (thetaGraph.pairAction 2).gibbsVariance
+          (thetaGraph.pairAction 2).E := by
   have hb : 0 < thetaGraph.b1 := by
     rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
     norm_num
   exact ⟨thetaGraph.carrier_gravity_partFn 2,
     thetaGraph.carrier_gravity_action 2,
     thetaGraph.sectionCost_carrierCompression_action 2,
-    thetaGraph.residueAction_complexity_pos 2 hb (by norm_num),
-    thetaGraph.residueAction_gibbsExpect_E_pos 2 hb (by norm_num),
-    thetaGraph.residueDefect_pos 2 hb (by norm_num),
-    thetaGraph.residueAction_gibbsVariance_E_pos 2 hb (by norm_num)⟩
+    thetaGraph.uniformComplexity_residue_bridge_pos 2 hb (by norm_num),
+    thetaGraph.uniformComplexity_description_bridge_pos 2 hb (by norm_num),
+    thetaGraph.uniformComplexity_pair_bridge_pos 2 hb (by norm_num),
+    thetaGraph.residueAction_gibbsVariance_E_pos 2 hb (by norm_num),
+    thetaGraph.descriptionAction_gibbsVariance_E_pos 2 hb (by norm_num),
+    thetaGraph.pairAction_gibbsVariance_E_pos 2 hb (by norm_num)⟩
+
+/-! ### The tower on theta (review #15) -/
+
+noncomputable local instance :
+    Fintype (IncidenceGraph.H1Reduction thetaGraph 8) :=
+  thetaGraph.h1ReductionFintype 8
+
+/-- **The commuting tower triangle on theta** (review #15):
+`8 → 4 → 2` composes to `8 → 2`. -/
+theorem theta_towerMap_triangle :
+    (thetaGraph.h1TowerMap 2 4 (by norm_num)).comp
+        (thetaGraph.h1TowerMap 4 8 (by norm_num))
+      = thetaGraph.h1TowerMap 2 8 (by norm_num) :=
+  thetaGraph.h1TowerMap_comp 2 4 8 (by norm_num) (by norm_num)
+
+/-- **The tower fibers on theta** (review #15): dropping `4 → 2`
+merges exactly `2^{b₁} = 4` fine classes into each coarse class. -/
+theorem theta_tower_fiber_card
+    (ξ : IncidenceGraph.H1Reduction thetaGraph 2) :
+    Nat.card {η : IncidenceGraph.H1Reduction thetaGraph 4 //
+        thetaGraph.h1TowerMap 2 4 (by norm_num) η = ξ} = 4 := by
+  have h := thetaGraph.card_h1TowerMap_fiber 2 4 2 (by norm_num)
+    (by norm_num) ξ
+  rw [h, ← thetaGraph.card_eq_b1 thetaLatticeBasis]
+  norm_num
+
+/-- **The ratchet along the theta tower** (review #15): reversing
+`4 → 2` costs `b₁·log 2 = 2·log 2` per coarse sector. -/
+theorem theta_tower_sectionCost :
+    sectionCost (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num)))
+        / Nat.card (IncidenceGraph.H1Reduction thetaGraph 2)
+      = 2 * Real.log 2 := by
+  have h := thetaGraph.sectionCost_h1TowerMap 2 4 2 (by norm_num)
+    (by norm_num)
+  rw [h, ← thetaGraph.card_eq_b1 thetaLatticeBasis]
+  norm_num
+
+/-- **What the theta tower forgets, priced** (review #15): the Gibbs
+conditional-entropy chain at `4 → 2`. -/
+theorem theta_tower_entropy_chain :
+    shannonEntropy (thetaGraph.residueMass 4)
+      = shannonEntropy (thetaGraph.residueMass 2)
+        + (thetaGraph.residueDist 4).condEntropy
+            (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num))) :=
+  thetaGraph.residue_tower_entropy_chain 2 4 (by norm_num)
+
+/-- The theta tower's conditional entropy is the difference of the
+two residue actions' `K + ⟨E⟩` decompositions (review #15). -/
+theorem theta_tower_condEntropy_eq :
+    (thetaGraph.residueDist 4).condEntropy
+        (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num)))
+      = ((thetaGraph.residueAction 4).complexity
+          + (thetaGraph.residueAction 4).gibbsExpect
+              (thetaGraph.residueAction 4).E)
+        - ((thetaGraph.residueAction 2).complexity
+          + (thetaGraph.residueAction 2).gibbsExpect
+              (thetaGraph.residueAction 2).E) :=
+  thetaGraph.residue_tower_condEntropy_eq 2 4 (by norm_num)
 
 end Meno

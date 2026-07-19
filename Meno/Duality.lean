@@ -1,4 +1,6 @@
 import Meno.Groupoid
+import Meno.Fluctuation
+import Meno.PeriodHarmonic
 import Mathlib.Analysis.Real.Pi.Bounds
 
 /-! # Fourier Duality on GroupoidObj
@@ -428,122 +430,107 @@ theorem dual_pair_product (α : ℝ) (hα : 0 < α) :
     (α / Real.pi) ^ ((1 : ℝ) / 2) * quadraticPartFn α ^ 2 := by
   rw [quadraticPartFn_duality_real α hα]; ring
 
-/-- Derivative of each summand: d/dβ exp(-β·k²) = -k²·exp(-β·k²). -/
-private lemma hasDerivAt_exp_neg_mul_sq (k : ℤ) (β : ℝ) :
-    HasDerivAt (fun γ => Real.exp (-γ * (k : ℝ) ^ 2))
-      (-(k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) β := by
-  have : HasDerivAt (fun γ => -γ * (k : ℝ) ^ 2) (-(1 : ℝ) * (k : ℝ) ^ 2) β :=
-    (hasDerivAt_id β).neg.mul_const _
-  convert this.exp using 1; ring
+/-! ### The scalar family as the rank-one chart (review #15)
+
+The scalar quadratic family `β ↦ ∑' k : ℤ, exp(−β·k²)` is the
+rank-one instance of the rank-generic inverse-temperature engine
+(`Meno/Fluctuation.lean`): the unit quadratic action `k ↦ k²` scales
+to it, and the differentiation lemmas below are the general
+`Z′ = −M₁`, `M₁′ = −M₂` read through the chart `(Fin 1 → ℤ) ≃ ℤ` —
+the analytic engine exists once, at every rank. -/
+
+/-- The rank-one unit quadratic action `k ↦ k²`. -/
+noncomputable def unitQuadAction : Meno.QuadraticAction 1 where
+  Q := !![1]
+  Q_posDef := Meno.posDef_fin_one 1 one_pos
+
+private def zEquiv : (Fin 1 → ℤ) ≃ ℤ := Equiv.funUnique (Fin 1) ℤ
+
+private lemma unitQuadAction_energy (k : Fin 1 → ℤ) :
+    unitQuadAction.energy k = ((k 0 : ℝ)) ^ 2 := by
+  show ∑ i, ∑ j, (!![(1 : ℝ)]) i j * (k i : ℝ) * (k j : ℝ) = _
+  have h : (!![(1 : ℝ)]) 0 0 = 1 := rfl
+  rw [Fin.sum_univ_one, Fin.sum_univ_one, h]
+  ring
+
+private lemma scaledPartFn_unit (β : ℝ) :
+    unitQuadAction.scaledPartFn β = quadraticPartFn β := by
+  refine (Equiv.tsum_eq zEquiv.symm
+    (fun k : Fin 1 → ℤ =>
+      Real.exp (-(β * unitQuadAction.energy k)))).symm.trans ?_
+  refine tsum_congr fun n => ?_
+  rw [unitQuadAction_energy]
+  show Real.exp (-(β * (n : ℝ) ^ 2)) = Real.exp (-β * (n : ℝ) ^ 2)
+  rw [show -(β * (n : ℝ) ^ 2) = -β * (n : ℝ) ^ 2 from by ring]
+
+private lemma scaledMoment_unit (β : ℝ) :
+    unitQuadAction.scaledMoment β
+      = ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2) := by
+  refine (Equiv.tsum_eq zEquiv.symm
+    (fun k : Fin 1 → ℤ => unitQuadAction.energy k
+      * Real.exp (-(β * unitQuadAction.energy k)))).symm.trans ?_
+  refine tsum_congr fun n => ?_
+  rw [unitQuadAction_energy]
+  show (n : ℝ) ^ 2 * Real.exp (-(β * (n : ℝ) ^ 2)) = _
+  rw [show -(β * (n : ℝ) ^ 2) = -β * (n : ℝ) ^ 2 from by ring]
+
+private lemma scaledMoment2_unit (β : ℝ) :
+    unitQuadAction.scaledMoment2 β
+      = ∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-β * (k : ℝ) ^ 2) := by
+  refine (Equiv.tsum_eq zEquiv.symm
+    (fun k : Fin 1 → ℤ => unitQuadAction.energy k ^ 2
+      * Real.exp (-(β * unitQuadAction.energy k)))).symm.trans ?_
+  refine tsum_congr fun n => ?_
+  rw [unitQuadAction_energy]
+  show ((n : ℝ) ^ 2) ^ 2 * Real.exp (-(β * (n : ℝ) ^ 2)) = _
+  rw [show -(β * (n : ℝ) ^ 2) = -β * (n : ℝ) ^ 2 from by ring,
+    show ((n : ℝ) ^ 2) ^ 2 = (n : ℝ) ^ 4 from by ring]
 
 private lemma summable_sq_mul_exp (β : ℝ) (hβ : 0 < β) :
     Summable (fun k : ℤ => (k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) := by
-  have hβ2 : 0 < β / 2 := by linarith
-  have hdom : Summable (fun k : ℤ => (2 / β) * Real.exp (-(β / 2) * (k : ℝ) ^ 2)) :=
-    (Meno.QuadraticAction.summable_scalarPartFn (β / 2) hβ2).const_smul (2 / β)
-  exact Summable.of_nonneg_of_le
-    (fun k => mul_nonneg (sq_nonneg _) (le_of_lt (Real.exp_pos _)))
-    (fun k => by
-      have h1 : β / 2 * (k : ℝ) ^ 2 ≤ Real.exp (β / 2 * (k : ℝ) ^ 2) :=
-        le_trans (by linarith [mul_nonneg (le_of_lt hβ2) (sq_nonneg (k : ℝ))])
-          (Real.add_one_le_exp _)
-      calc (k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)
-          = (2 / β) * (β / 2 * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
-            congr 1; field_simp
-        _ ≤ (2 / β) * Real.exp (β / 2 * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
-            exact mul_le_mul_of_nonneg_right
-              (mul_le_mul_of_nonneg_left h1 (by positivity)) (le_of_lt (Real.exp_pos _))
-        _ = (2 / β) * Real.exp (-(β / 2) * (k : ℝ) ^ 2) := by
-            rw [mul_assoc, ← Real.exp_add]; congr 1; ring_nf)
-    hdom
+  have h := (Equiv.summable_iff zEquiv.symm).mpr
+    (unitQuadAction.summable_energy_mul_scaledWeight hβ)
+  refine h.congr fun n => ?_
+  show unitQuadAction.energy (zEquiv.symm n)
+      * Real.exp (-(β * unitQuadAction.energy (zEquiv.symm n))) = _
+  rw [unitQuadAction_energy]
+  show (n : ℝ) ^ 2 * Real.exp (-(β * (n : ℝ) ^ 2)) = _
+  rw [show -(β * (n : ℝ) ^ 2) = -β * (n : ℝ) ^ 2 from by ring]
+
+private lemma summable_pow4_mul_exp (β : ℝ) (hβ : 0 < β) :
+    Summable (fun k : ℤ => (k : ℝ) ^ 4 * Real.exp (-β * (k : ℝ) ^ 2)) := by
+  have h := (Equiv.summable_iff zEquiv.symm).mpr
+    (unitQuadAction.summable_energy_sq_mul_scaledWeight hβ)
+  refine h.congr fun n => ?_
+  show unitQuadAction.energy (zEquiv.symm n) ^ 2
+      * Real.exp (-(β * unitQuadAction.energy (zEquiv.symm n))) = _
+  rw [unitQuadAction_energy]
+  show ((n : ℝ) ^ 2) ^ 2 * Real.exp (-(β * (n : ℝ) ^ 2)) = _
+  rw [show -(β * (n : ℝ) ^ 2) = -β * (n : ℝ) ^ 2 from by ring,
+    show ((n : ℝ) ^ 2) ^ 2 = (n : ℝ) ^ 4 from by ring]
 
 private lemma hasDerivAt_quadraticPartFn (β : ℝ) (hβ : 0 < β) :
     HasDerivAt quadraticPartFn
       (∑' k : ℤ, -(k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)) β := by
-  unfold quadraticPartFn
-  exact hasDerivAt_tsum_of_isPreconnected
-    (g := fun (k : ℤ) (γ : ℝ) => Real.exp (-γ * (k : ℝ) ^ 2))
-    (g' := fun (k : ℤ) (γ : ℝ) => -(k : ℝ) ^ 2 * Real.exp (-γ * (k : ℝ) ^ 2))
-    (u := fun k : ℤ => (k : ℝ) ^ 2 * Real.exp (-(β / 2) * (k : ℝ) ^ 2))
-    (t := Set.Ioi (β / 2))
-    (y₀ := β)
-    (summable_sq_mul_exp (β / 2) (by linarith))
-    isOpen_Ioi
-    isPreconnected_Ioi
-    (fun k y _ => hasDerivAt_exp_neg_mul_sq k y)
-    (fun k y (hy : β / 2 < y) => by
-      show |-(k : ℝ) ^ 2 * Real.exp (-y * (k : ℝ) ^ 2)| ≤
-        (k : ℝ) ^ 2 * Real.exp (-(β / 2) * (k : ℝ) ^ 2)
-      rw [show -(k : ℝ) ^ 2 * Real.exp (-y * (k : ℝ) ^ 2) =
-          -((k : ℝ) ^ 2 * Real.exp (-y * (k : ℝ) ^ 2)) from by ring,
-          abs_neg, abs_of_nonneg (mul_nonneg (sq_nonneg _) (le_of_lt (Real.exp_pos _)))]
-      exact mul_le_mul_of_nonneg_left
-        (Real.exp_le_exp_of_le (by nlinarith [sq_nonneg (k : ℝ)]))
-        (sq_nonneg _))
-    (Set.mem_Ioi.mpr (by linarith))
-    (Meno.QuadraticAction.summable_scalarPartFn β hβ)
-    (Set.mem_Ioi.mpr (by linarith))
+  have h := unitQuadAction.hasDerivAt_scaledPartFn hβ
+  rw [show unitQuadAction.scaledPartFn = quadraticPartFn from
+    funext scaledPartFn_unit] at h
+  convert h using 1
+  rw [scaledMoment_unit β, ← tsum_neg]
+  exact tsum_congr fun k => by ring
 
-private lemma summable_pow4_mul_exp (β : ℝ) (hβ : 0 < β) :
-    Summable (fun k : ℤ => (k : ℝ) ^ 4 * Real.exp (-β * (k : ℝ) ^ 2)) := by
-  have hβ2 : 0 < β / 2 := by linarith
-  have hdom : Summable (fun k : ℤ =>
-      (2 / β) * ((k : ℝ)^2 * Real.exp (-(β / 2) * (k : ℝ) ^ 2))) :=
-    (summable_sq_mul_exp (β / 2) hβ2).mul_left (2 / β)
-  refine Summable.of_nonneg_of_le
-    (fun k => mul_nonneg (by positivity) (le_of_lt (Real.exp_pos _)))
-    (fun k => ?_) hdom
-  have h1 : β / 2 * (k : ℝ) ^ 2 ≤ Real.exp (β / 2 * (k : ℝ) ^ 2) :=
-    le_trans (by linarith [mul_nonneg (le_of_lt hβ2) (sq_nonneg (k : ℝ))])
-      (Real.add_one_le_exp _)
-  have h_sq : (k : ℝ)^2 * Real.exp (-β * (k : ℝ)^2) ≤
-              (2/β) * Real.exp (-(β/2) * (k : ℝ)^2) := by
-    calc (k : ℝ) ^ 2 * Real.exp (-β * (k : ℝ) ^ 2)
-        = (2 / β) * (β / 2 * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
-          congr 1; field_simp
-      _ ≤ (2 / β) * Real.exp (β / 2 * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2) := by
-          exact mul_le_mul_of_nonneg_right
-            (mul_le_mul_of_nonneg_left h1 (by positivity)) (le_of_lt (Real.exp_pos _))
-      _ = (2 / β) * Real.exp (-(β / 2) * (k : ℝ) ^ 2) := by
-          rw [mul_assoc, ← Real.exp_add]; congr 1; ring_nf
-  have h_expand : (k : ℝ) ^ 4 * Real.exp (-β * (k : ℝ) ^ 2) =
-         (k : ℝ)^2 * ((k : ℝ)^2 * Real.exp (-β * (k : ℝ) ^ 2)) := by ring
-  rw [h_expand]
-  calc (k : ℝ)^2 * ((k : ℝ)^2 * Real.exp (-β * (k : ℝ) ^ 2))
-      ≤ (k : ℝ)^2 * ((2/β) * Real.exp (-(β/2) * (k : ℝ)^2)) :=
-        mul_le_mul_of_nonneg_left h_sq (sq_nonneg _)
-    _ = (2/β) * ((k : ℝ)^2 * Real.exp (-(β/2) * (k : ℝ)^2)) := by ring
-
-/-- Derivative of `M₂(β) := ∑' k, k²·exp(-βk²)` equals `-M₄(β)`. -/
+/-- Derivative of `M₂(β) := ∑' k, k²·exp(-βk²)` equals `-M₄(β)` — the
+general `M₁′ = −M₂` at the unit action. -/
 private lemma hasDerivAt_M₂ (β : ℝ) (hβ : 0 < β) :
     HasDerivAt (fun α => ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2))
       (∑' k : ℤ, -(k : ℝ) ^ 4 * Real.exp (-β * (k : ℝ) ^ 2)) β := by
-  exact hasDerivAt_tsum_of_isPreconnected
-    (g := fun (k : ℤ) (γ : ℝ) => (k : ℝ) ^ 2 * Real.exp (-γ * (k : ℝ) ^ 2))
-    (g' := fun (k : ℤ) (γ : ℝ) => -(k : ℝ) ^ 4 * Real.exp (-γ * (k : ℝ) ^ 2))
-    (u := fun k : ℤ => (k : ℝ) ^ 4 * Real.exp (-(β / 2) * (k : ℝ) ^ 2))
-    (t := Set.Ioi (β / 2))
-    (y₀ := β)
-    (summable_pow4_mul_exp (β / 2) (by linarith))
-    isOpen_Ioi
-    isPreconnected_Ioi
-    (fun k y _ => by
-      have h := hasDerivAt_exp_neg_mul_sq k y
-      have hh := h.const_mul ((k : ℝ)^2)
-      convert hh using 1; ring)
-    (fun k y (hy : β / 2 < y) => by
-      show |-(k : ℝ) ^ 4 * Real.exp (-y * (k : ℝ) ^ 2)| ≤
-        (k : ℝ) ^ 4 * Real.exp (-(β / 2) * (k : ℝ) ^ 2)
-      rw [show -(k : ℝ) ^ 4 * Real.exp (-y * (k : ℝ) ^ 2) =
-          -((k : ℝ) ^ 4 * Real.exp (-y * (k : ℝ) ^ 2)) from by ring,
-          abs_neg, abs_of_nonneg
-            (mul_nonneg (by positivity) (le_of_lt (Real.exp_pos _)))]
-      exact mul_le_mul_of_nonneg_left
-        (Real.exp_le_exp_of_le (by nlinarith [sq_nonneg (k : ℝ)]))
-        (by positivity))
-    (Set.mem_Ioi.mpr (by linarith))
-    (summable_sq_mul_exp β hβ)
-    (Set.mem_Ioi.mpr (by linarith))
+  have h := unitQuadAction.hasDerivAt_scaledMoment hβ
+  rw [show unitQuadAction.scaledMoment
+      = fun α => ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2) from
+    funext scaledMoment_unit] at h
+  convert h using 1
+  rw [scaledMoment2_unit β, ← tsum_neg]
+  exact tsum_congr fun k => by ring
 
 private lemma summable_N_summand (β : ℝ) (hβ : 0 < β) :
     Summable (fun k : ℤ => (1 - 4 * β * (k : ℝ) ^ 2) * Real.exp (-β * (k : ℝ) ^ 2)) := by

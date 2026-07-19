@@ -280,17 +280,30 @@ strictly positive terms (`uniformComplexity_description_bridge_pos`,
 `uniformComplexity_pair_bridge_pos`) — and the resolutions form a
 **tower**: coarse-graining has identity and composition laws
 (`coarseGrain_id`, `coarseGrain_comp`), for `q ∣ q'` the finer
-reduction maps canonically onto the coarser (`h1TowerMap`), residue
-weights, masses, and the Gibbs law push forward
-(`residueWeight_tower`, `residueMass_tower`, `residueDist_tower`),
-the coarse residue action **is** the coarse-graining of the finer one
-(`residueAction_tower` — concretely at theta, `4 → 2`,
-`theta_residueAction_tower`), and the partition-function
-factorization is transitive (`classPartFn_tower`). One theorem
-carries the whole priced package on one explicit graph
+reduction maps canonically onto the coarser (`h1TowerMap` — with
+identity, composition, witness-independence, and surjectivity laws,
+and weights, distributions, and actions composing across it:
+`h1TowerMap_comp`, `residueDist_tower_trans`,
+`residueAction_tower_trans`), residue weights, masses, and the Gibbs
+law push forward (`residueWeight_tower`, `residueMass_tower`,
+`residueDist_tower`), the coarse residue action **is** the
+coarse-graining of the finer one (`residueAction_tower` —
+concretely at theta, `4 → 2`, `theta_residueAction_tower`, with the
+commuting triangle `8 → 4 → 2`, `theta_towerMap_triangle`), and the
+partition-function factorization is transitive
+(`classPartFn_tower`). **Resolution loss is priced**: one step
+`q' = c·q` merges `c^{b₁}` classes per coarse class
+(`card_h1TowerMap_fiber`), reversing it costs `b₁·log c` per sector
+(`sectionCost_h1TowerMap`), and under the Gibbs law the loss is the
+conditional entropy of the tower map — the difference of the two
+`K + ⟨E⟩` decompositions (`residue_tower_entropy_chain`,
+`residue_tower_condEntropy_eq`; on theta at `4 → 2`:
+fibers of `4`, cost `2·log 2`, `theta_tower_entropy_chain`). One
+theorem carries the whole priced package on one explicit graph
 (`theta_priced_faces`): partition-function gravity, complexity
-gravity, priced time, strict bridge terms, strict energy variance,
-at `q = 2`.
+gravity, priced time, the **complete residue, description, and pair
+bridge packages**, and all three strict energy variances, at
+`q = 2`.
 
 **Uncertainty.** The Gibbs state's fluctuations are the model's
 uncertainty, and they are theorems, not vocabulary: the variance of
@@ -308,14 +321,24 @@ nonnegative and **strictly positive** on any graph with cycles
 `Meno/BasisIndependence.lean`); the same strictness holds at every
 finite resolution, for the residue, description, and pair actions
 (`residueAction_gibbsVariance_E_pos` and its transports). And the
-**fluctuation–dissipation identity** ties response to fluctuation —
-on the canonical quadratic family, the derivative of the Gibbs mean
-of squared winding in the coupling is *minus the Gibbs variance* of
-squared winding
-(`hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance`,
-`Meno/Duality.lean`); that variance's strict positivity is exactly
-why the mean energy strictly falls
-(`quadraticMeanEnergy_strictAntiOn`).
+**fluctuation–dissipation identity** ties response to fluctuation
+**at every rank** (`Meno/Fluctuation.lean`): the inverse-temperature
+scaling of any positive-definite quadratic action has differentiable
+partition function and mean energy — `Z′ = −M₁`, `M₁′ = −M₂`,
+dominated at half temperature — with
+**`d⟨E⟩/dβ = −Var_β(E)`**
+(`hasDerivAt_meanEnergy_eq_neg_gibbsVariance`) and strict
+dissipation from any nonzero-energy sector
+(`meanEnergy_strictAntiOn`). The intrinsic carrier consumes it
+through its cycle-basis chart: `classQuadActionβ` scales the
+carrier, `d⟨E⟩/dβ = −Var` holds intrinsically
+(`hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance`), and on any
+graph with cycles the Gibbs mean energy strictly falls
+(`classMeanEnergy_strictAntiOn`, `Meno/BasisIndependence.lean`).
+The canonical scalar family is the rank-one chart of the same
+engine (`unitQuadAction`,
+`hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance`,
+`quadraticMeanEnergy_strictAntiOn`, `Meno/Duality.lean`).
 
 **Geometry.** Every symmetric simplicial complex's fundamental
 groupoid carries a Lawvere-subadditive geodesic length
@@ -330,6 +353,7 @@ Meno/
 ├── SectorAction.lean          Analytic primitive: sectors, Boltzmann weights, partFn, complexity
 ├── QuadraticAction.lean       kᵀQk actions; scalar & diagonal Siegel–Poisson duality
 ├── SiegelPoisson.lean         Full-generality (non-diagonal) Siegel–Poisson via Poisson summation
+├── Fluctuation.lean           Fluctuation–dissipation at every rank: β-scaling, d⟨E⟩/dβ = −Var(E), strict dissipation
 ├── LatticeAction.lean         The carrier bundle: real-extension positivity, charts, intrinsic dual & duality
 ├── LoopKernel.lean            Categorical presentation: End(base) as sector lattice
 ├── SectorPresentation.lean    MulEquiv coordinates; duality transport
