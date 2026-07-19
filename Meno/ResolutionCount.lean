@@ -2438,6 +2438,113 @@ theorem residue_tower_condEntropy_eq (hdvd : q ∣ q') :
   have h3 := G.residue_tower_entropy_chain q q' hdvd
   linarith
 
+/-- **THE TWO PRICES IDENTIFIED** (review #16): the Gibbs price of
+one resolution step is the uniform ratchet cost minus the deficit
+gained — `H(q'|q) = b₁·log c − (Δ(q') − Δ(q))`. Counting and pricing
+the same loss differ by exactly the action-induced information the
+finer resolution carries. -/
+theorem residue_tower_condEntropy_eq_defect (hdvd : q ∣ q')
+    (hq' : q' = c * q) :
+    (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
+      = G.b1 * Real.log c - (G.residueDefect q' - G.residueDefect q) := by
+  have hchain := G.residue_tower_entropy_chain q q' hdvd
+  have hc0 : c ≠ 0 := by
+    rintro rfl
+    exact (NeZero.ne q') (by rw [hq', zero_mul])
+  have hq0 : q ≠ 0 := NeZero.ne q
+  have hcard : Real.log (Fintype.card (H1Reduction G q'))
+      = G.b1 * Real.log c + Real.log (Fintype.card (H1Reduction G q)) := by
+    have h1 : Fintype.card (H1Reduction G q') = q' ^ G.b1 := by
+      rw [← Nat.card_eq_fintype_card]
+      exact G.card_H1Reduction q'
+    have h2 : Fintype.card (H1Reduction G q) = q ^ G.b1 := by
+      rw [← Nat.card_eq_fintype_card]
+      exact G.card_H1Reduction q
+    rw [h1, h2, hq']
+    push_cast
+    rw [mul_pow, Real.log_mul (by positivity) (by positivity),
+      Real.log_pow, Real.log_pow]
+  have hΔ' : G.residueDefect q'
+      = Real.log (Fintype.card (H1Reduction G q'))
+        - shannonEntropy (G.residueMass q') := rfl
+  have hΔ : G.residueDefect q
+      = Real.log (Fintype.card (H1Reduction G q))
+        - shannonEntropy (G.residueMass q) := rfl
+  rw [hΔ', hΔ]
+  linarith
+
+/-- **THE STRICT PRICE OF ONE RESOLUTION STEP** (review #16): for a
+graph with cycles and a genuine refinement (`b₁ > 0`, `c > 1`), the
+Gibbs price is strictly positive and strictly below the uniform
+ratchet cost, and the deficit strictly grows —
+`0 < H(q'|q) < b₁·log c` and `Δ(q) < Δ(q')`. -/
+theorem residue_tower_price_strict (hb : 0 < G.b1) (hc : 1 < c)
+    (hdvd : q ∣ q') (hq' : q' = c * q) :
+    0 < (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
+      ∧ (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
+          < G.b1 * Real.log c
+      ∧ G.residueDefect q < G.residueDefect q' := by
+  classical
+  -- the zero fiber has c^{b₁} ≥ 2 classes
+  have hcard : 1 < Nat.card {η : H1Reduction G q' //
+      G.h1TowerMap q q' hdvd η = (0 : H1Reduction G q)} := by
+    rw [G.card_h1TowerMap_fiber q q' c hdvd hq' 0]
+    exact Nat.one_lt_pow hb.ne' hc
+  haveI : Nontrivial {η : H1Reduction G q' //
+      G.h1TowerMap q q' hdvd η = (0 : H1Reduction G q)} :=
+    Finite.one_lt_card_iff_nontrivial.mp hcard
+  have h0mem : G.h1TowerMap q q' hdvd (0 : H1Reduction G q') = 0 :=
+    map_zero _
+  obtain ⟨η, hη⟩ := exists_ne (⟨0, h0mem⟩ : {η : H1Reduction G q' //
+      G.h1TowerMap q q' hdvd η = (0 : H1Reduction G q)})
+  have hηne : η.val ≠ (0 : H1Reduction G q') :=
+    fun h => hη (Subtype.ext h)
+  -- strict positivity: two points in the zero fiber
+  have hpos : 0 < (G.residueDist q').condEntropy
+      (⇑(G.h1TowerMap q q' hdvd)) := by
+    refine FinDist.condEntropy_pos _ _ (fun κ => G.residueMass_pos q' κ)
+      (x := η.val) (y := (0 : H1Reduction G q')) hηne ?_
+    rw [η.prop, h0mem]
+  -- strict upper bound: the residue law is not fiber-uniform
+  have hm : 0 < c ^ G.b1 := pow_pos (Nat.pos_of_ne_zero (by
+    rintro rfl
+    exact absurd hc (by norm_num))) _
+  have hne : G.residueDist q'
+      ≠ ((G.residueDist q').map
+          (⇑(G.h1TowerMap q q' hdvd))).uniformLift
+          (⇑(G.h1TowerMap q q' hdvd)) hm
+          (G.card_h1TowerMap_fiber q q' c hdvd hq') := by
+    intro heq
+    have h1 := congrFun (congrArg FinDist.mass heq) (0 : H1Reduction G q')
+    have h2 := congrFun (congrArg FinDist.mass heq) η.val
+    have h3 : ((G.residueDist q').map
+        (⇑(G.h1TowerMap q q' hdvd))).mass
+          (G.h1TowerMap q q' hdvd (0 : H1Reduction G q'))
+        = ((G.residueDist q').map (⇑(G.h1TowerMap q q' hdvd))).mass
+          (G.h1TowerMap q q' hdvd η.val) := by
+      rw [h0mem, η.prop]
+    have h4 : G.residueMass q' 0 = G.residueMass q' η.val := by
+      have h5 : (G.residueDist q').mass (0 : H1Reduction G q')
+          = (G.residueDist q').mass η.val := by
+        rw [h1, h2]
+        show _ / _ = _ / _
+        rw [h3]
+      exact h5
+    exact absurd h4.symm
+      (ne_of_lt (G.residueMass_lt_residueMass_zero q' hηne))
+  have hlt' : (G.residueDist q').condEntropy
+      (⇑(G.h1TowerMap q q' hdvd)) < Real.log ((c : ℝ) ^ G.b1) := by
+    have h := FinDist.condEntropy_lt_log (⇑(G.h1TowerMap q q' hdvd))
+      hm (G.card_h1TowerMap_fiber q q' c hdvd hq') (G.residueDist q')
+      (fun κ => G.residueMass_pos q' κ) hne
+    rwa [show (((c ^ G.b1 : ℕ) : ℝ)) = (c : ℝ) ^ G.b1 from by push_cast; rfl]
+      at h
+  have hlt : (G.residueDist q').condEntropy
+      (⇑(G.h1TowerMap q q' hdvd)) < G.b1 * Real.log c := by
+    rwa [Real.log_pow] at hlt'
+  have hid := G.residue_tower_condEntropy_eq_defect q q' c hdvd hq'
+  exact ⟨hpos, hlt, by linarith⟩
+
 end TowerCost
 
 end IncidenceGraph

@@ -671,46 +671,11 @@ private lemma hasDerivAt_log_quadraticPartFn (β : ℝ) (hβ : 0 < β) :
     rw [← tsum_neg]; congr 1; ext k; ring]
   rw [neg_div]
 
-/-- `d⟨k²⟩/dα = ⟨k²⟩² - ⟨k⁴⟩` on `(0, ∞)`.
-
-    Differentiating `⟨k²⟩_α = M₂(α)/Z(α)` via the quotient rule, using
-    `M₂'(α) = -M₄(α)` and `Z'(α) = -M₂(α)`. The right-hand side is
-    `⟨k²⟩² - ⟨k⁴⟩ = -(⟨k⁴⟩ - ⟨k²⟩²)`, which Cauchy-Schwarz forces to
-    be strictly negative; combined with `Summable.tsum_lt_tsum` this
-    yields the strict anti-monotonicity of `quadraticMeanEnergy`. -/
-private lemma hasDerivAt_quadraticMeanEnergy (β : ℝ) (hβ : 0 < β) :
-    HasDerivAt quadraticMeanEnergy
-      ((quadraticMeanEnergy β)^2 -
-        (∑' k : ℤ, (k : ℝ)^4 * Real.exp (-β * (k : ℝ)^2)) / quadraticPartFn β) β := by
-  have hZ_pos : 0 < quadraticPartFn β :=
-    lt_trans one_pos (quadraticPartFn_gt_one β hβ)
-  have hZ_ne : quadraticPartFn β ≠ 0 := ne_of_gt hZ_pos
-  have hM₂ := hasDerivAt_M₂ β hβ
-  have hZ := hasDerivAt_quadraticPartFn β hβ
-  have hQuot := hM₂.div hZ hZ_ne
-  have h_M4 : (∑' k : ℤ, -(k : ℝ)^4 * Real.exp (-β * (k : ℝ)^2)) =
-      -(∑' k : ℤ, (k : ℝ)^4 * Real.exp (-β * (k : ℝ)^2)) := by
-    rw [← tsum_neg]; congr 1; ext k; ring
-  have h_M2 : (∑' k : ℤ, -(k : ℝ)^2 * Real.exp (-β * (k : ℝ)^2)) =
-      -(∑' k : ℤ, (k : ℝ)^2 * Real.exp (-β * (k : ℝ)^2)) := by
-    rw [← tsum_neg]; congr 1; ext k; ring
-  rw [h_M4, h_M2] at hQuot
-  convert hQuot using 1
-  unfold quadraticMeanEnergy
-  have h_exp_sq : (∑' (k : ℤ), (k : ℝ) ^ 2 * Real.exp (-(↑k ^ 2 * β))) =
-      (∑' (k : ℤ), (k : ℝ) ^ 2 * Real.exp (-β * ↑k ^ 2)) := by
-    congr 1; ext k; congr 2; ring
-  have h_exp_4 : (∑' (k : ℤ), (k : ℝ) ^ 4 * Real.exp (-(β * ↑k ^ 2))) =
-      (∑' (k : ℤ), (k : ℝ) ^ 4 * Real.exp (-β * ↑k ^ 2)) := by
-    congr 1; ext k; congr 2; ring
-  have h_exp_2 : (∑' (k : ℤ), (k : ℝ) ^ 2 * Real.exp (-(β * ↑k ^ 2))) =
-      (∑' (k : ℤ), (k : ℝ) ^ 2 * Real.exp (-β * ↑k ^ 2)) := by
-    congr 1; ext k; congr 2; ring
-  field_simp
-  rw [h_exp_sq, h_exp_4, h_exp_2]
-  ring
-
-/-- Cauchy–Schwarz / variance positivity: `M₂² < Z · M₄` for all α > 0.
+/-- **The Cauchy–Schwarz corroboration** (review #16): `M₂² < Z·M₄`
+    for all `α > 0` — an independent, self-contained route to the
+    strict positivity of the squared-winding variance, retained as
+    named corroboration of the generic strict-fluctuation engine
+    (`Meno/Fluctuation.lean`).
 
     Consider the "affine variance" summand `(Z·k² - M₂)²·exp(-αk²)`.
     Its tsum equals `Z²·M₄ - Z·M₂² = Z·(Z·M₄ - M₂²)`.
@@ -718,7 +683,7 @@ private lemma hasDerivAt_quadraticMeanEnergy (β : ℝ) (hβ : 0 < β) :
     tsum is strictly positive, forcing `Z·M₄ > M₂²`. This is the Gibbs
     Cauchy–Schwarz for the observable `k²`: the squared mean is strictly
     less than the mean of the square, because `k²` is not constant. -/
-private lemma M2_sq_lt_Z_mul_M4 (α : ℝ) (hα : 0 < α) :
+theorem M2_sq_lt_Z_mul_M4 (α : ℝ) (hα : 0 < α) :
     (∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)) ^ 2 <
       quadraticPartFn α *
         ∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2) := by
@@ -767,33 +732,26 @@ private lemma M2_sq_lt_Z_mul_M4 (α : ℝ) (hα : 0 < α) :
   have hposZM : 0 < Z * M4 - M2 ^ 2 := (mul_pos_iff_of_pos_left hZ_pos).mp h_tsum_pos
   linarith
 
-/-- `quadraticMeanEnergy` is strictly decreasing on `(0, ∞)`.
+private lemma unit_energy_one_ne :
+    unitQuadAction.energy (fun _ => (1 : ℤ)) ≠ 0 := by
+  rw [unitQuadAction_energy]
+  norm_num
 
-    Derivative computed as `d⟨k²⟩/dα = ⟨k²⟩² - ⟨k⁴⟩`, equivalently
-    `-gibbsVariance((wind)²)` under the project's variance convention
-    (`hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance`).  Strictly
-    negative by Cauchy–Schwarz (`M₂² < Z·M₄`, since `(wind)²` is not
-    constant under the Gibbs density). -/
+private lemma meanEnergy_unit :
+    unitQuadAction.meanEnergy = quadraticMeanEnergy := by
+  funext β
+  show unitQuadAction.scaledMoment β / unitQuadAction.scaledPartFn β = _
+  rw [scaledMoment_unit β, scaledPartFn_unit β]
+  rfl
+
+/-- `quadraticMeanEnergy` is strictly decreasing on `(0, ∞)` — the
+    generic strict-dissipation theorem (`Meno/Fluctuation.lean`) at
+    the rank-one unit action (review #16). The Cauchy–Schwarz route
+    stands as named corroboration (`M2_sq_lt_Z_mul_M4`). -/
 theorem quadraticMeanEnergy_strictAntiOn :
     StrictAntiOn quadraticMeanEnergy (Set.Ioi 0) := by
-  apply strictAntiOn_of_deriv_neg (convex_Ioi _)
-  · intro α hα
-    exact (hasDerivAt_quadraticMeanEnergy α hα).continuousAt.continuousWithinAt
-  · intro α hα
-    rw [interior_Ioi] at hα
-    have hd := hasDerivAt_quadraticMeanEnergy α hα
-    rw [hd.deriv]
-    have hCS := M2_sq_lt_Z_mul_M4 α hα
-    have hZ_pos : 0 < quadraticPartFn α :=
-      lt_trans one_pos (quadraticPartFn_gt_one α hα)
-    unfold quadraticMeanEnergy
-    set M2 := ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)
-    set M4 := ∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)
-    set Z := quadraticPartFn α
-    rw [show (M2/Z)^2 - M4/Z = (M2^2 - Z*M4) / Z^2 by field_simp]
-    apply div_neg_of_neg_of_pos
-    · linarith
-    · exact pow_pos hZ_pos 2
+  rw [← meanEnergy_unit]
+  exact unitQuadAction.meanEnergy_strictAntiOn ⟨fun _ => 1, unit_energy_one_ne⟩
 
 /-- `quadraticMeanEnergy` is injective on `(0, ∞)`: distinct couplings give
     distinct mean values.  Immediate from strict anti-monotonicity. -/
@@ -801,21 +759,11 @@ theorem quadraticMeanEnergy_injOn :
     Set.InjOn quadraticMeanEnergy (Set.Ioi 0) :=
   quadraticMeanEnergy_strictAntiOn.injOn
 
-/-- **Fluctuation-dissipation identity** at the `GroupoidObj` level:
-    `d⟨k²⟩/dα = -gibbsVariance((wind)²)` on the canonical quadratic family.
-
-    The derivative of the Gibbs mean of squared winding under coupling `α` is
-    the negative Gibbs variance of squared winding, a probabilistic identity
-    about the Gibbs density on `End (quadraticObj α).base`.  Strict positivity
-    of the variance (Cauchy–Schwarz: `(wind)²` is not constant) is the reason
-    `quadraticMeanEnergy` is strictly decreasing. -/
-theorem hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance
-    (α : ℝ) (hα : 0 < α) :
-    HasDerivAt quadraticMeanEnergy
-      (-((quadraticObj α hα).gibbsVariance
-            (fun g => (quadraticWind g : ℝ) ^ 2))) α := by
-  have h := hasDerivAt_quadraticMeanEnergy α hα
-  convert h using 1
+private lemma quadraticObj_gibbsVariance_expr (α : ℝ) (hα : 0 < α) :
+    (quadraticObj α hα).gibbsVariance
+        (fun g => (quadraticWind g : ℝ) ^ 2) =
+      (∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)) / quadraticPartFn α -
+        (quadraticMeanEnergy α) ^ 2 := by
   unfold GroupoidObj.gibbsVariance
   rw [quadraticMeanEnergy_eq_gibbsExpect α hα]
   have h_pow4 : (quadraticObj α hα).gibbsExpect
@@ -837,49 +785,42 @@ theorem hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance
     rw [tsum_congr h_term, tsum_div_const]
     congr 1
   rw [h_pow4]
-  ring
 
-/-- The Gibbs variance of squared winding is strictly positive on `(0, ∞)` —
-    Cauchy–Schwarz via `M₂² < Z·M₄`.  The observable `(wind)²` is not constant
-    under the Gibbs density, so its variance is nontrivially positive. -/
+private lemma quadraticObj_gibbsVariance_eq_unit (α : ℝ) (hα : 0 < α) :
+    (quadraticObj α hα).gibbsVariance (fun g => (quadraticWind g : ℝ) ^ 2)
+      = (unitQuadAction.scaledSector α hα).gibbsVariance
+          unitQuadAction.energy := by
+  rw [quadraticObj_gibbsVariance_expr α hα,
+    unitQuadAction.scaledSector_gibbsVariance_energy α hα,
+    scaledMoment2_unit α, scaledPartFn_unit α,
+    show unitQuadAction.meanEnergy α = quadraticMeanEnergy α from
+      congrFun meanEnergy_unit α]
+
+/-- **Fluctuation-dissipation identity** at the `GroupoidObj` level:
+    `d⟨k²⟩/dα = -gibbsVariance((wind)²)` on the canonical quadratic family.
+
+    The derivative of the Gibbs mean of squared winding under coupling `α` is
+    the negative Gibbs variance of squared winding, a probabilistic identity
+    about the Gibbs density on `End (quadraticObj α).base`.  Strict positivity
+    of the variance (Cauchy–Schwarz: `(wind)²` is not constant) is the reason
+    `quadraticMeanEnergy` is strictly decreasing. -/
+theorem hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance
+    (α : ℝ) (hα : 0 < α) :
+    HasDerivAt quadraticMeanEnergy
+      (-((quadraticObj α hα).gibbsVariance
+            (fun g => (quadraticWind g : ℝ) ^ 2))) α := by
+  rw [← meanEnergy_unit, quadraticObj_gibbsVariance_eq_unit α hα]
+  exact unitQuadAction.hasDerivAt_meanEnergy_eq_neg_gibbsVariance α hα
+
+/-- The Gibbs variance of squared winding is strictly positive on
+    `(0, ∞)` — the generic strict-fluctuation theorem at the unit
+    action (review #16); Cauchy–Schwarz (`M2_sq_lt_Z_mul_M4`) stands
+    as named corroboration. -/
 theorem quadraticObj_gibbsVariance_pos (α : ℝ) (hα : 0 < α) :
     0 < (quadraticObj α hα).gibbsVariance (fun g => (quadraticWind g : ℝ) ^ 2) := by
-  have h_expr : (quadraticObj α hα).gibbsVariance
-        (fun g => (quadraticWind g : ℝ) ^ 2) =
-      (∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)) / quadraticPartFn α -
-        (quadraticMeanEnergy α) ^ 2 := by
-    unfold GroupoidObj.gibbsVariance
-    rw [quadraticMeanEnergy_eq_gibbsExpect α hα]
-    have h_pow4 : (quadraticObj α hα).gibbsExpect
-          (fun g => ((quadraticWind g : ℝ) ^ 2) ^ 2) =
-        (∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)) / quadraticPartFn α := by
-      unfold GroupoidObj.gibbsExpect GroupoidObj.gibbsMass
-      rw [quadraticObj_partFn α hα]
-      have h_term : ∀ g : End (quadraticObj α hα).base,
-          ((quadraticWind g : ℝ) ^ 2) ^ 2 *
-            (Real.exp (-(quadraticObj α hα).energy g) / quadraticPartFn α) =
-          ((quadraticWind g : ℝ) ^ 4 * Real.exp (-α * (quadraticWind g : ℝ) ^ 2)) /
-            quadraticPartFn α := by
-        intro g
-        show ((quadraticWind g : ℝ) ^ 2) ^ 2 *
-          (Real.exp (-(α * (quadraticWind g : ℝ) ^ 2)) / quadraticPartFn α) = _
-        rw [mul_div_assoc, neg_mul]
-        congr 1
-        ring
-      rw [tsum_congr h_term, tsum_div_const]
-      congr 1
-    rw [h_pow4]
-  rw [h_expr]
-  have hCS := M2_sq_lt_Z_mul_M4 α hα
-  have hZ_pos : 0 < quadraticPartFn α :=
-    lt_trans one_pos (quadraticPartFn_gt_one α hα)
-  unfold quadraticMeanEnergy
-  set M2 := ∑' k : ℤ, (k : ℝ) ^ 2 * Real.exp (-α * (k : ℝ) ^ 2)
-  set M4 := ∑' k : ℤ, (k : ℝ) ^ 4 * Real.exp (-α * (k : ℝ) ^ 2)
-  set Z := quadraticPartFn α
-  rw [show M4/Z - (M2/Z)^2 = (Z*M4 - M2^2) / Z^2 by field_simp]
-  apply div_pos _ (pow_pos hZ_pos 2)
-  linarith
+  rw [quadraticObj_gibbsVariance_eq_unit α hα]
+  exact unitQuadAction.scaledSector_gibbsVariance_energy_pos α hα
+    (k₀ := fun _ => 1) unit_energy_one_ne
 
 /-- `log Z(α)` is strictly convex on `(0, ∞)`.
 

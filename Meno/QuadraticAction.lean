@@ -174,6 +174,20 @@ theorem _root_.Matrix.PosDef.exists_coercivity {d : ℕ}
           = (x₀ ⬝ᵥ M.mulVec x₀) * t ^ 2 := by rw [ht_sq]
         _ ≤ x ⬝ᵥ M.mulVec x := h2
 
+/-- Positive scalar multiples of positive-definite matrices are positive
+definite. Hand-rolled: `Matrix.PosDef.smul` needs `StarOrderedRing ℝ`
+synthesis, which fails at this pin. (Moved upstream from
+`Meno/SiegelPoisson.lean`, review #16.) -/
+lemma posDef_smul' {d : ℕ} {A : Matrix (Fin d) (Fin d) ℝ} (hA : A.PosDef)
+    {c : ℝ} (hc : 0 < c) : (c • A).PosDef := by
+  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
+  · show (c • A)ᴴ = c • A
+    rw [Matrix.conjTranspose_smul, star_trivial]
+    congr 1
+    exact (posDef_iff_dotProduct_mulVec.mp hA).1
+  · rw [Matrix.smul_mulVec, dotProduct_smul, smul_eq_mul]
+    exact mul_pos hc ((posDef_iff_dotProduct_mulVec.mp hA).2 hx)
+
 /-- Boltzmann weights of a positive-definite quadratic form are summable
 over the integer lattice: `exp(-kᵀMk) ≤ ∏ᵢ exp(-c kᵢ²)` by coercivity,
 and the right side is summable by the factorization machinery. -/

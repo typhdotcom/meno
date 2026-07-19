@@ -942,6 +942,209 @@ theorem entropy_eq_map_add_condEntropy [DecidableEq D] (f : X → D)
     ← hgroup]
   ring
 
+private lemma gibbs_term_le (P Q : FinDist X) (hQ : ∀ x, 0 < Q.mass x)
+    (x : X) :
+    P.mass x - Q.mass x
+      ≤ P.mass x * Real.log (P.mass x / Q.mass x) := by
+  rcases eq_or_lt_of_le (P.nonneg x) with h0 | hp
+  · rw [← h0, zero_mul, zero_sub]
+    exact neg_nonpos.mpr (hQ x).le
+  · have h := Real.log_le_sub_one_of_pos (div_pos (hQ x) hp)
+    have hlog : Real.log (P.mass x / Q.mass x)
+        = -Real.log (Q.mass x / P.mass x) := by
+      rw [← Real.log_inv]
+      congr 1
+      rw [inv_div]
+    rw [hlog]
+    have h2 : 1 - Q.mass x / P.mass x
+        ≤ -Real.log (Q.mass x / P.mass x) := by linarith
+    calc P.mass x - Q.mass x
+        = P.mass x * (1 - Q.mass x / P.mass x) := by field_simp
+      _ ≤ P.mass x * -Real.log (Q.mass x / P.mass x) :=
+          mul_le_mul_of_nonneg_left h2 hp.le
+
+/-- **The Gibbs inequality** (review #16): the relative entropy of a
+distribution against a fully supported reference is nonnegative. -/
+theorem sum_mul_log_div_nonneg (P Q : FinDist X)
+    (hQ : ∀ x, 0 < Q.mass x) :
+    0 ≤ ∑ x, P.mass x * Real.log (P.mass x / Q.mass x) :=
+  calc (0 : ℝ) = ∑ x, (P.mass x - Q.mass x) := by
+        rw [Finset.sum_sub_distrib, P.sum_one, Q.sum_one]
+        ring
+    _ ≤ ∑ x, P.mass x * Real.log (P.mass x / Q.mass x) :=
+        Finset.sum_le_sum fun x _ => gibbs_term_le P Q hQ x
+
+/-- **The strict Gibbs inequality** (review #16): distinct
+distributions have strictly positive relative entropy. -/
+theorem sum_mul_log_div_pos (P Q : FinDist X) (hQ : ∀ x, 0 < Q.mass x)
+    (hne : P ≠ Q) :
+    0 < ∑ x, P.mass x * Real.log (P.mass x / Q.mass x) := by
+  have hx : ∃ x, P.mass x ≠ Q.mass x := by
+    by_contra hall
+    push_neg at hall
+    exact hne (FinDist.ext (funext hall))
+  obtain ⟨x₀, hx₀⟩ := hx
+  have hstrict : P.mass x₀ - Q.mass x₀
+      < P.mass x₀ * Real.log (P.mass x₀ / Q.mass x₀) := by
+    rcases eq_or_lt_of_le (P.nonneg x₀) with h0 | hp
+    · rw [← h0, zero_mul, zero_sub]
+      exact neg_lt_zero.mpr (hQ x₀)
+    · have hne1 : Q.mass x₀ / P.mass x₀ ≠ 1 := by
+        intro h1
+        rw [div_eq_one_iff_eq hp.ne'] at h1
+        exact hx₀ h1.symm
+      have h := Real.log_lt_sub_one_of_pos (div_pos (hQ x₀) hp) hne1
+      have hlog : Real.log (P.mass x₀ / Q.mass x₀)
+          = -Real.log (Q.mass x₀ / P.mass x₀) := by
+        rw [← Real.log_inv]
+        congr 1
+        rw [inv_div]
+      rw [hlog]
+      have h2 : 1 - Q.mass x₀ / P.mass x₀
+          < -Real.log (Q.mass x₀ / P.mass x₀) := by linarith
+      calc P.mass x₀ - Q.mass x₀
+          = P.mass x₀ * (1 - Q.mass x₀ / P.mass x₀) := by field_simp
+        _ < P.mass x₀ * -Real.log (Q.mass x₀ / P.mass x₀) :=
+            mul_lt_mul_of_pos_left h2 hp
+  calc (0 : ℝ) = ∑ x, (P.mass x - Q.mass x) := by
+        rw [Finset.sum_sub_distrib, P.sum_one, Q.sum_one]
+        ring
+    _ < ∑ x, P.mass x * Real.log (P.mass x / Q.mass x) :=
+        Finset.sum_lt_sum (fun x _ => gibbs_term_le P Q hQ x)
+          ⟨x₀, Finset.mem_univ x₀, hstrict⟩
+
+/-- **Conditional entropy is nonnegative** (review #16): each mass is
+at most its fiber's total. -/
+theorem condEntropy_nonneg [DecidableEq D] (f : X → D) (P : FinDist X) :
+    0 ≤ P.condEntropy f := by
+  refine neg_nonneg.mpr (Finset.sum_nonpos fun x _ => ?_)
+  rcases eq_or_lt_of_le (P.nonneg x) with h0 | hp
+  · rw [← h0, zero_mul]
+  · have hmap : P.mass x ≤ (P.map f).mass (f x) := by
+      refine Finset.single_le_sum (fun y _ => P.nonneg y) ?_
+      exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
+    have hmpos : 0 < (P.map f).mass (f x) := lt_of_lt_of_le hp hmap
+    have hratio : P.mass x / (P.map f).mass (f x) ≤ 1 :=
+      (div_le_one hmpos).mpr hmap
+    have hlog : Real.log (P.mass x / (P.map f).mass (f x)) ≤ 0 :=
+      Real.log_nonpos (div_nonneg (P.nonneg x) hmpos.le) hratio
+    exact mul_nonpos_iff.mpr (Or.inl ⟨hp.le, hlog⟩)
+
+/-- **Conditional entropy is strictly positive** (review #16) when a
+fully supported distribution has two points in one fiber. -/
+theorem condEntropy_pos [DecidableEq D] (f : X → D) (P : FinDist X)
+    (hpos : ∀ x, 0 < P.mass x) {x y : X} (hxy : x ≠ y) (hf : f x = f y) :
+    0 < P.condEntropy f := by
+  classical
+  have hle : ∀ z ∈ Finset.univ,
+      P.mass z * Real.log (P.mass z / (P.map f).mass (f z)) ≤ 0 := by
+    intro z _
+    have hmap : P.mass z ≤ (P.map f).mass (f z) := by
+      refine Finset.single_le_sum (fun w _ => P.nonneg w) ?_
+      exact Finset.mem_filter.mpr ⟨Finset.mem_univ z, rfl⟩
+    have hmpos : 0 < (P.map f).mass (f z) := lt_of_lt_of_le (hpos z) hmap
+    have hratio : P.mass z / (P.map f).mass (f z) ≤ 1 :=
+      (div_le_one hmpos).mpr hmap
+    have hlog : Real.log (P.mass z / (P.map f).mass (f z)) ≤ 0 :=
+      Real.log_nonpos (div_nonneg (P.nonneg z) hmpos.le) hratio
+    exact mul_nonpos_iff.mpr (Or.inl ⟨(hpos z).le, hlog⟩)
+  have hstrict : P.mass x * Real.log (P.mass x / (P.map f).mass (f x)) < 0 := by
+    have hmap : P.mass x + P.mass y ≤ (P.map f).mass (f x) := by
+      have hsub : ({x, y} : Finset X)
+          ⊆ Finset.univ.filter (fun z => f z = f x) := by
+        intro z hz
+        rcases Finset.mem_insert.mp hz with rfl | hz
+        · exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, rfl⟩
+        · rw [Finset.mem_singleton.mp hz]
+          exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, hf.symm⟩
+      have h := Finset.sum_le_sum_of_subset_of_nonneg hsub
+        (fun z _ _ => P.nonneg z)
+      rwa [Finset.sum_pair hxy] at h
+    have hlt : P.mass x < (P.map f).mass (f x) := by
+      linarith [hpos y]
+    have hmpos : 0 < (P.map f).mass (f x) := lt_trans (hpos x) hlt
+    have hratio : P.mass x / (P.map f).mass (f x) < 1 :=
+      (div_lt_one hmpos).mpr hlt
+    exact mul_neg_of_pos_of_neg (hpos x)
+      (Real.log_neg (div_pos (hpos x) hmpos) hratio)
+  have hsum : ∑ z, P.mass z * Real.log (P.mass z / (P.map f).mass (f z))
+      < 0 := by
+    have h := Finset.sum_lt_sum hle ⟨x, Finset.mem_univ x, hstrict⟩
+    simpa using h
+  show (0 : ℝ) < -∑ z, P.mass z * Real.log (P.mass z / (P.map f).mass (f z))
+  linarith
+
+private lemma condEntropy_log_split [DecidableEq D] (f : X → D)
+    {m : ℕ} (hm : 0 < m)
+    (hfib : ∀ d, Nat.card {x : X // f x = d} = m) (P : FinDist X)
+    (hpos : ∀ x, 0 < P.mass x) :
+    ∑ x, P.mass x
+        * Real.log (P.mass x / ((P.map f).uniformLift f hm hfib).mass x)
+      = -P.condEntropy f + Real.log m := by
+  have hmap_pos : ∀ x, 0 < (P.map f).mass (f x) := by
+    intro x
+    refine Finset.sum_pos' (fun y _ => P.nonneg y) ⟨x, ?_, hpos x⟩
+    exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
+  have hm' : (m : ℝ) ≠ 0 := by exact_mod_cast hm.ne'
+  have hterm : ∀ x,
+      P.mass x * Real.log (P.mass x / ((P.map f).mass (f x) / m))
+        = P.mass x * Real.log (P.mass x / (P.map f).mass (f x))
+          + P.mass x * Real.log m := by
+    intro x
+    rw [show P.mass x / ((P.map f).mass (f x) / m)
+        = P.mass x / (P.map f).mass (f x) * m from by
+      field_simp,
+      Real.log_mul (div_pos (hpos x) (hmap_pos x)).ne' hm']
+    ring
+  show ∑ x, P.mass x * Real.log (P.mass x / ((P.map f).mass (f x) / m))
+    = -P.condEntropy f + Real.log m
+  rw [Finset.sum_congr rfl fun x _ => hterm x, Finset.sum_add_distrib,
+    ← Finset.sum_mul, P.sum_one, one_mul]
+  have hce : -P.condEntropy f
+      = ∑ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x)) := by
+    show -(-∑ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x))) = _
+    rw [neg_neg]
+  rw [hce]
+
+/-- **The constant-fiber upper bound** (review #16): the conditional
+entropy of a fully supported distribution along a constant-fiber map
+is at most the fiber log — with the gap the relative entropy against
+the fiber-uniformized distribution. -/
+theorem condEntropy_le_log [DecidableEq D] (f : X → D) {m : ℕ}
+    (hm : 0 < m) (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
+    (P : FinDist X) (hpos : ∀ x, 0 < P.mass x) :
+    P.condEntropy f ≤ Real.log m := by
+  have hQpos : ∀ x, 0 < ((P.map f).uniformLift f hm hfib).mass x := by
+    intro x
+    have hmap_pos : 0 < (P.map f).mass (f x) := by
+      refine Finset.sum_pos' (fun y _ => P.nonneg y) ⟨x, ?_, hpos x⟩
+      exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
+    show 0 < (P.map f).mass (f x) / m
+    positivity
+  have h := sum_mul_log_div_nonneg P
+    ((P.map f).uniformLift f hm hfib) hQpos
+  rw [condEntropy_log_split f hm hfib P hpos] at h
+  linarith
+
+/-- **The strict constant-fiber bound** (review #16): strict unless
+the distribution is its own fiber-uniformization. -/
+theorem condEntropy_lt_log [DecidableEq D] (f : X → D) {m : ℕ}
+    (hm : 0 < m) (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
+    (P : FinDist X) (hpos : ∀ x, 0 < P.mass x)
+    (hne : P ≠ (P.map f).uniformLift f hm hfib) :
+    P.condEntropy f < Real.log m := by
+  have hQpos : ∀ x, 0 < ((P.map f).uniformLift f hm hfib).mass x := by
+    intro x
+    have hmap_pos : 0 < (P.map f).mass (f x) := by
+      refine Finset.sum_pos' (fun y _ => P.nonneg y) ⟨x, ?_, hpos x⟩
+      exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
+    show 0 < (P.map f).mass (f x) / m
+    positivity
+  have h := sum_mul_log_div_pos P
+    ((P.map f).uniformLift f hm hfib) hQpos hne
+  rw [condEntropy_log_split f hm hfib P hpos] at h
+  linarith
+
 omit [Fintype X] [Fintype Y] in
 /-- **Shared-base coupling preserves the defect** (review #11): the
 coupling adds `log(m·m')` to both sides. -/

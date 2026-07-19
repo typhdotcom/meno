@@ -749,7 +749,41 @@ spine realizes it, and the realization is *invoked, not paralleled*:
   `Meno/BasisIndependence.lean`), and the legacy scalar family is
   the rank-one instance — its differentiation engine re-derived
   through the chart `(Fin 1 → ℤ) ≃ ℤ` (`unitQuadAction`,
-  `Meno/Duality.lean`).
+  `Meno/Duality.lean`). Since review #16 the **two prices of
+  resolution loss are identified**:
+  `H(q'|q) = b₁·log c − (Δ(q') − Δ(q))`
+  (`residue_tower_condEntropy_eq_defect` — via the generic Gibbs
+  inequality `sum_mul_log_div_nonneg`/`_pos`, conditional-entropy
+  nonnegativity and the constant-fiber bound `condEntropy_le_log`
+  with gap the relative entropy against the fiber-uniformization,
+  `Meno/InfoRatchet.lean`), strictly for `b₁ > 0 < c − 1`:
+  `0 < H(q'|q) < b₁·log c` and `Δ(q) < Δ(q')`
+  (`residue_tower_price_strict`), on theta at `4 → 2`
+  (`theta_tower_price`). **Temperature is a bundle operation**
+  (review #16): `QuadLatticeAction.scale` with identity
+  (`scale_one`), multiplicativity (`scale_scale`), equivalence
+  transport (`Equiv.scale`), and chart compatibility
+  (`scale_chartAction`); the basis-free moments
+  (`QuadLatticeAction.scaledPartFn`/`scaledMoment`/`scaledMoment2`/
+  `meanEnergy`) compute through every chart, and
+  **fluctuation–dissipation is stated once for every bundled lattice
+  action** (`QuadLatticeAction.hasDerivAt_meanEnergy_eq_neg_gibbsVariance`,
+  `meanEnergy_strictAntiOn`, `Meno/LatticeAction.lean`); the graph
+  definitions are direct specializations (`classQuadActionβ :=
+  classQuadAction.scale`, the carrier moments the bundle's), `β = 1`
+  recovers the carrier, its sector action, partition function,
+  expectation, and variance (`classQuadActionβ_one`,
+  `classSectorActionβ_one`, `classScaledPartFn_one`,
+  `classMeanEnergy_one`, `classSectorActionβ_one_gibbsVariance`),
+  and the **genuinely non-diagonal** theta carrier consumes the
+  intrinsic derivative and strict dissipation
+  (`theta_hasDerivAt_classMeanEnergy`,
+  `theta_classMeanEnergy_strictAntiOn`). The scalar public theorems
+  consume the generic engine (`quadraticMeanEnergy_strictAntiOn`,
+  `hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance`,
+  `quadraticObj_gibbsVariance_pos` — through `meanEnergy_unit` and
+  the groupoid-variance identification), with the Cauchy–Schwarz
+  route retained as named corroboration (`M2_sq_lt_Z_mul_M4`).
 
 The falsified endofunction-kernel design (Phase 17) stands
 falsified; its
@@ -816,37 +850,50 @@ complexity classes and pullback combinatorics, no analytics), and the
 theorems (`uniformAction` computes its `C`; `gravity_complexity`
 realizes its `gravity`), not by file motion.
 
-**The import flow (current).** The layer order matches the import
-DAG with no residue and no inversions:
+**The import flow (current — rewritten Phase 52, review #16).** The
+layer order matches the import DAG with no residue and no
+inversions:
 Foundation (`IncidenceGraph` — substrate, cycle lattice, intrinsic
 `b1`) → Topology (`GraphHomology` — freeness, retraction, the derived
 data of every lattice basis, the ℤ/ℝ keystones, Euler `b1_eq`, real
 rank, spanning criterion, `basisOfCycles`; `ThetaGraph` — incidence
 data and raw cycle facts; `GraphInstances` — connectivity, Euler
-values, the three concrete lattice bases) → Variational
-(`PeriodHarmonic`) → Priced bases and intrinsic harmonic
+values, the three concrete lattice bases) → Analytic spine
+(`SectorAction` → `QuadraticAction` — the coordinate primitive, the
+scalar engine, `posDef_smul'` upstream since Phase 52 →
+**`Fluctuation`** — the rank-generic inverse-temperature engine,
+importing `QuadraticAction` **directly** (review #16: not through
+`SiegelPoisson`); `SiegelPoisson` — the torus Fourier engine and the
+non-diagonal duality, downstream of `QuadraticAction` only) →
+Variational (`PeriodHarmonic`) → Priced bases and intrinsic harmonic
 (`HarmonicClass` — `basisGramData`, `harmonicEnergy`;
 `LatticeAction` — the carrier bundle `QuadLatticeAction` with its
-charts and intrinsic dual, on the analytic spine downstream of
-`SiegelPoisson`; `BasisIndependence` — unimodular relatedness, graph
-`partFn`, the bundled carrier `classQuadAction`) →
+charts, intrinsic dual, and, since Phase 52, the bundle's
+inverse-temperature scaling and fluctuation–dissipation, downstream
+of `SiegelPoisson` **and** `Fluctuation`; `BasisIndependence` —
+unimodular relatedness, graph `partFn`, the bundled carrier
+`classQuadAction`, its scaling as a bundle specialization) →
 Matter/Binding → Realizations (`Basic`, `Instances`, `UniformAction`)
 → Information on the carrier (`InfoRatchet` — downstream of
 `SectorAction` since Phase 48: the generic Gibbs entropy split
-`H = K + ⟨E⟩` lives there; `ResolutionCount` — downstream of
-`BasisIndependence` since Phase 45: the Gibbs residue distribution
-and, since Phase 48, the residue action and the modal bound live
-there) → Concrete consumers (`WedgePresentation`, `ThetaHarmonic`,
-`ThetaBinding`) → Corroborating models. `SectorPresentation` imports
-`LatticeAction` since Phase 48 — the categorical duality consumes the
-coordinate duality's re-derivation through the bundle. `GraphInstances` imports only
-the topology layer, so `Meno.lean`'s "unpriced topology" grouping is
+`H = K + ⟨E⟩`, the priced constructions, the Gibbs inequality, and
+conditional entropy live there; `ResolutionCount` — downstream of
+`BasisIndependence` since Phase 45: the Gibbs residue distribution,
+the residue action, the modal bound, the resolution tower, and its
+pricing live there) → Concrete consumers (`WedgePresentation`,
+`ThetaHarmonic`, `ThetaBinding`) → Corroborating models (`Duality` —
+its scalar differentiation engine a chart of `Fluctuation` since
+Phase 52). `SectorPresentation` imports `LatticeAction` since
+Phase 48 — the categorical duality consumes the coordinate duality's
+re-derivation through the bundle. `GraphInstances` imports only the
+topology layer, so `Meno.lean`'s "unpriced topology" grouping is
 true by construction (review #5, finding 1). The correction history —
-the Phase 37–40 sequence of inversions found and repaired — lives in
-Part II's phase addenda.
+the Phase 37–40 sequence of inversions found and repaired, and the
+Phase-52 relayering of `Fluctuation` — lives in Part II's phase
+addenda.
 
 **README** rewritten (Phase 37) and kept current: the architecture
-section lists the actual source files (32 as of Phase 45) and every
+section lists the actual source files (33 as of Phase 51) and every
 physical claim cites its theorem by name.
 
 ## Execution Order
@@ -4599,3 +4646,41 @@ face since Phase 27 becomes its rank-one chart. All twelve items
 CLOSED at phase end. `lake build Meno`: build green (3349 jobs — one
 new module, `Meno/Fluctuation.lean`), zero `sorry`, zero `axiom`,
 zero warnings.
+
+## Phase 52 addendum: sixteenth external review — four findings, four confirmed, four repaired (2026-07-19)
+
+Review #16 arrived against the Phase-51 state: the two prices of
+resolution loss unidentified, temperature not an operation on the
+bundle, the scalar publics still bypassing the generic engine, and
+the new analytic layer inverted with a stale Part I. Every claim
+verified against the code before repair; all four CONFIRMED. The
+ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 1 | The two prices of resolution loss remained disconnected: the uniform ratchet cost (`b₁·log c`) and the Gibbs conditional entropy were both called "the price", with no nonnegativity, no upper bound, and no relation to the change in `residueDefect` | **CONFIRMED** | **The generic entropy toolkit** (`Meno/InfoRatchet.lean`): the Gibbs inequality `sum_mul_log_div_nonneg` and its strict form (`log x ≤ x − 1`, the defect machinery's engine, now for arbitrary fully supported references), `condEntropy_nonneg` (fully generic), `condEntropy_pos` (full support + two points in one fiber), and the constant-fiber bounds **`condEntropy_le_log`**/**`condEntropy_lt_log`** — the gap is the relative entropy against the fiber-uniformization (`condEntropy_log_split`). **The identification** (`Meno/ResolutionCount.lean`): `H(q'|q) = b₁·log c − (Δ(q') − Δ(q))` (`residue_tower_condEntropy_eq_defect` — chain rule + `card_H1Reduction` bookkeeping), and **the strict package** `0 < H(q'|q) < b₁·log c` with `Δ(q) < Δ(q')` for `b₁ > 0`, `c > 1` (`residue_tower_price_strict` — the zero fiber has `c^{b₁} ≥ 2` fully supported classes; fiber-uniformity is refuted by the strict modal bound). On theta at `4 → 2`: **`theta_tower_price`** (`H(4\|2) = 2·log 2 − (Δ(4) − Δ(2))`, strict) |
+| 2 | Temperature scaling was not an operation on the carrier bundle: the general engine was coordinate-level, the carrier scaling a manually rebuilt graph-specific `QuadLatticeAction`, with no `scale`, no laws, no chart invariance, and no `β = 1` recovery | **CONFIRMED** | **`QuadLatticeAction.scale`** (`Meno/LatticeAction.lean`, importing `Meno/Fluctuation.lean`): positive-definite via the canonical chart; laws **`scale_one`**, **`scale_scale`**, **`Equiv.scale`** (equivalence transport), **`scale_chartAction`** (the Gram scales). Basis-free moments (`scaledPartFn`, `scaledMoment`, `scaledMoment2`, `meanEnergy`) computing through **every chart** (`scaledPartFn_chart`, …, `meanEnergy_chart`), and **fluctuation–dissipation stated once for every bundled lattice action** (`hasDerivAt_meanEnergy_eq_neg_gibbsVariance`, `scaledSector_gibbsVariance_energy_pos`, `meanEnergy_strictAntiOn` — through the canonical chart of the rank-generic engine). The graph definitions are **direct specializations** (`classQuadActionβ := classQuadAction.scale β hβ`; the carrier moments the bundle's), with `β = 1` recovering the carrier, its sector action, partition function, expectation, and variance (five recovery theorems, `Meno/BasisIndependence.lean`). **The non-diagonal consumer**: the theta carrier — Gram genuinely non-diagonal — consumes the intrinsic derivative and strict dissipation (`theta_hasDerivAt_classMeanEnergy`, `theta_classMeanEnergy_strictAntiOn`, `Meno/ThetaHarmonic.lean`) |
+| 3 | The scalar public theorems did not consume the generic fluctuation theorem: strict antitonicity still passed through the private scalar quotient calculation, variance positivity through the bespoke Cauchy–Schwarz, and `Meno/Fluctuation.lean`'s headline theorem had no consumer in `Meno/Duality.lean` | **CONFIRMED** | `quadraticMeanEnergy` identified with `unitQuadAction.meanEnergy` (`meanEnergy_unit`), the groupoid variance with the unit scaled-sector variance (`quadraticObj_gibbsVariance_eq_unit`, via the extracted moment form `quadraticObj_gibbsVariance_expr`); the three public theorems re-derived **directly from the generic engine**: `quadraticMeanEnergy_strictAntiOn` (generic strict dissipation at the unit action), `hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance` (generic FD + the identifications), `quadraticObj_gibbsVariance_pos` (generic strict variance). The private scalar quotient calculation deleted; **the Cauchy–Schwarz route retained as the explicitly named corroborating theorem** `M2_sq_lt_Z_mul_M4` (now public, docstring declaring its corroboration status) |
+| 4 | The dependency layer was inverted and Part I stale: `Meno/Fluctuation.lean` imported the entire Siegel–Poisson development solely for `posDef_smul'`, and the Part-I import-flow account omitted `Fluctuation` while asserting no residue | **CONFIRMED** | **`posDef_smul'` moved upstream** to `Meno/QuadraticAction.lean` (the matrix-positivity layer it belongs to); `Meno/Fluctuation.lean` imports `Meno.QuadraticAction` directly; `Meno/SiegelPoisson.lean` consumes the lemma from upstream. **Part I's import-flow account rewritten**: the analytic spine now reads `SectorAction → QuadraticAction → {Fluctuation, SiegelPoisson} → LatticeAction` with the Phase-52 relayering recorded |
+
+**Rule-3 amendments.** (1) Temperature scaling's canonical home is
+the bundle: `QuadLatticeAction.scale` with its laws; the coordinate
+engine (`Meno/Fluctuation.lean`) is the analytic substrate every
+chart consumes, and graph-level scaling is a specialization, not a
+construction. (2) The ratchet and the Gibbs conditional entropy are
+one currency: the uniform cost is the Gibbs price plus the deficit
+gained — recorded as the canonical reading of C9's resolution-loss
+account.
+
+**Discipline check.** No goal reopens: review #16's findings are
+refinements of Phase 51's layer, not contradictions of Part I's
+claims — the code had the theorems, in the wrong places or without
+their laws. Finding 1 is the phase's center: the Gibbs inequality
+generalizes the defect machinery from the uniform reference to every
+fully supported reference, and with it the two prices of one
+resolution step collapse into a single identity with strict bounds
+on an explicit graph. Finding 2 completes reviews #15–16's arc: the
+response theory now lives at all three levels — coordinate chart,
+bundle, carrier — each a specialization of the last. All twelve
+items remain CLOSED. `lake build Meno`: build green (3349 jobs),
+zero `sorry`, zero `axiom`, zero warnings.

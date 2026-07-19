@@ -863,19 +863,6 @@ lemma quadForm_dotProduct (Q : Matrix (Fin d) (Fin d) ℝ) (x : Fin d → ℝ) :
   rw [Finset.mul_sum]
   exact Finset.sum_congr rfl (fun j _ => by ring)
 
-/-- Positive scalar multiples of positive-definite matrices are positive
-definite. Hand-rolled: `Matrix.PosDef.smul` needs `StarOrderedRing ℝ`
-synthesis, which fails at this pin. -/
-lemma posDef_smul' {A : Matrix (Fin d) (Fin d) ℝ} (hA : A.PosDef)
-    {c : ℝ} (hc : 0 < c) : (c • A).PosDef := by
-  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
-  · show (c • A)ᴴ = c • A
-    rw [Matrix.conjTranspose_smul, star_trivial]
-    congr 1
-    exact (posDef_iff_dotProduct_mulVec.mp hA).1
-  · rw [Matrix.smul_mulVec, dotProduct_smul, smul_eq_mul]
-    exact mul_pos hc ((posDef_iff_dotProduct_mulVec.mp hA).2 hx)
-
 /-- The inverse of a positive-definite matrix is positive definite. -/
 lemma posDef_inv {A : Matrix (Fin d) (Fin d) ℝ} (hA : A.PosDef) :
     (A⁻¹).PosDef := by

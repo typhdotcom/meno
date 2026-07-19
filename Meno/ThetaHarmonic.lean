@@ -593,6 +593,60 @@ theorem theta_tower_entropy_chain :
             (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num))) :=
   thetaGraph.residue_tower_entropy_chain 2 4 (by norm_num)
 
+/-- **The two prices identified on theta** (review #16): at `4 → 2`,
+the Gibbs price equals the ratchet cost minus the deficit gained —
+`H(4|2) = 2·log 2 − (Δ(4) − Δ(2))` — with the strict package:
+`0 < H(4|2) < 2·log 2` and `Δ(2) < Δ(4)`. -/
+theorem theta_tower_price :
+    ((thetaGraph.residueDist 4).condEntropy
+          (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num)))
+        = 2 * Real.log 2
+          - (thetaGraph.residueDefect 4 - thetaGraph.residueDefect 2))
+      ∧ 0 < (thetaGraph.residueDist 4).condEntropy
+          (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num)))
+      ∧ (thetaGraph.residueDist 4).condEntropy
+          (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num)))
+          < 2 * Real.log 2
+      ∧ thetaGraph.residueDefect 2 < thetaGraph.residueDefect 4 := by
+  have hb : 0 < thetaGraph.b1 := by
+    rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
+    norm_num
+  have hb2 : ((thetaGraph.b1 : ℕ) : ℝ) = 2 := by
+    rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
+    norm_num
+  have hid := thetaGraph.residue_tower_condEntropy_eq_defect 2 4 2
+    (by norm_num) (by norm_num)
+  have hstrict := thetaGraph.residue_tower_price_strict 2 4 2 hb
+    (by norm_num) (by norm_num) (by norm_num)
+  rw [hb2] at hid
+  obtain ⟨h1, h2, h3⟩ := hstrict
+  rw [hb2] at h2
+  exact ⟨hid, h1, h2, h3⟩
+
+/-! ### Fluctuation–dissipation on theta (review #16)
+
+The theta graph's harmonic Gram is genuinely **non-diagonal** — its
+two cycles share a path — so these are the first consumers of the
+intrinsic derivative and strict-dissipation theorems beyond the
+diagonal/scalar family. -/
+
+/-- **The intrinsic derivative on a non-diagonal carrier**
+(review #16): fluctuation–dissipation on the theta graph. -/
+theorem theta_hasDerivAt_classMeanEnergy (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt thetaGraph.classMeanEnergy
+      (-((thetaGraph.classSectorActionβ β hβ).gibbsVariance
+          thetaGraph.harmonicEnergy)) β :=
+  thetaGraph.hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance β hβ
+
+/-- **Strict dissipation on a non-diagonal carrier** (review #16):
+the theta graph's Gibbs mean energy strictly decreases in the
+inverse temperature. -/
+theorem theta_classMeanEnergy_strictAntiOn :
+    StrictAntiOn thetaGraph.classMeanEnergy (Set.Ioi 0) := by
+  refine thetaGraph.classMeanEnergy_strictAntiOn ?_
+  rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
+  norm_num
+
 /-- The theta tower's conditional entropy is the difference of the
 two residue actions' `K + ⟨E⟩` decompositions (review #15). -/
 theorem theta_tower_condEntropy_eq :

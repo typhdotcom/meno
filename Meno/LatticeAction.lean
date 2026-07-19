@@ -1,4 +1,5 @@
 import Meno.SiegelPoisson
+import Meno.Fluctuation
 import Mathlib.LinearAlgebra.TensorProduct.Basis
 import Mathlib.LinearAlgebra.Dimension.Free
 import Mathlib.LinearAlgebra.Dual.Basis
@@ -1067,6 +1068,262 @@ theorem _root_.Meno.QuadraticAction.duality_via_lattice {r : ℕ}
   rw [ofQuadraticAction_partFn, ofQuadraticAction_dual_partFn,
     ofQuadraticAction_disc, ofQuadraticAction_rank] at h
   exact h
+
+/-! ### Inverse-temperature scaling on the bundle (review #16)
+
+Temperature is an operation on the carrier bundle itself:
+`QuadLatticeAction.scale` multiplies the form by `β > 0`, with the
+identity law (`scale_one`), multiplicativity (`scale_scale`),
+equivalence transport (`Equiv.scale`), and chart compatibility
+(`scale_chartAction` — the Gram scales). The basis-free moment
+functions (`scaledPartFn`, `scaledMoment`, `scaledMoment2`,
+`meanEnergy`) compute through every chart, and
+**fluctuation–dissipation holds once for every bundled lattice
+action** (`hasDerivAt_meanEnergy_eq_neg_gibbsVariance`,
+`meanEnergy_strictAntiOn`) — through the canonical chart of the
+rank-generic engine (`Meno/Fluctuation.lean`). -/
+
+private theorem mk_eq_mk {Λ : Type u} [acg : AddCommGroup Λ]
+    [mod : Module ℤ Λ] [fr : Module.Free ℤ Λ] [fin : Module.Finite ℤ Λ]
+    {form form' : Λ → Λ → ℝ} {c₁ a₁ p₁ c₂ a₂ p₂} (h : form = form') :
+    QuadLatticeAction.mk Λ form c₁ a₁ p₁
+      = QuadLatticeAction.mk Λ form' c₂ a₂ p₂ := by
+  subst h
+  rfl
+
+/-- **The inverse-temperature scaling of a bundled lattice action**
+(review #16): the form multiplied by `β > 0` — positive definite via
+the canonical chart. -/
+noncomputable def scale (β : ℝ) (hβ : 0 < β) : QuadLatticeAction.{u} where
+  Λ := Q.Λ
+  form a b := β * Q.form a b
+  form_comm a b := by rw [Q.form_comm]
+  form_add_left a₁ a₂ b := by rw [Q.form_add_left]; ring
+  posDef_baseChange := by
+    refine bilinBaseChange_posDef_of_gram _ _ _ (Module.finBasis ℤ Q.Λ) ?_
+    have hmat : (Matrix.of fun i j =>
+          β * Q.form (Module.finBasis ℤ Q.Λ i) (Module.finBasis ℤ Q.Λ j))
+        = β • Q.gram (Module.finBasis ℤ Q.Λ) := by
+      ext i j
+      rw [Matrix.of_apply, Matrix.smul_apply, smul_eq_mul]
+      congr 1
+    rw [hmat]
+    exact posDef_smul' (Q.gram_posDef (Module.finBasis ℤ Q.Λ)) hβ
+
+/-- **Scaling at `1` is the identity** (review #16). -/
+theorem scale_one : Q.scale 1 one_pos = Q := by
+  cases Q with
+  | mk Λ form c a p =>
+    exact mk_eq_mk (funext fun x => funext fun y => one_mul _)
+
+/-- **Scaling is multiplicative** (review #16). -/
+theorem scale_scale (β β' : ℝ) (hβ : 0 < β) (hβ' : 0 < β') :
+    (Q.scale β hβ).scale β' hβ' = Q.scale (β' * β) (mul_pos hβ' hβ) := by
+  cases Q with
+  | mk Λ form c a p =>
+    exact mk_eq_mk (funext fun x => funext fun y => by
+      show β' * (β * form x y) = β' * β * form x y
+      ring)
+
+/-- **Equivalence transport** (review #16): a form-preserving
+equivalence preserves every scaling. -/
+def Equiv.scale {Q Q' : QuadLatticeAction.{u}} (e : Q.Equiv Q')
+    (β : ℝ) (hβ : 0 < β) : (Q.scale β hβ).Equiv (Q'.scale β hβ) where
+  toLinearEquiv := e.toLinearEquiv
+  form_eq a b := by
+    show β * Q'.form (e.toLinearEquiv a) (e.toLinearEquiv b)
+      = β * Q.form a b
+    rw [e.form_eq]
+
+/-- **Chart compatibility** (review #16): the chart of the scaled
+bundle is the scaled chart — the Gram matrix scales. -/
+theorem scale_chartAction {n : ℕ} (b : Module.Basis (Fin n) ℤ Q.Λ)
+    (β : ℝ) (hβ : 0 < β) :
+    ((Q.scale β hβ).chartAction b).Q = β • (Q.chartAction b).Q := by
+  ext i j
+  rw [chartAction_Q, chartAction_Q, Matrix.smul_apply, gram_apply,
+    gram_apply, smul_eq_mul]
+  rfl
+
+/-- The bundle's β-scaled partition function — basis-free. -/
+noncomputable def scaledPartFn (β : ℝ) : ℝ :=
+  ∑' a : Q.Λ, Real.exp (-(β * Q.form a a))
+
+/-- The bundle's first β-scaled energy moment — basis-free. -/
+noncomputable def scaledMoment (β : ℝ) : ℝ :=
+  ∑' a : Q.Λ, Q.form a a * Real.exp (-(β * Q.form a a))
+
+/-- The bundle's second β-scaled energy moment — basis-free. -/
+noncomputable def scaledMoment2 (β : ℝ) : ℝ :=
+  ∑' a : Q.Λ, Q.form a a ^ 2 * Real.exp (-(β * Q.form a a))
+
+/-- The bundle's Gibbs mean energy at inverse temperature `β`. -/
+noncomputable def meanEnergy (β : ℝ) : ℝ :=
+  Q.scaledMoment β / Q.scaledPartFn β
+
+private theorem chart_energy_equivFun {n : ℕ}
+    (b : Module.Basis (Fin n) ℤ Q.Λ) (a : Q.Λ) :
+    (Q.chartAction b).energy (b.equivFun a) = Q.form a a := by
+  show ∑ i, ∑ j, Q.gram b i j * ((b.equivFun a i : ℤ) : ℝ)
+      * ((b.equivFun a j : ℤ) : ℝ) = Q.form a a
+  rw [Q.form_repr b a a]
+  refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+  rw [Module.Basis.equivFun_apply, gram_apply]
+  ring
+
+/-- Every chart computes the β-scaled partition function. -/
+theorem scaledPartFn_chart {n : ℕ} (b : Module.Basis (Fin n) ℤ Q.Λ)
+    (β : ℝ) :
+    Q.scaledPartFn β = (Q.chartAction b).scaledPartFn β := by
+  rw [show (Q.chartAction b).scaledPartFn β
+      = ∑' k : Fin n → ℤ,
+          Real.exp (-(β * (Q.chartAction b).energy k)) from rfl,
+    ← Equiv.tsum_eq b.equivFun.toEquiv
+      (fun k : Fin n → ℤ =>
+        Real.exp (-(β * (Q.chartAction b).energy k)))]
+  refine tsum_congr fun a => ?_
+  show Real.exp (-(β * Q.form a a))
+    = Real.exp (-(β * (Q.chartAction b).energy (b.equivFun a)))
+  rw [Q.chart_energy_equivFun b a]
+
+/-- Every chart computes the first β-scaled moment. -/
+theorem scaledMoment_chart {n : ℕ} (b : Module.Basis (Fin n) ℤ Q.Λ)
+    (β : ℝ) :
+    Q.scaledMoment β = (Q.chartAction b).scaledMoment β := by
+  rw [show (Q.chartAction b).scaledMoment β
+      = ∑' k : Fin n → ℤ, (Q.chartAction b).energy k
+          * Real.exp (-(β * (Q.chartAction b).energy k)) from rfl,
+    ← Equiv.tsum_eq b.equivFun.toEquiv
+      (fun k : Fin n → ℤ => (Q.chartAction b).energy k
+        * Real.exp (-(β * (Q.chartAction b).energy k)))]
+  refine tsum_congr fun a => ?_
+  show Q.form a a * Real.exp (-(β * Q.form a a))
+    = (Q.chartAction b).energy (b.equivFun a)
+      * Real.exp (-(β * (Q.chartAction b).energy (b.equivFun a)))
+  rw [Q.chart_energy_equivFun b a]
+
+/-- Every chart computes the second β-scaled moment. -/
+theorem scaledMoment2_chart {n : ℕ} (b : Module.Basis (Fin n) ℤ Q.Λ)
+    (β : ℝ) :
+    Q.scaledMoment2 β = (Q.chartAction b).scaledMoment2 β := by
+  rw [show (Q.chartAction b).scaledMoment2 β
+      = ∑' k : Fin n → ℤ, (Q.chartAction b).energy k ^ 2
+          * Real.exp (-(β * (Q.chartAction b).energy k)) from rfl,
+    ← Equiv.tsum_eq b.equivFun.toEquiv
+      (fun k : Fin n → ℤ => (Q.chartAction b).energy k ^ 2
+        * Real.exp (-(β * (Q.chartAction b).energy k)))]
+  refine tsum_congr fun a => ?_
+  show Q.form a a ^ 2 * Real.exp (-(β * Q.form a a))
+    = (Q.chartAction b).energy (b.equivFun a) ^ 2
+      * Real.exp (-(β * (Q.chartAction b).energy (b.equivFun a)))
+  rw [Q.chart_energy_equivFun b a]
+
+/-- Every chart computes the Gibbs mean energy. -/
+theorem meanEnergy_chart {n : ℕ} (b : Module.Basis (Fin n) ℤ Q.Λ) :
+    Q.meanEnergy = (Q.chartAction b).meanEnergy := by
+  funext β
+  show Q.scaledMoment β / Q.scaledPartFn β = _
+  rw [Q.scaledMoment_chart b β, Q.scaledPartFn_chart b β]
+  rfl
+
+/-- The β-scaled bundle as a sector action. -/
+noncomputable def scaledSector (β : ℝ) (hβ : 0 < β) : SectorAction.{u} :=
+  (Q.scale β hβ).toSectorAction
+
+/-- The scaled bundle's Gibbs mean of the energy, in moment form. -/
+theorem scaledSector_gibbsExpect_energy (β : ℝ) (hβ : 0 < β) :
+    (Q.scaledSector β hβ).gibbsExpect (fun a => Q.form a a)
+      = Q.scaledMoment β / Q.scaledPartFn β := by
+  have hterm : ∀ a : Q.Λ,
+      Q.form a a * (Q.scaledSector β hβ).gibbsMass a
+        = Q.form a a * Real.exp (-(β * Q.form a a))
+          / Q.scaledPartFn β := by
+    intro a
+    show Q.form a a * ((Q.scaledSector β hβ).weight a
+      / (Q.scaledSector β hβ).partFn) = _
+    rw [mul_div_assoc]
+    rfl
+  show (∑' a, Q.form a a * (Q.scaledSector β hβ).gibbsMass a) = _
+  rw [tsum_congr hterm, tsum_div_const]
+  rfl
+
+/-- The scaled bundle's Gibbs mean of the squared energy, in moment
+form. -/
+theorem scaledSector_gibbsExpect_energy_sq (β : ℝ) (hβ : 0 < β) :
+    (Q.scaledSector β hβ).gibbsExpect (fun a => Q.form a a ^ 2)
+      = Q.scaledMoment2 β / Q.scaledPartFn β := by
+  have hterm : ∀ a : Q.Λ,
+      Q.form a a ^ 2 * (Q.scaledSector β hβ).gibbsMass a
+        = Q.form a a ^ 2 * Real.exp (-(β * Q.form a a))
+          / Q.scaledPartFn β := by
+    intro a
+    show Q.form a a ^ 2 * ((Q.scaledSector β hβ).weight a
+      / (Q.scaledSector β hβ).partFn) = _
+    rw [mul_div_assoc]
+    rfl
+  show (∑' a, Q.form a a ^ 2 * (Q.scaledSector β hβ).gibbsMass a) = _
+  rw [tsum_congr hterm, tsum_div_const]
+  rfl
+
+/-- The scaled bundle's Gibbs variance of the energy, in moment
+form. -/
+theorem scaledSector_gibbsVariance_energy (β : ℝ) (hβ : 0 < β) :
+    (Q.scaledSector β hβ).gibbsVariance (fun a => Q.form a a)
+      = Q.scaledMoment2 β / Q.scaledPartFn β - Q.meanEnergy β ^ 2 := by
+  show (Q.scaledSector β hβ).gibbsExpect (fun a => Q.form a a ^ 2)
+      - (Q.scaledSector β hβ).gibbsExpect (fun a => Q.form a a) ^ 2 = _
+  rw [Q.scaledSector_gibbsExpect_energy_sq β hβ,
+    Q.scaledSector_gibbsExpect_energy β hβ]
+  rfl
+
+/-- The scaled bundle's energy variance is the canonical chart's. -/
+theorem scaledSector_gibbsVariance_eq_chart (β : ℝ) (hβ : 0 < β) :
+    (Q.scaledSector β hβ).gibbsVariance (fun a => Q.form a a)
+      = ((Q.chartAction (Module.finBasis ℤ Q.Λ)).scaledSector β
+          hβ).gibbsVariance
+          (Q.chartAction (Module.finBasis ℤ Q.Λ)).energy := by
+  rw [Q.scaledSector_gibbsVariance_energy β hβ,
+    (Q.chartAction (Module.finBasis ℤ Q.Λ)).scaledSector_gibbsVariance_energy
+      β hβ,
+    Q.scaledPartFn_chart (Module.finBasis ℤ Q.Λ) β,
+    Q.scaledMoment2_chart (Module.finBasis ℤ Q.Λ) β,
+    show Q.meanEnergy β
+        = (Q.chartAction (Module.finBasis ℤ Q.Λ)).meanEnergy β from
+      congrFun (Q.meanEnergy_chart (Module.finBasis ℤ Q.Λ)) β]
+
+/-- **FLUCTUATION–DISSIPATION FOR EVERY BUNDLED LATTICE ACTION**
+(review #16): the derivative of the Gibbs mean energy in the inverse
+temperature is minus the Gibbs variance of the energy — stated once
+on the bundle, through the canonical chart of the rank-generic
+engine. -/
+theorem hasDerivAt_meanEnergy_eq_neg_gibbsVariance (β : ℝ) (hβ : 0 < β) :
+    HasDerivAt Q.meanEnergy
+      (-((Q.scaledSector β hβ).gibbsVariance (fun a => Q.form a a))) β := by
+  rw [Q.meanEnergy_chart (Module.finBasis ℤ Q.Λ),
+    Q.scaledSector_gibbsVariance_eq_chart β hβ]
+  exact (Q.chartAction (Module.finBasis ℤ Q.Λ)).hasDerivAt_meanEnergy_eq_neg_gibbsVariance
+    β hβ
+
+/-- **Strict energy fluctuation on the bundle** (review #16): a
+sector of nonzero energy makes the variance strictly positive. -/
+theorem scaledSector_gibbsVariance_energy_pos (β : ℝ) (hβ : 0 < β)
+    {a₀ : Q.Λ} (ha₀ : Q.form a₀ a₀ ≠ 0) :
+    0 < (Q.scaledSector β hβ).gibbsVariance (fun a => Q.form a a) := by
+  rw [Q.scaledSector_gibbsVariance_eq_chart β hβ]
+  refine (Q.chartAction (Module.finBasis ℤ Q.Λ)).scaledSector_gibbsVariance_energy_pos
+    β hβ (k₀ := (Module.finBasis ℤ Q.Λ).equivFun a₀) ?_
+  rw [Q.chart_energy_equivFun (Module.finBasis ℤ Q.Λ) a₀]
+  exact ha₀
+
+/-- **Strict dissipation on the bundle** (review #16). -/
+theorem meanEnergy_strictAntiOn (h : ∃ a, Q.form a a ≠ 0) :
+    StrictAntiOn Q.meanEnergy (Set.Ioi 0) := by
+  obtain ⟨a₀, ha₀⟩ := h
+  rw [Q.meanEnergy_chart (Module.finBasis ℤ Q.Λ)]
+  refine (Q.chartAction (Module.finBasis ℤ Q.Λ)).meanEnergy_strictAntiOn
+    ⟨(Module.finBasis ℤ Q.Λ).equivFun a₀, ?_⟩
+  rw [Q.chart_energy_equivFun (Module.finBasis ℤ Q.Λ) a₀]
+  exact ha₀
 
 end QuadLatticeAction
 

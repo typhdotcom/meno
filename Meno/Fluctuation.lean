@@ -1,4 +1,4 @@
-import Meno.SiegelPoisson
+import Meno.QuadraticAction
 import Mathlib.Analysis.Calculus.SmoothSeries
 
 /-! # Fluctuation–Dissipation at Every Rank (review #15)

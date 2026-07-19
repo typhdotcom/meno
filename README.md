@@ -297,8 +297,15 @@ partition-function factorization is transitive
 (`sectionCost_h1TowerMap`), and under the Gibbs law the loss is the
 conditional entropy of the tower map — the difference of the two
 `K + ⟨E⟩` decompositions (`residue_tower_entropy_chain`,
-`residue_tower_condEntropy_eq`; on theta at `4 → 2`:
-fibers of `4`, cost `2·log 2`, `theta_tower_entropy_chain`). One
+`residue_tower_condEntropy_eq`). And the **two prices are one
+currency**: `H(q'|q) = b₁·log c − (Δ(q') − Δ(q))`
+(`residue_tower_condEntropy_eq_defect` — via the generic Gibbs
+inequality and the constant-fiber conditional-entropy bounds,
+`FinDist.condEntropy_le_log`), strictly for any genuine refinement:
+`0 < H(q'|q) < b₁·log c` and `Δ(q) < Δ(q')`
+(`residue_tower_price_strict`; on theta at `4 → 2`: fibers of `4`,
+cost `2·log 2`, `H(4|2) = 2·log 2 − (Δ(4) − Δ(2))` strict,
+`theta_tower_price`). One
 theorem carries the whole priced package on one explicit graph
 (`theta_priced_faces`): partition-function gravity, complexity
 gravity, priced time, the **complete residue, description, and pair
@@ -329,16 +336,32 @@ dominated at half temperature — with
 **`d⟨E⟩/dβ = −Var_β(E)`**
 (`hasDerivAt_meanEnergy_eq_neg_gibbsVariance`) and strict
 dissipation from any nonzero-energy sector
-(`meanEnergy_strictAntiOn`). The intrinsic carrier consumes it
-through its cycle-basis chart: `classQuadActionβ` scales the
-carrier, `d⟨E⟩/dβ = −Var` holds intrinsically
-(`hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance`), and on any
-graph with cycles the Gibbs mean energy strictly falls
-(`classMeanEnergy_strictAntiOn`, `Meno/BasisIndependence.lean`).
-The canonical scalar family is the rank-one chart of the same
-engine (`unitQuadAction`,
+(`meanEnergy_strictAntiOn`). Temperature is an **operation on the
+carrier bundle** (`QuadLatticeAction.scale`,
+`Meno/LatticeAction.lean`): identity, multiplicativity, equivalence
+transport, and chart compatibility (`scale_one`, `scale_scale`,
+`Equiv.scale`, `scale_chartAction`), with basis-free moments
+computing through every chart and fluctuation–dissipation stated
+**once for every bundled lattice action**
+(`QuadLatticeAction.hasDerivAt_meanEnergy_eq_neg_gibbsVariance`,
+`QuadLatticeAction.meanEnergy_strictAntiOn`). The intrinsic carrier
+is a direct specialization (`classQuadActionβ :=
+classQuadAction.scale`, with `β = 1` recovering the carrier, its
+partition function, expectation, and variance): `d⟨E⟩/dβ = −Var`
+holds intrinsically
+(`hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance`), on any graph
+with cycles the Gibbs mean energy strictly falls
+(`classMeanEnergy_strictAntiOn`, `Meno/BasisIndependence.lean`), and
+the genuinely **non-diagonal** theta carrier consumes both
+(`theta_hasDerivAt_classMeanEnergy`,
+`theta_classMeanEnergy_strictAntiOn`). The canonical scalar family
+is the rank-one chart of the same engine, its public theorems
+derived from it (`unitQuadAction`,
 `hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance`,
-`quadraticMeanEnergy_strictAntiOn`, `Meno/Duality.lean`).
+`quadraticMeanEnergy_strictAntiOn`,
+`quadraticObj_gibbsVariance_pos`, `Meno/Duality.lean`), with the
+Cauchy–Schwarz route retained as named corroboration
+(`M2_sq_lt_Z_mul_M4`).
 
 **Geometry.** Every symmetric simplicial complex's fundamental
 groupoid carries a Lawvere-subadditive geodesic length
