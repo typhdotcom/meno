@@ -269,8 +269,9 @@ fail off them.
 **The strictness.** On `cycleGraph 3` at `(q, q') = (2, 3)`:
 `Z(1/3)·Z(12) > Z(4/3)·Z(3)` in scalar theta values
 (`cycle3_classScaledPartFn`), by first-mode lower bounds against
-geometric tail bounds (the estimate discipline demonstrated in
-`Meno/Zeta.lean`, restated for the face), so the defect is strictly
+geometric tail bounds (the shared estimates promoted to
+`Meno/QuadraticAction.lean` at the G3 review, consumed by both
+`Meno/Zeta.lean` and the face), so the defect is strictly
 negative — **at the witness, incomparable resolutions couple
 supermodularly** (`cycle3_crossRatio_neg`).
 
