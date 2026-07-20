@@ -55,6 +55,20 @@ noncomputable def mass : ℝ := G.harmonicEnergy m.val
 not stored data. -/
 theorem mass_pos : 0 < m.mass := G.harmonicEnergy_pos m.prop
 
+/-- **Matter forces topology** (G7, the converse of `exists_matter`):
+a matter sector exists only where the graph has cycles — at `b₁ = 0`
+the keystone coordinates land in `Fin 0 → ℤ` and every class is
+zero. -/
+theorem b1_pos (m : MatterSector G) : 0 < G.b1 := by
+  rcases Nat.eq_zero_or_pos G.b1 with hb | hb
+  · exfalso
+    apply m.prop
+    apply G.h1QuotEquiv.injective
+    rw [map_zero]
+    funext j
+    exact absurd j.isLt (by omega)
+  · exact hb
+
 /-- **The variational identity**: the mass is the least energy among
 real cochains realizing the class's periods — attained. -/
 theorem mass_isLeast :

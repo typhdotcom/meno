@@ -13,13 +13,14 @@ discrete sectors a system can occupy, the action prices them, the
 Boltzmann sum reads the partition function, and duality, minimization,
 and counting theorems connect the faces.
 
-Everything below is a checked theorem — zero `sorry`, zero `axiom`
+Everything below is a checked theorem — zero sorry, zero axiom
 declarations, `lake build` green against Lean 4.26.0 and the pinned
 Mathlib. The program now underway — the Obstruction Program, with
-its four-anchor discipline — lives in [`PLAN.md`](PLAN.md); the
-first program's kernel-checked leg is a Lean object ([The coverage
-bundle](#the-coverage-bundle)), scheduled for replacement by the
-plan's dichotomy theorem.
+its four-anchor discipline — lives in [`PLAN.md`](PLAN.md); at its
+G7 close the first program's coverage bundle was deleted and
+replaced by the completion object, one dichotomy theorem whose
+forward direction requires every face's strictness ([The
+dichotomy](#the-dichotomy)).
 
 ---
 
@@ -423,44 +424,33 @@ the systole inequality, through the walk-length bridge.
 
 ---
 
-## The coverage bundle
+## The dichotomy
 
-The first program closed with a kernel-checked leg, a **Lean
-object**: the statement-coverage bundle `MenoStatementCoverage`
-(`Meno/Completion.lean`) — every acceptance
-signature of that program is a field in exactly one of **nine law packages**, and
-`menoStatementCoverage` is its one derivation, by direct
-named-theorem assignment. The graph-dependent packages are quantified
-over every finite multigraph `G`, the thermal package over every
-bundled lattice action `Q`, the information package over every finite
-distribution `P`; the coding-gravity package is **graph-free** — no
-vacuous quantifier — and the flagship package pins the concrete
-consumers.
+The completion object (G7): the first program's statement-coverage
+bundle and its nine law packages are deleted (recorded in
+`scripts/deleted.txt`), replaced by **one biconditional at the top
+of the tree** (`Meno/Completion.lean`) whose forward direction
+requires every face's strictness — a hollow face cannot deliver its
+strict conjunct, and deleting any face's strictness theorem breaks
+the file. **The universe of the model is interesting exactly when
+it is globally unsatisfiable.**
 
-| Package | Covers | Derivation |
-| :--- | :--- | :--- |
-| `GraphTopologyLaws` — `∀ G` | Gauge, Euler, independence, spanning, integral coordinates | `graphTopologyLaws` |
-| `HarmonicCarrierLaws` — `∀ G` | Rank well-definedness, unimodular transport, the basis-free partition function, the variational identity, positive energy | `harmonicCarrierLaws` |
-| `MatterBindingLaws` — `∀ G` | The intrinsic matter facts and the generic binding theorems on 2-complexes | `matterBindingLaws` |
-| `ResolutionCodingLaws` — `∀ G` | Graph-dependent: K1–K3 at every modulus, gauge counting, compression sections and costs, per-class recovery | `resolutionCodingLaws` |
-| `CodingGravityLaws` — graph-free | Generic: section counting, the coding theorem with its `ℝ≥0∞` boundary, the priced gravity and time identities, and counting gravity as the zero-energy corollary | `codingGravityLaws` |
-| `ThermalDualityLaws` — `∀ Q` | The scale algebra, the dual involution, temperature inversion, and the partition, mean-energy, and variance functional equations with the self-dual fixed point | `thermalDualityLaws` |
-| `InformationLaws` — `∀ P` | Pushforward functoriality, the unconditional entropy chain rule, the support-aware Gibbs inequality, data processing | `informationLaws` |
-| `ResolutionTowerLaws` — `∀ G` | The tower category, pushforwards, additive prices and costs, telescoping monotone deficits, strict pricing of genuine refinements | `resolutionTowerLaws` |
-| `FlagshipLaws` | The concrete consumers: cycle, wedge, and theta results — bases, counts, dualities, priced faces, tower prices, the thermal circle, the geodesic–harmonic duality | `flagshipLaws` |
+| Result | Statement |
+| :--- | :--- |
+| `meno_dichotomy` | **THE DICHOTOMY** (G7): `0 < b₁` **iff** matter exists **and** the spectrum strictly exceeds the vacuum **and** the harmonic energy genuinely fluctuates **and** every resolution `1 < q` carries a strict information deficit **and** every genuine refinement step of the tower has strictly positive section cost |
+| `exists_matter` | **The matter conjunct**: `0 < b₁` forces a nonzero `H¹` class |
+| `one_lt_classPartFn` | **The spectrum conjunct** (`Meno/Binding.lean`): with cycles, `1 < classPartFn` — the vacuum contributes `exp(−0) = 1` and a matter sector adds its own Boltzmann weight to the same convergent sum (`summable_classWeight`) |
+| `classSectorAction_gibbsVariance_energy_pos` | **The fluctuation conjunct**: the intrinsic carrier's energy variance is strictly positive on any graph with cycles |
+| `residueDefect_pos` | **The deficit conjunct**: at every resolution `1 < q` the Gibbs residue law sits strictly below maximal ignorance |
+| `sectionCost_h1TowerMap` | **The arrow conjunct's engine**: reversing one resolution step costs `b₁·log c` per coarse sector — strictly positive at any genuine refinement |
+| `MatterSector.b1_pos` | **The reverse direction** (`Meno/Matter.lean`, the converse of `exists_matter`): a matter sector exists only where the graph has cycles — at `b₁ = 0` the keystone coordinates land in `Fin 0 → ℤ` and every class is zero |
 
-Scope: the bundle enforces **statement coverage** —
-deleting an acceptance theorem breaks the derivation. Proof provenance
-is enforced by the direct-assignment discipline and review. The
-repository invariants are machine-assisted by `scripts/audit.py`
-(README citations resolve; recorded deletions stay deleted; deleted
-names are cited nowhere in living text; the architecture listing
-matches the tree; every declaration is reachable from the publicly
-claimed results or enumerated with its retention predicate). The
-bundle certifies statements, not depth; the Obstruction Program
-([`PLAN.md`](PLAN.md)) replaces it with a single dichotomy theorem
-whose forward direction requires every face's strictness. Audit
-chronology lives in the repository log.
+The repository invariants remain machine-assisted by
+`scripts/audit.py` (README citations resolve; recorded deletions
+stay deleted; deleted names are cited nowhere in living text; the
+architecture listing matches the tree; every declaration is
+reachable from the publicly claimed results or enumerated with its
+retention predicate). Audit chronology lives in the repository log.
 
 ---
 
@@ -504,7 +494,7 @@ Meno/
 ├── Hodge.lean                 Graph partition functions (identified with the spine)
 ├── Duality.lean               The scalar quadratic family and Gibbs wrappers (identified with the spine)
 ├── Zeta.lean                  Riemann functional equation through the spine's theta identification
-└── Completion.lean            THE STATEMENT-COVERAGE BUNDLE: every Part-I acceptance signature, one field each, one derivation; the three spine law packages
+└── Completion.lean            THE COMPLETION OBJECT (G7): the dichotomy — cycles iff matter, spectrum, fluctuation, deficit, and the strict arrow
 ```
 
 The legacy layer (`Meno/Simplicial.lean`–`Meno/Zeta.lean`) is retained

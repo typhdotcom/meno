@@ -374,6 +374,24 @@ noncomputable def IncidenceGraph.classPartFn (G : IncidenceGraph.{u, v}) : ℝ :
   ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
     Real.exp (-G.harmonicEnergy κ)
 
+/-- **The spectrum strictly exceeds the vacuum** (G7): with cycles,
+the class partition function is strictly more than the vacuum's unit
+weight — the zero class contributes `exp(−0) = 1` and a matter sector
+(`exists_matter`) adds its own Boltzmann weight `exp(−mass) > 0` to
+the same convergent sum (`summable_classWeight`). -/
+theorem IncidenceGraph.one_lt_classPartFn (G : IncidenceGraph.{u, v})
+    (hb : 0 < G.b1) : 1 < G.classPartFn := by
+  classical
+  obtain ⟨m⟩ := exists_matter G hb
+  have hterm := G.summable_classWeight.sum_le_tsum
+    ({0, m.val} : Finset ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)))
+    (fun κ _ => (Real.exp_pos _).le)
+  rw [Finset.sum_pair (Ne.symm m.prop), G.harmonicEnergy_zero, neg_zero,
+    Real.exp_zero] at hterm
+  have hZ : (1 : ℝ) + Real.exp (-G.harmonicEnergy m.val)
+      ≤ G.classPartFn := hterm
+  linarith [Real.exp_pos (-G.harmonicEnergy m.val)]
+
 
 namespace TwoComplex
 

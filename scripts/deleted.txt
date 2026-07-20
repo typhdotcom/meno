@@ -373,3 +373,24 @@ Simplicial.winding_sub
 Meno.IncidenceGraph.h1TowerMap_proof_irrel
 Meno.MenoSemanticCompletion
 Meno.menoSemanticCompletion
+# Meno II, G7 — the coverage bundle falls to the dichotomy (PLAN Harvest)
+Meno.MenoStatementCoverage
+Meno.menoStatementCoverage
+Meno.GraphTopologyLaws
+Meno.graphTopologyLaws
+Meno.HarmonicCarrierLaws
+Meno.harmonicCarrierLaws
+Meno.MatterBindingLaws
+Meno.matterBindingLaws
+Meno.ResolutionCodingLaws
+Meno.resolutionCodingLaws
+Meno.CodingGravityLaws
+Meno.codingGravityLaws
+Meno.QuadLatticeAction.ThermalDualityLaws
+Meno.QuadLatticeAction.thermalDualityLaws
+Meno.FinDist.InformationLaws
+Meno.FinDist.informationLaws
+Meno.IncidenceGraph.ResolutionTowerLaws
+Meno.IncidenceGraph.resolutionTowerLaws
+Meno.FlagshipLaws
+Meno.flagshipLaws

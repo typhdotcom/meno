@@ -402,30 +402,42 @@ Gram is unsound — consequence: `Meno/ThetaHarmonic.lean`'s derived
 pricing is excised in favor of the literal, and the face closes on
 the literal.
 
-### G7 — The dichotomy (the completion object) — OPEN
+### G7 — The dichotomy (the completion object) — CLOSED (Meno/Completion.lean)
 
 One biconditional at the top of the tree, replacing the coverage
 bundle:
 
 ```lean
-theorem meno_dichotomy (G : IncidenceGraph) :
+theorem meno_dichotomy (G : IncidenceGraph.{u, v}) :
     0 < G.b1 ↔
       Nonempty (MatterSector G)
       ∧ 1 < G.classPartFn
-      ∧ 0 < G.classSectorAction.gibbsVariance G.harmonicEnergy
-      ∧ (∀ q, 1 < q → 0 < G.residueDefect q)
-      ∧ (∀ q c, 1 < c → 1 ≤ q →
+      ∧ 0 < (G.classSectorAction).gibbsVariance G.harmonicEnergy
+      ∧ (∀ (q : ℕ) [NeZero q], 1 < q → 0 < G.residueDefect q)
+      ∧ (∀ (q c : ℕ) [NeZero q] [NeZero c], 1 < c →
           0 < sectionCost (⇑(G.h1TowerMap q (c * q) (dvd_mul_left q c))))
 ```
 
-(exact instance arguments fixed at execution; the conjunct list is
-this list — matter, spectrum, fluctuation, deficit, arrow).
+(the instance arguments fixed at execution: the planned `1 ≤ q`
+hypotheses became the `[NeZero q]` / `[NeZero c]` binders the tower
+API elaborates against; the conjunct list is this list — matter,
+spectrum, fluctuation, deficit, arrow).
 
-Forward: the standing strictness theorems (`exists_matter`,
-`classSectorAction_gibbsVariance_energy_pos`, `residueDefect_pos`,
-`card_h1TowerMap_fiber`). Reverse: `b₁ = 0` collapses every
-conjunct — `H¹` is a subsingleton, the partition function is `1`,
-the variance and deficit vanish, tower fibers are singletons.
+Forward, delivered as consumption — every conjunct a standing
+theorem cited by name: `exists_matter` (matter);
+`one_lt_classPartFn` (spectrum — no standing strict bound existed,
+so it was homed at `classPartFn`'s definition in
+`Meno/Binding.lean`: the vacuum's `exp(−0) = 1` plus a matter
+sector's weight inside `summable_classWeight`'s convergent sum);
+`classSectorAction_gibbsVariance_energy_pos` (fluctuation);
+`residueDefect_pos` (deficit); and `sectionCost_h1TowerMap` (arrow
+— the ratchet law `cost / |H¹_q| = b₁·log c` consumed at `1 < c`;
+`card_h1TowerMap_fiber` enters through it, not directly). Reverse,
+delivered smaller than planned: the matter conjunct alone forces
+`0 < b₁` — `MatterSector.b1_pos`, homed as the converse of
+`exists_matter` in `Meno/Matter.lean` (at `b₁ = 0` the keystone
+coordinates land in `Fin 0 → ℤ` and every class is zero); the
+planned every-conjunct collapse was not needed and was not built.
 
 **This is the completion object.** It cannot compile if any face is
 hollow — a hollow face cannot deliver its strict conjunct — and it
@@ -433,9 +445,10 @@ breaks if any strictness theorem is deleted. Review of the program
 is reading this one statement. **The universe of the model is
 interesting exactly when it is globally unsatisfiable.**
 
-On close, the Harvest executes: the coverage bundle and the law
-packages are deleted and deny-listed; the README's bundle section is
-replaced by the dichotomy.
+At close, the Harvest executed: the coverage bundle and the law
+packages deleted and deny-listed (`scripts/deleted.txt`);
+`Meno/Completion.lean` contains the dichotomy and nothing else; the
+README's bundle section replaced by the dichotomy.
 
 **Falsification:** not falsifiable as a whole; each conjunct's
 failure is its face's falsification with the consequence prescribed
@@ -484,7 +497,7 @@ entries are struck into `scripts/deleted.txt` at the executing
 phase. This section is exempt from the audit's ghosts leg; nothing
 outside a `Harvest` entry cites a deleted name.
 
-- **At G7 close:** `MenoStatementCoverage`, `menoStatementCoverage`,
+- **At G7 close (executed):** `MenoStatementCoverage`, `menoStatementCoverage`,
   `GraphTopologyLaws`, `graphTopologyLaws`, `HarmonicCarrierLaws`,
   `harmonicCarrierLaws`, `MatterBindingLaws`, `matterBindingLaws`,
   `ResolutionCodingLaws`, `resolutionCodingLaws`,
@@ -526,6 +539,6 @@ completion object — no coverage bundle, no review chronology.
 | G4 symmetry no-go | impossibility `cycle_no_invariant_representative`; law `cycle_equivariant_section_iff`; strictness `cycle_four_two_no_equivariant_section`, `cycle_four_two_no_invariant_representative`; boundary `cycle_three_two_equivariant_section` | **CLOSED** |
 | G5 non-uniform time | laws `lift_complexity` (G2) + `sectionCost_eq_sum_log_fiberCount`; Jensen `lift_complexity_ge_gibbs_log_rate` with boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; demotion `sectionCost_uniformLift` to the constant-redundancy chart; impossibility `sectionCostE_eq_zero_iff` (standing, restated) | **CLOSED** |
 | G6 binding sign | closed form `ofCycles_interaction_fin_two` / `ofCycles_bindingEnergy_fin_two`; iff `binding_attractive_iff` on the intrinsic `bindingEnergyClass` (invariance via `bindingEnergyClass_chart`); strictness `theta_binding_attractive_class` (the criterion's own anchor), with `theta_interaction` / `theta_binding_attractive` demoted to closed-form instances; boundary `wedge_binding_zero` | **CLOSED** |
-| G7 dichotomy | — | **OPEN** |
+| G7 dichotomy | `meno_dichotomy` — `0 < b₁` iff matter ∧ spectrum ∧ fluctuation ∧ deficit ∧ arrow; forward consumes `exists_matter`, `one_lt_classPartFn` (homed at G7, `Meno/Binding.lean`), `classSectorAction_gibbsVariance_energy_pos`, `residueDefect_pos`, `sectionCost_h1TowerMap`; reverse `MatterSector.b1_pos` (homed at G7, `Meno/Matter.lean`). Harvest executed: the coverage bundle and nine law packages deleted and deny-listed | **CLOSED** |
 | G8 self-reference | impossibility `no_self_enumeration` (every type, every universe, no finiteness); law `descriptionCost_split` (budget + log-ratio correction term); strictness — the cost corollary — `log_card_lt_descriptionCost` (correction positive at every nonempty finite carrier, via the diagonal's counting shadow); boundary `log_card_eq_descriptionCost_iff` (equality iff empty carrier) | **CLOSED** |
 | R README rewrite | — | **OPEN** |

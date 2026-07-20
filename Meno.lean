@@ -57,4 +57,6 @@ import Meno.CycleHarmonic
 import Meno.Hodge
 import Meno.Duality
 import Meno.Zeta
+
+-- The completion object: the dichotomy (G7)
 import Meno.Completion
