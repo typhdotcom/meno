@@ -15,9 +15,11 @@ and counting theorems connect the faces.
 
 Everything below is a checked theorem — zero `sorry`, zero `axiom`
 declarations, `lake build` green against Lean 4.26.0 and the pinned
-Mathlib. The program, its completion discipline, and the per-goal
-ledger live in [`PLAN.md`](PLAN.md); the completion certificate is
-itself a Lean object ([The certificate](#the-certificate)).
+Mathlib. The program now underway — the Obstruction Program, with
+its four-anchor discipline — lives in [`PLAN.md`](PLAN.md); the
+first program's kernel-checked leg is a Lean object ([The coverage
+bundle](#the-coverage-bundle)), scheduled for replacement by the
+plan's dichotomy theorem.
 
 ---
 
@@ -346,11 +348,10 @@ identifications are proved.
 
 ## The coverage bundle
 
-All twelve goals of the Completion Path are closed. One leg of that
-closure is a **Lean object**: the statement-coverage bundle
-`MenoStatementCoverage` (`Meno/Completion.lean`) is derived
-from the plan's Part I — every C1–C10 acceptance
-signature is a field in exactly one of **nine law packages**, and
+The first program closed with a kernel-checked leg, a **Lean
+object**: the statement-coverage bundle `MenoStatementCoverage`
+(`Meno/Completion.lean`) — every acceptance
+signature of that program is a field in exactly one of **nine law packages**, and
 `menoStatementCoverage` is its one derivation, by direct
 named-theorem assignment. The graph-dependent packages are quantified
 over every finite multigraph `G`, the thermal package over every
@@ -361,32 +362,28 @@ consumers.
 
 | Package | Covers | Derivation |
 | :--- | :--- | :--- |
-| `GraphTopologyLaws` — `∀ G` | C1–C2: gauge, Euler, independence, spanning, integral coordinates | `graphTopologyLaws` |
-| `HarmonicCarrierLaws` — `∀ G` | C3–C4: rank well-definedness, unimodular transport, the basis-free partition function, the variational identity, positive energy | `harmonicCarrierLaws` |
-| `MatterBindingLaws` — `∀ G` | C6–C7: the intrinsic matter facts and the generic binding theorems on 2-complexes | `matterBindingLaws` |
-| `ResolutionCodingLaws` — `∀ G` | C8–C9, graph-dependent: K1–K3 at every modulus, gauge counting, compression sections and costs, per-class recovery | `resolutionCodingLaws` |
-| `CodingGravityLaws` — graph-free | C8–C9, generic: section counting, the coding theorem with its `ℝ≥0∞` boundary, the priced gravity and time identities, and counting gravity as the zero-energy corollary | `codingGravityLaws` |
+| `GraphTopologyLaws` — `∀ G` | Gauge, Euler, independence, spanning, integral coordinates | `graphTopologyLaws` |
+| `HarmonicCarrierLaws` — `∀ G` | Rank well-definedness, unimodular transport, the basis-free partition function, the variational identity, positive energy | `harmonicCarrierLaws` |
+| `MatterBindingLaws` — `∀ G` | The intrinsic matter facts and the generic binding theorems on 2-complexes | `matterBindingLaws` |
+| `ResolutionCodingLaws` — `∀ G` | Graph-dependent: K1–K3 at every modulus, gauge counting, compression sections and costs, per-class recovery | `resolutionCodingLaws` |
+| `CodingGravityLaws` — graph-free | Generic: section counting, the coding theorem with its `ℝ≥0∞` boundary, the priced gravity and time identities, and counting gravity as the zero-energy corollary | `codingGravityLaws` |
 | `ThermalDualityLaws` — `∀ Q` | The scale algebra, the dual involution, temperature inversion, and the partition, mean-energy, and variance functional equations with the self-dual fixed point | `thermalDualityLaws` |
 | `InformationLaws` — `∀ P` | Pushforward functoriality, the unconditional entropy chain rule, the support-aware Gibbs inequality, data processing | `informationLaws` |
 | `ResolutionTowerLaws` — `∀ G` | The tower category, pushforwards, additive prices and costs, telescoping monotone deficits, strict pricing of genuine refinements | `resolutionTowerLaws` |
-| `FlagshipLaws` | C5 and the concrete consumers: cycle, wedge, and theta results — bases, counts, dualities, priced faces, tower prices, the thermal circle, the geodesic–harmonic duality | `flagshipLaws` |
+| `FlagshipLaws` | The concrete consumers: cycle, wedge, and theta results — bases, counts, dualities, priced faces, tower prices, the thermal circle, the geodesic–harmonic duality | `flagshipLaws` |
 
 Scope: the bundle enforces **statement coverage** —
 deleting an acceptance theorem breaks the derivation. Proof provenance
-is enforced by the direct-assignment discipline and review. Closure in
-full is a conjunction: the coverage bundle compiles, the import DAG
-matches Part I, the recorded deletions stay deleted, `lake build Meno`
-is green with zero `sorry`/`axiom`/warnings, and the derivation routes
-and public claims are held to substantive review. A build re-checks
-two of those legs — the certificate compiles, and the tree compiles
-clean. The import-DAG and recorded-deletion legs are review
-obligations, machine-assisted by `scripts/audit.py` (README citations
-resolve; recorded deletions stay deleted; the architecture listing
+is enforced by the direct-assignment discipline and review. The
+repository invariants are machine-assisted by `scripts/audit.py`
+(README citations resolve; recorded deletions stay deleted; deleted
+names are cited nowhere in living text; the architecture listing
 matches the tree; every declaration is reachable from the publicly
 claimed results or enumerated with its retention predicate). The
-fifth leg — derivation routes and claim accuracy — is a standing
-review discipline, not a one-time event. Audit chronology lives in
-[`PLAN.md`](PLAN.md) Part II.
+bundle certifies statements, not depth; the Obstruction Program
+([`PLAN.md`](PLAN.md)) replaces it with a single dichotomy theorem
+whose forward direction requires every face's strictness. Audit
+chronology lives in the repository log.
 
 ---
 
@@ -447,8 +444,9 @@ compression, and uncertainty is Gibbs fluctuation with its response
 identity. The project's claim is that these analogues are *theorems of
 one structure* — the sector lattice with its action — not that the
 physical world has been derived. Where a desired statement failed,
-the failure is recorded in `PLAN.md` (falsified designs are kept as
-falsified, with proofs).
+the counterexample is kept as a theorem
+(`exists_dualityFlow_eq_zero_not_selfDual`), and every excised
+design is recorded in `scripts/deleted.txt`.
 
 ---
 
