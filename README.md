@@ -22,16 +22,14 @@ The carrier of the thesis is a **sector lattice with a
 positive-definite quadratic action**: the lattice enumerates the
 discrete sectors a system can occupy, the action prices them, the
 Boltzmann sum reads the partition function, and duality, minimization,
-and counting theorems connect the faces. The analytic crown — one
-Siegel–Poisson duality proved at full generality, through which
-every duality in the tree flows, down to Riemann's functional
-equation — is proved once and consumed everywhere
-([Duality](#duality)).
+and counting theorems connect the faces. The analytic crown is one
+Siegel–Poisson duality, proved at full generality and consumed
+everywhere: every duality in the tree flows through it, down to
+Riemann's functional equation ([Duality](#duality)).
 
 Everything below is a checked theorem — zero sorry, zero axiom
 declarations, `lake build` green against Lean 4.26.0 and the pinned
-Mathlib. The Obstruction Program that shaped this tree is recorded
-in [`PLAN.md`](PLAN.md) — nine faces, all closed
+Mathlib. The tree is organized into nine faces, indexed below
 ([The nine faces](#the-nine-faces)).
 
 ---
@@ -67,8 +65,7 @@ basis-coordinate quadratic action is a form-preserving chart of it
 base, encoding the base once is cheaper — and the defect from
 exactness is the log-correlation of the two descriptions' redundancy
 profiles (`gravity_defect`). Sharing saves exactly the base
-precisely at zero covariance; counting is the zero-energy special
-case.
+precisely at zero covariance.
 
 **Obstruction (matter).** A nonzero cohomology class is locally
 consistent and globally unsatisfiable — no potential realizes it. The
@@ -76,7 +73,7 @@ irreducible obstruction carries variational mass.
 
 **Compression (time).** A map that merges states destroys information.
 Its reverse descriptions are its sections, and their counted cost is
-the arrow of time — derived as a coding theorem, not defined.
+the arrow of time, a coding theorem.
 
 **Fluctuation (uncertainty).** The Gibbs state's variance is the
 model's uncertainty, and its response to temperature is dissipation —
@@ -97,10 +94,10 @@ the predicate space.
 
 ## The nine faces
 
-A face closes on four anchors — an impossibility, an exact law that
+Each face has four anchors: an impossibility, an exact law that
 carries its own correction term, a strictness witness where the
 correction is genuinely nonzero, and a boundary where it exactly
-vanishes. Eight faces close that way; G7 assembles five strict
+vanishes. Eight faces have that shape; G7 assembles five strict
 phenomena into the completion object. The full tables live in the
 linked sections; the anchors are the theorems themselves.
 
@@ -137,14 +134,14 @@ bundled lattice action.
 | Result | Statement |
 | :--- | :--- |
 | `QuadraticAction.duality` | `Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` at full generality, via multidimensional Poisson summation (`Meno/SiegelPoisson.lean`) |
-| `QuadLatticeAction.duality` | The intrinsic duality, prefactor `√(disc/π^rank)` — no basis in the definition; outside its defining file the direct analytic invocation of `QuadraticAction.duality` occurs exactly once, here (its in-file scalar/real corollaries in `Meno/SiegelPoisson.lean` sit upstream of the bundle in the import order) |
+| `QuadLatticeAction.duality` | The intrinsic duality, prefactor `√(disc/π^rank)`, its definition basis-free; outside its defining file the direct analytic invocation of `QuadraticAction.duality` occurs exactly once, here (its in-file scalar/real corollaries in `Meno/SiegelPoisson.lean` sit upstream of the bundle in the import order) |
 | `chartAction_dual`, `disc_eq`, `disc_dual` | Every dual basis charts the intrinsic dual as the coordinate dual; the discriminant is basis-independent, with the reciprocal law `disc(Q^∨) = π^{2·rank}/disc(Q)` |
 | `dualDual`, `duality_dualDual`, `partFn_dualDual` | The double dual is a bundled form-preserving involution — rank, energy, discriminant, and partition function transported — and applying the duality twice cancels the prefactors |
 | `basisGramData_duality` | The per-chart coordinate duality, as a corollary |
 | `cyclesDualEquiv` | Period evaluation is a perfect pairing `H₁(G;ℤ) ≃ Dual ℤ H¹(G;ℤ)` — well-defined by Stokes, bijective by the keystone; the transported form is `π²` times the unit-edge chain pairing |
 | `cycle_harmonic_duality` | `Z(priced cycles) = √(disc/π^{b₁})·Z(harmonic classes)` (`Meno/BasisIndependence.lean`) |
 | `classActionEquivCycleDual` | `classQuadAction ≃q cycleAction.dual`, through the equivalence calculus — `refl`/`trans`/`symm`/`dual` with identity, associativity, and inverse laws (`Equiv.trans_assoc`, `trans_symm`, `symm_trans`), contravariant dual functoriality (`dual_trans`, `dual_refl`, `dual_symm`) — with the two prefactors multiplying to one (`dual_prefactor_mul_one`) |
-| `theta_siegelPoisson_duality`, `partitionFn_T_duality_via_spine` | The genuinely non-diagonal theta duality and the cycle-graph T-duality are `cycle_harmonic_duality` read in the concrete bases — no bespoke modular input |
+| `theta_siegelPoisson_duality`, `partitionFn_T_duality_via_spine` | The genuinely non-diagonal theta duality and the cycle-graph T-duality are `cycle_harmonic_duality` read in the concrete bases |
 | `thetaGram_offDiag_ne_zero` | The theta Gram's off-diagonal is `−1/6 ≠ 0` — the non-diagonality of the flagship carrier is a theorem, not a remark |
 | `QuadraticAction.selfDual`, `QuadraticAction.selfDual_iff` | Self-duality of a bundled action is the quadratic condition `Q² = π²·1` (`Meno/SiegelPoisson.lean`) |
 | `QuadraticAction.dualityFlow`, `QuadraticAction.dualityFlow_eq`, `QuadraticAction.dualityFlow_eq_zero_iff` | The duality flow `K − K∨ = −½·log(det Q/π^r)` at every rank — zero exactly on the critical determinant `det Q = π^r` |
@@ -167,8 +164,8 @@ bundled lattice action.
 Every finite multigraph (`IncidenceGraph`) carries an intrinsic
 integral cycle lattice `H₁(G;ℤ) = ker ∂ℤ` and cohomology
 `H¹(G;ℤ) = ℤ-cochains ⧸ gradients`. A presentation **is** a lattice
-basis `Module.Basis (Fin n) ℤ G.cycleLattice` — no presentation
-structure, no stored fields: closedness, real/integer independence,
+basis `Module.Basis (Fin n) ℤ G.cycleLattice`: closedness,
+real/integer independence,
 period realizability, integral potentials, spanning, and the keystone
 equivalences are all theorems of any basis (`Meno/GraphHomology.lean`).
 The topology layer itself is deliberately unpriced.
@@ -192,7 +189,7 @@ Nothing the physics reads depends on a choice of basis.
 | :--- | :--- |
 | `card_eq_b1` | Every lattice basis has exactly `b₁` elements |
 | `exists_unimodular_relating` | Any two bases are unimodularly related (`Meno/BasisIndependence.lean`) |
-| `cycleLatticeBasis_unimodular_related`, `wedgeLatticeBasis_unimodular_related`, `thetaLatticeBasis_unimodular_related` | The hand-built cycle, wedge, and theta bases are unimodularly related to the fundamental basis — the concrete acceptance witnesses |
+| `cycleLatticeBasis_unimodular_related`, `wedgeLatticeBasis_unimodular_related`, `thetaLatticeBasis_unimodular_related` | The hand-built cycle, wedge, and theta bases are unimodularly related to the fundamental basis |
 | `exists_int_coords` | Primitivity is forced |
 | `basisGramData_partFn`, `IncidenceGraph.partFn`, `MatterSector.mass_chart` | Energies, masses, and the partition function are functions of the graph alone |
 
@@ -232,18 +229,18 @@ releases an *energy* equal to a rest mass is algebraic annihilation.
 | `theta_binding_kills`, `theta_removed_weight` | Concretely: filling the theta graph's first cycle kills its `1/3`-mass sector and costs the spectrum at least `exp(−1/3)` (`Meno/ThetaBinding.lean`) |
 | `ofCycles_interaction_fin_two`, `ofCycles_bindingEnergy_fin_two` | **The closed form at `b₁ = 2`** (G6, `Meno/BindingSign.lean`): the priced Gram is the inverse chain Gram (`basisGramData_gram`), so the unit sectors' interaction is `−⟨c₁,c₂⟩/det` and their binding energy `2⟨c₁,c₂⟩/det`, with the chain determinant positive |
 | `bindingEnergyClass`, `bindingEnergyClass_chart` | **The intrinsic binding energy** of two `H¹` classes, through `harmonicEnergy` — invariant under the unimodular action by construction, computed by every basis chart |
-| `binding_attractive_iff`, `theta_binding_attractive_class` | **THE BINDING SIGN CRITERION** (G6): binding is attraction **exactly when the cycles overlap with consistent orientation** — `0 < bindingEnergyClass ↔ 0 < ⟨c₁,c₂⟩`; with positive overlap there is no non-attractive joint sector in any chart — the sign is forced by topology, not by choice of basis. The criterion's strictness witness: the intrinsic binding of the theta classes is positive, because the cycles overlap with `⟨c₁,c₂⟩ = 2` |
+| `binding_attractive_iff`, `theta_binding_attractive_class` | **The binding sign criterion** (G6): binding is attraction **exactly when the cycles overlap with consistent orientation** — `0 < bindingEnergyClass ↔ 0 < ⟨c₁,c₂⟩`; with positive overlap there is no non-attractive joint sector in any chart — the sign is forced by topology, not by choice of basis. The criterion's strictness witness: the intrinsic binding of the theta classes is positive, because the cycles overlap with `⟨c₁,c₂⟩ = 2` |
 | `wedge_binding_zero` | **The boundary** (G6): the wedge's basis cycles share no edge, the overlap is zero — disjoint matter does not bind |
-| `HarmonicGramData.bindingEnergy_eq`, `theta_interaction`, `theta_bindingEnergy`, `theta_binding_attractive` | Binding energy is `−2·interaction`; at theta the interaction is `−1/6` — **the closed-form instance** `−2/12` (demoted at G6, rule 3: `⟨c₁,c₂⟩ = 2`, `det = 12`) — the binding energy `1/3`, and the joint sector strictly cheaper than its parts: **attraction**. The criterion's own witness is `theta_binding_attractive_class` |
+| `HarmonicGramData.bindingEnergy_eq`, `theta_interaction`, `theta_bindingEnergy`, `theta_binding_attractive` | Binding energy is `−2·interaction`; at theta the interaction is `−1/6` — **the closed-form instance** `−2/12` (`⟨c₁,c₂⟩ = 2`, `det = 12`) — the binding energy `1/3`, and the joint sector strictly cheaper than its parts: **attraction**. The criterion's own witness is `theta_binding_attractive_class` |
 
 ### Time and information
 
 Descriptions at finite resolution are counted exactly, and the ratchet
 is **derived, not defined**: reverse-description cost *equals* fiber
-information as a coding theorem. The numerical costs are defined only
-on finite types — `Nat.card`'s junk zero on infinite types is refused,
-not exploited. And the information face inhabits the thesis's **one
-integral carrier**, not merely its API: the resolution-`q` residue is
+information as a coding theorem. The numerical costs are defined only on
+finite types, so `Nat.card`'s junk zero on infinite types never
+enters a statement. And the information face inhabits the thesis's **one
+integral carrier**: the resolution-`q` residue is
 exactly the carrier's quotient, and time's arrow is priced against the
 action, not only against counts (`Meno/InfoRatchet.lean`,
 `Meno/ResolutionCount.lean`).
@@ -272,7 +269,7 @@ action, not only against counts (`Meno/InfoRatchet.lean`,
 | `lift_complexity_ge_gibbs_log_rate` | **The Jensen ratchet bound** (G5): `⟨log ∘ fiberCount f⟩ ≤ K(lift f) − K` — the priced increment dominates the Gibbs-mean log-redundancy |
 | `lift_complexity_sub_eq_iff_fiberCount_const` | **The boundary** (G5): the Jensen gap vanishes iff the redundancy is constant — full Gibbs support makes the boundary exact; the ratchet's defect is one more fluctuation quantity |
 | `twoSector_jensen_gap_pos` | **The strictness** (G5): at the two-sector witness the Jensen gap is strictly positive |
-| `SectorAction.sectionCost_uniformLift` | **The constant-redundancy chart** (demoted at G5, rule 3): `sectionCost f / \|Λ\| = K(uniformLift) − K(base)` — both sides collapse to `log m` at constant fibers |
+| `SectorAction.sectionCost_uniformLift` | **The constant-redundancy chart**: `sectionCost f / \|Λ\| = K(uniformLift) − K(base)` — both sides collapse to `log m` at constant fibers |
 
 ### Self-reference
 
@@ -323,11 +320,8 @@ precisely at zero Gibbs covariance
 (`gravity_defect_eq_zero_iff`). The priced identity
 `SectorAction.complexity_gravity` — coupling saves exactly the base
 — is its **zero-covariance chart**: constant redundancy profiles
-have zero covariance, and the theorem is re-derived as that instance
-(demotion, PLAN rule 3), its statement unchanged, its decomposition
-lemmas (`coupling_energyEquiv`, `uniformLift_energyEquiv`,
-`complexity_prod`) retained as structure. What is established is
-that **one statement** has the counting, entropy,
+have zero covariance, and the identity is that instance of the
+law. One statement has the counting, entropy,
 partition-function, and carrier identities as literal instances:
 **counting** is the zero-energy special case, **entropy** the
 Gibbs-split corollary, and on the graph carrier the identity holds
@@ -343,7 +337,7 @@ whose losses are priced in one currency.
 | `SectorAction.lift`, `SectorAction.couple` | The unconditioned constructions: energy pulled back along any surjective map from a finite type — surjectivity carries the zero-energy sector — and the pullback `SGD.Pullback` priced by the base; no fiber hypotheses |
 | `fiberCount`, `SectorAction.gibbsCov`, `gibbsCov_self` | The redundancy profile of a description map, and the Gibbs covariance whose diagonal is the standing `gibbsVariance` |
 | `lift_complexity`, `couple_complexity` | The priced increments are log Gibbs-mean redundancies: `K(lift f) = K + log⟨fiberCount f⟩`, `K(couple) = K + log⟨fiberCount f · fiberCount g⟩` (pullback fibers are fiber products, `fiberCount_pullback_base`) |
-| `gravity_defect` | **THE COVARIANCE GRAVITY LAW**: `gravityDefect = log⟨m·m'⟩ − log⟨m⟩ − log⟨m'⟩` — sharing two descriptions over one base saves exactly the base, corrected by the log-correlation of their redundancy profiles; the correction is a fluctuation quantity |
+| `gravity_defect` | **The covariance gravity law**: `gravityDefect = log⟨m·m'⟩ − log⟨m⟩ − log⟨m'⟩` — sharing two descriptions over one base saves exactly the base, corrected by the log-correlation of their redundancy profiles; the correction is a fluctuation quantity |
 | `gravity_defect_eq_zero_iff` | **The boundary**: the defect vanishes iff `gibbsCov (fiberCount f) (fiberCount g) = 0` — the constant-fiber identity is the zero-covariance chart, not a law of coupling |
 | `gibbsCov_double_sum`, `gravityDefect_nonneg_of_comonotone` | **The direction theorem**: `Cov(φ,ψ) = ½ Σ_{d,d'} μ_d μ_{d'} (φ_d − φ_{d'})(ψ_d − ψ_{d'})`, so comonotone redundancy binds — `0 ≤ defect` |
 | `twoSectorAction`, `twoSectorMap`, `twoSector_gravityDefect_pos` | **The strictness witness**: base `Bool` with energies `0`/`1` and redundancy profile `(1, 2)` on both legs — the defect is `log⟨m²⟩ − 2 log⟨m⟩ > 0`, by strict Gibbs fluctuation of the non-constant profile |
@@ -354,7 +348,8 @@ whose losses are priced in one currency.
 | Result | Statement |
 | :--- | :--- |
 | `SectorAction.complexity_gravity` | **The gravity theorem**: `K(coupling) + K(base) = K(lift) + K(lift)` (`Meno/InfoRatchet.lean`) |
-| `coupling_energyEquiv`, `uniformLift_energyEquiv` | Energy-level decompositions of the constant-fiber constructions: `coupling ≈ base ⊗ (free ⊗ free)`, `lift ≈ base ⊗ free` — read through `SectorAction.EnergyEquiv` and `complexity_congr`; retained as structure, the former proof route of `complexity_gravity`, retired at G2 |
+| `coupling_energyEquiv`, `uniformLift_energyEquiv` | Energy-level decompositions of the constant-fiber constructions: `coupling ≈ base ⊗ (free ⊗ free)`, `lift ≈ base ⊗ free` — read through `SectorAction.EnergyEquiv` and `complexity_congr` |
+| `SectorAction.prod`, `partFn_prod`, `complexity_prod` | Independent composition: sectors pair, energies add, the partition function multiplies, and complexity adds — `K(A ⊗ B) = K(A) + K(B)` |
 | `partFn_gravity` | The partition-function form — the exponential of the complexity form |
 | `counting_gravity` | **Counting is the zero-energy corollary**: `log \|X ×_D Y\| + log \|D\| = log \|X\| + log \|Y\|` for uniform-fiber maps into a finite shared base — the gravity theorem instantiated at `uniformAction D` |
 | `uniformAction` | A finite type as a sector lattice with zero energy — `Z = \|A\|`, `K = log \|A\|` (`uniformAction_partFn`, `uniformAction_complexity`, `Meno/UniformAction.lean`) |
@@ -410,7 +405,7 @@ and pairs are actions too (`Meno/InfoRatchet.lean`,
 | `theta_tower_price_triangle` | The full triangle consumed on theta: `H(8\|2) = H(8\|4) + H(4\|2) = 2·log 4 − (Δ(8) − Δ(2))` |
 | `h1ReductionCRT`, `card_h1Reduction_mul_gcd` | **CRT on the tower** (G3, `Meno/TowerGravity.lean`): the `lcm` reduction **is** the fiber product of the two reductions over their common coarsening — the finer resolution is the coupling of the coarser ones; the counting identity is `Nat.gcd_mul_lcm` raised to `b₁` |
 | `residueWeight_zero_eq_classScaledPartFn`, `harmonicEnergy_zsmul` | **The key lemma** (G3): the modal coset weight is the scaled partition function — `residueWeight q 0 = classScaledPartFn (q²)`; the fiber of zero is `q·H¹`, enumerated from the carrier by multiplication by `q`, with quadratic energy |
-| `residue_gravity_crossRatio` | **THE CROSS-RATIO LAW** (G3): the four-resolution gravity defect on the tower is `(log Z(q²) + log Z(q'²)) − (log Z(gcd²) + log Z(lcm²))` — a cross-ratio of scaled partition functions |
+| `residue_gravity_crossRatio` | **The cross-ratio law** (G3): the four-resolution gravity defect on the tower is `(log Z(q²) + log Z(q'²)) − (log Z(gcd²) + log Z(lcm²))` — a cross-ratio of scaled partition functions |
 | `residue_gravity_dvd` | **The boundary** (G3): along a divisibility chain the defect vanishes identically — gravity is exact along chains; off them it can strictly fail (`cycle3_crossRatio_neg`) |
 | `cycle3_classScaledPartFn`, `cycle3_crossRatio_neg` | **The strictness** (G3): on `C₃` at `(2, 3)` the defect is strictly negative — `Z(1/3)·Z(12) > Z(4/3)·Z(3)` by first-mode lower bounds against geometric tails — **at the witness, incomparable resolutions couple supermodularly**; read as the face's negative: there is no resolution-independent gravity on the tower — exact along the divisibility order, strictly failing at an incomparable pair |
 | `residue_tower_price_id`, `sectionCost_h1TowerMap_id` | The identity step has zero price and zero cost |
@@ -430,8 +425,8 @@ condition is part of the statement.
 
 ### Uncertainty
 
-The Gibbs state's fluctuations are the model's uncertainty, and they
-are theorems, not vocabulary. Fluctuation–dissipation is stated once
+The Gibbs state's fluctuations are the model's uncertainty.
+Fluctuation–dissipation is stated once
 for every bundled lattice action, and temperature is an operation on
 the carrier bundle (`Meno/Fluctuation.lean`, `Meno/LatticeAction.lean`).
 
@@ -447,7 +442,7 @@ the carrier bundle (`Meno/Fluctuation.lean`, `Meno/LatticeAction.lean`).
 | `classQuadActionβ`, `hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance`, `classMeanEnergy_strictAntiOn` | The intrinsic carrier is a direct specialization (`classQuadActionβ := classQuadAction.scale`, `β = 1` recovery proved once on the bundle, scaled moments invariant under `≃q`): `d⟨E⟩/dβ = −Var` holds intrinsically, and on any graph with cycles the Gibbs mean energy strictly falls |
 | `theta_hasDerivAt_classMeanEnergy`, `theta_classMeanEnergy_strictAntiOn` | Both consumed on the genuinely non-diagonal theta carrier |
 | `unitQuadAction`, `hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance`, `quadraticMeanEnergy_strictAntiOn`, `quadraticObj_gibbsVariance_pos` | The canonical scalar family is the rank-one chart of the same engine, its public theorems derived from it (`Meno/Duality.lean`) |
-| `M2_sq_lt_Z_mul_M4` | The Cauchy–Schwarz route retained as named corroboration |
+| `M2_sq_lt_Z_mul_M4` | An independent Cauchy–Schwarz corroboration of the moment engine: `M₂² < Z·M₄` |
 
 ### The currency (G9)
 
@@ -466,7 +461,7 @@ redundancy and energy.
 | :--- | :--- |
 | `SectorAction.cgf` | **The currency**: `cgf φ = log ⟨e^φ⟩` — unconditioned, like `partFn` and `gibbsExpect`; each law carries its own summability, automatic on a finite sector type |
 | `FinDist.tilt`, `tilt_norm_pos`, `FullSupport.tilt` | **The tilted distribution**: reweight by `exp (φ x)` — normalizable with no support hypothesis (total mass one forces a positive mass, `exists_mass_pos`), full-support-preserving |
-| `cgf_sub_gibbsExpect_eq_relativeEntropy` | **THE KL IDENTITY** (the exact law, `Meno/InfoRatchet.lean`): `cgf φ − ⟨φ⟩` is the relative entropy of the Gibbs law against its own tilt by the observable |
+| `cgf_sub_gibbsExpect_eq_relativeEntropy` | **The KL identity** (the exact law, `Meno/InfoRatchet.lean`): `cgf φ − ⟨φ⟩` is the relative entropy of the Gibbs law against its own tilt by the observable |
 | `gibbsExpect_le_cgf`, `cgf_sub_gibbsExpect_eq_zero_iff` | The Gibbs–Jensen bound and its boundary (the observable is constant), both corollaries of the relative-entropy engine (`relativeEntropy_nonneg`, `relativeEntropy_eq_zero_iff`) |
 | `cgf_bilinear_eq_zero_iff` | **The bilinear boundary**: the additivity defect on a pair vanishes iff the exponentiated observables are Gibbs-uncorrelated |
 | `lift_complexity_eq_cgf` | **The time recognition**: the lift's priced increment is `cgf` of the log-redundancy — `lift_complexity` in cumulant form |
@@ -487,7 +482,7 @@ impossibility anchor is the standing `MatterSector.not_gradient`: the
 class whose mass the inequality bounds admits no global potential.
 Every symmetric simplicial complex's fundamental groupoid carries a
 Lawvere-subadditive geodesic length, and on the `n`-cycle the
-combinatorial and harmonic masses meet — now as the equality case of
+combinatorial and harmonic masses meet — the equality case of
 the systole inequality, through the walk-length bridge.
 
 | Result | Statement |
@@ -499,7 +494,7 @@ the systole inequality, through the walk-length bridge.
 | `cycleMatter`, `cycleMatter_mass`, `cycleMatter_pairing`, `cycleFullCycle_normSq` | Matter on `C_n`: the winding-one class — mass `1/n`, pairing `1` on the full cycle, chain norm `n` |
 | `cycle_systole_equality` | **The equality case**: on `C_n` with the full cycle the systole inequality is equality — `1 = (1/n) · n` |
 | `simplicialGeodesic` | The geodesic length instance (`Meno/Groupoid.lean`) |
-| `geodesic_harmonic_duality` | `n · (1/n) = 1` — **the systole equality instance** (demoted, PLAN rule 3): geodesic length is the chain norm of the full cycle (`cycleGeodesic_canonical`), the walk-layer energy is the intrinsic mass, and `cycle_systole_equality` closes the circle |
+| `geodesic_harmonic_duality` | `n · (1/n) = 1` — **the systole equality instance**: geodesic length is the chain norm of the full cycle (`cycleGeodesic_canonical`), the walk-layer energy is the intrinsic mass, and `cycle_systole_equality` closes the circle |
 | `cycleCanonicalObj`, `cycleCanonicalObj_partFn_eq_partitionFn` | The canonical cycle groupoid object — winding classes of the fundamental groupoid — with partition function recovering the walk model's `partitionFn`, no extra hypotheses |
 | `GroupoidObj.toLoopKernelObj`, `cycleLoopKernel` | Every grounded groupoid object **is** a spine loop kernel — all five data fields transfer verbatim; the cycle instance |
 | `cycleSectorPresentation`, `cycleLoopKernel_partFn_eq_partitionFn` | Winding coordinates present the cycle kernel as the rank-one quadratic action `!![1/n]`; its partition function transits the spine to `partitionFn n` — every step a spine theorem |
@@ -523,7 +518,7 @@ consistent everywhere and globally unsatisfiable — a nonzero class,
 
 | Result | Statement |
 | :--- | :--- |
-| `meno_dichotomy` | **THE DICHOTOMY** (G7): `0 < b₁` **iff** matter exists **and** the spectrum strictly exceeds the vacuum **and** the harmonic energy genuinely fluctuates **and** every resolution `1 < q` carries a strict information deficit **and** every genuine refinement step of the tower has strictly positive section cost |
+| `meno_dichotomy` | **The dichotomy** (G7): `0 < b₁` **iff** matter exists **and** the spectrum strictly exceeds the vacuum **and** the harmonic energy genuinely fluctuates **and** every resolution `1 < q` carries a strict information deficit **and** every genuine refinement step of the tower has strictly positive section cost |
 | `exists_matter` | **The matter conjunct**: `0 < b₁` forces a nonzero `H¹` class |
 | `one_lt_classPartFn` | **The spectrum conjunct** (`Meno/Binding.lean`): with cycles, `1 < classPartFn` — the vacuum contributes `exp(−0) = 1` and a matter sector adds its own Boltzmann weight to the same convergent sum (`summable_classWeight`) |
 | `classSectorAction_gibbsVariance_energy_pos` | **The fluctuation conjunct**: the intrinsic carrier's energy variance is strictly positive on any graph with cycles |
@@ -553,14 +548,14 @@ Meno/
 ├── SectorPresentation.lean    MulEquiv coordinates; duality transport
 ├── Geodesic.lean              Lawvere-subadditive length class
 ├── HarmonicForm.lean          HarmonicGramData; variational builder; binding algebra
-├── IncidenceGraph.lean        THE graph substrate: ∂, grad, Stokes (any ring); walks; components; gauge; H₁; b₁
+├── IncidenceGraph.lean        The graph substrate: ∂, grad, Stokes (any ring); walks; components; gauge; H₁; b₁
 ├── GraphHomology.lean         Pure graph homology: every basis's derived data; keystones; Euler; the H₁ ≃ Dual H¹ pairing
 ├── ThetaGraph.lean            The theta graph: incidence data and raw integral cycle facts
 ├── GraphInstances.lean        Cycle, theta, genuine wedge: connectivity, Euler b₁, and the concrete lattice bases
 ├── PeriodHarmonic.lean        Least-norm-at-prescribed-periods machinery; cycle & wedge Gram forms
 ├── HarmonicClass.lean         Priced Gram data of a basis; intrinsic harmonic energy on H¹; variational identity
 ├── BasisIndependence.lean     Bases unimodularly related; partFn is the graph's; classQuadAction; H₁↔H¹ duality
-├── WedgePresentation.lean     C5 acceptance witnesses: wedge matter; hand-built bases related to the fundamental one
+├── WedgePresentation.lean     Wedge matter; hand-built bases unimodularly related to the fundamental one
 ├── Matter.lean                MatterSector = nonzero H¹ class; mass, positivity, trapped paradox
 ├── Binding.lean               2-complexes; the induced map; binding kills matter; exact spectral decomposition
 ├── ThetaBinding.lean          Binding at the theta graph: kill, rank drop `2 → 1`, removed weight
@@ -569,7 +564,7 @@ Meno/
 ├── TowerGravity.lean          Arithmetic gravity on the tower (G3): CRT, the key lemma, the cross-ratio law, chain exactness, C₃ strictness
 ├── Basic.lean                 The pullback substrate: fibers, the shared-base pullback, sigma-fiber and marginal equivalences
 ├── UniformAction.lean         The uniform (zero-energy) sector action; pullback finiteness
-├── InfoRatchet.lean           Fiber information; the coding theorem; THE GRAVITY THEOREM and its counting corollary; finite distributions; the currency's KL identity (G9)
+├── InfoRatchet.lean           Fiber information; the coding theorem; the gravity theorem and its counting corollary; finite distributions; the currency's KL identity (G9)
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
@@ -580,11 +575,10 @@ Meno/
 ├── Hodge.lean                 Graph partition functions (identified with the spine)
 ├── Duality.lean               The scalar quadratic family and Gibbs wrappers (identified with the spine)
 ├── Zeta.lean                  Riemann functional equation through the spine's theta identification
-└── Completion.lean            THE COMPLETION OBJECT (G7): the dichotomy — cycles iff matter, spectrum, fluctuation, deficit, and the strict arrow
+└── Completion.lean            The completion object (G7): the dichotomy — cycles iff matter, spectrum, fluctuation, deficit, and the strict arrow
 ```
 
-The legacy layer (`Meno/Simplicial.lean`–`Meno/Zeta.lean`) is retained
-deliberately: it is
+The legacy layer (`Meno/Simplicial.lean`–`Meno/Zeta.lean`) is
 a second, independent derivation of the spine's first objects, with
 the identifications proved (`cyclePeriodData_energy_eq`,
 `quadraticPartFn_eq_scalarPartFn`, `graphPartitionFn_eq_spine`,

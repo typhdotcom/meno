@@ -9,10 +9,8 @@ Machine-assists five review obligations:
                  structure fields and file names resolve at the token tier).
 2. DELETIONS   — no name recorded deleted in scripts/deleted.txt is
                  declared anywhere in Meno/ (deletions stay deleted).
-3. GHOSTS      — no deny-list name is cited in living text: README.md,
-                 PLAN.md before the Harvest marker, or Meno/*.lean
-                 comment text. The Harvest section is the deletion
-                 ledger and is exempt. A
+3. GHOSTS      — no deny-list name is cited in living text: README.md
+                 or Meno/*.lean comment text. A
                  citation matching a deny name is exempt only if it
                  resolves to a current declaration (a live theorem of
                  the same last name in another namespace); re-declaring
@@ -207,15 +205,11 @@ def main():
     ok &= not redecl
 
     # -- 3. ghosts — deny-list names cited in living text (review #29)
-    plan_text = (REPO / "PLAN.md").read_text()
-    harvest = plan_text.find("## Harvest")
-    plan_head = plan_text[:harvest] if harvest != -1 else plan_text
     comment_text = "\n".join(
         split_comments(f.read_text())[1] for f in sorted(MENO.glob("*.lean")))
     cite_re = re.compile(r"`([A-Za-z][A-Za-z0-9_.'₀-₉]*)`")
     ghosts = []
     for label, text in (("README.md", readme),
-                        ("PLAN.md", plan_head),
                         ("Meno/ comments", comment_text)):
         for c in sorted(set(cite_re.findall(text))):
             hit = (c in deny
