@@ -579,10 +579,11 @@ counting (`instAdditiveComplexityOnType`), pricing
   (review #10): `FinDist` (`Meno/InfoRatchet.lean`) carries
   nonnegativity and normalization, with pushforward (`FinDist.map`),
   uniform fiber lift (`uniformLift`), shared-base coupling
-  (`coupling`), the lift pushforward law (`map_uniformLift`), both
-  coupling marginals (`coupling_fst`, `coupling_snd`), and **the
-  generic entropy gravity identity** (`entropy_gravity`:
-  `H(coupling) + H(base) = H(lift) + H(lift)`) — proved once. On the
+  (`coupling`), the lift pushforward law (`map_uniformLift`), and
+  both coupling marginals (`coupling_fst`, `coupling_snd`) — the
+  entropy face of gravity flows through the one engine
+  (`SectorAction.entropy_gravity`; review #22 deleted the parallel
+  distribution-level identity, consumerless since review #14). On the
   carrier: `residueDist`, `descriptionDist` (its lift — pushforward
   recovers it, `descriptionDist_map`), `pairDist` (a genuine
   coupling: `pairMass_sum`, `pairDist_fst`, `pairDist_snd`);
@@ -590,7 +591,7 @@ counting (`instAdditiveComplexityOnType`), pricing
   `H(description) = H(residue) + log|gauge|`;
   **`carrier_gravity_entropy`** is the **four-term gravity identity**
   `H(pair) + H(residue) = H(description) + H(description)` — the
-  generic theorem instantiated at the Gibbs residue distribution;
+  priced engine identity instantiated at the residue action;
   the uniform identity `carrier_gravity_complexity` is the priced
   identity plus the common deficit — proved **once** (review #21
   deleted the parallel SGD-bridge proof of the same statement);
@@ -5026,3 +5027,34 @@ base finiteness). `lake build Meno`: green (3350 jobs, 34 source
 files), zero `sorry`, zero `axiom`, zero warnings. Cumulative:
 twenty-one reviews, ninety-two findings, ninety-two confirmed and
 repaired.
+
+## Phase 58 addendum: twenty-second external review — Phase-57 verified at source; one finding, one confirmed, one repaired; THE LAST SURVIVOR (2026-07-19)
+
+Review #22 verified every Phase-57 repair at source — the engine
+derivations, the deletions (zero dangling references), the qualified
+README sentence, the certificate split, the shed witnesses, and the
+honest "review leg pending" record — and returned **REJECT on one
+finding alone**: a survivor of the disease Phase 57 itself outlawed.
+The conjunction, already open, stays open through the repair. The
+ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 5 | `FinDist.entropy_gravity` (InfoRatchet.lean:824) — a gravity-shaped identity `H(coupling) + H(base) = H(lift) + H(lift)` proved by parallel computation (`entropy_coupling` + `entropy_uniformLift` + `ring`), not through the engine, with **zero consumers** (the carrier's `carrier_gravity_entropy` and the certificate's `priced_gravity_entropy` both route through `SectorAction.entropy_gravity`); its docstring claimed "Proved once; every instance is an instantiation" — there were no instantiations; the FinDist section header and Part I's C9 bullet still advertised it as load-bearing. Consumerless since review #14's rerouting; the Phase-57 cleanup pass walked past it — violating simultaneously the 1b/1c standard Phase 57 applied "beyond the prescription" and Phase 57's own rule-3 amendment (1) | **CONFIRMED** — the only reference in the tree outside the theorem itself was the section-docstring advertisement | **Deleted, not instantiated** (as prescribed — building a fourth engine instance to save a theorem nothing consumes would manufacture a consumer for scaffolding, the move Phase 57 refused for the numeric shadows). The feeder lemmas stay with their live consumers (`entropy_uniformLift`, `entropy_coupling` → `descriptionEntropy_split`, `pairEntropy_split`, `defect_uniformLift`, `defect_coupling`). The FinDist section docstring now states the truth — the entropy face of gravity flows through the one engine, `SectorAction.entropy_gravity`; Part I's C9 bullet drops the "generic entropy gravity identity — proved once" advertisement and corrects the neighboring `carrier_gravity_entropy` attribution to the priced engine identity at the residue action (Part II history stays as written). Certificate re-derived; the four machine legs re-run |
+
+**Rule-3 amendment.** A cleanup pass that codifies a standard must
+be **swept against that standard before closing**: when a phase
+outlaws a pattern, the phase's own discipline check greps the tree
+for remaining instances of the pattern — the standards created this
+phase are applied to the tree this phase, not deferred to the next
+reviewer.
+
+**Discipline check.** No goal reopens beyond the already-open
+C9/C12 arc (this finding is the completion of Phase 57's repair,
+same goals, same conjunction). The four machine-checked legs of the
+closure conjunction hold: certificate re-derived, import DAG
+unchanged from Phase 57's record, deletions recorded, `lake build
+Meno` green (3350 jobs, 34 source files), zero `sorry`, zero
+`axiom`, zero warnings. The substantive-review leg pends
+resubmission. Cumulative: twenty-two reviews, ninety-three findings,
+ninety-three confirmed and repaired.

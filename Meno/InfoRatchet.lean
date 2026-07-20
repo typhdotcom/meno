@@ -526,12 +526,12 @@ The distribution semantics of the gravity face, as one abstraction: a
 `FinDist` carries nonnegativity and normalization; `map` is the
 pushforward, `uniformLift` the uniform fiber lift, `coupling` the
 shared-base coupling on the pullback. The lift pushforward law
-(`map_uniformLift`), both coupling marginals (`coupling_fst`,
-`coupling_snd`), and **the entropy gravity identity**
-(`entropy_gravity` — `H(coupling) + H(base) = H(lift) + H(lift)`) are
-proved once, here. The graph instantiations — the Gibbs residue
-distribution and the uniform distribution — live in
-`Meno/ResolutionCount.lean`. -/
+(`map_uniformLift`) and both coupling marginals (`coupling_fst`,
+`coupling_snd`) are proved once, here. The entropy face of gravity
+flows through the one engine — `SectorAction.entropy_gravity`, below
+(review #22: the parallel distribution-level identity is deleted).
+The graph instantiations — the Gibbs residue distribution and the
+uniform distribution — live in `Meno/ResolutionCount.lean`. -/
 
 /-- A **finite probability distribution**: a nonnegative, normalized
 mass function on a finite type. -/
@@ -815,25 +815,6 @@ theorem coupling_uniform [DecidableEq D] [Nonempty D] (f : X → D)
   push_cast
   rw [mul_inv]
   field_simp
-
-/-- **THE ENTROPY GRAVITY IDENTITY, generically** (review #10): for
-any base distribution uniformly lifted along two constant-fiber maps,
-the shared-base coupling's entropy plus the base's entropy equals the
-two lifts' entropies — sharing the base saves exactly one copy of its
-entropy. Proved once; every instance is an instantiation. -/
-theorem entropy_gravity [DecidableEq D] (f : X → D) (g : Y → D)
-    [Fintype (SGD.Pullback f g)] {m m' : ℕ}
-    (hm : 0 < m) (hm' : 0 < m')
-    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
-    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') (P : FinDist D) :
-    (P.coupling f g hm hm' hf hg).entropy + P.entropy
-      = (P.uniformLift f hm hf).entropy
-        + (P.uniformLift g hm' hg).entropy := by
-  rw [entropy_coupling f g hm hm' hf hg,
-    entropy_uniformLift f hm hf, entropy_uniformLift g hm' hg,
-    Nat.cast_mul,
-    Real.log_mul (by exact_mod_cast hm.ne') (by exact_mod_cast hm'.ne')]
-  ring
 
 /-! ### The uniform entropy defect (review #11)
 
