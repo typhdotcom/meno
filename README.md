@@ -208,6 +208,31 @@ action, not only against counts (`Meno/InfoRatchet.lean`,
 | `sectionCost_carrierCompression_div`, `sectionCost_carrierCompression_action` | The per-sector gauge-fixing cost is exactly that conditional entropy — at the action level, exactly `K(descriptionAction) − K(residueAction)` |
 | `SectorAction.sectionCost_uniformLift` | The generic priced time law it specializes: `sectionCost f / \|Λ\| = K(uniformLift) − K(base)` |
 
+### Symmetry
+
+The no-go face (G4): descriptions exist and are priced (K1–K3), and a
+description respecting the system's own symmetry can fail to exist at
+all. `IncidenceGraph.Auto` is the generic automorphism — vertex and
+edge equivalences commuting with `src` and `tgt` — with the pullback
+`Auto.cochainMap` on `R`-cochains, its commutation with the gradient
+(`Auto.cochainMap_grad`), and the descended actions `Auto.h1Map` (any
+coefficient ring) and `Auto.h1ReductionMap` (the finite reduction of
+the intrinsic carrier). On the cycle graph the rotation `cycleRot`
+acts transitively on edges — an invariant cochain is constant
+(`cycleRot_invariant_eq_const`) — and trivially on classes. The
+winding-one generator (`windingOneClass`, through the class map
+`h1ResClass`) then admits no symmetric description off coprimality:
+where the symmetric description fails, every encoding of the class
+breaks the symmetry — the choice of bit is physical.
+
+| Result | Statement |
+| :--- | :--- |
+| `cycle_no_invariant_representative` | **The impossibility**: at `1 < gcd n q` no rotation-invariant cochain represents the generator class — invariance forces constancy, a constant's winding is `n·c`, and `n·c = 1` in `ZMod q` is exactly invertibility of `n` |
+| `cycle_equivariant_section_iff` | **The exact law**: a rotation-equivariant section of the resolution-`q` compression exists iff `gcd n q = 1`; the forward construction is the constant cochain scaled by `n⁻¹ mod q` |
+| `cycleRot_h1Map_int`, `cycleRot_h1ReductionMap` | The rotation is trivial on integral classes and on the carrier's finite reduction — the *content* is symmetric even where every *description* of it is not |
+| `cycle_four_two_no_invariant_representative`, `cycle_four_two_no_equivariant_section` | **The strictness witness** at `(n, q) = (4, 2)`: no invariant representative, no equivariant section |
+| `cycle_three_two_equivariant_section` | **The boundary witness** at `(n, q) = (3, 2)`: the equivariant section, exhibited |
+
 ### Gravity
 
 There is **one gravity theorem**: the priced identity
@@ -415,6 +440,7 @@ Meno/
 ├── UniformAction.lean         The uniform (zero-energy) sector action; pullback finiteness
 ├── InfoRatchet.lean           Fiber information; the coding theorem; THE GRAVITY THEOREM and its counting corollary; finite distributions
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
+├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine
 ├── CycleHarmonic.lean         Flagship bridge: walk route ≡ period route; T-duality on C_n

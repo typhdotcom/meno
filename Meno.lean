@@ -34,6 +34,9 @@ import Meno.UniformAction
 import Meno.InfoRatchet
 import Meno.ResolutionCount
 
+-- Symmetry: automorphisms, the no-go for symmetric descriptions (G4)
+import Meno.Symmetry
+
 -- Concrete consumers of the whole stack
 import Meno.WedgePresentation
 import Meno.ThetaHarmonic

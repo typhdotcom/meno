@@ -477,7 +477,7 @@ completion object — no coverage bundle, no review chronology.
 | G1 systole inequality | — | **OPEN** |
 | G2 covariance gravity | — | **OPEN** |
 | G3 arithmetic gravity | — | **OPEN** |
-| G4 symmetry no-go | — | **OPEN** |
+| G4 symmetry no-go | impossibility `cycle_no_invariant_representative`; law `cycle_equivariant_section_iff`; strictness `cycle_four_two_no_equivariant_section`, `cycle_four_two_no_invariant_representative`; boundary `cycle_three_two_equivariant_section` | **CLOSED** |
 | G5 non-uniform time | — | **OPEN** |
 | G6 binding sign | — | **OPEN** |
 | G7 dichotomy | — | **OPEN** |
