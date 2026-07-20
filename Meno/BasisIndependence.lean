@@ -3,14 +3,14 @@ import Meno.LatticeAction
 import Meno.Fluctuation
 import Mathlib.LinearAlgebra.Matrix.Basis
 
-/-! # Basis Independence (C3)
+/-! # Basis Independence
 
 **Any two lattice bases of a graph are `GL(n,ℤ)`-related**, and the
 partition function is a function of the graph alone.
 
 With the presentation being an actual
-`Module.Basis (Fin n) ℤ G.cycleLattice` (review #5, finding 2), C3's
-content is largely definitional:
+`Module.Basis (Fin n) ℤ G.cycleLattice`, the content is largely
+definitional:
 
 * **Rank well-definedness** is `card_eq_b1`
   (`Meno/GraphHomology.lean`): every basis has exactly `b₁` elements.
@@ -40,7 +40,7 @@ namespace IncidenceGraph
 
 variable (G : IncidenceGraph.{u, v})
 
-/-- **C3's acceptance**: any two lattice bases of the same graph are
+/-- Any two lattice bases of the same graph are
 related by a unimodular change of basis — the change-of-basis matrix
 is integral with unit determinant, and it recombines one basis's
 cycles into the other's. -/
@@ -80,7 +80,7 @@ theorem basisGramData_partFn_eq_tsum_classes {n : ℕ}
         = G.latticeQuotEquiv B κ from rfl,
       G.basisGramData_energy_latticeQuot B κ]
 
-/-- **The partition function does not see the basis** (C3): every
+/-- **The partition function does not see the basis**: every
 lattice basis computes the graph's partition function. -/
 theorem basisGramData_partFn {n : ℕ}
     (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
@@ -92,7 +92,7 @@ theorem basisGramData_partFn {n : ℕ}
 
 /-! ## The intrinsic carrier
 
-The thesis's carrier, as one object (review #6, finding 1): the sector
+The thesis's carrier, as one object: the sector
 lattice is `H¹(G;ℤ)` and the action is the harmonic energy — the
 positive-definite quadratic action in intrinsic form, with the zero
 class as vacuum. Every basis-coordinate quadratic action is a *chart*
@@ -114,7 +114,7 @@ theorem summable_classWeight :
     (G.basisGramData G.cycleBasis).toQuadraticAction.toSectorAction.summable
   exact h.congr fun κ => rfl
 
-/-- **The intrinsic polarized form on `H¹(G;ℤ)`** (review #7): the
+/-- **The intrinsic polarized form on `H¹(G;ℤ)`**: the
 Gram bilinear form of the fundamental basis at the classes' keystone
 coordinates. Basis-independent by `classForm_chart`. -/
 noncomputable def classForm
@@ -150,7 +150,7 @@ theorem classForm_add_left (κ₁ κ₂ κ') :
   ring
 
 
-/-- **Basis charts preserve the form** (review #7): the Gram
+/-- **Basis charts preserve the form**: the Gram
 interaction of any basis at the keystone coordinates is the intrinsic
 polarized form — via polarization from the chart identity for
 energies, with no coordinate transport. -/
@@ -205,10 +205,10 @@ theorem classForm_h1Basis {n : ℕ}
   rw [← G.classForm_chart B, latticeQuotEquiv_h1Basis, latticeQuotEquiv_h1Basis]
   exact interaction_single (G.basisGramData B) i j
 
-/-- **THE INTRINSIC QUADRATIC-LATTICE ACTION** (review #7): the
+/-- **THE INTRINSIC QUADRATIC-LATTICE ACTION**: the
 thesis's carrier as one bundled object — the lattice `H¹(G;ℤ)` with
 the polarized form `classForm`, positive definite on the **real scalar
-extension** (review #9): the field is discharged from the Gram chart
+extension**: the field is discharged from the Gram chart
 of the fundamental basis (`bilinBaseChange_posDef_of_gram`), and
 integral positivity and summability are theorems of the bundle. Every
 basis chart is a form-preserving linear equivalence
@@ -229,22 +229,22 @@ noncomputable def classQuadAction : QuadLatticeAction.{v} where
     rw [hmat]
     exact (G.basisGramData G.cycleBasis).gram_posDef
 
-/-- **THE INTRINSIC CARRIER** (review #6, finding 1): the analytic
-projection of the intrinsic quadratic-lattice action (review #7) —
+/-- **THE INTRINSIC CARRIER**: the analytic
+projection of the intrinsic quadratic-lattice action —
 the sector lattice `H¹(G;ℤ)` with the harmonic energy
 `E κ = classForm κ κ`, as a `SectorAction`. -/
 noncomputable def classSectorAction : SectorAction.{v} :=
   (G.classQuadAction).toSectorAction
 
 
-/-- **The carrier's rank is `b₁`** (review #8): the intrinsic lattice
+/-- **The carrier's rank is `b₁`**: the intrinsic lattice
 is finite free of exactly the graph's first Betti number. -/
 theorem classQuadAction_rank : (G.classQuadAction).rank = G.b1 := by
   show Module.finrank ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) = G.b1
   rw [G.h1QuotEquiv.finrank_eq, Module.finrank_fintype_fun_eq_card,
     Fintype.card_fin]
 
-/-- **Every basis charts the carrier bundle** (review #9): the chart
+/-- **Every basis charts the carrier bundle**: the chart
 of `classQuadAction` at the induced `H¹` basis is precisely the
 basis's coordinate quadratic action. -/
 theorem chartAction_h1Basis {n : ℕ}
@@ -257,7 +257,7 @@ theorem chartAction_h1Basis {n : ℕ}
       QuadLatticeAction.gram_apply]
     exact G.classForm_h1Basis B i j)
 
-/-- **The carrier's intrinsic Siegel–Poisson duality** (review #9):
+/-- **The carrier's intrinsic Siegel–Poisson duality**:
 the dual lattice of `H¹(G;ℤ)` against the carrier, prefactor
 `√(disc / π^{b₁})` — no basis in the statement. -/
 theorem classQuadAction_duality :
@@ -268,7 +268,7 @@ theorem classQuadAction_duality :
   rwa [G.classQuadAction_rank] at h
 
 /-- **Every chart's coordinate action receives the Siegel–Poisson
-duality — as a corollary of the intrinsic duality** (review #9): chart
+duality — as a corollary of the intrinsic duality**: chart
 the carrier and its dual at `B` (`chartAction_h1Basis`,
 `chartAction_dual`), transport the partition functions
 (`partFn_chartAction`), and read the discriminant through `disc_eq`.
@@ -332,7 +332,7 @@ theorem basisGramData_partFn_eq_classSectorAction {n : ℕ}
   rw [G.basisGramData_partFn B, G.classSectorAction_partFn]
 
 
-/-! ### The energy moments of the intrinsic carrier (review #14)
+/-! ### The energy moments of the intrinsic carrier
 
 The generic variance law above still demands summability from its
 callers. For the **energy observable** the moments are theorems: a
@@ -385,7 +385,7 @@ private lemma summable_energy_sq_weight_chart :
       ((G.basisGramData G.cycleBasis).toQuadraticAction.energy_nonneg k))
     ((G.summable_exp_neg_half_energy).mul_left 16)
 
-/-- **The first harmonic-energy moment is summable** (review #14). -/
+/-- **The first harmonic-energy moment is summable**. -/
 theorem summable_harmonicEnergy_gibbs :
     Summable (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
       G.harmonicEnergy κ * (G.classSectorAction).gibbsMass κ) := by
@@ -406,7 +406,7 @@ theorem summable_harmonicEnergy_gibbs :
   rw [mul_div_assoc]
   rfl
 
-/-- **The second harmonic-energy moment is summable** (review #14). -/
+/-- **The second harmonic-energy moment is summable**. -/
 theorem summable_harmonicEnergy_sq_gibbs :
     Summable (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
       G.harmonicEnergy κ ^ 2 * (G.classSectorAction).gibbsMass κ) := by
@@ -427,8 +427,8 @@ theorem summable_harmonicEnergy_sq_gibbs :
   rw [mul_div_assoc]
   rfl
 
-/-- **Uncertainty on the intrinsic carrier, unconditional**
-(review #14): the Gibbs variance of the harmonic energy against the
+/-- **Uncertainty on the intrinsic carrier, unconditional**: the
+Gibbs variance of the harmonic energy against the
 carrier's Boltzmann weights is nonnegative — no summability
 hypotheses; the moments are theorems. -/
 theorem classSectorAction_gibbsVariance_energy_nonneg :
@@ -436,7 +436,7 @@ theorem classSectorAction_gibbsVariance_energy_nonneg :
   (G.classSectorAction).gibbsVariance_nonneg _
     (G.summable_harmonicEnergy_sq_gibbs) (G.summable_harmonicEnergy_gibbs)
 
-/-- **Strict uncertainty on the intrinsic carrier** (review #14): on
+/-- **Strict uncertainty on the intrinsic carrier**: on
 any graph with cycles the harmonic energy genuinely fluctuates — the
 vacuum has zero energy, a basis class has positive energy, and one of
 the two misses the Gibbs mean. -/
@@ -466,7 +466,7 @@ theorem classSectorAction_gibbsVariance_energy_pos (hb : 0 < G.b1) :
     rw [G.harmonicEnergy_zero]
     exact fun h => hc h.symm
 
-/-! ### Fluctuation–dissipation on the intrinsic carrier (review #15)
+/-! ### Fluctuation–dissipation on the intrinsic carrier
 
 The inverse-temperature scaling of the intrinsic carrier
 (`classQuadActionβ` — `β·classForm`, positive definite for `β > 0`),
@@ -480,8 +480,8 @@ them and gives
 carrier variance makes the mean energy **strictly decreasing** on
 any graph with cycles (`classMeanEnergy_strictAntiOn`). -/
 
-/-- **The inverse-temperature scaling of the intrinsic carrier**
-(reviews #15, #16): a **direct specialization** of the bundle
+/-- **The inverse-temperature scaling of the intrinsic carrier**: a
+**direct specialization** of the bundle
 operation `QuadLatticeAction.scale`. -/
 noncomputable def classQuadActionβ (β : ℝ) (hβ : 0 < β) :
     QuadLatticeAction.{v} :=
@@ -495,22 +495,22 @@ noncomputable def classSectorActionβ (β : ℝ) (hβ : 0 < β) :
 
 
 /-- The carrier's β-scaled partition function — the bundle's,
-specialized (review #16). -/
+specialized. -/
 noncomputable def classScaledPartFn (β : ℝ) : ℝ :=
   (G.classQuadAction).scaledPartFn β
 
 /-- The carrier's first β-scaled energy moment — the bundle's,
-specialized (review #16). -/
+specialized. -/
 noncomputable def classScaledMoment (β : ℝ) : ℝ :=
   (G.classQuadAction).scaledMoment β
 
 /-- The carrier's second β-scaled energy moment — the bundle's,
-specialized (review #16). -/
+specialized. -/
 noncomputable def classScaledMoment2 (β : ℝ) : ℝ :=
   (G.classQuadAction).scaledMoment2 β
 
 /-- The carrier's Gibbs mean energy at inverse temperature `β` — the
-bundle's, specialized (review #16). -/
+bundle's, specialized. -/
 noncomputable def classMeanEnergy (β : ℝ) : ℝ :=
   (G.classQuadAction).meanEnergy β
 
@@ -540,7 +540,7 @@ theorem classScaledPartFn_pos (β : ℝ) (hβ : 0 < β) :
     0 < G.classScaledPartFn β :=
   (G.classSectorActionβ β hβ).partFn_pos
 
-/-- **The temperature recognition** (G9): the log β-scaled partition
+/-- **The temperature recognition**: the log β-scaled partition
 function is the harmonic complexity plus the cumulant functional of
 the temperature-shift observable — the identity
 `⟨e^{(1−β)E}⟩ = Z(β)/Z` on the intrinsic carrier; summability is
@@ -695,8 +695,8 @@ theorem classSectorActionβ_gibbsVariance_eq (β : ℝ) (hβ : 0 < β) :
       = (G.basisGramData G.cycleBasis).toQuadraticAction.meanEnergy β from
     congrFun G.classMeanEnergy_eq β]
 
-/-- **FLUCTUATION–DISSIPATION ON THE INTRINSIC CARRIER**
-(review #15): the derivative of the carrier's Gibbs mean energy in
+/-- **FLUCTUATION–DISSIPATION ON THE INTRINSIC CARRIER**: the
+derivative of the carrier's Gibbs mean energy in
 the inverse temperature is minus the Gibbs variance of the harmonic
 energy — response equals fluctuation, intrinsically, at every
 rank. -/
@@ -709,7 +709,7 @@ theorem hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance (β : ℝ)
     β hβ
 
 
-/-- **STRICT DISSIPATION ON THE INTRINSIC CARRIER** (review #15): on
+/-- **STRICT DISSIPATION ON THE INTRINSIC CARRIER**: on
 any graph with cycles, the Gibbs mean energy strictly decreases in
 the inverse temperature — `d⟨E⟩/dβ = −Var < 0`. -/
 theorem classMeanEnergy_strictAntiOn (hb : 0 < G.b1) :
@@ -725,7 +725,7 @@ theorem classMeanEnergy_strictAntiOn (hb : 0 < G.b1) :
     exact one_ne_zero h3
   exact ((G.basisGramData G.cycleBasis).energy_pos_of_ne_zero _ hne).ne'
 
-/-! ## The intrinsic dual identified with graph homology (review #10)
+/-! ## The intrinsic dual identified with graph homology
 
 The abstract dual lattice `Module.Dual ℤ H¹(G;ℤ)` *is* the cycle
 lattice `H₁(G;ℤ)`, through the period-evaluation pairing
@@ -765,7 +765,7 @@ private lemma cast_dot_cycles (i j : Fin G.b1) :
 
 /-- **The priced cycle lattice**: `H₁(G;ℤ)` with `π²` times the
 unit-edge chain pairing — the topological carrier of the intrinsic
-dual (review #10). Real positivity discharges from the chain Gram of
+dual. Real positivity discharges from the chain Gram of
 the fundamental cycles. -/
 noncomputable def cycleAction : QuadLatticeAction.{v} where
   Λ := ↥G.cycleLattice
@@ -803,7 +803,7 @@ private lemma dualForm_dualBasis_cycles (i j : Fin G.b1) :
     Matrix.nonsing_inv_nonsing_inv _ hunit]
 
 /-- **The dual's form on cycles is `π²` times the unit-edge chain
-pairing** (review #10): transporting the intrinsic dual across
+pairing**: transporting the intrinsic dual across
 period evaluation lands on the priced cycle lattice. -/
 theorem dualForm_cyclesDualEquiv (c c' : ↥G.cycleLattice) :
     (G.classQuadAction).dualForm (G.cyclesDualEquiv c) (G.cyclesDualEquiv c')
@@ -832,7 +832,7 @@ theorem dualForm_cyclesDualEquiv (c c' : ↥G.cycleLattice) :
     congr 1
     exact (G.cast_dot_cycles i j).symm
 
-/-- **The intrinsic dual IS priced graph homology** (review #10): the
+/-- **The intrinsic dual IS priced graph homology**: the
 period-evaluation equivalence is form-preserving from the priced cycle
 lattice onto the carrier's dual action. -/
 noncomputable def cycleActionEquivDual :
@@ -840,7 +840,7 @@ noncomputable def cycleActionEquivDual :
   toLinearEquiv := G.cyclesDualEquiv
   form_eq := fun c c' => G.dualForm_cyclesDualEquiv c c'
 
-/-- **SIEGEL–POISSON BETWEEN HOMOLOGY AND COHOMOLOGY** (review #10):
+/-- **SIEGEL–POISSON BETWEEN HOMOLOGY AND COHOMOLOGY**:
 the Boltzmann sum of the priced cycles — `H₁(G;ℤ)` with `π²` times
 the unit-edge chain pairing — against the harmonic classes, with the
 basis-independent prefactor. Cycles are the dual sectors of harmonic
@@ -852,7 +852,7 @@ theorem cycle_harmonic_duality :
   rw [← (G.cycleActionEquivDual).partFn_eq]
   exact G.classQuadAction_duality
 
-/-- **The symmetric topological statement** (review #11): the carrier
+/-- **The symmetric topological statement**: the carrier
 itself is form-equivalent to the dual of the priced cycle lattice —
 harmonic cohomology *is* the dual of priced homology, derived in the
 equivalence calculus: the involution's inverse composed with the
@@ -861,8 +861,8 @@ noncomputable def classActionEquivCycleDual :
     (G.classQuadAction).Equiv (G.cycleAction).dual :=
   ((G.classQuadAction).dualDual.symm).trans (G.cycleActionEquivDual).dual
 
-/-- **TEMPERATURE–DUALITY BETWEEN HARMONIC `H¹` AND PRICED `H₁`**
-(review #17): the bundle temperature–duality functional equation
+/-- **TEMPERATURE–DUALITY BETWEEN HARMONIC `H¹` AND PRICED `H₁`**: the
+bundle temperature–duality functional equation
 (`QuadLatticeAction.meanEnergy_T_dual`) at the intrinsic carrier,
 with the dual's mean energy transported to the priced cycle lattice
 through the period-evaluation equivalence (`cycleActionEquivDual`) —
@@ -878,7 +878,7 @@ theorem classMeanEnergy_T_dual (β : ℝ) (hβ : 0 < β) :
   exact h
 
 /-- **The variance transformation law between harmonic `H¹` and
-priced `H₁`** (review #18): the bundle law at the intrinsic carrier,
+priced `H₁`**: the bundle law at the intrinsic carrier,
 with the dual's mean energy and variance transported to the priced
 cycle lattice —
 `Var_{H¹}(β) + 2β⁻³·⟨E⟩_{H₁}(β⁻¹) − β⁻⁴·Var_{H₁}(β⁻¹) = b₁/(2β²)`. -/
@@ -896,7 +896,7 @@ theorem classGibbsVariance_T_dual (β : ℝ) (hβ : 0 < β) :
     G.classQuadAction_rank] at h
   exact h
 
-/-- **The self-dual fixed point on the carrier** (review #18): a
+/-- **The self-dual fixed point on the carrier**: a
 graph whose carrier is form-equivalent to its own dual has intrinsic
 mean energy exactly `b₁/4` at `β = 1`. -/
 theorem classMeanEnergy_self_dual
@@ -905,7 +905,7 @@ theorem classMeanEnergy_self_dual
   have h := (G.classQuadAction).meanEnergy_self_dual e
   rwa [G.classQuadAction_rank] at h
 
-/-! ### Chart interfaces for concrete consumers (review #11)
+/-! ### Chart interfaces for concrete consumers
 
 The flagship graphs re-derive their coordinate dualities from
 `cycle_harmonic_duality`; these lemmas read the intrinsic objects in

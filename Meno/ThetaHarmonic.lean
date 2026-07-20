@@ -11,11 +11,11 @@ three internal-vertex paths — is the smallest graph whose harmonic Gram
 form is **not diagonal**: its two independent cycles share a path, so
 the periods couple. This file derives that Gram form from the graph's
 topology by variational minimization and feeds it to the general
-Siegel–Poisson duality (`Meno/SiegelPoisson.lean`), giving Phase 15 its
-first genuinely non-diagonal consumer.
+Siegel–Poisson duality (`Meno/SiegelPoisson.lean`) as its first
+genuinely non-diagonal consumer.
 
 The presentation is the lattice basis `thetaLatticeBasis`
-(`Meno/GraphInstances.lean`, review #5) — everything priced here is
+(`Meno/GraphInstances.lean`) — everything priced here is
 **derived** from it: the chain Gram `!![4, 2; 2, 4]` is the unit-edge
 Gram of the basis (`basisGramData_theta_gram` ties the derived pricing
 to the literal closed form), the period Gram is its inverse
@@ -82,7 +82,7 @@ theorem cyclesR_thetaLatticeBasis :
 
 /-- **The derived pricing equals the closed form**: the Gram form of
 the theta basis's priced Gram data — the inverse unit-edge chain Gram,
-with nothing stored (review #5, finding 3) — is the literal
+with nothing stored — is the literal
 `!![1/3, −1/6; −1/6, 1/3]`. -/
 theorem basisGramData_theta_gram :
     (thetaGraph.basisGramData thetaLatticeBasis).gram
@@ -90,10 +90,9 @@ theorem basisGramData_theta_gram :
   show (gramOf (thetaGraph.cyclesR thetaLatticeBasis))⁻¹ = _
   rw [cyclesR_thetaLatticeBasis, gramOf_thetaCycles, thetaChainGram_inv]
 
-/-- C5's acceptance witness for theta: the hand-built basis is a
-unimodular recombination of the fundamental one (C3's
-`exists_unimodular_relating`; the cycle and wedge instances live in
-`Meno/WedgePresentation.lean`). -/
+/-- Theta's hand-built basis is a unimodular recombination of the
+fundamental one (`exists_unimodular_relating`; the cycle and wedge
+instances live in `Meno/WedgePresentation.lean`). -/
 theorem thetaLatticeBasis_unimodular_related :
     ∃ U : Matrix (Fin thetaGraph.b1) (Fin thetaGraph.b1) ℤ,
       IsUnit U.det ∧
@@ -133,7 +132,7 @@ theorem thetaGram_offDiag_ne_zero :
 
 
 /-- The theta graph has matter: the intrinsic class of the single-edge
-cochain with periods `(1, 0)` (C6). Mass, the variational identity,
+cochain with periods `(1, 0)`. Mass, the variational identity,
 no-potential, and annihilation all come from the intrinsic
 `MatterSector` API. -/
 noncomputable def thetaMatter : MatterSector thetaGraph :=
@@ -165,7 +164,7 @@ theorem thetaMatter_coords :
     decide
 
 /-- The theta matter's mass is `1/3` — the intrinsic harmonic energy,
-computed through the theta basis's chart (C6). -/
+computed through the theta basis's chart. -/
 theorem thetaMatter_mass : thetaMatter.mass = 1/3 := by
   rw [← thetaMatter.mass_chart thetaLatticeBasis, thetaMatter_coords]
   show ∑ i, ∑ j, (gramOf (thetaGraph.cyclesR thetaLatticeBasis))⁻¹ i j
@@ -174,7 +173,7 @@ theorem thetaMatter_mass : thetaMatter.mass = 1/3 := by
   norm_num [Fin.sum_univ_two]
 
 /-- **The first non-diagonal consumer of the general Siegel–Poisson
-duality — now through the topology** (review #11): the theta duality
+duality — now through the topology**: the theta duality
 is `cycle_harmonic_duality` at the theta graph, read in the
 `thetaLatticeBasis` chart. The dual side is the priced cycle lattice
 (`cycleAction_gram`: `π²` times the chain Gram `!![4,2;2,4]`), the
@@ -223,32 +222,30 @@ end Theta
 
 /-! ## Binding energy at the Gram level
 
-From the Phase 19 time capsule: gravity re-enters at the Gram level.
+Gravity re-enters at the Gram level.
 The **binding energy** of two sectors is the energy released by joint
 minimization, `E(a) + E(b) − E(a+b)`; by polarization it equals
 `−2·B(a,b)` where `B` is the Gram bilinear form. Sharing edges makes
 the *chain* overlap positive, hence the *period* cross-term negative,
 hence the binding positive: **sectors that share roads attract**. For
 two cycles of lengths `n₁, n₂` sharing `k` co-oriented edges the exact
-value at unit sectors is `2k/(n₁n₂ − k²)` — the capsule's `2k/(n₁n₂)`
+value at unit sectors is `2k/(n₁n₂ − k²)` — `2k/(n₁n₂)`
 is the leading approximation. Theta (`n₁ = n₂ = 4`, `k = 2`) gives
 `1/3`, confirmed against the derived Gram form. -/
 
 section Binding
 
 /- The generic binding algebra (`HarmonicGramData.interaction`,
-`energy_add`, `bindingEnergy`, `bindingEnergy_eq`, annihilation) was
-born here in Phase 19 and moved upstream to `Meno/HarmonicForm.lean`
-in Phase 22 — it is pure Gram-data algebra with no theta dependence.
-What stays here is theta's concrete numbers and the parametric
-shared-cycle oracle. -/
+`energy_add`, `bindingEnergy`, `bindingEnergy_eq`, annihilation) lives
+upstream in `Meno/HarmonicForm.lean` — it is pure Gram-data algebra
+with no theta dependence. What stays here is theta's concrete numbers
+and the parametric shared-cycle oracle. -/
 
 /-- The theta interaction of the two unit sectors is the off-diagonal
-`−1/6` — **the closed-form instance** (G6 demotion, PLAN rule 3):
+`−1/6` — **the closed-form instance**:
 `−⟨c₁,c₂⟩/det = −2/12` through `ofCycles_interaction_fin_two`
 (`Meno/BindingSign.lean`), transported to the literal data along the
-derived-Gram identification (`basisGramData_theta_gram`). The
-independent literal-matrix arithmetic is retired. -/
+derived-Gram identification (`basisGramData_theta_gram`). -/
 theorem theta_interaction :
     thetaHarmonicGramData.interaction ![1, 0] ![0, 1] = -(1/6) := by
   have h : (thetaGraph.basisGramData thetaLatticeBasis).interaction
@@ -280,7 +277,7 @@ theorem theta_bindingEnergy :
 
 /-- Attraction, stated as an inequality: the joint sector is strictly
 cheaper than its parts — **the closed form's instance at the
-Gram-data level** (demoted at G6, transitively through
+Gram-data level** (transitively through
 `theta_interaction`). The criterion's own strictness witness is
 `theta_binding_attractive_class`. -/
 theorem theta_binding_attractive :
@@ -291,7 +288,7 @@ theorem theta_binding_attractive :
   unfold HarmonicGramData.bindingEnergy at h
   linarith
 
-/-- **THE CRITERION'S STRICTNESS WITNESS** (G6): the intrinsic
+/-- **THE CRITERION'S STRICTNESS WITNESS**: the intrinsic
 binding energy of the theta classes is positive — the cycles overlap
 with `⟨c₁,c₂⟩ = 2 > 0`, and the sign criterion forces attraction.
 Proved through the iff's constructive direction
@@ -312,7 +309,7 @@ end Binding
 
 /-! ## Exactness: matter as trapped inconsistency
 
-The time capsule's third idea, formalized at theta. A 1-cochain is a
+Exactness at theta. A 1-cochain is a
 system of local constraints ("the potential difference across `e` is
 `ω e`"). A **global potential** solves them all; going around a cycle
 shows a solution can exist only if the periods vanish. The converse
@@ -324,11 +321,11 @@ representative (`periodRep`) carries positive energy precisely because
 no potential can flatten it. Matter is trapped paradox.
 
 This pair (period map surjective — `periodRep_periods`; kernel exactly
-the gradients — `period_eq_zero_iff_exists_grad`) is the rank-2 case of the capsule's
-keystone: the incompressible residue of local re-description is `b₁`
-period coordinates. The description-cost half was completed in C8
-(`log_card_sections`, `theta_residue_count`, `theta_gauge_count`):
-the keystone is a coding theorem now, not a design problem. -/
+the gradients — `period_eq_zero_iff_exists_grad`) is the rank-2 case of
+the keystone: the incompressible residue of local re-description is `b₁`
+period coordinates. The description-cost half is `log_card_sections`,
+`theta_residue_count`, `theta_gauge_count`: the keystone is a coding
+theorem. -/
 
 section Gauge
 
@@ -340,7 +337,7 @@ end Gauge
 /-- At any resolution `q`, the theta graph's incompressible residue is
 exactly `q²` classes — two digits of resolution, one per independent
 cycle, at every scale. Direct specialization of the generic keystone
-count `card_quotient` (K1); lives here, not in `ResolutionCount.lean`,
+count `card_quotient`; lives here, not in `ResolutionCount.lean`,
 so the generic layer never imports a concrete graph. -/
 theorem theta_residue_count (q : ℕ) [NeZero q] :
     Nat.card ((Fin 6 → ZMod q)
@@ -349,7 +346,7 @@ theorem theta_residue_count (q : ℕ) [NeZero q] :
   thetaGraph.card_quotient thetaLatticeBasis q
 
 /-- At any resolution `q`, the theta graph's gauge group is `q⁴` — one
-`q`-digit per non-cycle edge (`6 − 2` of them). K1's `q²` classes and
+`q`-digit per non-cycle edge (`6 − 2` of them). The `q²` classes and
 this `q⁴` of gauge multiply to `q⁶ = |descriptions|`. -/
 theorem theta_gauge_count (q : ℕ) [NeZero q] :
     Nat.card (LinearMap.range (thetaGraph.gradLin (ZMod q))) = q ^ 4 := by
@@ -358,7 +355,7 @@ theorem theta_gauge_count (q : ℕ) [NeZero q] :
     simp
   rw [thetaGraph.card_gauge thetaLatticeBasis q, hexp]
 
-/-- **The deficit, concretely positive** (review #12): at resolution
+/-- **The deficit, concretely positive**: at resolution
 `q = 2` the theta graph's Gibbs residue law is strictly below maximal
 ignorance — the quadratic action genuinely prices the four finite
 sectors, through the strict modal bound of the shifted Gaussian
@@ -379,7 +376,7 @@ noncomputable local instance :
 local instance : Nonempty (IncidenceGraph.H1Reduction thetaGraph 2) :=
   thetaGraph.h1ReductionNonempty 2
 
-/-- **The complete positive decomposition, concretely** (review #13):
+/-- **The complete positive decomposition, concretely**:
 at resolution `q = 2` the theta graph's uniform complexity decomposes
 into the residue action's complexity, its expected energy, and the
 deficit — all three strictly positive. The pricing–counting bridge,
@@ -402,7 +399,7 @@ noncomputable local instance :
     Fintype (IncidenceGraph.H1Reduction thetaGraph 4) :=
   thetaGraph.h1ReductionFintype 4
 
-/-- **The resolution tower, concretely** (review #14): reducing the
+/-- **The resolution tower, concretely**: reducing the
 theta graph from resolution `4` to resolution `2` — the coarse
 residue action **is** the coarse-graining of the finer one along the
 canonical tower map. -/
@@ -429,8 +426,8 @@ local instance :
       (thetaGraph.carrierCompression 2)) :=
   thetaGraph.carrierPullbackNonempty 2
 
-/-- **The priced faces on the theta graph at `q = 2`** (reviews #14,
-#15): the priced partition-function and complexity gravity
+/-- **The priced faces on the theta graph at `q = 2`**: the priced
+partition-function and complexity gravity
 identities, the priced time identity, the **complete residue,
 description, and pair bridge packages** — each bridge equality with
 its three strictly positive terms — and all **three transported
@@ -495,14 +492,14 @@ theorem theta_priced_faces :
     thetaGraph.descriptionAction_gibbsVariance_E_pos 2 hb (by norm_num),
     thetaGraph.pairAction_gibbsVariance_E_pos 2 hb (by norm_num)⟩
 
-/-! ### The tower on theta (review #15) -/
+/-! ### The tower on theta -/
 
 noncomputable local instance :
     Fintype (IncidenceGraph.H1Reduction thetaGraph 8) :=
   thetaGraph.h1ReductionFintype 8
 
-/-- **The commuting tower triangle on theta** (review #15):
-`8 → 4 → 2` composes to `8 → 2`. -/
+/-- **The commuting tower triangle on theta**: `8 → 4 → 2`
+composes to `8 → 2`. -/
 theorem theta_towerMap_triangle :
     (thetaGraph.h1TowerMap 2 4 (by norm_num)).comp
         (thetaGraph.h1TowerMap 4 8 (by norm_num))
@@ -510,7 +507,7 @@ theorem theta_towerMap_triangle :
   thetaGraph.h1TowerMap_comp 2 4 8 (by norm_num) (by norm_num)
 
 
-/-- **The two prices identified on theta** (review #16): at `4 → 2`,
+/-- **The two prices identified on theta**: at `4 → 2`,
 the Gibbs price equals the ratchet cost minus the deficit gained —
 `H(4|2) = 2·log 2 − (Δ(4) − Δ(2))` — with the strict package:
 `0 < H(4|2) < 2·log 2` and `Δ(2) < Δ(4)`. -/
@@ -544,7 +541,7 @@ noncomputable local instance :
     DecidableEq (IncidenceGraph.H1Reduction thetaGraph 4) :=
   thetaGraph.h1ReductionDecEq 4
 
-/-- **The complete priced composition law on theta** (review #17):
+/-- **The complete priced composition law on theta**:
 along `8 → 4 → 2` the conditional entropies add
 (`H(8|2) = H(8|4) + H(4|2)`), the section costs add, and the
 telescoped two-step price identity holds —
@@ -580,23 +577,23 @@ theorem theta_tower_price_triangle :
   rw [hprice]
   norm_num
 
-/-! ### Fluctuation–dissipation on theta (review #16)
+/-! ### Fluctuation–dissipation on theta
 
 The theta graph's harmonic Gram is genuinely **non-diagonal** — its
 two cycles share a path — so these are the first consumers of the
 intrinsic derivative and strict-dissipation theorems beyond the
 diagonal/scalar family. -/
 
-/-- **The intrinsic derivative on a non-diagonal carrier**
-(review #16): fluctuation–dissipation on the theta graph. -/
+/-- **The intrinsic derivative on a non-diagonal carrier**:
+fluctuation–dissipation on the theta graph. -/
 theorem theta_hasDerivAt_classMeanEnergy (β : ℝ) (hβ : 0 < β) :
     HasDerivAt thetaGraph.classMeanEnergy
       (-((thetaGraph.classSectorActionβ β hβ).gibbsVariance
           thetaGraph.harmonicEnergy)) β :=
   thetaGraph.hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance β hβ
 
-/-- **Strict dissipation on a non-diagonal carrier** (review #16):
-the theta graph's Gibbs mean energy strictly decreases in the
+/-- **Strict dissipation on a non-diagonal carrier**: the
+theta graph's Gibbs mean energy strictly decreases in the
 inverse temperature. -/
 theorem theta_classMeanEnergy_strictAntiOn :
     StrictAntiOn thetaGraph.classMeanEnergy (Set.Ioi 0) := by
@@ -604,8 +601,8 @@ theorem theta_classMeanEnergy_strictAntiOn :
   rw [← thetaGraph.card_eq_b1 thetaLatticeBasis]
   norm_num
 
-/-- **Temperature–duality on a non-diagonal carrier** (review #17):
-theta's harmonic `H¹` mean energy and its priced `H₁` cycle mean
+/-- **Temperature–duality on a non-diagonal carrier**: theta's
+harmonic `H¹` mean energy and its priced `H₁` cycle mean
 energy at reciprocal temperatures —
 `⟨E⟩_{H¹}(β) + β⁻²·⟨E⟩_{H₁}(β⁻¹) = 1/β`, with `b₁ = 2`. -/
 theorem theta_classMeanEnergy_T_dual (β : ℝ) (hβ : 0 < β) :
@@ -619,7 +616,7 @@ theorem theta_classMeanEnergy_T_dual (β : ℝ) (hβ : 0 < β) :
   rw [h, div_eq_div_iff (by positivity) hβ.ne']
   ring
 
-/-- **The variance transformation law on theta** (review #18):
+/-- **The variance transformation law on theta**:
 `Var_{H¹}(β) + 2β⁻³·⟨E⟩_{H₁}(β⁻¹) − β⁻⁴·Var_{H₁}(β⁻¹) = 1/β²`, with
 `b₁ = 2` — fluctuation–dissipation and temperature–duality closed
 into one circle on a genuinely non-diagonal carrier. -/
@@ -638,7 +635,7 @@ theorem theta_gibbsVariance_T_dual (β : ℝ) (hβ : 0 < β) :
   rw [h, div_eq_div_iff (by positivity) (by positivity)]
   ring
 
-/-! ## The systole at the theta graph (G1 strictness)
+/-! ## The systole at the theta graph
 
 Every integral cycle pairing nontrivially with `thetaMatter` has
 chain norm at least `4`: in the theta basis's coordinates `(a, b)`
@@ -713,7 +710,7 @@ theorem theta_pairing_normSq_ge_four (c : ↥thetaGraph.cycleLattice)
     exact_mod_cast one_le_theta_intForm hab
   linarith
 
-/-- **THE STRICTNESS** (G1): the theta systole bound `1/4` is
+/-- **THE STRICTNESS**: the theta systole bound `1/4` is
 strictly below the mass `1/3` — the systole inequality is strict on
 the theta graph. -/
 theorem theta_mass_gt_systole : (1 : ℝ) / 4 < thetaMatter.mass := by

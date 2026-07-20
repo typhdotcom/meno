@@ -8,8 +8,7 @@ the graph, the two integral basis cycles sharing a path, and the raw
 topological facts about them (lattice membership, real spanning,
 integral spanning, independence of the casts), all stated through the
 substrate's `IncidenceGraph.boundary` — no specialized boundary
-operator (review #3, finding 4), no basis structure (review #5,
-finding 2 — the lattice basis `thetaLatticeBasis` is assembled from
+operator, no basis structure (the lattice basis `thetaLatticeBasis` is assembled from
 these facts in `Meno/GraphInstances.lean` via
 `IncidenceGraph.basisOfCycles`).
 

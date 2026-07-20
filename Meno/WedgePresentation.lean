@@ -1,26 +1,24 @@
 import Meno.GraphInstances
 import Meno.Matter
 
-/-! # The Concrete Bases' Acceptance Witnesses (C5)
+/-! # The Concrete Bases' Witnesses
 
 The concrete graphs' lattice bases live with their topology in
-`Meno/GraphInstances.lean` (review #5: `cycleLatticeBasis`,
+`Meno/GraphInstances.lean` (`cycleLatticeBasis`,
 `wedgeLatticeBasis`, `thetaLatticeBasis` — genuine
 `Module.Basis _ ℤ G.cycleLattice` objects, everything derived). What
-remains here are the C5 acceptance witnesses that consume the priced
-stack:
+remains here are the witnesses that consume the priced stack:
 
 * the genuine wedge has **matter** (`wedge_exists_matter`,
   `Meno/CycleHarmonic.lean`) — nontrivial topology forces it;
 * each hand-built basis is a **unimodular recombination** of its
-  graph's fundamental basis — instances of C3's
+  graph's fundamental basis — instances of
   `exists_unimodular_relating`. (The theta instance lives with its
   pricing in `Meno/ThetaHarmonic.lean`.)
 
-The old hand-built presentation structures, the routed prefix-sum
-potentials, and the per-instance integral fields are gone: integral
-potentials, period surjectivity, spanning, and Gram positivity are
-theorems of every lattice basis (`Meno/GraphHomology.lean`). -/
+Integral potentials, period surjectivity, spanning, and Gram
+positivity are theorems of every lattice basis
+(`Meno/GraphHomology.lean`). -/
 
 namespace Meno
 
@@ -28,10 +26,10 @@ open scoped BigOperators
 open Matrix
 
 
-/-! ## C5's acceptance witnesses -/
+/-! ## The witnesses -/
 
 /-- The cycle graph's hand-built basis is a unimodular recombination
-of the fundamental one (C3's `exists_unimodular_relating`). -/
+of the fundamental one (`exists_unimodular_relating`). -/
 theorem cycleLatticeBasis_unimodular_related (n : ℕ) (hn : 0 < n) :
     ∃ U : Matrix (Fin (cycleGraph n hn).b1) (Fin (cycleGraph n hn).b1) ℤ,
       IsUnit U.det ∧
@@ -45,7 +43,7 @@ theorem cycleLatticeBasis_unimodular_related (n : ℕ) (hn : 0 < n) :
       (finCongr ((cycleGraph n hn).card_eq_b1 (cycleLatticeBasis n hn))))
 
 /-- The wedge's hand-built basis is a unimodular recombination of the
-fundamental one (C3's `exists_unimodular_relating`). -/
+fundamental one (`exists_unimodular_relating`). -/
 theorem wedgeLatticeBasis_unimodular_related
     (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
     ∃ U : Matrix (Fin (wedgeGraph n₁ n₂ h₁ h₂).b1)

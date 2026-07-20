@@ -15,7 +15,7 @@ as a quadratic action of rank `r`. The data:
   promote `coord` to a monoid isomorphism (between the multiplicative
   `End` and the additive `Fin r → ℤ`).
 * `Q`, `Q_posDef` — the Gram form of the quadratic action (symmetry
-  is derived, review #6).
+  is derived).
 * `energy_eq` — the energy on the loop kernel coincides with the
   quadratic form in lattice coordinates.
 
@@ -23,8 +23,8 @@ From a presentation, we transport partition functions: `L.partFn`
 equals the partition function of the associated quadratic action.
 
 The structural compatibility (`coord_one`, `coord_comp`) is the
-load-bearing piece that makes downstream **categorical duality** (Phase
-6's `dualVia`) coherent: bare set equivalence suffices for the analytic
+load-bearing piece that makes downstream **categorical duality**
+(`dualVia`) coherent: bare set equivalence suffices for the analytic
 identity but structural duality requires composition correspondence. -/
 
 namespace Meno
@@ -56,8 +56,7 @@ namespace SectorPresentation
 variable {L : LoopKernelObj.{u, v}} {r : ℕ} (P : SectorPresentation L r)
 
 /-- Symmetry of the presentation's Gram form — a theorem of
-positive-definiteness over ℝ, with the retired field's name and
-statement (review #6). -/
+positive-definiteness over ℝ. -/
 theorem Q_symm : P.Q.IsSymm := P.Q_posDef.isSymm
 
 /-- The quadratic action induced by a presentation. Summability is a
@@ -83,7 +82,7 @@ theorem partFn_eq : L.partFn = P.toQuadraticAction.toSectorAction.partFn := by
   rw [hg]
 
 
-/-! ## The categorical dual via a presentation (Phase 6 target)
+/-! ## The categorical dual via a presentation
 
 With the general dual available (`Meno/SiegelPoisson.lean`), the
 categorical dual is transport: same category, same basepoint, energy
@@ -92,7 +91,7 @@ coordinates. The **same** `coord` then presents the dual object as the
 dual action, and the categorical duality theorem is a two-line
 consequence of `QuadraticAction.duality_via_lattice` — the coordinate
 duality re-derived through the canonical embedding into
-`QuadLatticeAction` (review #12), so the direct analytic invocation of
+`QuadLatticeAction`, so the direct analytic invocation of
 `QuadraticAction.duality` occurs once globally, inside
 `QuadLatticeAction.duality`. -/
 
@@ -132,9 +131,8 @@ theorem dualVia_partFn (P : SectorPresentation L r) :
 /-- **Categorical Siegel–Poisson duality**: the partition function of
 the dual loop kernel is `√(det Q / π^r)` times the original's, for any
 loop kernel admitting a presentation — at any rank, any Gram form.
-Phase 6's `dualVia_partFn` target, now at full generality — derived
-through the canonical embedding into `QuadLatticeAction`
-(review #12). -/
+The full-generality form of `dualVia_partFn`, derived through the
+canonical embedding into `QuadLatticeAction`. -/
 theorem dualVia_partFn_duality (P : SectorPresentation L r) :
     ((LoopKernelObj.dualVia P).partFn : ℂ)
       = ↑(P.Q.det / Real.pi ^ r : ℝ) ^ ((1 : ℂ) / 2) * ↑L.partFn := by

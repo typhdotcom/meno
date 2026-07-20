@@ -2,15 +2,11 @@ import Meno.Binding
 import Meno.BasisIndependence
 import Meno.ResolutionCount
 
-/-! # The Completion Object: the Dichotomy (G7)
+/-! # The Completion Object: the Dichotomy
 
-One biconditional at the top of the tree. The first program's
-statement-coverage bundle and its nine law packages — an
-acceptance-signature checklist, one field per claim — lived in this
-file; the Obstruction Program (PLAN, G7) deletes them (recorded in
-`scripts/deleted.txt`) and installs their successor: one statement
-whose forward direction requires a strict engine for each of its
-five phenomena.
+One biconditional at the top of the tree — one statement whose
+forward direction requires a strict engine for each of its five
+phenomena.
 
 `meno_dichotomy`: a finite multigraph has cycles **iff** the five
 strict phenomena all occur —
@@ -46,7 +42,7 @@ namespace Meno
 
 universe u v
 
-/-- **THE DICHOTOMY** (G7, the completion object): a finite
+/-- **THE DICHOTOMY** (the completion object): a finite
 multigraph has cycles **iff** matter exists, the spectrum strictly
 exceeds the vacuum, the energy fluctuates, every resolution carries
 a strict information deficit, and every genuine refinement of the

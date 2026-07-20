@@ -1,9 +1,9 @@
 import Meno.InfoRatchet
 import Mathlib.Data.ZMod.Basic
 
-/-! # Self-Reference: the Diagonal Corner (G8)
+/-! # Self-Reference: the Diagonal Corner
 
-The diagonal kernel of the stake (PLAN, G8), exactly this and no
+The diagonal kernel, exactly this and no
 more: **no description system enumerates its own binary predicates,
 and the shortfall is priced.** Scope stated plainly: this is the
 Lawvere/Cantor core in Meno's vocabulary — the fixed-point-free
@@ -19,8 +19,8 @@ incompleteness theorems.
   as the enumerable budget plus its own correction term —
   `descriptionCost f = log |A| + log (|A → ZMod 2| / |A|)` — the
   correction is the log-ratio of the predicate space to the carrier.
-* **The strictness** (`log_card_lt_descriptionCost`, the PLAN's cost
-  corollary): the correction term is strictly positive at **every**
+* **The strictness** (`log_card_lt_descriptionCost`): the correction
+  term is strictly positive at **every**
   nonempty finite carrier — `log |A| < descriptionCost f`. The route
   is the diagonal itself, not an independent numeric bound: were the
   predicate space no larger than the carrier, a finite retraction
@@ -34,7 +34,7 @@ namespace Meno
 
 universe u
 
-/-- **The impossibility (G8)**: no type surjects onto its own
+/-- **The impossibility**: no type surjects onto its own
 `ZMod 2`-valued predicates — every type, every universe, no
 finiteness hypothesis. The direct diagonal: a preimage of
 `fun b => e b b + 1` evaluated at itself forces `0 = 1` in
@@ -66,7 +66,7 @@ private theorem card_lt_card_predicates (A : Type u) [Finite A] :
 
 variable {A : Type} [Fintype A]
 
-/-- **The exact law (G8)**: on a nonempty finite carrier the forward
+/-- **The exact law**: on a nonempty finite carrier the forward
 description cost of a binary predicate is the enumerable budget plus
 its own correction term — the log-ratio of the predicate space to
 the carrier. -/
@@ -80,7 +80,7 @@ theorem descriptionCost_split [Nonempty A] (f : A → ZMod 2) :
   rw [descriptionCost_eq, Real.log_div hF hA]
   ring
 
-/-- **The strictness (G8) — the cost corollary**: the law's
+/-- **The strictness — the cost corollary**: the law's
 correction term is strictly positive at every nonempty finite
 carrier, so the enumerable budget never pays for the predicate
 space. Derived through the counting shadow of the diagonal
@@ -93,7 +93,7 @@ theorem log_card_lt_descriptionCost [Nonempty A] (f : A → ZMod 2) :
   rw [one_lt_div (by exact_mod_cast Nat.card_pos)]
   exact_mod_cast card_lt_card_predicates A
 
-/-- **The boundary (G8)**: the budget equals the price **iff** the
+/-- **The boundary**: the budget equals the price **iff** the
 carrier is empty — the shortfall vanishes exactly where there is
 nothing to describe. -/
 theorem log_card_eq_descriptionCost_iff (f : A → ZMod 2) :

@@ -1,17 +1,16 @@
 import Meno.Matter
 
-/-! # Geometric Binding: attaching faces kills matter (C7)
+/-! # Geometric Binding: attaching faces kills matter
 
-**The space-changing binding theorem** — the Completion Path's C7, the
-original Goal 7. A `TwoComplex` attaches faces to a graph along
-integral cycles. On cohomology:
+**The space-changing binding theorem**. A `TwoComplex` attaches faces
+to a graph along integral cycles. On cohomology:
 
 * `TwoComplex.h1` — the complex's `H¹`: cochains with vanishing
   periods around every attached face, modulo gradients.
 * `TwoComplex.restrict` — the map induced by `G ↪ X` on `H¹`. It is
   **injective** (`restrict_injective`), with range exactly the
-  classes annihilating the attached cycles (`range_restrict`) — the
-  acceptance's `attach_dual_image`.
+  classes annihilating the attached cycles (`range_restrict`), and
+  `attach_dual_image`.
 * **`binding_kills_matter`** — a matter sector with nonzero period
   around an attached face does not extend to the filled space. Not
   "its image has zero energy": *there is no image*. The variational
@@ -41,13 +40,8 @@ The concrete instance — the theta graph with its first basis cycle
 filled: `thetaMatter` dies (`theta_binding_kills`), `b₁` drops
 `2 → 1` (`theta_attach_finrank`), and the removed weight is at least
 `exp(−1/3)` (`theta_removed_weight`) — lives in
-`Meno/ThetaBinding.lean` (review #3: this file is generic binding
-theory and imports only the matter layer).
-
-With this file, the Phase-27 placeholder that accepted an arbitrary
-killing map is deleted from
-`Meno/Matter.lean` (discipline 1c): the induced map now exists, and
-the theorem is about *it*. -/
+`Meno/ThetaBinding.lean` (this file is generic binding
+theory and imports only the matter layer). -/
 
 namespace Meno
 
@@ -190,7 +184,7 @@ theorem range_restrict : LinearMap.range X.restrict = X.survivors := by
     rwa [G.classPairing_mk] at this
   -- `Submodule.Quotient.mk` and `mkQ` agree definitionally.
 
-/-- **BINDING KILLS MATTER** (C7's heart, the original Goal 7): a
+/-- **BINDING KILLS MATTER**: a
 matter sector with nonzero period around an attached face does not
 extend to the filled space — there is no class of the complex
 restricting to it. The paradox the sector stores is resolved by the
@@ -236,7 +230,7 @@ section Splitting
 
 variable (c : G.E → ℤ) (hc : c ∈ G.cycleLattice)
 
-/-- **`attach_h1`** (acceptance): attaching one face along `c`
+/-- **`attach_h1`**: attaching one face along `c`
 presents the quotient `H₁(G;ℤ) ⧸ ⟨c⟩`. -/
 noncomputable def attach_h1 :
     (G.attach c hc : TwoComplex.{u, v, w} G).h1Homology ≃ₗ[ℤ]
@@ -329,14 +323,14 @@ noncomputable def spanLineEquiv (hτ : c ⬝ᵥ τ = 1) :
       = a • (b • (⟨c, hc⟩ : G.cycleLattice))
     exact (smul_smul a b _).symm
 
-/-- **`H₁` of the filled complex is free** (acceptance): the quotient
+/-- **`H₁` of the filled complex is free**: the quotient
 by a primitive cycle carries a basis. -/
 noncomputable def attachH1Basis :
     Σ n : ℕ, Module.Basis (Fin n) ℤ
       (LinearMap.ker (latticePairing (G := G) τ)) :=
   Submodule.basisOfPid G.cycleBasis _
 
-/-- **The rank drops by exactly one** (acceptance): `H₁` of the
+/-- **The rank drops by exactly one**: `H₁` of the
 complex obtained by filling a primitive cycle has rank `b₁ − 1`. One
 face, one sector — the count is exact. -/
 theorem finrank_attach_h1Homology (hτ : c ⬝ᵥ τ = 1) :
@@ -374,7 +368,7 @@ noncomputable def IncidenceGraph.classPartFn (G : IncidenceGraph.{u, v}) : ℝ :
   ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
     Real.exp (-G.harmonicEnergy κ)
 
-/-- **The spectrum strictly exceeds the vacuum** (G7): with cycles,
+/-- **The spectrum strictly exceeds the vacuum**: with cycles,
 the class partition function is strictly more than the vacuum's unit
 weight — the zero class contributes `exp(−0) = 1` and a matter sector
 (`exists_matter`) adds its own Boltzmann weight `exp(−mass) > 0` to
@@ -486,7 +480,7 @@ theorem partFn_eq_survivors :
     (fun s : ↥X.survivors => Real.exp (-G.harmonicEnergy s.val))]
   exact tsum_congr fun κ' => rfl
 
-/-- **THE EXACT SPECTRAL DECOMPOSITION** (C7): the graph's partition
+/-- **THE EXACT SPECTRAL DECOMPOSITION**: the graph's partition
 function is the complex's partition function *plus* the killed
 classes' Boltzmann sum — an equality, not a bound. Filling faces
 partitions the spectrum into survivors and casualties. -/
@@ -535,8 +529,8 @@ theorem attach_partFn_add_le (m : MatterSector G) (i : X.Faces)
   rw [← X.partFn_add_killed]
   exact add_le_add_right hcompl _
 
-/-- **The partition function strictly decreases** (acceptance,
-corollary of the decomposition): the filled space weighs strictly
+/-- **The partition function strictly decreases** (corollary of the
+decomposition): the filled space weighs strictly
 less — the killed sector's weight is gone. -/
 theorem attach_partFn_lt (m : MatterSector G) (i : X.Faces)
     (hm : G.classPairing (X.face i) (X.face_mem i) m.val ≠ 0) :

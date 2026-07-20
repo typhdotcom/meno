@@ -1,9 +1,9 @@
 import Meno.Matter
 import Meno.GraphInstances
 
-/-! # The Systole Inequality (G1)
+/-! # The Systole Inequality
 
-The geometry ⋈ matter face of the obstruction program (PLAN, G1).
+The geometry ⋈ matter face of the obstruction program.
 
 * **The impossibility anchor** is the standing `MatterSector.not_gradient`
   (`Meno/Matter.lean`): the class whose mass the inequality bounds
@@ -31,7 +31,7 @@ The geometry ⋈ matter face of the obstruction program (PLAN, G1).
   the full cycle the bound is equality — mass `1/n`, pairing `1`,
   norm `n`. `Simplicial.geodesic_harmonic_duality`
   (`Meno/Groupoid.lean`) is re-derived as this equality instance
-  through the walk-length bridge (demotion, PLAN rule 3).
+  through the walk-length bridge.
 * **The strictness** lives at the theta graph
   (`Meno/ThetaHarmonic.lean`): `theta_pairing_normSq_ge_four` and
   `theta_mass_gt_systole` — the systole bound `1/4` is strictly below
@@ -162,7 +162,7 @@ theorem realizer_dotProduct_castCycle
 
 /-! ## The exact law -/
 
-/-- **THE SYSTOLE INEQUALITY** (G1, the exact law): for every finite
+/-- **THE SYSTOLE INEQUALITY** (the exact law): for every finite
 graph, every class, and every integral cycle, pairing squared is
 bounded by harmonic energy times chain norm. The realizer attained by
 `harmonicEnergy_isLeast` pairs as the integer pairing; Cauchy–Schwarz
@@ -198,7 +198,7 @@ theorem harmonicEnergy_eq_periodRep_normSq
       * ((G.h1QuotEquiv κ i : ℤ) : ℝ) * ((G.h1QuotEquiv κ j : ℤ) : ℝ) = _
   rw [quadForm_dotProduct]
 
-/-- **The dual-norm bound** (G1 boundary, inequality half): every real
+/-- **The dual-norm bound** (inequality half): every real
 combination of the fundamental cycles certifies a lower bound on the
 harmonic energy through its normalized squared pairing. -/
 theorem dualNorm_combination_le
@@ -221,7 +221,7 @@ theorem dualNorm_combination_le
     G.harmonicEnergy_eq_periodRep_normSq κ]
   exact dotProduct_sq_le_normSq_mul_normSq _ _
 
-/-- **Dual-norm attainment** (G1 boundary, equality half): for a
+/-- **Dual-norm attainment** (equality half): for a
 nonzero class, the dual-norm bound is attained at `z` exactly when
 `z` is parallel to the harmonic representative. -/
 theorem dualNorm_combination_eq_iff
@@ -296,7 +296,7 @@ namespace MatterSector
 
 variable {G : IncidenceGraph.{u, v}}
 
-/-- **THE MASS–SYSTOLE BOUND** (G1 corollary): matter's mass is
+/-- **THE MASS–SYSTOLE BOUND**: matter's mass is
 bounded below by the reciprocal chain norm of every integral cycle it
 pairs with nontrivially — the integer pairing squared is at least
 one. -/
@@ -437,11 +437,11 @@ theorem cycleFullCycle_normSq :
   rw [Finset.sum_congr rfl fun e _ => mul_one (1 : ℝ), Finset.sum_const,
     Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, mul_one]
 
-/-- **THE EQUALITY CASE** (G1 boundary witness): on `C_n` with the
+/-- **THE EQUALITY CASE**: on `C_n` with the
 full cycle, the systole inequality is equality — mass `1/n`, pairing
 `1`, norm `n`. The walk-layer duality
 `Simplicial.geodesic_harmonic_duality` is this instance, through the
-walk-length bridge (demotion, PLAN rule 3). -/
+walk-length bridge. -/
 theorem cycle_systole_equality :
     (((cycleGraph n hn).cyclePairing (cycleLatticeBasis n hn 0)
         (cycleMatter n hn).val : ℤ) : ℝ) ^ 2

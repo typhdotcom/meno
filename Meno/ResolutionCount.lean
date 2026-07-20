@@ -4,23 +4,23 @@ import Meno.UniformAction
 import Meno.BasisIndependence
 import Mathlib.Algebra.Module.ZMod
 
-/-! # Resolution Counting: the Keystone's Counting Shadows (K1–K3)
+/-! # Resolution Counting: the Keystone's Counting Shadows
 
-The finite-resolution corollaries stated in PLAN (Phase 24), derived
+The finite-resolution corollaries derived
 from the ℤ-form keystone (`Meno/GraphHomology.lean`). Fix a
 resolution `q ≥ 1`: descriptions are cochains `G.E → ZMod q`,
 neighbor-local re-descriptions are mod-`q` gradients — `G.gradLin
 (ZMod q)`, the *same* graph-level gradient as the real and integer
-layers (C1: defined once). Then, through any lattice basis
-`B : Module.Basis (Fin n) ℤ G.cycleLattice` (review #5 — no
+layers, defined once. Then, through any lattice basis
+`B : Module.Basis (Fin n) ℤ G.cycleLattice` (no
 presentation structure, no stored fields):
 
-* **K1** (`card_quotient`): the compression residue counts exactly
+* **`card_quotient`**: the compression residue counts exactly
   `q ^ b₁` — the incompressible content is `b₁` resolution-digits.
-* **K2** (`log_card_split`): `log |C_q| = log |G_q| + b₁ · log q` —
+* **`log_card_split`**: `log |C_q| = log |G_q| + b₁ · log q` —
   total description cost = gauge freedom + incompressible residue,
   in `InfoRatchet`'s literal log-cardinality vocabulary.
-* **K3** (`card_fiber`): every fiber of the compression map has
+* **`card_fiber`**: every fiber of the compression map has
   cardinality `|G_q|` — what a section must add back is pure gauge;
   `fiberInfoCost_mk` states this through `fiberInfoCost` itself.
 
@@ -40,9 +40,9 @@ open Matrix
 
 universe u v
 
-/-- **The one fiber-to-kernel equivalence** (review #9): the fiber of a
+/-- **The one fiber-to-kernel equivalence**: the fiber of a
 linear map over any attained value is a coset of its kernel — shift by
-a chosen preimage. Every K3 fiber statement below (`card_fiber`,
+a chosen preimage. Every fiber statement below (`card_fiber`,
 `carrierFiberEquivGauge`) derives from this single construction. -/
 def fiberEquivKer {R : Type*} {M : Type*} {N : Type*} [Ring R]
     [AddCommGroup M] [AddCommGroup N] [Module R M] [Module R N]
@@ -191,10 +191,10 @@ noncomputable def latticeQuotEquivQ :
     ((G.periodLinQ B q).quotKerEquivOfSurjective
       (G.periodLinQ_surjective B q))
 
-/-! ## K1–K3 -/
+/-! ## The counting shadows -/
 
 include B in
-/-- **K1 — the residue counts `q ^ n` (= `q ^ b₁`)**: at any
+/-- **The residue counts `q ^ n` (= `q ^ b₁`)**: at any
 resolution, the incompressible content of a description is exactly
 `b₁` resolution-digits. -/
 theorem card_quotient :
@@ -204,7 +204,7 @@ theorem card_quotient :
   rw [Nat.card_eq_fintype_card, Fintype.card_fun, ZMod.card, Fintype.card_fin]
 
 include B in
-/-- **K2 — the description-cost split**: total description cost =
+/-- **The description-cost split**: total description cost =
 gauge freedom + incompressible residue, in `InfoRatchet`'s literal
 log-cardinality vocabulary. -/
 theorem log_card_split :
@@ -227,10 +227,10 @@ theorem log_card_split :
   ring
 
 omit [NeZero q] in
-/-- **K3 — fiber uniformity**: every fiber of the compression map has
+/-- **Fiber uniformity**: every fiber of the compression map has
 exactly `|G_q|` descriptions — specifying a description given its
 class is pure gauge choice. Derived from the one fiber-to-kernel
-equivalence (review #9): the class map is `Submodule.mkQ`, whose
+equivalence: the class map is `Submodule.mkQ`, whose
 kernel is the gauge group. -/
 theorem card_fiber
     (x : (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :
@@ -245,7 +245,7 @@ theorem card_fiber
   exact h
 
 include B in
-/-- K3 through `fiberInfoCost` itself: the fiber information of the
+/-- Fiber uniformity through `fiberInfoCost` itself: the fiber information of the
 compression map is `q ^ b₁` classes' worth of pure gauge. -/
 theorem fiberInfoCost_mk
     [Fintype ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))]
@@ -271,20 +271,20 @@ theorem fiberInfoCost_mk
   push_cast
   ring
 
-/-! ## C8: the section count of the compression map
+/-! ## The section count of the compression map
 
 The keystone's counting shadows meet the coding theorem
 (`Meno/InfoRatchet.lean`): a *section* of the mod-`q` compression map is
 a gauge-fixing — a choice of description for each class. There are
 `|G_q|^{q^{b₁}}` of them, and the log of that count is exactly the fiber
-information `fiberInfoCost_mk` (K3). Reversing compression is genuinely
+information `fiberInfoCost_mk`. Reversing compression is genuinely
 costly, and the cost is now *counted*, not defined. -/
 
 include B in
 /-- **The gauge group is `q^{|E|−b₁}`**: the mod-`q` local
-re-descriptions number exactly `q` per non-cycle edge. Together with K1
-(`q^{b₁}` classes) this is Euler's `|E| = (|E|−b₁) + b₁` read as a
-count. -/
+re-descriptions number exactly `q` per non-cycle edge. Together with
+`card_quotient` (`q^{b₁}` classes) this is Euler's
+`|E| = (|E|−b₁) + b₁` read as a count. -/
 theorem card_gauge :
     Nat.card (LinearMap.range (G.gradLin (ZMod q)))
       = q ^ (Fintype.card G.E - n) := by
@@ -307,7 +307,7 @@ theorem card_gauge :
   exact (Nat.eq_of_mul_eq_mul_left (pow_pos hq n) hLag).symm
 
 include B in
-/-- **The number of gauge-fixings** (C8, closed form): a section of the
+/-- **The number of gauge-fixings** (closed form): a section of the
 compression map chooses a representative per class, and there are
 `|G_q|^{q^{b₁}}` of them — `|G_q|` gauge choices, independently, for each
 of the `q^{b₁}` incompressible classes. -/
@@ -333,8 +333,8 @@ theorem card_compression_sections :
 
 /-- **The per-class recovery cost**: recovering which description
 produced *one* class costs `log |G_q|` — the fiber ambiguity of a
-single output (K3 in `recoveryCost` form). `[NeZero q]` is load-bearing
-(review #3): at `q = 0` the fibers are infinite and the numerical cost
+single output (fiber uniformity in `recoveryCost` form). `[NeZero q]` is
+load-bearing: at `q = 0` the fibers are infinite and the numerical cost
 API refuses them. -/
 theorem recoveryCost_compression
     (x : (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :
@@ -371,9 +371,9 @@ theorem sectionCost_compression :
     Submodule.Quotient.mk_surjective _
   rw [log_card_sections hsurj, G.fiberInfoCost_mk B q]
 
-/-- **K1 for every finite graph**: at every resolution `q ≥ 1`, the
-compression residue counts exactly `q ^ b₁` — through the fundamental
-basis, with no per-graph hypotheses. -/
+/-- **`card_quotient` for every finite graph**: at every resolution
+`q ≥ 1`, the compression residue counts exactly `q ^ b₁` — through the
+fundamental basis, with no per-graph hypotheses. -/
 theorem card_quotient_eq :
     Nat.card ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
       = q ^ G.b1 :=
@@ -381,7 +381,7 @@ theorem card_quotient_eq :
 
 /-! ## The information face on the sector-action carrier
 
-The bridge review #5 (finding 5) demanded: the finite-resolution
+The finite-resolution
 residue is not merely *counted* — it inhabits the thesis's advertised
 carrier, a sector lattice with its action. The compression residue,
 the description space, and the gauge group are each a **uniform
@@ -391,8 +391,8 @@ every sector free), and:
 * the residue's complexity is exactly `b₁ · log q`
   (`uniformAction_quotient_complexity`) — the incompressible content,
   as a sector-action complexity;
-* K2 becomes a complexity identity of sector actions
-  (`uniformComplexity_split`): description complexity = gauge
+* the description-cost split becomes a complexity identity of sector
+  actions (`uniformComplexity_split`): description complexity = gauge
   complexity + residue complexity. -/
 
 /-- The description quotient at a positive resolution is finite. -/
@@ -415,8 +415,8 @@ noncomputable instance gaugeFintype :
 instance gaugeNonempty : Nonempty ↥(LinearMap.range (G.gradLin (ZMod q))) :=
   ⟨0⟩
 
-/-- **The information face inhabits the carrier** (review #5,
-finding 5): the compression residue, as a uniform sector action, has
+/-- **The information face inhabits the carrier**: the compression
+residue, as a uniform sector action, has
 complexity exactly `b₁ · log q` — the incompressible content of a
 description is a sector-action complexity, not merely a count. -/
 theorem uniformAction_quotient_complexity :
@@ -428,8 +428,8 @@ theorem uniformAction_quotient_complexity :
   push_cast [Real.log_pow]
   ring
 
-/-- **K2 on the sector-action carrier**: the description-cost split
-`log |C_q| = log |G_q| + b₁ · log q` as an identity of uniform
+/-- **The description-cost split on the sector-action carrier**: the
+split `log |C_q| = log |G_q| + b₁ · log q` as an identity of uniform
 sector-action complexities — description complexity = gauge
 complexity + residue complexity. -/
 theorem uniformComplexity_split :
@@ -445,7 +445,7 @@ theorem uniformComplexity_split :
 
 /-! ## The finite reduction of the intrinsic carrier
 
-Review #6, finding 1: the residue is not merely a finite type sharing
+The residue is not merely a finite type sharing
 the `uniformAction` API — it is the **finite reduction of the one
 integral carrier**. The intrinsic carrier's lattice is
 `H¹(G;ℤ) = (G.E → ℤ) ⧸ range ∂ᵀℤ` (the sector lattice of
@@ -454,8 +454,8 @@ definitionally). Coefficient reduction `h1Res` maps it onto the
 resolution-`q` residue, its kernel is exactly `q·H¹(G;ℤ)`
 (`ker_h1Res`), so the residue **is** `H¹(G;ℤ) ⧸ q·H¹(G;ℤ)`
 (`h1ResQuotEquiv`), the coordinates commute with the keystones
-(`latticeQuotEquivQ_h1Res`), and the uniform complexity and the K2
-split are derived **through that reduction**
+(`latticeQuotEquivQ_h1Res`), and the uniform complexity and the
+description-cost split are derived **through that reduction**
 (`uniformAction_h1ResQuot_complexity`,
 `uniformComplexity_split_carrier`). -/
 
@@ -580,8 +580,8 @@ theorem ker_h1Res :
       _ = Submodule.Quotient.mk (0 : G.E → ZMod q) := by rw [hω]
       _ = 0 := rfl
 
-/-- **THE FINITE REDUCTION OF THE INTRINSIC CARRIER** (review #6,
-finding 1): the resolution-`q` residue is exactly the integral
+/-- **THE FINITE REDUCTION OF THE INTRINSIC CARRIER**: the
+resolution-`q` residue is exactly the integral
 carrier's quotient by `q` — `H¹(G;ℤ) ⧸ q·H¹(G;ℤ) ≃ H¹(G;ZMod q)`.
 One integral carrier; its finite reductions. -/
 noncomputable def h1ResQuotEquiv :
@@ -626,8 +626,8 @@ theorem uniformAction_h1ResQuot_complexity :
   push_cast [Real.log_pow]
   ring
 
-/-- **K2 through the intrinsic carrier's reduction** (review #6,
-finding 1): description complexity splits as gauge complexity plus
+/-- **The description-cost split through the intrinsic carrier's
+reduction**: description complexity splits as gauge complexity plus
 the complexity of the integral carrier's mod-`q` reduction. Gravity,
 matter, time, and uncertainty share one carrier — the sector lattice
 `H¹(G;ℤ)` with its harmonic action (`classSectorAction`) — and the
@@ -643,22 +643,23 @@ theorem uniformComplexity_split_carrier :
   rw [G.uniformComplexity_split q, G.uniformAction_quotient_complexity q,
     G.uniformAction_h1ResQuot_complexity q]
 
-/-! ## Gravity and time on the carrier's reduction (review #7)
+/-! ## Gravity and time on the carrier's reduction
 
 `H1Reduction G q` **names** the finite reduction of the intrinsic
 carrier; `carrierCompression` is the map that reads a resolution-`q`
-description as a finite sector of the carrier. K3 is extracted as an
+description as a finite sector of the carrier. Fiber uniformity is
+extracted as an
 **equivalence** of every compression fiber with the gauge group
 (`carrierFiberEquivGauge`), the carrier gravity identity
 (`carrier_gravity_complexity` — pairs of descriptions representing
 the same finite sector) is proved **once**, in the priced section
-below (review #21), and the gauge-fixing cost transports
+below, and the gauge-fixing cost transports
 (`sectionCost_carrierCompression`). With
 the intrinsic Gibbs fluctuation — unconditional and strict for the
 energy observable, the moments being theorems
 (`classSectorAction_gibbsVariance_energy_nonneg`,
 `classSectorAction_gibbsVariance_energy_pos`,
-`Meno/BasisIndependence.lean`, review #14) — all four faces now
+`Meno/BasisIndependence.lean`) — all four faces now
 consume the one carrier. -/
 
 /-- **The finite reduction of the intrinsic carrier, named**:
@@ -684,13 +685,13 @@ theorem h1Reduction_nsmul_eq_zero (ξ : H1Reduction G q) : q • ξ = 0 := by
         (natCast_zsmul _ _).symm
     _ = 0 := h.trans hz
 
-/-- **The reduction is a `ZMod q`-module** (review #8): the canonical
+/-- **The reduction is a `ZMod q`-module**: the canonical
 scalar structure on the `q`-torsion quotient. -/
 noncomputable instance : Module (ZMod q) (H1Reduction G q) :=
   AddCommGroup.zmodModule (G.h1Reduction_nsmul_eq_zero q)
 
 /-- The finite reduction, as a **`ZMod q`-linear** equivalence with
-the resolution quotient (review #8 — the `ℤ`-linear `h1ResQuotEquiv`,
+the resolution quotient (the `ℤ`-linear `h1ResQuotEquiv`,
 upgraded; `ZMod q`-linearity of an additive map between `ZMod q`
 modules is automatic). -/
 noncomputable def h1ResQuotEquivZMod :
@@ -704,7 +705,7 @@ noncomputable def h1ResQuotEquivZMod :
     map_smul' := ZMod.map_smul (G.h1ResQuotEquiv q).toLinearMap.toAddMonoidHom }
 
 /-- **Reading a description as a finite sector of the carrier** — a
-`ZMod q`-linear map (review #8): the class map followed by the
+`ZMod q`-linear map: the class map followed by the
 reduction identification. -/
 noncomputable def carrierCompression :
     (G.E → ZMod q) →ₗ[ZMod q] H1Reduction G q :=
@@ -723,7 +724,7 @@ theorem carrierCompression_surjective :
     rw [carrierCompression_apply, hω, LinearEquiv.symm_apply_apply]⟩
 
 /-- **The kernel of the carrier reading is the gauge group** — the
-linear-algebra form of K3 (review #8): fibers are cosets of this
+linear-algebra form of fiber uniformity: fibers are cosets of this
 kernel. -/
 theorem ker_carrierCompression :
     LinearMap.ker (G.carrierCompression q)
@@ -743,8 +744,8 @@ theorem ker_carrierCompression :
       (Submodule.Quotient.mk_eq_zero _).mpr h, map_zero]
 
 /-- **Every `carrierCompression` fiber is the gauge group, by
-kernel/cosets** (review #8): the one fiber-to-kernel equivalence
-(review #9) at a chosen preimage, with the kernel identified by
+kernel/cosets**: the one fiber-to-kernel equivalence
+at a chosen preimage, with the kernel identified by
 `ker_carrierCompression`. -/
 noncomputable def carrierFiberEquivGauge (ξ : H1Reduction G q) :
     SGD.Fiber (G.carrierCompression q) ξ
@@ -770,7 +771,7 @@ noncomputable instance carrierPullbackFintype :
       (G.carrierCompression q)) :=
   inferInstance
 
-/-- **The time face on the carrier, by transport** (review #8): the
+/-- **The time face on the carrier, by transport**: the
 gauge-fixing cost of `carrierCompression` is the gauge-fixing cost of
 the class map — `sectionCost` is invariant under codomain relabeling
 (`sectionCost_comp_equiv`), and the relabeling is `h1ResQuotEquivZMod`.
@@ -788,7 +789,7 @@ theorem sectionCost_carrierCompression :
         (Submodule.Quotient.mk y) from rfl,
     h, G.sectionCost_compression G.cycleBasis q]
 
-/-! ## The Gibbs distribution through the reduction (review #9)
+/-! ## The Gibbs distribution through the reduction
 
 Gravity and time previously consumed only the carrier's underlying
 quotient, through `uniformAction` — whose energy is identically zero.
@@ -803,25 +804,24 @@ Here the **intrinsic Gibbs distribution** of `classSectorAction`
 * `descriptionMass` — the uniform gauge lift through
   `carrierCompression`; `descriptionEntropy_split` is
   `H(description) = H(residue) + log |gauge|`.
-* `pairDist` — the shared-pair **coupling** on the self-pullback
-  (review #10): normalized by construction, with **both marginals
+* `pairDist` — the shared-pair **coupling** on the self-pullback:
+  normalized by construction, with **both marginals
   the description distribution** (`pairDist_fst`, `pairDist_snd`) —
   all through the `FinDist` abstraction of `Meno/InfoRatchet.lean`.
 * **`carrier_gravity_entropy`** — the four-term gravity identity
-  `H(pair) + H(residue) = H(description) + H(description)`: since
-  review #14 a **corollary of the priced calculus**
+  `H(pair) + H(residue) = H(description) + H(description)`: a
+  **corollary of the priced calculus**
   (`SectorAction.entropy_gravity` at the residue action), with the
   uniform complexity identity the priced identity plus the common
-  deficit (`carrier_gravity_complexity` — proved **once**, here;
-  review #21 deleted the parallel SGD-bridge proof, everything now
-  flowing through the gravity theorem
+  deficit (`carrier_gravity_complexity` — proved **once**, here, with
+  everything now flowing through the gravity theorem
   `SectorAction.complexity_gravity`). Both live at
   the end of the priced section.
 * `sectionCost_carrierCompression_div` — the time face: the
   per-sector gauge-fixing cost is the conditional entropy
   `H(description) − H(residue) = log |gauge|`. -/
 
-/-- **The residue distribution** (review #9): the total intrinsic
+/-- **The residue distribution**: the total intrinsic
 Gibbs mass of the integral classes reducing to a given finite sector
 of the carrier. -/
 noncomputable def residueMass (ξ : H1Reduction G q) : ℝ :=
@@ -865,7 +865,7 @@ theorem residueMass_sum :
         Equiv.tsum_eq (Equiv.sigmaFiberEquiv _) _
     _ = 1 := (G.classSectorAction).tsum_gibbsMass_eq_one
 
-/-- **Basis independence** (review #9): every lattice basis computes
+/-- **Basis independence**: every lattice basis computes
 the residue distribution — the `B`-coordinate Boltzmann sum over the
 coset of coordinates reducing to `ξ`, divided by the graph's partition
 function. The statement's left side never mentions a basis. -/
@@ -899,7 +899,7 @@ theorem residueMass_chart {n : ℕ}
   rw [LinearEquiv.apply_symm_apply] at h
   exact h.symm
 
-/-! ### The zero class is strictly modal (review #12)
+/-! ### The zero class is strictly modal
 
 The residue distribution is not merely positive and normalized — the
 quadratic action **concentrates** it: the zero class carries strictly
@@ -998,7 +998,7 @@ private lemma residueMass_mk_eq_periodization {n : ℕ}
   simp only [smul_eq_mul]
   field_simp
 
-/-- **The zero class is strictly modal** (review #12): every nonzero
+/-- **The zero class is strictly modal**: every nonzero
 finite sector carries strictly less residue mass than the zero
 sector — the quadratic action genuinely concentrates the residue
 distribution. -/
@@ -1061,7 +1061,7 @@ theorem residueMass_lt_residueMass_zero {ξ : H1Reduction G q}
   exact (div_lt_div_iff_of_pos_right hZ).mpr
     (periodization_lt_periodization_zero hMq hx)
 
-/-- **The residue distribution, bundled** (review #10): nonnegativity
+/-- **The residue distribution, bundled**: nonnegativity
 and normalization carried by the structure, not asserted at use
 sites. -/
 noncomputable def residueDist : FinDist (H1Reduction G q) where
@@ -1072,7 +1072,7 @@ noncomputable def residueDist : FinDist (H1Reduction G q) where
 @[simp] theorem residueDist_mass :
     (G.residueDist q).mass = G.residueMass q := rfl
 
-/-- **The residue distribution is genuinely non-uniform** (review #12):
+/-- **The residue distribution is genuinely non-uniform**:
 on any graph with cycles, at any resolution `1 < q`, the quadratic
 action concentrates residue mass on the zero class — the Gibbs law is
 never the counting law. -/
@@ -1100,7 +1100,7 @@ theorem card_carrierCompression_fiber (ξ : H1Reduction G q) :
       = Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) :=
   Nat.card_congr (G.carrierFiberEquivGauge q ξ)
 
-/-- **The description distribution, bundled first** (review #11): the
+/-- **The description distribution, bundled first**: the
 uniform gauge lift of the residue distribution through
 `carrierCompression` — normalization and nonnegativity come from the
 `FinDist` structure, never recomputed. -/
@@ -1108,8 +1108,7 @@ noncomputable def descriptionDist : FinDist (G.E → ZMod q) :=
   (G.residueDist q).uniformLift (G.carrierCompression q)
     Nat.card_pos (G.card_carrierCompression_fiber q)
 
-/-- **The description mass — the distribution's mass projection**
-(review #11): each finite sector's residue mass divided evenly across
+/-- **The description mass — the distribution's mass projection**: each finite sector's residue mass divided evenly across
 its gauge fiber. -/
 noncomputable def descriptionMass : (G.E → ZMod q) → ℝ :=
   (G.descriptionDist q).mass
@@ -1117,7 +1116,7 @@ noncomputable def descriptionMass : (G.E → ZMod q) → ℝ :=
 @[simp] theorem descriptionDist_mass :
     (G.descriptionDist q).mass = G.descriptionMass q := rfl
 
-/-- **H(description) = H(residue) + log |gauge|** (review #9): the
+/-- **H(description) = H(residue) + log |gauge|**: the
 entropy chain rule at the uniform gauge lift — a description prices a
 finite sector of the carrier plus one free gauge choice. -/
 theorem descriptionEntropy_split :
@@ -1127,7 +1126,7 @@ theorem descriptionEntropy_split :
   FinDist.entropy_uniformLift (G.carrierCompression q) Nat.card_pos
     (G.card_carrierCompression_fiber q) (G.residueDist q)
 
-/-- **The shared-pair coupling, bundled** (review #10): the
+/-- **The shared-pair coupling, bundled**: the
 shared-base coupling of two description lifts over the residue
 distribution — a genuine coupling, by construction: it is nonnegative
 and normalized (the `FinDist` structure), and **both marginals are
@@ -1146,8 +1145,7 @@ noncomputable def pairMass
     ℝ :=
   (G.pairDist q).mass p
 
-/-- **The first marginal is the description distribution**
-(review #10). -/
+/-- **The first marginal is the description distribution**. -/
 theorem pairDist_fst :
     (G.pairDist q).map (fun p => p.val.1) = G.descriptionDist q :=
   FinDist.coupling_fst (G.carrierCompression q) (G.carrierCompression q)
@@ -1155,8 +1153,7 @@ theorem pairDist_fst :
     (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
     (G.residueDist q)
 
-/-- **The second marginal is the description distribution**
-(review #10). -/
+/-- **The second marginal is the description distribution**. -/
 theorem pairDist_snd :
     (G.pairDist q).map (fun p => p.val.2) = G.descriptionDist q :=
   FinDist.coupling_snd (G.carrierCompression q) (G.carrierCompression q)
@@ -1164,7 +1161,7 @@ theorem pairDist_snd :
     (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
     (G.residueDist q)
 
-/-! ### The uniform entropy defect: pricing meets counting (review #11)
+/-! ### The uniform entropy defect: pricing meets counting
 
 The Gibbs-priced and uniform-counting gravity identities were two
 instances of one generic theorem; the **defect** `Δ = log|X| − H(P)`
@@ -1180,13 +1177,13 @@ complexity from its Gibbs entropy:
 — the uniform gravity identity is the Gibbs entropy gravity plus the
 same deficit on both sides. -/
 
-/-- **The action-induced information deficit** (review #11): how far
+/-- **The action-induced information deficit**: how far
 the Gibbs residue distribution sits below maximal ignorance on the
 finite reduction. Nonnegative (`FinDist.defect_nonneg`); zero exactly
 when the Gibbs law is uniform (`FinDist.defect_eq_zero_iff`). -/
 noncomputable def residueDefect : ℝ := (G.residueDist q).defect
 
-/-- **The deficit is strictly positive** (review #12): on any graph
+/-- **The deficit is strictly positive**: on any graph
 with cycles, at any resolution `1 < q`, the quadratic action genuinely
 changes finite-resolution information — the maximum-entropy bound is
 never attained, because the Gibbs residue law concentrates on the zero
@@ -1209,7 +1206,7 @@ theorem uniformComplexity_residue_split :
   ring
 
 /-- `K_uniform(description) = H(description) + Δ` — **the same Δ**:
-the uniform gauge lift preserves the deficit (review #11). -/
+the uniform gauge lift preserves the deficit. -/
 theorem uniformComplexity_description_split :
     (uniformAction (G.E → ZMod q)).complexity
       = shannonEntropy (G.descriptionMass q) + G.residueDefect q := by
@@ -1225,7 +1222,7 @@ theorem uniformComplexity_description_split :
   exact congrArg₂ (· + ·) rfl h
 
 /-- `K_uniform(pair) = H(pair) + Δ` — **the same Δ**: the shared-base
-coupling preserves the deficit (review #11). Together with the
+coupling preserves the deficit. Together with the
 previous two, the uniform gravity identity equals the Gibbs entropy
 gravity identity plus the same action-induced deficit on both
 sides — pricing and counting are two decompositions of one
@@ -1249,13 +1246,12 @@ theorem uniformComplexity_pair_split :
   rw [h2]
   exact congrArg₂ (· + ·) rfl h
 
-/-! ### The residue action: coarse-graining the harmonic action (reviews #12, #13)
+/-! ### The residue action: coarse-graining the harmonic action
 
 The `K_uniform = H + Δ` splits above become a genuine *pricing* bridge
 once the residue distribution is exhibited as the Gibbs law of an
 action — and the action itself must be the **coarse-graining of the
-harmonic action**, not a reconstruction from the normalized masses
-(review #13). The **unnormalized coset weight**
+harmonic action**, not a reconstruction from the normalized masses. The **unnormalized coset weight**
 `W ξ = ∑_{κ mod q = ξ} exp(−harmonicEnergy κ)` (`residueWeight`)
 satisfies `residueMass ξ = W ξ / Z` (`residueMass_eq_residueWeight_div`);
 the **residue action** is `classSectorAction.coarseGrain` at the
@@ -1280,7 +1276,7 @@ theorem residueMass_le_residueMass_zero (ξ : H1Reduction G q) :
   · rw [hξ]
   · exact (G.residueMass_lt_residueMass_zero q hξ).le
 
-/-- **The unnormalized coset weight** (review #13):
+/-- **The unnormalized coset weight**:
 `W ξ = ∑_{κ mod q = ξ} exp(−harmonicEnergy κ)` — the harmonic
 action's coarse weight at the quotient map onto the finite
 reduction. -/
@@ -1296,7 +1292,7 @@ theorem residueWeight_pos (ξ : H1Reduction G q) :
   exact SectorAction.coarseWeight_pos (G.classSectorAction) ⟨κ₀, hκ₀⟩
 
 /-- **The residue mass is the coset weight over the partition
-function** (review #13): the normalized masses of `residueMass` are
+function**: the normalized masses of `residueMass` are
 the coarse Boltzmann weights of the harmonic action, divided by its
 partition function. -/
 theorem residueMass_eq_residueWeight_div (ξ : H1Reduction G q) :
@@ -1319,7 +1315,7 @@ theorem residueWeight_le_residueWeight_zero (ξ : H1Reduction G q) :
   have h2 := mul_le_mul_of_nonneg_right h hZ.le
   rwa [div_mul_cancel₀ _ hZ.ne', div_mul_cancel₀ _ hZ.ne'] at h2
 
-/-- **The residue action** (reviews #12, #13): the coarse-graining of
+/-- **The residue action**: the coarse-graining of
 the harmonic action at the quotient map onto the finite reduction —
 the generic `SectorAction.coarseGrain`, with the zero class as the
 modal ground state. Its energy is the coset free-energy difference,
@@ -1338,8 +1334,7 @@ noncomputable instance : DecidableEq (G.residueAction q).Λ :=
   inferInstanceAs (DecidableEq (H1Reduction G q))
 
 /-- The residue action's energy, in terms of the normalized masses —
-the partition function cancels out of the weight ratio (the retired
-definition of review #12, now a theorem). -/
+the partition function cancels out of the weight ratio. -/
 theorem residueAction_E (ξ : H1Reduction G q) :
     (G.residueAction q).E ξ
       = Real.log (G.residueMass q 0) - Real.log (G.residueMass q ξ) := by
@@ -1352,13 +1347,12 @@ theorem residueAction_E (ξ : H1Reduction G q) :
     Real.log_div (G.residueWeight_pos q ξ).ne' hZ.ne']
   ring
 
-/-- **The effective free energy of a finite sector** (review #13):
+/-- **The effective free energy of a finite sector**:
 `F ξ = −log W ξ`. -/
 noncomputable def residueFreeEnergy (ξ : H1Reduction G q) : ℝ :=
   -Real.log (G.residueWeight q ξ)
 
-/-- **The residue energy is the free-energy difference**
-(review #13): `E ξ = F ξ − F 0`. -/
+/-- **The residue energy is the free-energy difference**: `E ξ = F ξ − F 0`. -/
 theorem residueAction_E_freeEnergy (ξ : H1Reduction G q) :
     (G.residueAction q).E ξ
       = G.residueFreeEnergy q ξ - G.residueFreeEnergy q 0 := by
@@ -1367,15 +1361,14 @@ theorem residueAction_E_freeEnergy (ξ : H1Reduction G q) :
   ring
 
 /-- **The harmonic partition function factorizes through the residue
-action** (review #13): `Z = W 0 · Z_residue`. -/
+action**: `Z = W 0 · Z_residue`. -/
 theorem classPartFn_eq_residueWeight_mul :
     (G.classSectorAction).partFn
       = G.residueWeight q 0 * (G.residueAction q).partFn :=
   SectorAction.partFn_eq_coarseWeight_mul (G.classSectorAction) _ 0
     (G.residueWeight_pos q) (G.residueWeight_le_residueWeight_zero q)
 
-/-- **The harmonic complexity decomposes through the residue action**
-(review #13): `log Z = log W 0 + K(residueAction)`. -/
+/-- **The harmonic complexity decomposes through the residue action**: `log Z = log W 0 + K(residueAction)`. -/
 theorem classComplexity_residue_split :
     (G.classSectorAction).complexity
       = Real.log (G.residueWeight q 0) + (G.residueAction q).complexity :=
@@ -1400,8 +1393,7 @@ theorem residueAction_partFn :
   rw [tsum_fintype, Finset.sum_congr rfl fun ξ _ => G.residueAction_weight q ξ,
     ← Finset.sum_div, G.residueMass_sum q, one_div]
 
-/-- **The residue action's Gibbs mass is the residue distribution**
-(review #12): the normalization cancels, leaving exactly the coset
+/-- **The residue action's Gibbs mass is the residue distribution**: the normalization cancels, leaving exactly the coset
 Boltzmann masses. -/
 theorem residueAction_gibbsMass :
     (G.residueAction q).gibbsMass = G.residueMass q := by
@@ -1419,7 +1411,7 @@ theorem residueAction_complexity :
   show Real.log (G.residueAction q).partFn = _
   rw [G.residueAction_partFn q, Real.log_inv]
 
-/-- **`H(residue) = K(residueAction) + ⟨E⟩`** (review #12): the Gibbs
+/-- **`H(residue) = K(residueAction) + ⟨E⟩`**: the Gibbs
 entropy split of `Meno/InfoRatchet.lean`, instantiated at the residue
 action — the residue entropy *is* complexity plus expected energy. -/
 theorem residueAction_entropy_split :
@@ -1431,7 +1423,7 @@ theorem residueAction_entropy_split :
   rw [G.residueAction_gibbsMass q] at h
   exact h
 
-/-- **THE PRICING–COUNTING BRIDGE** (review #12): uniform complexity
+/-- **THE PRICING–COUNTING BRIDGE**: uniform complexity
 on the finite reduction is the residue action's complexity plus its
 expected energy plus the deficit —
 
@@ -1448,7 +1440,7 @@ theorem uniformComplexity_residue_bridge :
   rw [G.uniformComplexity_residue_split q, G.residueAction_entropy_split q]
 
 /-- The residue action's Gibbs distribution, bundled: it **is** the
-residue distribution (review #13). -/
+residue distribution. -/
 theorem residueAction_gibbsDist :
     (G.residueAction q).gibbsDist = G.residueDist q := by
   refine @FinDist.ext (H1Reduction G q) _ _ _ ?_
@@ -1457,7 +1449,7 @@ theorem residueAction_gibbsDist :
   rw [G.residueAction_gibbsMass q]
   rfl
 
-/-! #### The strict theorems of the residue action (review #13)
+/-! #### The strict theorems of the residue action
 
 The strict modal bound is fully cashed at the action level: energy is
 zero exactly on the ground class and strictly positive exactly off
@@ -1466,7 +1458,7 @@ complexity and the expected energy are strictly positive, so the
 pricing–counting bridge decomposes the uniform complexity into
 **three strictly positive terms**. -/
 
-/-- **Energy vanishes exactly at the zero class** (review #13). -/
+/-- **Energy vanishes exactly at the zero class**. -/
 theorem residueAction_E_eq_zero_iff (ξ : H1Reduction G q) :
     (G.residueAction q).E ξ = 0 ↔ ξ = 0 := by
   constructor
@@ -1480,8 +1472,7 @@ theorem residueAction_E_eq_zero_iff (ξ : H1Reduction G q) :
     rw [G.residueAction_E q 0]
     exact sub_self _
 
-/-- **Energy is strictly positive exactly off the zero class**
-(review #13). -/
+/-- **Energy is strictly positive exactly off the zero class**. -/
 theorem residueAction_E_pos_iff (ξ : H1Reduction G q) :
     0 < (G.residueAction q).E ξ ↔ ξ ≠ 0 := by
   constructor
@@ -1512,7 +1503,7 @@ theorem residueMass_zero_lt_one (hb : 0 < G.b1) (hq : 1 < q) :
   have hpos := G.residueMass_pos q ξ
   linarith
 
-/-- **The residue complexity is strictly positive** (review #13):
+/-- **The residue complexity is strictly positive**:
 `K(residueAction) = −log(residueMass 0) > 0`. -/
 theorem residueAction_complexity_pos (hb : 0 < G.b1) (hq : 1 < q) :
     0 < (G.residueAction q).complexity := by
@@ -1522,8 +1513,7 @@ theorem residueAction_complexity_pos (hb : 0 < G.b1) (hq : 1 < q) :
   have h3 := Real.log_neg h1 h2
   linarith
 
-/-- **The expected residue energy is strictly positive**
-(review #13): some class off the ground state carries positive Gibbs
+/-- **The expected residue energy is strictly positive**: some class off the ground state carries positive Gibbs
 mass at positive energy. -/
 theorem residueAction_gibbsExpect_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
     0 < (G.residueAction q).gibbsExpect (G.residueAction q).E := by
@@ -1544,7 +1534,7 @@ theorem residueAction_gibbsExpect_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
   exact mul_pos ((G.residueAction_E_pos_iff q ξ).mpr hξ)
     ((G.residueAction q).gibbsMass_pos ξ)
 
-/-- **THE BRIDGE, IN THREE STRICTLY POSITIVE TERMS** (review #13): on
+/-- **THE BRIDGE, IN THREE STRICTLY POSITIVE TERMS**: on
 any graph with cycles, at any resolution `1 < q`, the uniform
 complexity decomposes as `K_uniform = K(residueAction) + ⟨E⟩ + Δ`
 with every summand strictly positive — pricing genuinely carries
@@ -1562,7 +1552,7 @@ theorem uniformComplexity_residue_bridge_pos (hb : 0 < G.b1) (hq : 1 < q) :
     G.residueAction_gibbsExpect_E_pos q hb hq,
     G.residueDefect_pos q hb hq⟩
 
-/-- **The time face, as conditional entropy** (review #9): the
+/-- **The time face, as conditional entropy**: the
 per-sector gauge-fixing cost of `carrierCompression` is exactly the
 entropy gap `H(description) − H(residue) = log |gauge|`. -/
 theorem sectionCost_carrierCompression_div :
@@ -1582,7 +1572,7 @@ theorem sectionCost_carrierCompression_div :
   field_simp
   ring
 
-/-! ### Priced gravity and time (review #13)
+/-! ### Priced gravity and time
 
 Descriptions and pairs were `FinDist` constructions — gravity and
 time were measured by entropy but not priced by any action. Here they
@@ -1601,7 +1591,7 @@ bridge extends to descriptions and pairs
 (`uniformComplexity_description_bridge`,
 `uniformComplexity_pair_bridge`). -/
 
-/-- **The description action** (review #13): the priced uniform lift
+/-- **The description action**: the priced uniform lift
 of the residue action through the carrier compression — each
 description prices as its finite sector, the gauge choice is free. -/
 noncomputable def descriptionAction : SectorAction.{v} :=
@@ -1611,7 +1601,7 @@ noncomputable def descriptionAction : SectorAction.{v} :=
 noncomputable instance : Fintype (G.descriptionAction q).Λ :=
   inferInstanceAs (Fintype (G.E → ZMod q))
 
-/-- **The pair action** (review #13): the priced shared-base coupling
+/-- **The pair action**: the priced shared-base coupling
 of two description lifts over the residue action. -/
 noncomputable def pairAction : SectorAction.{v} :=
   (G.residueAction q).coupling (G.carrierCompression q)
@@ -1622,8 +1612,7 @@ noncomputable instance : Fintype (G.pairAction q).Λ :=
   inferInstanceAs
     (Fintype (SGD.Pullback (G.carrierCompression q) (G.carrierCompression q)))
 
-/-- The description action's Gibbs mass is the description mass
-(review #13). -/
+/-- The description action's Gibbs mass is the description mass. -/
 theorem descriptionAction_gibbsMass :
     (G.descriptionAction q).gibbsMass = G.descriptionMass q := by
   funext ω
@@ -1637,7 +1626,7 @@ theorem descriptionAction_gibbsMass :
   rfl
 
 /-- **The description action's Gibbs distribution is the description
-distribution** (review #13): the priced lift's Gibbs law is the
+distribution**: the priced lift's Gibbs law is the
 `FinDist` uniform lift of the residue distribution. -/
 theorem descriptionAction_gibbsDist :
     (G.descriptionAction q).gibbsDist = G.descriptionDist q := by
@@ -1646,8 +1635,7 @@ theorem descriptionAction_gibbsDist :
   rw [G.residueAction_gibbsDist q] at h
   exact h
 
-/-- The pair action's Gibbs mass is the shared-pair mass
-(review #13). -/
+/-- The pair action's Gibbs mass is the shared-pair mass. -/
 theorem pairAction_gibbsMass :
     (G.pairAction q).gibbsMass = G.pairMass q := by
   funext p
@@ -1663,7 +1651,7 @@ theorem pairAction_gibbsMass :
   rfl
 
 /-- **The pair action's Gibbs distribution is the shared-pair
-coupling** (review #13): the priced coupling's Gibbs law is the
+coupling**: the priced coupling's Gibbs law is the
 `FinDist` shared-base coupling of the residue distribution. -/
 theorem pairAction_gibbsDist :
     (G.pairAction q).gibbsDist = G.pairDist q := by
@@ -1674,7 +1662,7 @@ theorem pairAction_gibbsDist :
   rw [G.residueAction_gibbsDist q] at h
   exact h
 
-/-- `K(description) = K(residue) + log |gauge|` (review #13) — the
+/-- `K(description) = K(residue) + log |gauge|` — the
 complexity chain rule at the priced lift. -/
 theorem descriptionAction_complexity :
     (G.descriptionAction q).complexity
@@ -1684,7 +1672,7 @@ theorem descriptionAction_complexity :
     (G.carrierCompression q) Nat.card_pos (G.card_carrierCompression_fiber q)
   exact h.trans (add_comm _ _)
 
-/-- `K(pair) = K(residue) + 2·log |gauge|` (review #13). -/
+/-- `K(pair) = K(residue) + 2·log |gauge|`. -/
 theorem pairAction_complexity :
     (G.pairAction q).complexity
       = (G.residueAction q).complexity
@@ -1700,7 +1688,7 @@ theorem pairAction_complexity :
   rw [h]
   ring
 
-/-- **GRAVITY, PRICED — partition functions** (review #13): sharing
+/-- **GRAVITY, PRICED — partition functions**: sharing
 one finite sector multiplies out —
 `Z(pair) · Z(residue) = Z(description) · Z(description)`. -/
 theorem carrier_gravity_partFn :
@@ -1711,7 +1699,7 @@ theorem carrier_gravity_partFn :
     Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
     (G.card_carrierCompression_fiber q)
 
-/-- **GRAVITY, PRICED — complexities** (review #13): the four-term
+/-- **GRAVITY, PRICED — complexities**: the four-term
 gravity identity at the level of `log Z`:
 `K(pair) + K(residue) = K(description) + K(description)`. -/
 theorem carrier_gravity_action :
@@ -1723,7 +1711,7 @@ theorem carrier_gravity_action :
     Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
     (G.card_carrierCompression_fiber q)
 
-/-- **TIME, PRICED** (reviews #13, #14): the per-sector gauge-fixing
+/-- **TIME, PRICED**: the per-sector gauge-fixing
 cost is the complexity difference of the priced actions —
 `sectionCost / |sectors| = K(descriptionAction) − K(residueAction)` —
 a **direct specialization** of the generic priced time law
@@ -1738,24 +1726,21 @@ theorem sectionCost_carrierCompression_action :
   rw [Nat.card_eq_fintype_card]
   exact h
 
-/-- The description action's expected energy is the residue action's
-(review #13): the free gauge choice carries no energy. -/
+/-- The description action's expected energy is the residue action's: the free gauge choice carries no energy. -/
 theorem descriptionAction_gibbsExpect_E :
     (G.descriptionAction q).gibbsExpect (G.descriptionAction q).E
       = (G.residueAction q).gibbsExpect (G.residueAction q).E :=
   SectorAction.uniformLift_gibbsExpect_E (G.residueAction q)
     (G.carrierCompression q) Nat.card_pos (G.card_carrierCompression_fiber q)
 
-/-- The description action's energy variance is the residue action's
-(review #13). -/
+/-- The description action's energy variance is the residue action's. -/
 theorem descriptionAction_gibbsVariance_E :
     (G.descriptionAction q).gibbsVariance (G.descriptionAction q).E
       = (G.residueAction q).gibbsVariance (G.residueAction q).E :=
   SectorAction.uniformLift_gibbsVariance_E (G.residueAction q)
     (G.carrierCompression q) Nat.card_pos (G.card_carrierCompression_fiber q)
 
-/-- The pair action's expected energy is the residue action's
-(review #13). -/
+/-- The pair action's expected energy is the residue action's. -/
 theorem pairAction_gibbsExpect_E :
     (G.pairAction q).gibbsExpect (G.pairAction q).E
       = (G.residueAction q).gibbsExpect (G.residueAction q).E :=
@@ -1764,8 +1749,7 @@ theorem pairAction_gibbsExpect_E :
     Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
     (G.card_carrierCompression_fiber q)
 
-/-- The pair action's energy variance is the residue action's
-(review #13). -/
+/-- The pair action's energy variance is the residue action's. -/
 theorem pairAction_gibbsVariance_E :
     (G.pairAction q).gibbsVariance (G.pairAction q).E
       = (G.residueAction q).gibbsVariance (G.residueAction q).E :=
@@ -1774,7 +1758,7 @@ theorem pairAction_gibbsVariance_E :
     Nat.card_pos Nat.card_pos (G.card_carrierCompression_fiber q)
     (G.card_carrierCompression_fiber q)
 
-/-- `H(description) = K(descriptionAction) + ⟨E⟩` (review #13): the
+/-- `H(description) = K(descriptionAction) + ⟨E⟩`: the
 Gibbs entropy split at the description action. -/
 theorem descriptionAction_entropy_split :
     shannonEntropy (G.descriptionMass q)
@@ -1784,7 +1768,7 @@ theorem descriptionAction_entropy_split :
   rw [G.descriptionAction_gibbsMass q] at h
   exact h
 
-/-- **THE BRIDGE, ON DESCRIPTIONS** (review #13):
+/-- **THE BRIDGE, ON DESCRIPTIONS**:
 `K_uniform(description) = K(descriptionAction) + ⟨E⟩ + Δ` — the same
 deficit as on the residue. -/
 theorem uniformComplexity_description_bridge :
@@ -1795,7 +1779,7 @@ theorem uniformComplexity_description_bridge :
   rw [G.uniformComplexity_description_split q,
     G.descriptionAction_entropy_split q]
 
-/-- `H(pair) = K(pairAction) + ⟨E⟩` (review #13): the Gibbs entropy
+/-- `H(pair) = K(pairAction) + ⟨E⟩`: the Gibbs entropy
 split at the pair action. -/
 theorem pairAction_entropy_split :
     shannonEntropy (G.pairMass q)
@@ -1805,7 +1789,7 @@ theorem pairAction_entropy_split :
   rw [G.pairAction_gibbsMass q] at h
   exact h
 
-/-- **THE BRIDGE, ON PAIRS** (review #13):
+/-- **THE BRIDGE, ON PAIRS**:
 `K_uniform(pair) = K(pairAction) + ⟨E⟩ + Δ` — the same deficit on all
 three levels: the uniform gravity identity is the priced gravity
 identity plus the one action-induced deficit on both sides. -/
@@ -1817,8 +1801,8 @@ theorem uniformComplexity_pair_bridge :
         + G.residueDefect q := by
   rw [G.uniformComplexity_pair_split q, G.pairAction_entropy_split q]
 
-/-- **GRAVITY ON THE CARRIER — the four-term identity** (reviews #10,
-#14): sharing one finite sector of the intrinsic carrier saves
+/-- **GRAVITY ON THE CARRIER — the four-term identity**: sharing one
+finite sector of the intrinsic carrier saves
 exactly one copy of the residue entropy against two independent
 descriptions — `H(pair) + H(residue) = 2·H(description)` — now a
 **corollary of the priced calculus**: the priced entropy gravity
@@ -1841,16 +1825,16 @@ theorem carrier_gravity_entropy :
     G.descriptionAction_gibbsMass q] at h
   exact h
 
-/-- **THE DEFICIT CANCELLATION** (review #28): the gap between
+/-- **THE DEFICIT CANCELLATION**: the gap between
 uniform complexity and Shannon entropy is the **same** deficit
 `Δ = residueDefect` at all three levels of the carrier identity —
 pair, residue, description — so the deficits cancel across the
 gravity identity. This is the numerical bridge between the two
 faces on the carrier: entropy gravity and counting gravity differ
 term-by-term by deficits that sum to the same amount on both sides.
-Formerly the proof route of `carrier_gravity_complexity`; stated as
-its own theorem because it is content, not a route — the counting
-identity itself follows in one step from `counting_gravity`. -/
+Stated as its own theorem because it is content, not a mere proof
+route — the counting identity itself follows in one step from
+`counting_gravity`. -/
 theorem carrier_gravity_deficits_cancel :
     ((uniformAction (SGD.Pullback (G.carrierCompression q)
           (G.carrierCompression q))).complexity
@@ -1866,7 +1850,7 @@ theorem carrier_gravity_deficits_cancel :
   have h3 := G.uniformComplexity_description_split q
   linarith
 
-/-- **GRAVITY ON THE CARRIER** (reviews #7, #10, #14, #21, #28):
+/-- **GRAVITY ON THE CARRIER**:
 pairs of descriptions representing the **same finite sector of the
 intrinsic carrier** — sharing the sector is worth exactly one copy
 of its complexity. **The zero-energy corollary instantiated on the
@@ -1890,7 +1874,7 @@ theorem carrier_gravity_complexity :
   simp only [uniformAction_complexity]
   simpa [Nat.card_eq_fintype_card] using key
 
-/-! #### Strict fluctuation and the strict bridges (review #14)
+/-! #### Strict fluctuation and the strict bridges
 
 The strict modal bound reaches the gravity branch: the residue
 action's energy variance is strictly positive on any graph with
@@ -1900,8 +1884,7 @@ untouched to descriptions and pairs, and the description and pair
 bridges decompose into three strictly positive terms exactly as the
 residue bridge does. -/
 
-/-- **The residue action's energy variance is strictly positive**
-(review #14). -/
+/-- **The residue action's energy variance is strictly positive**. -/
 theorem residueAction_gibbsVariance_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
     0 < (G.residueAction q).gibbsVariance (G.residueAction q).E := by
   classical
@@ -1918,16 +1901,14 @@ theorem residueAction_gibbsVariance_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
   rw [h0]
   exact ne_of_gt ((G.residueAction_E_pos_iff q ξ).mpr hξ)
 
-/-- The description action's energy variance is strictly positive
-(review #14) — transported from the residue action. -/
+/-- The description action's energy variance is strictly positive — transported from the residue action. -/
 theorem descriptionAction_gibbsVariance_E_pos (hb : 0 < G.b1)
     (hq : 1 < q) :
     0 < (G.descriptionAction q).gibbsVariance (G.descriptionAction q).E := by
   rw [G.descriptionAction_gibbsVariance_E q]
   exact G.residueAction_gibbsVariance_E_pos q hb hq
 
-/-- The pair action's energy variance is strictly positive
-(review #14) — transported from the residue action. -/
+/-- The pair action's energy variance is strictly positive — transported from the residue action. -/
 theorem pairAction_gibbsVariance_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
     0 < (G.pairAction q).gibbsVariance (G.pairAction q).E := by
   rw [G.pairAction_gibbsVariance_E q]
@@ -1944,15 +1925,13 @@ theorem descriptionAction_complexity_pos (hb : 0 < G.b1) (hq : 1 < q) :
   have h3 := Real.log_nonneg h2
   linarith
 
-/-- The description action's expected energy is strictly positive
-(review #14). -/
+/-- The description action's expected energy is strictly positive. -/
 theorem descriptionAction_gibbsExpect_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
     0 < (G.descriptionAction q).gibbsExpect (G.descriptionAction q).E := by
   rw [G.descriptionAction_gibbsExpect_E q]
   exact G.residueAction_gibbsExpect_E_pos q hb hq
 
-/-- **THE BRIDGE ON DESCRIPTIONS, IN THREE STRICTLY POSITIVE TERMS**
-(review #14). -/
+/-- **THE BRIDGE ON DESCRIPTIONS, IN THREE STRICTLY POSITIVE TERMS**. -/
 theorem uniformComplexity_description_bridge_pos (hb : 0 < G.b1)
     (hq : 1 < q) :
     (uniformAction (G.E → ZMod q)).complexity
@@ -1977,15 +1956,13 @@ theorem pairAction_complexity_pos (hb : 0 < G.b1) (hq : 1 < q) :
   have h3 := Real.log_nonneg h2
   linarith
 
-/-- The pair action's expected energy is strictly positive
-(review #14). -/
+/-- The pair action's expected energy is strictly positive. -/
 theorem pairAction_gibbsExpect_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
     0 < (G.pairAction q).gibbsExpect (G.pairAction q).E := by
   rw [G.pairAction_gibbsExpect_E q]
   exact G.residueAction_gibbsExpect_E_pos q hb hq
 
-/-- **THE BRIDGE ON PAIRS, IN THREE STRICTLY POSITIVE TERMS**
-(review #14). -/
+/-- **THE BRIDGE ON PAIRS, IN THREE STRICTLY POSITIVE TERMS**. -/
 theorem uniformComplexity_pair_bridge_pos (hb : 0 < G.b1) (hq : 1 < q) :
     (uniformAction (SGD.Pullback (G.carrierCompression q)
         (G.carrierCompression q))).complexity
@@ -2000,7 +1977,7 @@ theorem uniformComplexity_pair_bridge_pos (hb : 0 < G.b1) (hq : 1 < q) :
     G.pairAction_gibbsExpect_E_pos q hb hq,
     G.residueDefect_pos q hb hq⟩
 
-/-! ### The resolution tower (review #14)
+/-! ### The resolution tower
 
 Coarse-grainings at different resolutions are not disconnected
 snapshots. For `q ∣ q'` the finer reduction maps canonically onto the
@@ -2034,7 +2011,7 @@ private lemma range_qsmul_le (hdvd : q ∣ q') :
   rw [smul_smul, show ((q : ℤ)) * (c : ℤ) = ((q' : ℤ)) from by
     exact_mod_cast hc.symm]
 
-/-- **The canonical reduction between resolutions** (review #14): for
+/-- **The canonical reduction between resolutions**: for
 `q ∣ q'`, the finer reduction `H¹⧸q'H¹` maps onto the coarser
 `H¹⧸qH¹` — the identity of the carrier, descended to the
 quotients. -/
@@ -2051,7 +2028,7 @@ integral carrier — the projections `h1Res` factors through
       = (Submodule.Quotient.mk κ : H1Reduction G q) :=
   rfl
 
-/-- **Residue weights push forward through the tower** (review #14):
+/-- **Residue weights push forward through the tower**:
 the coarse coset weight is the sum of the finer coset weights over
 the tower fiber. -/
 theorem residueWeight_tower (hdvd : q ∣ q') (ξ : H1Reduction G q) :
@@ -2063,7 +2040,7 @@ theorem residueWeight_tower (hdvd : q ∣ q') (ξ : H1Reduction G q) :
       (Submodule.Quotient.mk κ : H1Reduction G q'))
     (⇑(G.h1TowerMap q q' hdvd)) ξ
 
-/-- **Residue masses push forward through the tower** (review #14). -/
+/-- **Residue masses push forward through the tower**. -/
 theorem residueMass_tower (hdvd : q ∣ q') (ξ : H1Reduction G q) :
     G.residueMass q ξ
       = ∑' η : {η : H1Reduction G q' // G.h1TowerMap q q' hdvd η = ξ},
@@ -2074,7 +2051,7 @@ theorem residueMass_tower (hdvd : q ∣ q') (ξ : H1Reduction G q) :
     (G.residueMass_eq_residueWeight_div q' η.val).symm
 
 /-- **The residue Gibbs distribution pushes forward through the
-tower** (review #14): the coarser Gibbs law is the pushforward of the
+tower**: the coarser Gibbs law is the pushforward of the
 finer one along the tower map. -/
 theorem residueDist_tower (hdvd : q ∣ q') :
     (G.residueDist q').map (⇑(G.h1TowerMap q q' hdvd))
@@ -2118,7 +2095,7 @@ theorem residueAction_tower_weight_le (hdvd : q ∣ q')
   · exact (G.residueWeight_pos q' 0).le
   · exact G.residueWeight_le_residueWeight_zero q ξ
 
-/-- **THE TOWER IDENTIFICATION** (review #14): the coarse residue
+/-- **THE TOWER IDENTIFICATION**: the coarse residue
 action is the coarse-graining of the finer residue action along the
 tower map — the resolutions form a coherent tower, by the generic
 composition law of coarse-grainings. -/
@@ -2136,7 +2113,7 @@ theorem residueAction_tower (hdvd : q ∣ q') :
     (G.residueAction_tower_weight_le q q' hdvd)
     (G.residueWeight_pos q) (G.residueWeight_le_residueWeight_zero q)
 
-/-- **The factorization is transitive** (review #14):
+/-- **The factorization is transitive**:
 `W_q(0) = W_{q'}(0) · W_tower(0)` — the modal weight at the coarse
 resolution factors through the finer one. -/
 theorem residueWeight_factor_trans (hdvd : q ∣ q') :
@@ -2147,8 +2124,7 @@ theorem residueWeight_factor_trans (hdvd : q ∣ q') :
   have h0 : G.residueWeight q' 0 ≠ 0 := (G.residueWeight_pos q' 0).ne'
   field_simp
 
-/-- **The partition function factors through the whole tower**
-(review #14): `Z = W_{q'}(0) · (W_tower(0) · Z_q)` — consistent with
+/-- **The partition function factors through the whole tower**: `Z = W_{q'}(0) · (W_tower(0) · Z_q)` — consistent with
 the one-step factorization at either resolution. -/
 theorem classPartFn_tower (hdvd : q ∣ q') :
     (G.classSectorAction).partFn
@@ -2159,14 +2135,14 @@ theorem classPartFn_tower (hdvd : q ∣ q') :
     G.residueWeight_factor_trans q q' hdvd]
   ring
 
-/-! #### The tower's laws (review #15)
+/-! #### The tower's laws
 
 The reduction maps genuinely form a tower: identity, composition,
 independence of the divisibility witness, and surjectivity — with
 the corresponding composition laws for residue weights,
 distributions, and actions. -/
 
-/-- **Identity law** (review #15): the tower map at `q ∣ q` is the
+/-- **Identity law**: the tower map at `q ∣ q` is the
 identity. -/
 theorem h1TowerMap_id :
     G.h1TowerMap q q dvd_rfl = LinearMap.id := by
@@ -2174,7 +2150,7 @@ theorem h1TowerMap_id :
   obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
   rfl
 
-/-- **Surjectivity** (review #15): every coarse class is hit — both
+/-- **Surjectivity**: every coarse class is hit — both
 reductions are quotients of the same carrier. -/
 theorem h1TowerMap_surjective (hdvd : q ∣ q') :
     Function.Surjective (G.h1TowerMap q q' hdvd) := by
@@ -2182,7 +2158,7 @@ theorem h1TowerMap_surjective (hdvd : q ∣ q') :
   obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
   exact ⟨Submodule.Quotient.mk κ, rfl⟩
 
-/-- **Zero price at the identity** (review #18): the identity tower
+/-- **Zero price at the identity**: the identity tower
 step forgets nothing — its Gibbs conditional entropy vanishes, by
 `condEntropy_id`. -/
 theorem residue_tower_price_id :
@@ -2190,7 +2166,7 @@ theorem residue_tower_price_id :
   rw [G.h1TowerMap_id q, LinearMap.id_coe]
   exact FinDist.condEntropy_id _
 
-/-- **Zero cost at the identity** (review #18): the identity tower
+/-- **Zero cost at the identity**: the identity tower
 map is injective, so its section cost vanishes. -/
 theorem sectionCost_h1TowerMap_id :
     sectionCost (⇑(G.h1TowerMap q q dvd_rfl)) = 0 := by
@@ -2204,7 +2180,7 @@ section TowerComp
 
 variable (q' q'' : ℕ) [NeZero q'] [NeZero q'']
 
-/-- **Composition law** (review #15): tower maps compose along
+/-- **Composition law**: tower maps compose along
 divisibility. -/
 theorem h1TowerMap_comp (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
     (G.h1TowerMap q q' h₁).comp (G.h1TowerMap q' q'' h₂)
@@ -2213,7 +2189,7 @@ theorem h1TowerMap_comp (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
   obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
   rfl
 
-/-- **Residue distributions compose across the tower** (review #15):
+/-- **Residue distributions compose across the tower**:
 the two-step pushforward of the finest Gibbs law equals the one-step
 pushforward — both are the coarse residue distribution. -/
 theorem residueDist_tower_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
@@ -2223,7 +2199,7 @@ theorem residueDist_tower_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
   rw [G.residueDist_tower q' q'' h₂, G.residueDist_tower q q' h₁,
     G.residueDist_tower q q'' (h₁.trans h₂)]
 
-/-- **Residue actions compose across the tower** (review #15):
+/-- **Residue actions compose across the tower**:
 coarse-graining the intermediate residue action and coarse-graining
 the finest one agree at the coarse resolution — both are the coarse
 residue action. -/
@@ -2239,7 +2215,7 @@ theorem residueAction_tower_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
 
 end TowerComp
 
-/-! ### The price of resolution loss (review #15)
+/-! ### The price of resolution loss
 
 The tower is not free: dropping from resolution `q' = c·q` to
 resolution `q` merges `c^{b₁}` fine classes into each coarse class
@@ -2264,7 +2240,7 @@ private noncomputable def towerFiberEquivKer (hdvd : q ∣ q') (ξ : H1Reduction
   left_inv η := Subtype.ext (sub_add_cancel _ _)
   right_inv η := Subtype.ext (add_sub_cancel_right _ _)
 
-/-- **Every tower fiber has `c^{b₁}` classes** (review #15): dropping
+/-- **Every tower fiber has `c^{b₁}` classes**: dropping
 one resolution step `q' = c·q` merges exactly `c^{b₁}` fine classes
 into each coarse class. -/
 theorem card_h1TowerMap_fiber (hdvd : q ∣ q') (hq' : q' = c * q)
@@ -2300,7 +2276,7 @@ theorem card_h1TowerMap_fiber (hdvd : q ∣ q') (hq' : q' = c * q)
       _ = q ^ G.b1 * c ^ G.b1 := mul_comm _ _
   rw [hfib ξ, hm]
 
-/-- **The ratchet along the tower** (review #15): reversing one
+/-- **The ratchet along the tower**: reversing one
 resolution step costs `b₁·log c` per coarse sector — the section
 cost of the tower map, normalized. -/
 theorem sectionCost_h1TowerMap (hdvd : q ∣ q') (hq' : q' = c * q) :
@@ -2322,8 +2298,7 @@ theorem sectionCost_h1TowerMap (hdvd : q ∣ q') (hq' : q' = c * q) :
   rw [Nat.card_eq_fintype_card, hcost,
     mul_div_cancel_left₀ _ hcard.ne', Real.log_pow]
 
-/-- **The Gibbs conditional-entropy chain across the tower**
-(review #15): the fine residue entropy is the coarse residue entropy
+/-- **The Gibbs conditional-entropy chain across the tower**: the fine residue entropy is the coarse residue entropy
 plus the conditional entropy of the tower map under the fine Gibbs
 law — what one resolution step forgets, priced by the Gibbs
 distribution. -/
@@ -2336,7 +2311,7 @@ theorem residue_tower_entropy_chain (hdvd : q ∣ q') :
   rw [G.residueDist_tower q q' hdvd] at h
   exact h
 
-/-- **The lost information, priced** (review #15): the tower's
+/-- **The lost information, priced**: the tower's
 conditional entropy is the difference of the two residue actions'
 `K + ⟨E⟩` decompositions — resolution loss is a difference of
 pricings. -/
@@ -2351,7 +2326,7 @@ theorem residue_tower_condEntropy_eq (hdvd : q ∣ q') :
   have h3 := G.residue_tower_entropy_chain q q' hdvd
   linarith
 
-/-- **THE TWO PRICES IDENTIFIED** (review #16): the Gibbs price of
+/-- **THE TWO PRICES IDENTIFIED**: the Gibbs price of
 one resolution step is the uniform ratchet cost minus the deficit
 gained — `H(q'|q) = b₁·log c − (Δ(q') − Δ(q))`. Counting and pricing
 the same loss differ by exactly the action-induced information the
@@ -2386,7 +2361,7 @@ theorem residue_tower_condEntropy_eq_defect (hdvd : q ∣ q')
   rw [hΔ', hΔ]
   linarith
 
-/-- **THE STRICT PRICE OF ONE RESOLUTION STEP** (review #16): for a
+/-- **THE STRICT PRICE OF ONE RESOLUTION STEP**: for a
 graph with cycles and a genuine refinement (`b₁ > 0`, `c > 1`), the
 Gibbs price is strictly positive and strictly below the uniform
 ratchet cost, and the deficit strictly grows —
@@ -2458,7 +2433,7 @@ theorem residue_tower_price_strict (hb : 0 < G.b1) (hc : 1 < c)
   have hid := G.residue_tower_condEntropy_eq_defect q q' c hdvd hq'
   exact ⟨hpos, hlt, by linarith⟩
 
-/-- **Deficit monotonicity along the tower** (review #18): refining
+/-- **Deficit monotonicity along the tower**: refining
 the resolution can only grow the deficit — pure **data processing**
 at the uniform reference (`FinDist.defect_map_le`), since the tower
 map pushes the fine Gibbs law to the coarse one and the uniform
@@ -2487,7 +2462,7 @@ theorem residueDefect_mono (hdvd : q ∣ q') :
 
 end TowerCost
 
-/-! ### The priced composition law (review #17)
+/-! ### The priced composition law
 
 The price is not only a one-step theorem: conditional entropies add
 along the tower by the generic chain rule
@@ -2500,7 +2475,7 @@ section TowerPriceComp
 
 variable (q' q'' c c' : ℕ) [NeZero q'] [NeZero q'']
 
-/-- **Conditional entropies add along the tower** (review #17):
+/-- **Conditional entropies add along the tower**:
 `H(q″|q) = H(q″|q′) + H(q′|q)` — the generic chain rule
 `FinDist.condEntropy_comp` specialized to the tower maps, with the
 intermediate pushforward identified as the intermediate residue
@@ -2515,8 +2490,7 @@ theorem residue_tower_condEntropy_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
     rfl
   rw [hcomp, FinDist.condEntropy_comp, G.residueDist_tower q' q'' h₂]
 
-/-- **Section costs add along the tower** (review #17; review #21
-shed the two ratio witnesses the conclusion never used). -/
+/-- **Section costs add along the tower**. -/
 theorem sectionCost_h1TowerMap_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
     sectionCost (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
         / Nat.card (H1Reduction G q)
@@ -2542,7 +2516,7 @@ theorem sectionCost_h1TowerMap_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
     Real.log_mul (by exact_mod_cast hc') (by exact_mod_cast hc)]
   ring
 
-/-- **The deficit increments telescope** (review #17): the two-step
+/-- **The deficit increments telescope**: the two-step
 price identity is the sum of the one-step identities — the chain rule
 adds the conditional entropies, the section costs add, and
 `(Δ(q″) − Δ(q′)) + (Δ(q′) − Δ(q)) = Δ(q″) − Δ(q)`. -/

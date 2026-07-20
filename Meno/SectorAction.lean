@@ -67,7 +67,7 @@ noncomputable def gibbsExpect (f : A.Λ → ℝ) : ℝ := ∑' k, f k * A.gibbsM
 noncomputable def gibbsVariance (f : A.Λ → ℝ) : ℝ :=
   A.gibbsExpect (fun k => f k ^ 2) - A.gibbsExpect f ^ 2
 
-/-- **The cumulant functional** of the Gibbs law (G9): the log
+/-- **The cumulant functional** of the Gibbs law: the log
 Gibbs-mean of the exponentiated observable, `log ⟨e^φ⟩` —
 unconditioned, like `partFn` and `gibbsExpect`; each law carries its
 own summability, and on a finite `Λ` it is automatic. -/
@@ -118,7 +118,7 @@ theorem summable_sq_sub_gibbs (f : A.Λ → ℝ)
   refine ((hsq.sub hfc).add hc2).congr ?_
   intro k; ring
 
-/-- **The variance is the centered second moment** (review #14): with
+/-- **The variance is the centered second moment**: with
 both raw moments summable, `Var(f) = ∑' (f − ⟨f⟩)² · μ` — the closed
 form behind both the nonnegativity and the strict positivity of Gibbs
 fluctuation. -/
@@ -156,7 +156,7 @@ theorem gibbsVariance_nonneg (f : A.Λ → ℝ)
   rw [A.gibbsVariance_eq_tsum f hsq hf]
   exact tsum_nonneg fun k => mul_nonneg (sq_nonneg _) (A.gibbsMass_nonneg k)
 
-/-- **Strict Gibbs fluctuation** (review #14): an observable that
+/-- **Strict Gibbs fluctuation**: an observable that
 misses its own mean somewhere has strictly positive variance — every
 sector carries positive Gibbs mass, so the centered term at the
 witness is positive. -/
@@ -219,7 +219,7 @@ theorem complexity_prod (A : SectorAction.{u}) (B : SectorAction.{v}) :
 
 /-! ## Energy-preserving equivalence -/
 
-/-- **Energy-preserving equivalence of sector actions** (review #21):
+/-- **Energy-preserving equivalence of sector actions**:
 a relabeling of sectors under which every sector keeps its energy.
 The congruence the gravity theorem's decomposition lemmas are read
 through (`complexity_congr`; `SectorAction.complexity_gravity`,

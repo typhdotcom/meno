@@ -1,14 +1,14 @@
 import Meno.BasisIndependence
 
-/-! # Matter: nonzero cohomology classes (C6 — intrinsic)
+/-! # Matter: nonzero cohomology classes
 
 **A matter sector is a nonzero class of `H¹(G;ℤ)`** — the intrinsic
 quotient `(G.E → ℤ) ⧸ range ∂ᵀℤ` — with every physical attribute a
-theorem through the graph-level harmonic theory (C4):
+theorem through the graph-level harmonic theory:
 
 * `mass` — the intrinsic harmonic energy of the class
   (`IncidenceGraph.harmonicEnergy`); every presentation computes it
-  (`mass_chart`, via C4's `energy_eq_harmonicEnergy`).
+  (`mass_chart`, via `energy_eq_harmonicEnergy`).
 * `mass_pos` — positive mass from positive-definiteness
   (`harmonicEnergy_pos`); never stored data.
 * `mass_isLeast` — the variational identity: mass is the least
@@ -18,17 +18,13 @@ theorem through the graph-level harmonic theory (C4):
 * `annihilation` — binding a sector against its inverse releases the
   pair's entire rest mass. Algebraic cancellation inside `H¹`; the
   *geometric* `binding_kills_matter` — an ambient space change killing
-  a class under the induced map — is proved in `Meno/Binding.lean`
-  (C7). The Phase-27 arbitrary-map placeholder is deleted: the
-  induced map exists now, and the theorems are about it.
+  a class under the induced map — is proved in `Meno/Binding.lean`.
 * `exists_matter` — nontrivial topology (`0 < b₁`) forces matter.
 
-The Phase-22 coordinate subtype `{k : Fin P.r → ℤ // k ≠ 0}` is
-removed (C6, discipline 1c): coordinates now enter only through the
-keystone equivalences, and the Phase-23 coordinate transport is
-subsumed by `mass_chart` — any two bases' charts of the same
-intrinsic sector weigh the same because both equal the intrinsic
-mass. -/
+Coordinates enter only through the keystone equivalences, and
+coordinate transport is subsumed by `mass_chart` — any two bases'
+charts of the same intrinsic sector weigh the same because both
+equal the intrinsic mass. -/
 
 namespace Meno
 
@@ -55,7 +51,7 @@ noncomputable def mass : ℝ := G.harmonicEnergy m.val
 not stored data. -/
 theorem mass_pos : 0 < m.mass := G.harmonicEnergy_pos m.prop
 
-/-- **Matter forces topology** (G7, the converse of `exists_matter`):
+/-- **Matter forces topology** (the converse of `exists_matter`):
 a matter sector exists only where the graph has cycles — at `b₁ = 0`
 the keystone coordinates land in `Fin 0 → ℤ` and every class is
 zero. -/
@@ -77,9 +73,9 @@ theorem mass_isLeast :
           ∧ E = ω ⬝ᵥ ω} m.mass :=
   G.harmonicEnergy_isLeast m.val
 
-/-- **Every basis computes the mass** (the chart lemma, subsuming the
-Phase-23 coordinate transport): the energy any lattice basis
-assigns to the sector's keystone coordinates is the intrinsic mass. -/
+/-- **Every basis computes the mass** (the chart lemma): the energy
+any lattice basis assigns to the sector's keystone coordinates is the
+intrinsic mass. -/
 theorem mass_chart {n : ℕ} (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
     (G.basisGramData B).energy (G.latticeQuotEquiv B m.val) = m.mass :=
   G.basisGramData_energy_latticeQuot B m.val
@@ -105,7 +101,7 @@ def neg : MatterSector G := ⟨-m.val, neg_ne_zero.mpr m.prop⟩
 /-- **Annihilation**: binding a sector against its antimatter releases
 the pair's entire rest mass — twice the sector's own. Algebraic
 cancellation inside `H¹`; the geometric space-changing statement is
-C7. -/
+`binding_kills_matter`. -/
 theorem annihilation :
     (G.basisGramData G.cycleBasis).bindingEnergy
       (G.h1QuotEquiv m.val) (G.h1QuotEquiv m.neg.val) = 2 * m.mass := by

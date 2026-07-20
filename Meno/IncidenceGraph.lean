@@ -2,16 +2,16 @@ import Mathlib.Tactic
 import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 import Mathlib.LinearAlgebra.Matrix.ToLin
 
-/-! # Incidence Graphs: the one graph substrate (C1)
+/-! # Incidence Graphs: the one graph substrate
 
-The single finite-multigraph foundation under every presentation
-(PLAN, Completion Path C1). An `IncidenceGraph` bundles finite vertex
+The single finite-multigraph foundation under every presentation. An
+`IncidenceGraph` bundles finite vertex
 and edge types with source and target maps; the boundary, gradient,
 and their linear-map forms are defined **once**, over an arbitrary
 commutative ring — `ℝ`, `ℤ`, and `ZMod q` are the consumers.
 
-Beyond the chain-level vocabulary this file provides the engines the
-completion path runs on:
+Beyond the chain-level vocabulary this file provides the engines built
+on it:
 
 * **Walks** (`Walk`, `Walk.sum`, `Walk.chain`): edge paths traversed
   forward or backward, their cochain sums, and their signed traversal
@@ -24,7 +24,7 @@ completion path runs on:
 * **Walk integration** (`integrate`, `grad_integrate`): a cochain all
   of whose closed-walk sums vanish is a gradient, by integrating
   along chosen walks from component basepoints. Over `ℤ` this is the
-  integral-potentials engine that C2's fundamental presentation
+  integral-potentials engine that the fundamental presentation
   feeds; over `ℝ` it powers spanning. This is where walk structure
   enters the theory — which is why it lives here, on the graph, and
   not on any presentation. -/
@@ -37,7 +37,7 @@ open Matrix
 universe u v
 
 /-- A finite directed multigraph: finite vertex and edge types with
-source and target maps. The one graph substrate (PLAN, C1). -/
+source and target maps. The one graph substrate. -/
 structure IncidenceGraph where
   /-- Vertices. -/
   V : Type u
@@ -57,7 +57,7 @@ attribute [instance] IncidenceGraph.fintypeV IncidenceGraph.fintypeE
 
 /-- Net flow of an `R`-valued 1-cochain into a vertex, for edge data
 `(src, tgt)`: each edge contributes `+ω e` at its target and `−ω e`
-at its source. Defined once, over any commutative ring (C1). -/
+at its source. Defined once, over any commutative ring. -/
 def flowBoundary {V : Type u} {ι : Type v} [Fintype ι] [DecidableEq V]
     {R : Type*} [CommRing R] (src tgt : ι → V) (ω : ι → R) (v : V) : R :=
   ∑ e, ((if tgt e = v then (1 : R) else 0)
@@ -434,7 +434,7 @@ noncomputable def gaugeEquiv :
   left_inv f := Subtype.ext (funext fun _ => rfl)
   right_inv h := funext <| Quotient.ind fun _ => rfl
 
-/-- **The gauge theorem** (C1 acceptance): the dimension of the
+/-- **The gauge theorem**: the dimension of the
 gradient's kernel is the number of connected components. Connectivity
 governs gauge, never exactness. -/
 theorem finrank_gauge :
@@ -517,7 +517,7 @@ theorem boundary_castR (ω : G.E → ℤ) (v : G.V) :
   norm_num
 
 /-- The boundary commutes with any ring homomorphism on coefficients
-— the scalar-extension engine (review #7). -/
+— the scalar-extension engine. -/
 theorem boundary_ringHom {R S : Type*} [CommRing R] [CommRing S]
     (f : R →+* S) (ω : G.E → R) (v : G.V) :
     f (G.boundary ω v) = G.boundary (fun e => f (ω e)) v := by

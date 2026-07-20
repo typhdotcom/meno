@@ -1,13 +1,13 @@
 import Meno.PeriodHarmonic
 
-/-! # The Intrinsic Harmonic Energy (C4)
+/-! # The Intrinsic Harmonic Energy
 
 **Harmonic theory for every finite graph, on the intrinsic classes.**
 The presentation is a lattice basis
-`B : Module.Basis (Fin n) ℤ G.cycleLattice` (review #5, finding 2);
+`B : Module.Basis (Fin n) ℤ G.cycleLattice`;
 its **priced Gram data** `basisGramData B` is the inverse of the
-derived unit-edge chain Gram (review #5, finding 3 — the canonical
-pricing, with nothing stored). `IncidenceGraph.harmonicEnergy` assigns
+derived unit-edge chain Gram (the canonical pricing, with nothing
+stored). `IncidenceGraph.harmonicEnergy` assigns
 to each class of `H¹(G;ℤ) = (G.E → ℤ) ⧸ range ∂ᵀℤ` the energy of its
 harmonic representative — defined through the fundamental basis, and
 computed by **every** basis (`energy_eq_harmonicEnergy`,
@@ -20,7 +20,7 @@ is basis-independent, so the variational sets coincide, and
 `IsLeast.unique` transports the energies. No coordinate transport, no
 `GL(r,ℤ)` matrices in the proof.
 
-Delivered (C4 acceptance):
+This file provides:
 
 * `harmonicEnergy` — basis-free by construction on the intrinsic
   quotient; basis-independent by `energy_eq_harmonicEnergy`.
@@ -28,7 +28,7 @@ Delivered (C4 acceptance):
   finite graph: the class energy is the least cochain energy among
   realizers, attained.
 * `harmonicEnergy_pos` — nonzero classes have positive energy: the
-  matter inequality, intrinsic (the C6 bridge). -/
+  matter inequality, intrinsic. -/
 
 namespace Meno
 
@@ -43,11 +43,10 @@ variable (G : IncidenceGraph.{u, v})
 variable {n : ℕ} (B : Module.Basis (Fin n) ℤ G.cycleLattice)
 
 /-- **The priced Gram data of a lattice basis**: the inverse of the
-derived unit-edge chain Gram, through the Phase-20 builder — with the
+derived unit-edge chain Gram, with the
 variational identity as a theorem
 (`HarmonicGramData.ofCycles_energy_isLeast`). Nothing is stored: the
-Gram and its positivity are theorems of the basis (review #5,
-finding 3). -/
+Gram and its positivity are theorems of the basis. -/
 noncomputable def basisGramData : HarmonicGramData G.V :=
   HarmonicGramData.ofCycles (G.cyclesR B) (G.gramOf_cyclesR_posDef B)
 
@@ -111,15 +110,15 @@ theorem isLeast_gradShift (τ : G.E → ℤ) :
   rw [hset] at h
   exact h
 
-/-- **The intrinsic harmonic energy** of an integer cohomology class
-(C4): defined through the fundamental basis; every basis computes it
+/-- **The intrinsic harmonic energy** of an integer cohomology class:
+defined through the fundamental basis; every basis computes it
 (`energy_eq_harmonicEnergy`). -/
 noncomputable def harmonicEnergy
     (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) : ℝ :=
   (G.basisGramData G.cycleBasis).energy (G.h1QuotEquiv κ)
 
-/-- **The variational identity for every finite graph** (C4
-acceptance): the class energy is the least cochain energy among
+/-- **The variational identity for every finite graph**: the class
+energy is the least cochain energy among
 realizers of the class's periods — attained. -/
 theorem harmonicEnergy_isLeast
     (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :
@@ -130,8 +129,8 @@ theorem harmonicEnergy_isLeast
   HarmonicGramData.ofCycles_energy_isLeast (V := G.V) G.fundCyclesR
     (G.gramOf_cyclesR_posDef G.cycleBasis) (G.h1QuotEquiv κ)
 
-/-- **Every basis computes the intrinsic energy** (C4's basis-freeness,
-delivered variationally): the energy any lattice basis assigns to the
+/-- **Every basis computes the intrinsic energy**: the energy any
+lattice basis assigns to the
 periods of `τ` is the harmonic energy of `τ`'s class. -/
 theorem energy_eq_harmonicEnergy (τ : G.E → ℤ) :
     (G.basisGramData B).energy (fun j => τ ⬝ᵥ G.cyclesZ B j)
@@ -159,7 +158,7 @@ theorem basisGramData_energy_latticeQuot
   exact G.energy_eq_harmonicEnergy B τ
 
 /-- **Nonzero classes have positive energy** — the matter inequality,
-intrinsic (the C6 bridge). -/
+intrinsic. -/
 theorem harmonicEnergy_pos
     {κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)} (hκ : κ ≠ 0) :
     0 < G.harmonicEnergy κ :=

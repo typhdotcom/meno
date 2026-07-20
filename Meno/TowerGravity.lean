@@ -2,9 +2,9 @@ import Meno.ResolutionCount
 import Meno.Systole
 import Mathlib.Analysis.Complex.ExponentialBounds
 
-/-! # Arithmetic Gravity on the Tower (G3)
+/-! # Arithmetic Gravity on the Tower
 
-The tower face of the obstruction program (PLAN, G3).
+The tower face of the obstruction program.
 
 * **CRT** (`h1ReductionCRT`): the finer reduction is the fiber
   product of the coarser ones over their common coarsening —
@@ -79,7 +79,7 @@ namespace IncidenceGraph
 
 variable (G : IncidenceGraph.{u, v})
 
-/-- **The harmonic energy is quadratic** (G3 key-lemma engine):
+/-- **The harmonic energy is quadratic**:
 `E(c • κ) = c² · E(κ)`. -/
 theorem harmonicEnergy_zsmul (c : ℤ)
     (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :
@@ -90,7 +90,7 @@ theorem harmonicEnergy_zsmul (c : ℤ)
 
 /-! ## The key lemma -/
 
-/-- **THE KEY LEMMA** (G3): the modal coset weight is the scaled
+/-- **THE KEY LEMMA**: the modal coset weight is the scaled
 partition function — `residueWeight q 0 = classScaledPartFn (q²)`,
 with `classScaledPartFn` the standing β-scaled carrier partition
 function (`Meno/BasisIndependence.lean`). The fiber of zero is
@@ -148,7 +148,7 @@ theorem residueAction_complexity_eq (q : ℕ) [NeZero q] :
 
 /-! ## The exact law and its boundary -/
 
-/-- **THE CROSS-RATIO LAW** (G3, the exact law): the four-resolution
+/-- **THE CROSS-RATIO LAW** (the exact law): the four-resolution
 gravity defect on the tower is a cross-ratio of scaled partition
 functions — via `classComplexity_residue_split` and the key lemma
 (`residueAction_complexity_eq`), each residue complexity is the
@@ -169,7 +169,7 @@ theorem residue_gravity_crossRatio (q q' : ℕ) [NeZero q] [NeZero q'] :
     G.residueAction_complexity_eq (Nat.lcm q q')]
   ring
 
-/-- **The tower recognition** (G9): substituting the temperature
+/-- **The tower recognition**: substituting the temperature
 recognition (`log_classScaledPartFn_eq_cgf`) into the cross-ratio
 law, the four class complexities cancel — the tower defect is the
 four-term cumulant combination of energy observables on the
@@ -197,7 +197,7 @@ theorem residue_gravity_crossRatio_cgf (q q' : ℕ) [NeZero q] [NeZero q'] :
       (hpos (Nat.lcm q q'))]
   ring
 
-/-- **The boundary** (G3): along a divisibility chain the defect
+/-- **The boundary**: along a divisibility chain the defect
 vanishes identically — `{gcd, lcm} = {q, q'}` and the cross-ratio
 cancels. Gravity is exact along chains; the `C₃` witness
 (`cycle3_crossRatio_neg`) shows it can strictly fail off them. -/
@@ -213,7 +213,7 @@ theorem residue_gravity_dvd (q q' : ℕ) [NeZero q] [NeZero q']
 
 /-! ## Chinese remainder on the tower -/
 
-/-- **CRT ON THE TOWER** (G3): the `lcm` reduction is the fiber
+/-- **CRT ON THE TOWER**: the `lcm` reduction is the fiber
 product of the two reductions over their common coarsening — the
 finer resolution **is** the coupling of the coarser ones, so the
 cross-ratio law is a gravity statement. Componentwise Chinese
@@ -308,7 +308,7 @@ noncomputable def h1ReductionCRT (q q' : ℕ) [NeZero q] [NeZero q'] :
       G.card_H1Reduction (Nat.gcd q q'), smul_eq_mul, harith]
     ring
 
-/-- **Counting on the tower** (G3): the CRT counting identity —
+/-- **Counting on the tower**: the CRT counting identity —
 `Nat.gcd_mul_lcm` raised to `b₁`. -/
 theorem card_h1Reduction_mul_gcd (q q' : ℕ) [NeZero q] [NeZero q'] :
     Nat.card (H1Reduction G (Nat.lcm q q'))
@@ -498,7 +498,7 @@ theorem cycle3_classScaledPartFn (s : ℝ) :
   congr 1
   ring
 
-/-- **THE STRICTNESS** (G3): on `cycleGraph 3` at `(q, q') = (2, 3)`
+/-- **THE STRICTNESS**: on `cycleGraph 3` at `(q, q') = (2, 3)`
 the four-resolution defect is strictly negative —
 `Z(1)·Z(36) > Z(4)·Z(9)` at the carrier scale, i.e.
 `Z(1/3)·Z(12) > Z(4/3)·Z(3)` in theta values. **At the witness,

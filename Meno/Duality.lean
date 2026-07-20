@@ -13,10 +13,7 @@ scalar theory: the canonical one-object quadratic family
 (`quadraticObj`), its Gibbs wrappers, the scalar mean energy with its
 fluctuation–dissipation and T-duality functional equations — derived
 from the spine's bundle engine, not differentiated locally — and the
-Cauchy–Schwarz corroboration `M2_sq_lt_Z_mul_M4`. (Reviews #25–#28:
-the `GroupoidObj.dual` construction, the product law, the rank-bound
-and decomposition chains, and the local differentiation cluster were
-consumerless mirrors of spine theorems and are deleted.) -/
+Cauchy–Schwarz corroboration `M2_sq_lt_Z_mul_M4`. -/
 
 namespace Simplicial
 
@@ -116,7 +113,7 @@ noncomputable def GroupoidObj.gibbsExpect (E : GroupoidObj) (f : End E.base → 
 noncomputable def GroupoidObj.gibbsVariance (E : GroupoidObj) (f : End E.base → ℝ) : ℝ :=
   E.gibbsExpect (fun g => f g ^ 2) - (E.gibbsExpect f) ^ 2
 
-/-- **Audit identification (C12)**: the groupoid Gibbs machinery *is*
+/-- The groupoid Gibbs machinery *is*
 the sector action's, through the loop-kernel bridge — definitionally.
 Retained as groupoid-facing wrappers; the analytic source of truth is
 `SectorAction`. -/
@@ -150,7 +147,7 @@ theorem quadraticPartFn_gt_one (α : ℝ) (hα : 0 < α) : quadraticPartFn α > 
   exact Meno.QuadraticAction.scalarPartFn_gt_one α hα
 
 
-/-! ### The scalar family as the rank-one chart (review #15)
+/-! ### The scalar family as the rank-one chart
 
 The scalar quadratic family `β ↦ ∑' k : ℤ, exp(−β·k²)` is the
 rank-one instance of the rank-generic inverse-temperature engine
@@ -263,7 +260,7 @@ theorem quadraticMeanEnergy_eq_gibbsExpect (α : ℝ) (hα : 0 < α) :
   congr 1
 
 
-/-- **The Cauchy–Schwarz corroboration** (review #16): `M₂² < Z·M₄`
+/-- **The Cauchy–Schwarz corroboration**: `M₂² < Z·M₄`
     for all `α > 0` — an independent, self-contained route to the
     strict positivity of the squared-winding variance, retained as
     named corroboration of the generic strict-fluctuation engine
@@ -338,7 +335,7 @@ private lemma meanEnergy_unit :
 
 /-- `quadraticMeanEnergy` is strictly decreasing on `(0, ∞)` — the
     generic strict-dissipation theorem (`Meno/Fluctuation.lean`) at
-    the rank-one unit action (review #16). The Cauchy–Schwarz route
+    the rank-one unit action. The Cauchy–Schwarz route
     stands as named corroboration (`M2_sq_lt_Z_mul_M4`). -/
 theorem quadraticMeanEnergy_strictAntiOn :
     StrictAntiOn quadraticMeanEnergy (Set.Ioi 0) := by
@@ -401,7 +398,7 @@ theorem hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance
 
 /-- The Gibbs variance of squared winding is strictly positive on
     `(0, ∞)` — the generic strict-fluctuation theorem at the unit
-    action (review #16); Cauchy–Schwarz (`M2_sq_lt_Z_mul_M4`) stands
+    action; Cauchy–Schwarz (`M2_sq_lt_Z_mul_M4`) stands
     as named corroboration. -/
 theorem quadraticObj_gibbsVariance_pos (α : ℝ) (hα : 0 < α) :
     0 < (quadraticObj α hα).gibbsVariance (fun g => (quadraticWind g : ℝ) ^ 2) := by
@@ -441,7 +438,7 @@ private lemma unitDual_scaledPartFn (γ : ℝ) :
       = -(Real.pi ^ 2 * γ) * (n : ℝ) ^ 2 from by ring]
 
 /-- The unit dual's mean energy is `π²` times the canonical mean
-energy at the `π²`-rescaled coupling (review #17). -/
+energy at the `π²`-rescaled coupling. -/
 private lemma unitDual_meanEnergy (γ : ℝ) :
     unitQuadAction.dual.meanEnergy γ
       = Real.pi ^ 2 * quadraticMeanEnergy (Real.pi ^ 2 * γ) := by
@@ -470,7 +467,7 @@ private lemma unitDual_meanEnergy (γ : ℝ) :
     `(π²/α²)·⟨k²⟩_{π²/α} + ⟨k²⟩_α = 1/(2α)`.
 
     **The bundle temperature–duality functional equation**
-    (`QuadLatticeAction.meanEnergy_T_dual`, review #17) **at the unit
+    (`QuadLatticeAction.meanEnergy_T_dual`) **at the unit
     action**: `⟨E⟩(α) + α⁻²·⟨E⟩∨(α⁻¹) = 1/(2α)`, with the unit dual's
     mean energy identified as `π²·⟨k²⟩_{π²·α⁻¹}`
     (`unitDual_meanEnergy`). The scalar theorem no longer
@@ -496,7 +493,7 @@ theorem quadraticMeanEnergy_T_dual (α : ℝ) (hα : 0 < α) :
   linarith
 
 /-- At the self-dual coupling α = π, the mean of `k²` is `1/(4π)` —
-    **from the functional equation** (review #17): at `α = π` the two
+    **from the functional equation**: at `α = π` the two
     mean-energy terms of `quadraticMeanEnergy_T_dual` coalesce into
     `2·⟨k²⟩_π = 1/(2π)`. -/
 theorem quadraticMeanEnergy_self_dual :

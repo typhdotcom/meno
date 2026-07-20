@@ -12,8 +12,7 @@ A `QuadraticAction r` is the analytic primitive whose sector lattice is
 Gram matrix `Q`. Summability of the Boltzmann weight is **derived** from
 `Q.PosDef` (`summable_exp_neg_quadForm`, via the eigenvalue-free
 coercivity bound `Matrix.PosDef.exists_coercivity`): it is a theorem
-(`QuadraticAction.summable`), not a stored field (review #5, retiring
-the Session-1 deferral recorded at PLAN Goal 2).
+(`QuadraticAction.summable`), not a stored field.
 
 The rank-1 case `ofScalar α hα` builds `QuadraticAction 1` with `Q = !![α]`;
 its partition function equals `∑' k : ℤ, exp(-α k²)`. The scalar
@@ -24,7 +23,7 @@ its partition function equals `∑' k : ℤ, exp(-α k²)`. The scalar
 The general matrix Siegel–Poisson duality
 `Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` is proved at full generality in
 `Meno/SiegelPoisson.lean` (multidimensional Poisson summation over the
-integer lattice, Phase 15); the diagonal cases below are its elementary
+integer lattice); the diagonal cases below are its elementary
 corroborating derivations. -/
 
 namespace Meno
@@ -39,10 +38,9 @@ universe u
 Scalar Gaussian sums, the product factorization over `ℤ^r`, coercivity
 of positive-definite forms, and `summable_exp_neg_quadForm` — placed
 *before* `QuadraticAction` so that summability of the Boltzmann weight
-is **derived** from positive-definiteness, never stored (review #5;
-PLAN Goal 2). Coercivity and `summable_exp_neg_quadForm` are relocated
-upstream from `Meno/SiegelPoisson.lean` (Phase 15), which now consumes
-them. -/
+is **derived** from positive-definiteness, never stored. Coercivity
+and `summable_exp_neg_quadForm` live upstream of
+`Meno/SiegelPoisson.lean`, which now consumes them. -/
 
 namespace QuadraticAction
 
@@ -176,8 +174,7 @@ theorem _root_.Matrix.PosDef.exists_coercivity {d : ℕ}
 
 /-- Positive scalar multiples of positive-definite matrices are positive
 definite. Hand-rolled: `Matrix.PosDef.smul` needs `StarOrderedRing ℝ`
-synthesis, which fails at this pin. (Moved upstream from
-`Meno/SiegelPoisson.lean`, review #16.) -/
+synthesis, which fails at this pin. -/
 lemma posDef_smul' {d : ℕ} {A : Matrix (Fin d) (Fin d) ℝ} (hA : A.PosDef)
     {c : ℝ} (hc : 0 < c) : (c • A).PosDef := by
   refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
@@ -222,8 +219,7 @@ theorem summable_exp_neg_quadForm {d : ℕ} {M : Matrix (Fin d) (Fin d) ℝ}
         exact Finset.sum_congr rfl (fun i _ => by ring)
 
 /-- Over `ℝ`, a positive-definite matrix is symmetric: hermitian with
-trivial star. Named so the retired `Q_symm`/`gram_symm` fields become
-derived theorems (review #6). -/
+trivial star. -/
 theorem _root_.Matrix.PosDef.isSymm {d : ℕ} {A : Matrix (Fin d) (Fin d) ℝ}
     (hA : A.PosDef) : A.IsSymm := by
   have h : Aᴴ = A := hA.1
@@ -236,7 +232,7 @@ theorem _root_.Matrix.PosDef.isSymm {d : ℕ} {A : Matrix (Fin d) (Fin d) ℝ}
 /-- A quadratic action of rank `r`: a positive-definite Gram form
 `Q : Matrix (Fin r) (Fin r) ℝ`. Symmetry (`QuadraticAction.Q_symm`)
 and summability of the Boltzmann weight (`QuadraticAction.summable`)
-are **derived**, never stored (reviews #5, #6). -/
+are **derived**, never stored. -/
 structure QuadraticAction (r : ℕ) where
   Q : Matrix (Fin r) (Fin r) ℝ
   Q_posDef : Q.PosDef
@@ -245,15 +241,13 @@ namespace QuadraticAction
 
 variable {r : ℕ} (A : QuadraticAction r)
 
-/-- **Symmetry is a theorem** (review #6): positive-definiteness over
-`ℝ` gives it. Same name and statement as the retired field, so
-consumers are unchanged. -/
+/-- **Symmetry is a theorem**: positive-definiteness over
+`ℝ` gives it. -/
 theorem Q_symm : A.Q.IsSymm := A.Q_posDef.isSymm
 
-/-- **Summability is a theorem** (PLAN Goal 2, closed): the Boltzmann
+/-- **Summability is a theorem**: the Boltzmann
 weight of a quadratic action is summable, by coercivity of its
-positive-definite Gram form. Same name and statement as the retired
-field, so consumers are unchanged. -/
+positive-definite Gram form. -/
 theorem summable : Summable (fun k : Fin r → ℤ =>
     Real.exp (-(∑ i, ∑ j, A.Q i j * (k i : ℝ) * (k j : ℝ)))) :=
   summable_exp_neg_quadForm A.Q_posDef
@@ -418,8 +412,7 @@ theorem scalarPartFn_gt_one (α : ℝ) (hα : 0 < α) : 1 < scalarPartFn α := b
   linarith [Real.exp_pos (-α)]
 
 /-- Shifted-mode summability: the positive modes of the scalar theta
-sum converge (promoted from `Meno/Zeta.lean`, G3 review — every
-estimate on the scalar theta value lives where the value lives). -/
+sum converge. -/
 theorem summable_exp_sq_shift (α : ℝ) (hα : 0 < α) :
     Summable (fun k : ℕ => Real.exp (-α * ((k : ℝ) + 1) ^ 2)) := by
   have h := (summable_nat_add_iff 1).mpr (summable_scalarPartFn_nat α hα)
@@ -428,7 +421,7 @@ theorem summable_exp_sq_shift (α : ℝ) (hα : 0 < α) :
 /-- Symmetric split: the partition function minus its vacuum term
 equals twice the sum over positive modes. The ℤ-sum over `k²`
 collapses to the ℕ-sum over `(k+1)²` doubled (by evenness) plus the
-`k = 0` term (promoted from `Meno/Zeta.lean`, G3 review). -/
+`k = 0` term. -/
 theorem scalarPartFn_sub_one_eq (α : ℝ) (hα : 0 < α) :
     scalarPartFn α - 1 = 2 * ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2) := by
   set S : ℝ := ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2) with hS_def
@@ -459,7 +452,7 @@ theorem scalarPartFn_sub_one_eq (α : ℝ) (hα : 0 < α) :
   ring
 
 /-- Per-mode geometric domination:
-`exp(−α(k+1)²) ≤ exp(−α)·exp(−α)^k` (G3). -/
+`exp(−α(k+1)²) ≤ exp(−α)·exp(−α)^k`. -/
 theorem exp_sq_shift_le_geo (α : ℝ) (hα : 0 < α) (k : ℕ) :
     Real.exp (-α * ((k : ℝ) + 1) ^ 2) ≤ Real.exp (-α) * Real.exp (-α) ^ k := by
   rw [show Real.exp (-α) * Real.exp (-α) ^ k
@@ -470,7 +463,7 @@ theorem exp_sq_shift_le_geo (α : ℝ) (hα : 0 < α) (k : ℕ) :
   have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
   nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ (k : ℝ) + 1) hk]
 
-/-- First-mode lower bound: `1 + 2·exp(−α) ≤ Z(α)` (G3). -/
+/-- First-mode lower bound: `1 + 2·exp(−α) ≤ Z(α)`. -/
 theorem scalarPartFn_ge (α : ℝ) (hα : 0 < α) :
     1 + 2 * Real.exp (-α) ≤ scalarPartFn α := by
   have h := scalarPartFn_sub_one_eq α hα
@@ -485,7 +478,7 @@ theorem scalarPartFn_ge (α : ℝ) (hα : 0 < α) :
   linarith
 
 /-- Geometric tail upper bound:
-`Z(α) ≤ 1 + 2·exp(−α)/(1−exp(−α))` (G3). -/
+`Z(α) ≤ 1 + 2·exp(−α)/(1−exp(−α))`. -/
 theorem scalarPartFn_le (α : ℝ) (hα : 0 < α) :
     scalarPartFn α ≤ 1 + 2 * (Real.exp (-α) / (1 - Real.exp (-α))) := by
   have h := scalarPartFn_sub_one_eq α hα
@@ -528,7 +521,7 @@ For diagonal Gram forms the lattice sum factors, so the matrix duality
 scalar duality — **no multidimensional Poisson summation needed**. This
 realizes the rank-2 matrix Siegel–Poisson target for diagonal `Q`. The
 general (non-diagonal) case is proved in `Meno/SiegelPoisson.lean` via
-multidimensional Poisson summation (Phase 15); the diagonal route here
+multidimensional Poisson summation; the diagonal route here
 survives as the elementary corroborating derivation. -/
 
 /-- Diagonal rank-2 quadratic action: `Q = diag(α, β)` with `α, β > 0`. -/
@@ -564,10 +557,7 @@ noncomputable def ofDiagonal₂ (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
 
 /-! ## The diagonal constructor
 
-`ofDiagonal` builds the rank-`r` action with Gram `diag(α)`. Its
-duality theory was superseded by the full non-diagonal Siegel–Poisson
-proof (`Meno/SiegelPoisson.lean`, multidimensional Poisson summation)
-and is deleted (review #28); what remains is the constructor itself,
+`ofDiagonal` builds the rank-`r` action with Gram `diag(α)`. It is
 consumed as the rank-2 witness that the duality flow can vanish off
 the self-dual locus (`exists_dualityFlow_eq_zero_not_selfDual`). -/
 

@@ -1,18 +1,15 @@
 import Meno.SectorAction
 import Meno.Basic
 
-/-! # The Uniform Sector Action — Counting as Zero-Energy Pricing (C9)
+/-! # The Uniform Sector Action — Counting as Zero-Energy Pricing
 
-The valid replacement for the falsified endofunction-kernel design
-(Part II, Phase 17 record: `E(id) = log|A|` contradicted `energy_id`;
-endofunction sums broke summability). The correct realization is
-simpler: a finite nonempty type is a sector lattice
+A finite nonempty type is a sector lattice
 with **zero energy everywhere** — every state equally costly to
 name — so its partition function *is* its cardinality and its
 complexity *is* `log |A|` (`uniformAction_partFn`,
 `uniformAction_complexity`).
 
-Counting is not a parallel theory (review #25): the log-cardinality
+Counting is not a parallel theory: the log-cardinality
 gravity identity is the **zero-energy corollary** of the one gravity
 theorem — `counting_gravity` (`Meno/InfoRatchet.lean`) instantiates
 `SectorAction.complexity_gravity` at `uniformAction D` and evaluates

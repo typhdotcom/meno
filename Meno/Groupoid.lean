@@ -18,9 +18,7 @@ edges: objects = vertices, morphisms = homotopy classes of walks. The
 partition function over automorphisms is the groupoid's Boltzmann sum;
 its complexity theory lives on the spine, reached through
 `GroupoidObj.toLoopKernelObj`. The cycle instance factors through the
-spine presentation and recovers `partitionFn n` with its T-duality
-(reviews #25–#28: the local complexity laws, the product law, and the
-dual-object machinery were consumerless mirrors and are deleted). -/
+spine presentation and recovers `partitionFn n` with its T-duality. -/
 
 namespace Simplicial
 
@@ -250,7 +248,7 @@ attribute [instance] GroupoidObj.grpd
 /-- **Bridge to the spine**: every groupoid object satisfying the two
 ground conditions (zero identity energy, non-negative energy) is a loop
 kernel. All five data fields transfer verbatim — the bridge is pure
-repackaging (plan falsification clause #4: near-`rfl`). -/
+repackaging, near-`rfl`. -/
 noncomputable def GroupoidObj.toLoopKernelObj (E : GroupoidObj)
     (h_id : E.energy (𝟙 E.base) = 0)
     (h_nonneg : ∀ g, 0 ≤ E.energy g) : Meno.LoopKernelObj where
@@ -371,8 +369,7 @@ theorem cycleSectorPresentation_partFn_eq_gramData (n : ℕ) (hn : n ≥ 3) :
 canonical cycle groupoid object's partition function obeys T-duality as
 a corollary of `Meno.partitionFn_T_duality_via_spine`: no winding
 hypothesis, no dual-object construction — the spine carries the
-duality (the former local dual-object route is deleted, reviews
-#25–#28). -/
+duality. -/
 theorem cycleCanonicalObj_T_duality (n : ℕ) (hn : n ≥ 3) :
     (↑(Meno.QuadraticAction.scalarPartFn (Real.pi ^ 2 * n)) : ℂ) =
     ↑((1 / (n : ℝ)) / Real.pi) ^ ((1 : ℂ) / 2)
@@ -380,8 +377,8 @@ theorem cycleCanonicalObj_T_duality (n : ℕ) (hn : n ≥ 3) :
   rw [cycleCanonicalObj_partFn_eq_partitionFn]
   exact Meno.partitionFn_T_duality_via_spine n hn
 
-/-- **The categorical dual of the cycle loop kernel** (Phase 6's
-`dualVia`, instantiated): the dual object built by transporting
+/-- **The categorical dual of the cycle loop kernel** (`dualVia`,
+instantiated): the dual object built by transporting
 `π²·Q⁻¹` through the winding coordinates has partition function
 `√((1/n)/π) · Z(C_n)`. The concrete witness that
 `SectorPresentation.dualVia_partFn_duality` has a consumer. -/
@@ -398,7 +395,7 @@ theorem cycleLoopKernel_dualVia_partFn (n : ℕ) (hn : n ≥ 3) :
 
 end CycleSpine
 
-/-! ## The Geodesic Instance (Goal 4)
+/-! ## The Geodesic Instance
 
 Minimal walk length within a homotopy class, as a Lawvere-subadditive
 length on the fundamental groupoid. The combinatorial mass `n` of the
@@ -417,7 +414,7 @@ noncomputable def homotopyClassLength (C : Complex V) {u v : V} :
     (fun _ _ h => congrArg (fun m : ℕ => (m : ℝ))
       (geodesicLength_eq_of_homotopic C h))
 
-/-- **The simplicial walk-length `Geodesic` structure** (Goal 4): the
+/-- **The simplicial walk-length `Geodesic` structure**: the
 fundamental groupoid of a symmetric complex carries the
 minimal-representative walk length; subadditivity holds because the
 append of minimal representatives represents the composite class. -/
@@ -464,7 +461,7 @@ noncomputable def canonicalLoop (n : ℕ) (hn : n ≥ 3) :
     End (⟨cycleBase n hn⟩ : SimplicialGroupoid (CycleGraph n hn)) :=
   Quot.mk _ (cycleWalk n hn)
 
-/-- **Goal 4's acceptance**: the geodesic length of the canonical
+/-- The geodesic length of the canonical
 cycle is the combinatorial mass `n`, at the `Geodesic` layer, with no
 analytic content involved. -/
 theorem cycleGeodesic_canonical (n : ℕ) (hn : n ≥ 3) :
@@ -472,15 +469,14 @@ theorem cycleGeodesic_canonical (n : ℕ) (hn : n ≥ 3) :
   show ((geodesicLength (CycleGraph n hn) (cycleWalk n hn) : ℕ) : ℝ) = n
   rw [cycleGraph_geodesic_eq_n]
 
-/-- **The geodesic/harmonic duality — the systole equality instance**
-(G1 demotion, PLAN rule 3): combinatorial mass times harmonic mass is
+/-- **The geodesic/harmonic duality — the systole equality instance**:
+combinatorial mass times harmonic mass is
 one because the systole inequality is *equality* on `C_n` — the
 geodesic length of the canonical loop is the chain norm of the full
 cycle (the walk-length bridge, `cycleGeodesic_canonical` with
 `cycleFullCycle_normSq`), the walk-layer energy is the intrinsic mass
 (`cycleMatter_mass`), and the winding-one pairing is `1`
-(`cycle_systole_equality`, `Meno/Systole.lean`). The independent
-arithmetic route is retired. -/
+(`cycle_systole_equality`, `Meno/Systole.lean`). -/
 theorem geodesic_harmonic_duality (n : ℕ) (hn : n ≥ 3) :
     Geodesic.length (canonicalLoop n hn)
       * (Meno.cyclePeriodData n (by omega)).energy ![1] = 1 := by

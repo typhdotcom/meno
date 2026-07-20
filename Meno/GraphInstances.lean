@@ -1,13 +1,12 @@
 import Meno.GraphHomology
 import Meno.ThetaGraph
 
-/-! # Concrete Graph Topology: connectivity, Betti numbers, bases (C1/C5)
+/-! # Concrete Graph Topology: connectivity, Betti numbers, bases
 
 The concrete graphs' topological invariants and their **lattice
 bases**, all through the pure graph-homology layer — this file imports
 only `Meno/GraphHomology.lean` and `Meno/ThetaGraph.lean`, so the
-"unpriced topology" grouping of `Meno.lean` is true by the import DAG
-(review #5, finding 1):
+"unpriced topology" grouping of `Meno.lean` is true by the import DAG:
 
 * `cycleGraph` — `C_n`, with `b₁ = 1` derived through its lattice
   basis (`cycleGraph_b1'`).
@@ -16,7 +15,7 @@ only `Meno/GraphHomology.lean` and `Meno/ThetaGraph.lean`, so the
   spectator vertex.
 * `thetaGraph_preconnected`, `thetaGraph_b1` — `K₂,₃` is connected and
   has `b₁ = 2`, by walks and Euler's formula.
-* **The concrete lattice bases** (review #5, finding 2):
+* **The concrete lattice bases**:
   `cycleLatticeBasis`, `thetaLatticeBasis`, `wedgeLatticeBasis` —
   genuine `Module.Basis _ ℤ G.cycleLattice` objects assembled by
   `IncidenceGraph.basisOfCycles` from raw closedness, independence,
@@ -35,7 +34,7 @@ universe u v
 
 /-! ### The cycle graph's boundary and cycle facts
 
-Stated through the substrate's single operator (review #3): the
+Stated through the substrate's single operator: the
 boundary closed form over any commutative ring, constancy of closed
 cochains, and the raw ingredients of the lattice basis. -/
 
@@ -237,7 +236,7 @@ theorem wedgeRoute_succ (m : ℕ) (k : ℕ) (hk : k + 1 < m) :
   rw [dif_neg (show ¬ ((⟨k + 1, hk⟩ : Fin m) : ℕ) = 0 by simp)]
   congr 1
 
-/-- **The genuine wedge** `C_{n₁} ∨ C_{n₂}` (C1): both cycles share
+/-- **The genuine wedge** `C_{n₁} ∨ C_{n₂}`: both cycles share
 the basepoint `none`; `n₁ + n₂ − 1` vertices, no spectator. -/
 @[reducible] def wedgeGraph (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
     IncidenceGraph :=
@@ -332,8 +331,7 @@ theorem wedgeGraph_preconnected (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < 
   obtain ⟨q⟩ := hall v
   exact ⟨p.reverse.append q⟩
 
-/-- **`b₁(C_{n₁} ∨ C_{n₂}) = 2` on the genuine wedge** (the C1
-acceptance number): Euler's formula on `n₁ + n₂` edges,
+/-- **`b₁(C_{n₁} ∨ C_{n₂}) = 2` on the genuine wedge**: Euler's formula on `n₁ + n₂` edges,
 `n₁ + n₂ − 1` vertices, one component — no hand-built basis, no
 spectator. -/
 theorem wedgeGraph_b1 (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :

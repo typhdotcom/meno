@@ -1,9 +1,9 @@
 import Meno.ResolutionCount
 import Meno.GraphInstances
 
-/-! # Symmetry: the no-go for symmetric descriptions (G4)
+/-! # Symmetry: the no-go for symmetric descriptions
 
-The symmetry face of the obstruction program (PLAN, G4). The generic
+The symmetry face of the obstruction program. The generic
 infrastructure is `IncidenceGraph.Auto` — a graph automorphism: vertex
 and edge equivalences commuting with `src` and `tgt` — with its
 pullback action on `R`-cochains (`Auto.cochainMap`), the commutation
@@ -31,7 +31,7 @@ edges) acts transitively on edges — an invariant cochain is constant
 * **The boundary witness** (`cycle_three_two_equivariant_section`):
   at `(n, q) = (3, 2)` the equivariant section exists.
 
-The reading, stated as fact: descriptions exist and are priced (K1–K3);
+The reading, stated as fact: descriptions exist and are priced;
 a description respecting the system's own symmetry can fail to exist at
 all; where it fails, every encoding breaks the symmetry — the choice of
 bit is physical. -/
@@ -49,7 +49,7 @@ variable (G : IncidenceGraph.{u, v})
 /-! ## Graph automorphisms and their actions -/
 
 /-- **A graph automorphism**: vertex and edge equivalences commuting
-with `src` and `tgt` (G4 infrastructure). -/
+with `src` and `tgt`. -/
 structure Auto where
   /-- The vertex equivalence. -/
   vertexEquiv : G.V ≃ G.V
@@ -226,7 +226,7 @@ theorem cycle_latticeQuotEquivQ_mk (n q : ℕ) (hn : 0 < n) [NeZero q]
 
 /-! ## The impossibility: no symmetric description -/
 
-/-- **THE SYMMETRY NO-GO** (G4, the impossibility): at any resolution
+/-- **THE SYMMETRY NO-GO** (the impossibility): at any resolution
 sharing a factor with `n`, the winding-one generator class of
 `H¹(C_n; ZMod q)` has **no rotation-invariant representative**.
 Rotation-invariance on the transitive edge action forces a constant
@@ -267,7 +267,7 @@ theorem cycle_no_invariant_representative (n q : ℕ) (hn : 0 < n)
 
 /-! ## The exact law: equivariant sections exist exactly at coprimality -/
 
-/-- **THE EQUIVARIANT-SECTION LAW** (G4, the exact law): a
+/-- **THE EQUIVARIANT-SECTION LAW** (the exact law): a
 rotation-equivariant section of the resolution-`q` compression of
 `C_n` exists **iff** `gcd n q = 1`. Forward: an equivariant section's
 value at the generator's reduction is an invariant representative,

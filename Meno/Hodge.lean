@@ -10,10 +10,8 @@ function and the identification that makes it the spine's: for a graph
 with `b₁` independent cycles, `graphPartitionFn` sums Boltzmann
 weights over winding vectors `k ∈ ℤ^{b₁}`, and it **is** the spine's
 partition function definitionally (`graphPartitionFn_eq_spine`).
-(Review #28: the standalone rank-1 recovery, Siegel-theta reading,
-torus factorization, and diagonal-factorization developments were
-consumerless and are deleted; diagonal duality is subsumed by the
-full Siegel–Poisson theorem, `Meno/SiegelPoisson.lean`.) -/
+Diagonal duality is subsumed by the full Siegel–Poisson theorem,
+`Meno/SiegelPoisson.lean`. -/
 
 namespace Simplicial
 
@@ -49,7 +47,7 @@ noncomputable def graphPartitionFn (b₁ : ℕ)
       Real.exp (-∑ i, ∑ j, Q i j * (k i : ℝ) * (k j : ℝ)))) : ℝ :=
   ∑' k : Fin b₁ → ℤ, Real.exp (-∑ i, ∑ j, Q i j * (k i : ℝ) * (k j : ℝ))
 
-/-- **Audit identification (C12)**: `graphPartitionFn` *is* the
+/-- `graphPartitionFn` *is* the
 spine's partition function — for any `QuadraticAction` packaging the
 same Gram matrix, definitionally. Retained as the graph-facing
 wrapper; the analytic source of truth is the spine. -/

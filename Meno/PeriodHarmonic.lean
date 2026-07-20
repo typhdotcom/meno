@@ -4,9 +4,9 @@ import Meno.GraphHomology
 
 /-! # Period-Model Harmonic Data: the General Finite-Graph API
 
-The extraction the Phase 18 record promised: the least-norm-at-
-prescribed-periods lemma (proved concretely first, for the theta
-graph), now packaged as a **builder**: any family of cycle vectors
+The least-norm-at-prescribed-periods lemma (proved concretely first,
+for the theta graph), now packaged as a **builder**: any family of
+cycle vectors
 with positive-definite chain Gram matrix yields a `HarmonicGramData`
 whose Gram form is the *inverse* chain Gram — with the variational
 identity as a theorem, not an assertion.
@@ -30,8 +30,8 @@ variable {ι : Type*} [Fintype ι] {r : ℕ}
 
 /-- Gram matrix of a family of period vectors under the standard
 (unit-edge) dot product — the canonical pricing datum, *derived* from
-the family, never stored (review #5, finding 3). It lives here, in the
-variational layer, not in the topology layer (review #6, finding 2):
+the family, never stored. It lives here, in the
+variational layer, not in the topology layer:
 the Gram **is** pricing. -/
 noncomputable def gramOf (c : Fin r → ι → ℝ) : Matrix (Fin r) (Fin r) ℝ :=
   fun i j => c i ⬝ᵥ c j
@@ -196,8 +196,8 @@ variable (G : IncidenceGraph.{u', v'}) {n : ℕ}
   (B : Module.Basis (Fin n) ℤ G.cycleLattice)
 
 /-- **The unit-edge Gram of a lattice basis is positive definite** —
-derived, with nothing stored (review #5, finding 3), and located in
-the priced layer where the Gram lives (review #6, finding 2): the
+derived, with nothing stored, and located in
+the priced layer where the Gram lives: the
 quadratic form is the squared norm of the combination, which vanishes
 only at zero by independence (`cast_independent`, topology layer). -/
 theorem IncidenceGraph.gramOf_cyclesR_posDef :
@@ -284,7 +284,7 @@ One basis cycle: the all-ones cochain. Chain Gram `[[n]]`, period Gram
 `[[1/n]]` — the spine's original harmonic mass, re-derived. The
 boundary closed form, constancy, and the cycle graph's lattice basis
 live in the topology layer (`Meno/GraphInstances.lean`), stated
-through the substrate's `boundary` (review #3, finding 4). -/
+through the substrate's `boundary`. -/
 
 section CyclePeriods
 
@@ -326,10 +326,8 @@ disjoint-support basis cycles as edge-cochains, their chain Gram
 matrix `wedgeHarmonicGramData` (`Meno/CycleHarmonic.lean`) asserts,
 here derived. None of this mentions vertices; the wedge *graph* and
 its presentations live in `Meno/GraphInstances.lean` and
-`Meno/WedgePresentation.lean` (the genuine `n₁ + n₂ − 1`-vertex model,
-Completion Path C1/C5 — the Phase-21 spectator model and its
-constancy machinery were removed when the Euler criterion obsoleted
-them). -/
+`Meno/WedgePresentation.lean` (the genuine `n₁ + n₂ − 1`-vertex
+model). -/
 
 section WedgePeriods
 

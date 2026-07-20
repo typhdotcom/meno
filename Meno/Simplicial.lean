@@ -9,10 +9,8 @@ import Meno.InfoRatchet
 The walk substrate of the corroborating route: graphs, 2-complexes,
 walks, homotopy, geodesic length, winding arithmetic on the cycle
 graph, and the discrete Hodge theory the groupoid bridge consumes.
-(Review #28: the standalone contractibility/geodesic-matter model,
-the disk/hollow-triangle binding chapters, and the parity arguments
-were consumerless pre-spine developments and are deleted; binding
-and matter live on the spine, `Meno/Binding.lean`, `Meno/Matter.lean`.) -/
+Binding and matter live on the spine, `Meno/Binding.lean`,
+`Meno/Matter.lean`. -/
 
 namespace Simplicial
 
@@ -1415,12 +1413,11 @@ theorem geodesic_computation_is_lossy (C : Complex V)
   exact hne (hinj heq)
 
 /-- **The simplicial ratchet**: any section of the homotopy quotient
-    map misses walks — reversing the quotient loses reachability. The
-    abstract cost-class form (Phase 10's transition-cost
-    vocabulary) is deleted (C9); this is the cardinality-free ratchet
-    of `Meno/InfoRatchet.lean`, which is the form that survives the
-    quotient's infinite fibers. Where fibers are finite the coding
-    theorem (`log_card_sections`) quantifies the loss. -/
+    map misses walks — reversing the quotient loses reachability. This
+    is the cardinality-free ratchet of `Meno/InfoRatchet.lean`, which is
+    the form that survives the quotient's infinite fibers. Where fibers
+    are finite the coding theorem (`log_card_sections`) quantifies the
+    loss. -/
 theorem simplicial_ratchet
     (C : Complex V) {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v)
     (r : HomotopyClass₂ C v v → Walk C.toGraph v v)

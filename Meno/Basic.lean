@@ -17,7 +17,7 @@ layers (`Meno/ResolutionCount.lean`, `Meno/ThetaHarmonic.lean`).
 The former abstract complexity hierarchy — the measure classes,
 their log-cardinality realization, the type-level gravity and
 refactoring bounds, and the additivity engine — is **deleted**
-(review #25; the name-by-name record is `scripts/deleted.txt`):
+(the name-by-name record is `scripts/deleted.txt`):
 consumer analysis found it certificate-only — a
 parallel construction, not a load-bearing layer. The one gravity
 theorem of the program is `SectorAction.complexity_gravity`
@@ -55,7 +55,7 @@ def Pullback.equivSigmaFiber {A B D : Type u} (f : A → D) (g : B → D) :
   right_inv := fun ⟨_, ⟨_, ha⟩, ⟨_, hb⟩⟩ => by subst ha; rfl
 
 /-- The fiber of the pullback's base map over `d` is the product of
-the two fibers over `d` (review #10 — the counting engine of the
+the two fibers over `d` (the counting engine of the
 shared-base coupling). -/
 def Pullback.baseFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
     (d : D) :
@@ -67,7 +67,7 @@ def Pullback.baseFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
   right_inv _ := rfl
 
 /-- The fiber of the pullback's first projection over `x` is the
-`g`-fiber over `f x` (review #10 — the first marginal's counting
+`g`-fiber over `f x` (the first marginal's counting
 engine). -/
 def Pullback.fstFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
     (x : A) :
@@ -81,7 +81,7 @@ def Pullback.fstFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
   right_inv y := rfl
 
 /-- The fiber of the pullback's second projection over `y` is the
-`f`-fiber over `g y` (review #10 — the second marginal's counting
+`f`-fiber over `g y` (the second marginal's counting
 engine). -/
 def Pullback.sndFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
     (y : B) :
@@ -94,11 +94,9 @@ def Pullback.sndFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
     exact Prod.ext rfl p.prop.symm
   right_inv x := rfl
 
-/-! ## The arrow of time — moved
+/-! ## The arrow of time
 
-Phase 10's abstract transition-cost class and its Landauer 2/1
-instance are deleted (Completion Path
-C9). The ratchet is now *derived*, not axiomatized:
+The ratchet is *derived*, not axiomatized:
 `Meno/InfoRatchet.lean` counts the reverse descriptions
 (`log_card_sections` — the coding theorem) and proves the
 cardinality-free form (`section_not_surjective_of_not_injective`);

@@ -120,7 +120,7 @@ noncomputable def menoSpectralIntegral : ℝ :=
 The split and the shifted-mode summability
 (`QuadraticAction.scalarPartFn_sub_one_eq`,
 `QuadraticAction.summable_exp_sq_shift`) live with the scalar theta
-value (`Meno/QuadraticAction.lean`, promoted at the G3 review); this
+value (`Meno/QuadraticAction.lean`); this
 file consumes them. -/
 
 /-- General per-mode integrand `2·exp(-α(k+1)²)·α^(s-1)` is integrable on `Ioi 0`. -/

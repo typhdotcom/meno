@@ -9,13 +9,13 @@ construction supplies to a finite graph on `V`:
 * a symmetric positive-definite Gram form on `Fin r → ℝ`.
 
 Summability of `exp(-kᵀ Q k)` on the integer lattice is **derived**
-from positive-definiteness (`HarmonicGramData.summable`, review #5) —
+from positive-definiteness (`HarmonicGramData.summable`) —
 never stored.
 
 The Gram form is the data from which a `QuadraticAction` is built.
-**The structure carries no variational field** (Phase 17 decision,
-restated Phase 22): the identity "energy k = least cochain
-energy at periods k" is proved *outside* the structure — generically
+**The structure carries no variational field**: the identity "energy
+k = least cochain energy at periods k" is proved *outside* the
+structure — generically
 for cycle-built data by `HarmonicGramData.ofCycles_energy_isLeast`
 (`Meno/PeriodHarmonic.lean`), and per legacy instance by the
 identification theorems in the specialisation files.
@@ -36,9 +36,9 @@ universe u
 
 `r` is the intended first Betti number; `gram` is the Gram form of a
 harmonic 1-cochain basis. Summability of the Boltzmann weight is
-derived (`HarmonicGramData.summable`), never stored (review #5).
+derived (`HarmonicGramData.summable`), never stored.
 
-**Scope note (Phase 17)**: this structure is positive-definite matrix
+This structure is positive-definite matrix
 data and nothing more — it does not carry a variational field, and
 nothing here ties `gram` to a graph or to a minimization. The
 variational identity lives at the graph level
@@ -55,12 +55,11 @@ namespace HarmonicGramData
 variable {V : Type u} (H : HarmonicGramData V)
 
 /-- Symmetry of the Gram form — a theorem of positive-definiteness
-over ℝ, with the retired field's name and statement (review #6). -/
+over ℝ. -/
 theorem gram_symm : H.gram.IsSymm := H.gram_posDef.isSymm
 
 /-- Summability of the Boltzmann weight — a theorem of the
-positive-definite Gram, with the retired field's name and statement
-(review #5). -/
+positive-definite Gram. -/
 theorem summable : Summable (fun k : Fin H.r → ℤ =>
     Real.exp (-(∑ i, ∑ j, H.gram i j * (k i : ℝ) * (k j : ℝ)))) :=
   summable_exp_neg_quadForm H.gram_posDef
@@ -124,7 +123,7 @@ theorem energy_neg (k : Fin H.r → ℤ) : H.energy (-k) = H.energy k := by
   push_cast [Pi.neg_apply]
   ring
 
-/-! ## Binding algebra (moved from `Meno/ThetaHarmonic.lean`, Phase 22)
+/-! ## Binding algebra
 
 Pure `HarmonicGramData` operations: the interaction bilinear form,
 polarization, binding energy, annihilation. Graph-specific instances
@@ -183,7 +182,7 @@ is twice its energy — the pair's entire rest mass. This is algebraic
 cancellation inside one fixed period lattice — and it is the theorem
 that genuinely releases an energy. The *geometric*
 `binding_kills_matter` (the ambient space changes and a class dies
-under the induced map) is proved in `Meno/Binding.lean` (C7); its
+under the induced map) is proved in `Meno/Binding.lean`; its
 spectral content is a removed Boltzmann *weight*, not a moved
 energy. -/
 theorem bindingEnergy_neg_self (k : Fin H.r → ℤ) :

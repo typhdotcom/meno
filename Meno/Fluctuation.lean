@@ -1,7 +1,7 @@
 import Meno.QuadraticAction
 import Mathlib.Analysis.Calculus.SmoothSeries
 
-/-! # Fluctuation–Dissipation at Every Rank (review #15)
+/-! # Fluctuation–Dissipation at Every Rank
 
 The inverse-temperature scaling of a quadratic action: for
 `A : QuadraticAction d` and `β > 0`, the Boltzmann family
@@ -154,7 +154,7 @@ theorem scaledPartFn_pos {β : ℝ} (hβ : 0 < β) : 0 < A.scaledPartFn β :=
   (A.summable_scaledWeight hβ).tsum_pos
     (fun _ => (Real.exp_pos _).le) 0 (Real.exp_pos _)
 
-/-- **`Z′ = −M₁`** (review #15): differentiation under the lattice
+/-- **`Z′ = −M₁`**: differentiation under the lattice
 sum, dominated at half temperature. -/
 theorem hasDerivAt_scaledPartFn {β : ℝ} (hβ : 0 < β) :
     HasDerivAt A.scaledPartFn (-A.scaledMoment β) β := by
@@ -198,7 +198,7 @@ theorem hasDerivAt_scaledPartFn {β : ℝ} (hβ : 0 < β) :
     (A.summable_scaledWeight hβ)
     (Set.mem_Ioi.mpr (by linarith))
 
-/-- **`M₁′ = −M₂`** (review #15). -/
+/-- **`M₁′ = −M₂`**. -/
 theorem hasDerivAt_scaledMoment {β : ℝ} (hβ : 0 < β) :
     HasDerivAt A.scaledMoment (-A.scaledMoment2 β) β := by
   have hval : -A.scaledMoment2 β
@@ -262,7 +262,7 @@ theorem hasDerivAt_meanEnergy {β : ℝ} (hβ : 0 < β) :
 
 /-! ## The β-scaled sector action and the genuine Gibbs variance -/
 
-/-- **The β-scaled sector action** (review #15): energy `β·E_A`,
+/-- **The β-scaled sector action**: energy `β·E_A`,
 ground state the zero sector. -/
 noncomputable def scaledSector (β : ℝ) (hβ : 0 < β) : SectorAction.{0} where
   Λ := Fin d → ℤ
@@ -315,7 +315,7 @@ theorem scaledSector_gibbsVariance_energy (β : ℝ) (hβ : 0 < β) :
   rw [A.scaledSector_gibbsExpect_energy_sq β hβ,
     A.scaledSector_gibbsExpect_energy β hβ]
 
-/-- **FLUCTUATION–DISSIPATION AT EVERY RANK** (review #15): the
+/-- **FLUCTUATION–DISSIPATION AT EVERY RANK**: the
 derivative of the Gibbs mean energy in the inverse temperature is
 minus the Gibbs variance of the energy — response equals
 fluctuation, for every positive-definite Gram at every rank. -/
@@ -344,7 +344,7 @@ theorem summable_energy_sq_gibbs (β : ℝ) (hβ : 0 < β) :
   rw [mul_div_assoc]
   rfl
 
-/-- **Strict Gibbs fluctuation of the energy** (review #15): a single
+/-- **Strict Gibbs fluctuation of the energy**: a single
 sector of nonzero energy makes the variance strictly positive at
 every inverse temperature. -/
 theorem scaledSector_gibbsVariance_energy_pos (β : ℝ) (hβ : 0 < β)
@@ -364,7 +364,7 @@ theorem scaledSector_gibbsVariance_energy_pos (β : ℝ) (hβ : 0 < β)
     rw [A.energy_zero]
     exact fun h => hc h.symm
 
-/-- **STRICT DISSIPATION** (review #15): with any sector of nonzero
+/-- **STRICT DISSIPATION**: with any sector of nonzero
 energy, the Gibbs mean energy strictly decreases in the inverse
 temperature — `d⟨E⟩/dβ = −Var < 0`. -/
 theorem meanEnergy_strictAntiOn (h : ∃ k, A.energy k ≠ 0) :

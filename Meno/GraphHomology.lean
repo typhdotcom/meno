@@ -8,7 +8,7 @@ import Mathlib.LinearAlgebra.Dual.Basis
 
 Everything a finite graph's first homology provides — lattice, basis,
 exactness, quotient, rank, and Euler results — in one file importing
-only the substrate (review #5, finding 1; review #6, finding 2: no
+only the substrate (no
 Gram object, no positive-definiteness, no matrix inversion — the
 unit-edge Gram and every priced consequence live in the
 variational layer, `Meno/PeriodHarmonic.lean`):
@@ -16,15 +16,15 @@ variational layer, `Meno/PeriodHarmonic.lean`):
 * freeness of `ℤ^E ⧸ H₁`, the splitting, and the retraction of `ℤ^E`
   onto the cycle lattice;
 * **the derived data of an arbitrary lattice basis**
-  `B : Module.Basis (Fin n) ℤ G.cycleLattice` (review #5, finding 2 —
-  the presentation *is* the basis; every former field is a theorem):
+  `B : Module.Basis (Fin n) ℤ G.cycleLattice` (the presentation *is*
+  the basis; every former field is a theorem):
   integer cycles `cyclesZ`, real casts `cyclesR`, closedness,
   coordinates `coordMap`, real independence `cast_independent`,
   integer potentials, period surjectivity (`ℤ` and `ℝ`), real
   spanning, exactness, and the keystone quotient equivalences over
   `ℤ` and `ℝ`;
 * the **fundamental basis** `cycleBasis` (PID structure theorem):
-  existence of a lattice basis for every finite graph — C2's content,
+  existence of a lattice basis for every finite graph,
   with nothing stored;
 * the **real cycle-space rank** (`finrank_ker_boundaryLin`), **Euler's
   formula** (`b1_eq`), and the **spanning criterion**
@@ -32,8 +32,8 @@ variational layer, `Meno/PeriodHarmonic.lean`):
 * `basisOfCycles` — the concrete-instance bridge: closed, independent,
   integrally spanning integer cycles assemble into a lattice basis.
 
-Real spanning is proved by **scalar extension and dimension**
-(review #7): rational independence transfers to `ℝ` through a cast
+Real spanning is proved by **scalar extension and dimension**:
+rational independence transfers to `ℝ` through a cast
 left inverse (`linearIndependent_ratCast`), the rational kernel is
 spanned by the basis after clearing denominators, rank–nullity over
 `ℚ` and `ℝ` pins the real kernel's dimension at `n`
@@ -51,7 +51,7 @@ universe u v
 
 /-! ## Scalar extension
 
-The base-change engine (review #7): rational independence transfers to
+The base-change engine: rational independence transfers to
 `ℝ` through a cast left inverse, and rational vectors clear
 denominators to integer ones. No Gram, no pairing operator — sums and
 `Pi.single` only. -/
@@ -299,8 +299,8 @@ theorem cast_single {α : Type*} [DecidableEq α] (a j : α) :
 /-! ## The derived data of an arbitrary lattice basis
 
 The presentation **is** a basis `B : Module.Basis (Fin n) ℤ
-G.cycleLattice` (review #5, finding 2). Everything the retired
-structures stored is a theorem of `B`: the integer cycles and their
+G.cycleLattice`. Every datum a presentation could store is a theorem
+of `B`: the integer cycles and their
 real casts, closedness, independence, Gram positivity, integer
 potentials, period surjectivity, spanning, exactness, and the keystone
 quotient equivalences. Every basis automatically has `n = b₁`
@@ -649,8 +649,8 @@ theorem finrank_ker_boundaryLin_rat_le :
         rwa [Module.finrank_fintype_fun_eq_card, Fintype.card_fin] at h
 
 include B in
-/-- **The real cycle-space dimension is `n`, by scalar extension**
-(review #7): rank–nullity over `ℚ` bounds the rank of `∂` below;
+/-- **The real cycle-space dimension is `n`, by scalar extension**:
+rank–nullity over `ℚ` bounds the rank of `∂` below;
 `ℚ`-independent rational vectors in the range stay independent over
 `ℝ` (`linearIndependent_ratCast`), so the real rank is at least the
 rational rank; rank–nullity over `ℝ` then bounds the real kernel by
@@ -846,8 +846,7 @@ theorem card_edges_eq_finrank_gauge_add :
 
 include B in
 /-- **Every lattice basis has exactly `b₁` elements** — the rank is
-never a choice (the C3 well-definedness brick, now definitional in
-the basis abstraction). -/
+never a choice. -/
 theorem card_eq_b1 : n = G.b1 := by
   have h := Module.finrank_eq_card_basis B
   rw [Fintype.card_fin] at h
@@ -857,7 +856,7 @@ end LatticeBasis
 
 /-! ## The fundamental basis: existence for every finite graph
 
-C2's content with nothing stored: the PID structure theorem produces a
+Nothing is stored: the PID structure theorem produces a
 basis of the cycle lattice; `cycleBasisSigma_fst` proves the
 construction meets the intrinsic invariant `b₁`. -/
 
@@ -874,8 +873,8 @@ theorem cycleBasisSigma_fst : G.cycleBasisSigma.1 = G.b1 :=
 
 /-- **The fundamental basis of `H₁(G;ℤ)`** — every finite incidence
 graph carries a lattice basis, indexed by the intrinsic `b₁`. This is
-the fundamental-presentation theorem (C2) in basis form: every former
-presentation field is a theorem of this object (review #5). -/
+the fundamental-presentation theorem in basis form: every former
+presentation field is a theorem of this object. -/
 noncomputable def cycleBasis : Module.Basis (Fin G.b1) ℤ G.cycleLattice :=
   G.cycleBasisSigma.2.reindex (finCongr G.cycleBasisSigma_fst)
 
@@ -892,8 +891,8 @@ noncomputable def fundCyclesZ : Fin G.b1 → G.E → ℤ :=
 noncomputable def fundCyclesR : Fin G.b1 → G.E → ℝ :=
   G.cyclesR G.cycleBasis
 
-/-- **Intrinsic `H¹` coordinates for every finite graph** (C2
-acceptance): integer cochains modulo integer gradients are `ℤ^{b₁}`,
+/-- **Intrinsic `H¹` coordinates for every finite graph**: integer
+cochains modulo integer gradients are `ℤ^{b₁}`,
 through the fundamental basis. -/
 noncomputable def h1QuotEquiv :
     ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) ≃ₗ[ℤ] (Fin G.b1 → ℤ) :=
@@ -913,7 +912,7 @@ theorem h1QuotEquiv_mk (τ : G.E → ℤ) :
 
 
 /-- Real cochains modulo gradients are `ℝ^{b₁}` — for every finite
-graph (C4 acceptance), through the fundamental basis. -/
+graph, through the fundamental basis. -/
 noncomputable def cochainQuotEquivR :
     ((G.E → ℝ) ⧸ LinearMap.range (G.gradLin ℝ)) ≃ₗ[ℝ] (Fin G.b1 → ℝ) :=
   G.cochainQuotEquiv G.cycleBasis
@@ -932,7 +931,7 @@ theorem finrank_ker_boundaryLin :
   G.finrank_ker_boundaryLin_eq G.cycleBasis
 
 /-- **Euler's formula for every finite graph**, proved in the topology
-layer (review #5, finding 1): `b₁ = |E| − |V| + c`, by the real
+layer: `b₁ = |E| − |V| + c`, by the real
 cycle-space rank, rank–nullity twice, the transpose rank equality, and
 the gauge theorem. -/
 theorem b1_eq :
@@ -960,7 +959,7 @@ theorem b1_eq :
     exact (Matrix.rank_transpose _).symm
   omega
 
-/-- **The spanning criterion** (C5's tool): a closed, linearly
+/-- **The spanning criterion**: a closed, linearly
 independent family of `b₁` cycle vectors spans the cycle space — by
 the real cycle-space rank, with no per-graph constancy argument. -/
 theorem spanning_of_card_eq_b1 {r : ℕ} (hr : r = G.b1)
@@ -1075,8 +1074,8 @@ private lemma cast_dotProduct {ι : Type v} [Fintype ι] (x y : ι → ℤ) :
   push_cast
   rfl
 
-/-- **Primitivity from real spanning and unit-period realizers** (C3's
-argument, generalized to raw integral families): if the cast family
+/-- **Primitivity from real spanning and unit-period realizers**: if
+the cast family
 spans the real cycle space and every integer period vector is
 realized by an integer cochain, then every integral cycle is an
 **integer** combination of the family — the real coordinates are the
@@ -1144,7 +1143,7 @@ theorem exists_int_coords {r : ℕ} (c : Fin r → G.E → ℤ)
   refine Finset.sum_congr rfl fun i _ => ?_
   rw [← key i]
 
-/-! ### The homology–cohomology pairing (review #10)
+/-! ### The homology–cohomology pairing
 
 `H₁(G;ℤ)` is canonically the dual of `H¹(G;ℤ)`: a cohomology class
 evaluates on an integral cycle through any representative — Stokes
@@ -1159,8 +1158,8 @@ instance : Module.Finite ℤ G.cycleLattice :=
   Module.Finite.of_basis G.cycleBasis
 
 /-- The `H¹` basis a cycle-lattice basis induces: the standard basis
-of `ℤⁿ` pulled back along the keystone equivalence. (Moved here from
-the priced layer, review #10 — the basis is unpriced.) -/
+of `ℤⁿ` pulled back along the keystone equivalence. The basis is
+unpriced. -/
 noncomputable def h1Basis {n : ℕ}
     (B : Module.Basis (Fin n) ℤ G.cycleLattice) :
     Module.Basis (Fin n) ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :=
@@ -1224,7 +1223,7 @@ theorem cyclePairing_cycleBasis (j : Fin G.b1) :
     latticeQuotEquiv_mk]
   rfl
 
-/-- **THE HOMOLOGY–COHOMOLOGY PERFECT PAIRING** (review #10): period
+/-- **THE HOMOLOGY–COHOMOLOGY PERFECT PAIRING**: period
 evaluation identifies the integral cycle lattice with the dual of
 `H¹(G;ℤ)`. The map is basis-free; bijectivity is the keystone — the
 fundamental cycles are carried to a dual basis. -/

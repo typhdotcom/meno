@@ -2,13 +2,13 @@ import Meno.Binding
 import Meno.ThetaHarmonic
 import Meno.GraphInstances
 
-/-! # Binding at the Theta Graph (C7's concrete consumer)
+/-! # Binding at the Theta Graph
 
 The theta graph with its first basis cycle filled — the generic
 2-complex theory of `Meno/Binding.lean` instantiated: the `(1,0)`
 sector (`thetaMatter`, mass `1/3`) dies, `b₁` drops `2 → 1`, and the
 spectrum loses at least the killed sector's Boltzmann weight
-`exp(−1/3)`. Split from `Meno/Binding.lean` (review #3) so the
+`exp(−1/3)`. Split from `Meno/Binding.lean` so the
 generic binding layer does not import the concrete graphs or the
 information layer. -/
 

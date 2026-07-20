@@ -1,8 +1,8 @@
 import Meno.Matter
 
-/-! # The Binding Sign Criterion (G6)
+/-! # The Binding Sign Criterion
 
-The binding face of the obstruction program (PLAN, G6). At `b₁ = 2`
+The binding face of the obstruction program. At `b₁ = 2`
 the priced Gram is the inverse chain Gram (the standing
 `basisGramData_gram`), so the two-by-two inverse gives the **closed
 form**: the interaction of the two unit sectors is `−⟨c₁,c₂⟩ / det`,
@@ -23,10 +23,6 @@ is positive (`ofCycles_interaction_fin_two`,
   `Meno/ThetaHarmonic.lean`): the intrinsic binding of the theta
   classes is positive — `⟨c₁,c₂⟩ = 2 > 0` forces attraction through
   the criterion's own iff.
-* **The demotion** (PLAN rule 3): `theta_interaction` and
-  `theta_binding_attractive` are re-derived as instances of the
-  closed form — `⟨c₁,c₂⟩ = 2`, `det = 12`; the literal-matrix route
-  is retired.
 * **The boundary witness** (`wedge_binding_zero`): the wedge's basis
   cycles share no edge, the overlap is zero — disjoint matter does
   not bind. -/
@@ -130,7 +126,7 @@ theorem bindingEnergyClass_chart {n : ℕ}
         = G.latticeQuotEquiv B (κ₁ + κ₂) from (map_add _ κ₁ κ₂).symm,
     G.basisGramData_energy_latticeQuot B (κ₁ + κ₂)]
 
-/-- **THE BINDING SIGN CRITERION** (G6, the iff): at `b₁ = 2`, the
+/-- **THE BINDING SIGN CRITERION** (the iff): at `b₁ = 2`, the
 sectors of the two basis cycles bind attractively **iff** the cycles
 overlap with consistent orientation — `0 < ⟨c₁, c₂⟩`. The left side
 is intrinsic (`bindingEnergyClass`), so the sign is forced by
@@ -155,7 +151,7 @@ end IncidenceGraph
 
 /-! ## The boundary witness: the wedge does not bind -/
 
-/-- **Disjoint matter does not bind** (G6 boundary): the wedge's two
+/-- **Disjoint matter does not bind**: the wedge's two
 basis cycles share no edge — the overlap is zero, so the binding
 energy vanishes. -/
 theorem wedge_binding_zero (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :

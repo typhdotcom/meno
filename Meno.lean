@@ -36,13 +36,13 @@ import Meno.UniformAction
 import Meno.InfoRatchet
 import Meno.ResolutionCount
 
--- Symmetry: automorphisms, the no-go for symmetric descriptions (G4)
+-- Symmetry: automorphisms, the no-go for symmetric descriptions
 import Meno.Symmetry
 
--- Arithmetic gravity on the resolution tower (G3)
+-- Arithmetic gravity on the resolution tower
 import Meno.TowerGravity
 
--- Self-reference: the diagonal corner (G8)
+-- Self-reference: the diagonal corner
 import Meno.Diagonal
 
 -- Concrete consumers of the whole stack
@@ -58,5 +58,5 @@ import Meno.Hodge
 import Meno.Duality
 import Meno.Zeta
 
--- The completion object: the dichotomy (G7)
+-- The completion object: the dichotomy
 import Meno.Completion

@@ -103,7 +103,7 @@ theorem cycleHarmonicGramData_partFn_eq_partitionFn (n : ℕ) (hn : n ≥ 3) :
 
   `Z(π² · n) = √((1/n) / π) · partitionFn n hn`
 
-— now derived **through the topology** (review #11): it is
+— now derived **through the topology**: it is
 `cycle_harmonic_duality` at the cycle graph, read in the
 `cycleLatticeBasis` chart. The dual side is the priced cycle lattice —
 the all-ones cycle with chain Gram `!![n]`, so the homology action is
@@ -165,7 +165,7 @@ theorem partitionFn_T_duality_via_spine (n : ℕ) (hn : n ≥ 3) :
   rw [hb1, hdisc, pow_one, hdual, hharm] at h
   exact h
 
-/-! ## Theta identification (formerly `Theta.lean`)
+/-! ## Theta identification
 
 `Theta.lean` carried its own copy of the modular machinery, specialized
 at `τ = i/(πn)`. Its two public statements survive here as corollaries
@@ -184,7 +184,7 @@ positive-definiteness and summability are inherited from
 same.
 
 The graph-level *derivation* of this Gram form is now the genuine
-wedge's (`Meno/WedgePresentation.lean`, C1/C5): the two basis cycles
+wedge's (`Meno/WedgePresentation.lean`): the two basis cycles
 have disjoint edge supports, chain Gram `diag(n₁, n₂)` (vertex-free,
 `Meno/PeriodHarmonic.lean`), spanning by the Euler criterion on the
 `n₁ + n₂ − 1`-vertex graph, and the period Gram is the inverse. The
@@ -213,7 +213,7 @@ theorem wedgeHarmonicGramData_energy_basis₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥
   simp [Fin.sum_univ_two]
 
 /-- **Rank-2 matter exists**: the wedge carries matter sectors — the
-intrinsic class of the single-edge cochain on the first cycle (C6).
+intrinsic class of the single-edge cochain on the first cycle.
 First matter instance above rank 1 — the abstraction stack is not
 secretly rank-1. -/
 noncomputable def wedgeMatter₁ (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
@@ -275,9 +275,9 @@ theorem cyclePeriodData_energy_eq (n : ℕ) (hn : n ≥ 3) (k : Fin 1 → ℤ) :
     _ = (cycleHarmonicGramData n hn).energy k := rfl
 
 
-/-! ### The wedge: assertion retired
+/-! ### The wedge: derived, not asserted
 
-`wedgeHarmonicGramData` above was introduced (Phase 13) with its Gram
+`wedgeHarmonicGramData` above was introduced with its Gram
 form `diag(1/n₁, 1/n₂)` asserted on "true, unformalized ground." The
 period machinery now derives that form from the wedge graph itself
 (`Meno/PeriodHarmonic.lean`); here the derived data is identified with

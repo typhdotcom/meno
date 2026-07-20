@@ -4,7 +4,7 @@ import Mathlib.Analysis.Matrix.PosDef
 
 /-! # Multivariate Poisson Summation and the General Siegel–Poisson Duality
 
-This file closes falsification clause #3 of PLAN.md at full generality:
+This file proves, at full generality,
 the Siegel–Poisson duality `Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` for an
 **arbitrary** symmetric positive-definite Gram form `Q`, not merely a
 diagonal one.
@@ -20,7 +20,7 @@ summability of its Fourier coefficients — the analytically delicate steps
 of the general theorem — are elementary for Gaussians.
 
 Spectral diagonalization cannot substitute for the bridge: orthogonal
-maps do not preserve `ℤ^d` (the Phase 14 record documents this). The
+maps do not preserve `ℤ^d`. The
 correct division of labor, implemented here, is that diagonalization is
 legitimate on the *integral* side (Lebesgue measure is linear-map
 covariant) and the periodization bridge handles the *sum* side.
@@ -31,10 +31,9 @@ covariant) and the periodization bridge handles the *sum* side.
 * `QuadraticAction.dual` (general) and `QuadraticAction.duality`.
 
 (Coercivity `Matrix.PosDef.exists_coercivity` and the summability
-theorem `summable_exp_neg_quadForm` moved **upstream** to
-`Meno/QuadraticAction.lean` in review #5: summability is derived where
-the structure is defined, and the structure carries no summability
-field.)
+theorem `summable_exp_neg_quadForm` live in
+`Meno/QuadraticAction.lean`: summability is derived where the structure
+is defined, and the structure carries no summability field.)
 -/
 
 namespace Meno
@@ -875,7 +874,7 @@ lemma posDef_inv {A : Matrix (Fin d) (Fin d) ℝ} (hA : A.PosDef) :
     have hstary : star y = y := funext fun i => star_trivial _
     rwa [hstary] at h
 
-/-! ### The Gaussian Fourier engine (review #13)
+/-! ### The Gaussian Fourier engine
 
 Poisson summation at the origin and the strict modal bound consume
 the same analytic fact: the torus Fourier series of the Gaussian
@@ -926,7 +925,7 @@ theorem mFourierCoeff_periodization (hM : M.PosDef) (m : Fin d → ℤ) :
   push_cast [Complex.ofReal_cpow hdet]
   norm_num
 
-/-- **The Gaussian Fourier engine** (review #13): the torus Fourier
+/-- **The Gaussian Fourier engine**: the torus Fourier
 series of the periodized Gaussian converges at every shift, to the
 periodization — one `HasSum`, consumed by Poisson summation at the
 origin (`tsum_gaussian_eq`) and by the strict modal bound
@@ -975,8 +974,7 @@ theorem hasSum_gaussFourierCoeff_periodization_zero (hM : M.PosDef) :
 /-- **Multivariate Poisson summation for the Gaussian family**: the
 lattice sum of `exp(-π·xᵀMx)` equals the lattice sum of its Fourier
 transform. The theorem Mathlib does not yet have, at the generality
-Meno needs. Derived from the Gaussian Fourier engine at the origin
-(review #13). -/
+Meno needs. Derived from the Gaussian Fourier engine at the origin. -/
 theorem tsum_gaussian_eq (hM : M.PosDef) :
     (∑' n : Fin d → ℤ, ((gaussian M (fun i => (n i : ℝ)) : ℝ) : ℂ))
       = ∑' m : Fin d → ℤ,
@@ -999,13 +997,13 @@ theorem tsum_gaussian_eq (hM : M.PosDef) :
   push_cast [Complex.ofReal_cpow hdet]
   norm_num
 
-/-- **The strict modal bound for the Gaussian periodization**
-(review #12): away from the integer lattice, the periodized Gaussian
+/-- **The strict modal bound for the Gaussian periodization**: away
+from the integer lattice, the periodized Gaussian
 sits strictly below its value at the origin. Every torus Fourier
 coefficient of the periodization is a **positive** shifted Gaussian
 (`gaussFourierCoeff_pos`), and a shift with a non-integer coordinate
 breaks the alignment of at least one character. Derived from the
-Gaussian Fourier engine (review #13). -/
+Gaussian Fourier engine. -/
 theorem periodization_lt_periodization_zero (hM : M.PosDef)
     {x : Fin d → ℝ} {i₀ : Fin d} (hx : ∀ k : ℤ, x i₀ ≠ (k : ℝ)) :
     periodization M x < periodization M 0 := by
@@ -1082,8 +1080,7 @@ open Complex
 
 /-- The **general dual** of a quadratic action: `Q ↦ π²·Q⁻¹`.
 Symmetry and positive-definiteness are derived (and summability is a
-theorem of every quadratic action). This is the plan's Phase 2 target
-construction at full (non-diagonal) generality. -/
+theorem of every quadratic action). -/
 noncomputable def QuadraticAction.dual {r : ℕ} (A : QuadraticAction r) :
     QuadraticAction r where
   Q := Real.pi ^ 2 • A.Q⁻¹
@@ -1094,8 +1091,8 @@ noncomputable def QuadraticAction.dual {r : ℕ} (A : QuadraticAction r) :
 
 /-- **The general Siegel–Poisson duality**:
 `Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` for **every** symmetric
-positive-definite Gram form `Q`, at every rank. Closes falsification
-clause #3 of PLAN.md in full: the diagonal restriction is gone. -/
+positive-definite Gram form `Q`, at every rank. The diagonal
+restriction is gone. -/
 theorem QuadraticAction.duality {r : ℕ} (A : QuadraticAction r) :
     (↑(A.dual.toSectorAction.partFn) : ℂ)
       = ↑(A.Q.det / Real.pi ^ r : ℝ) ^ ((1 : ℂ) / 2)
@@ -1173,10 +1170,10 @@ end Duality
 
 /-! ## Duality algebra: involution, self-duality, flow
 
-The Phase 2 wishlist, now cheap because `dual` is a first-class
-`QuadraticAction`. One plan claim is **falsified** here:
-`dualityFlow_zero_iff_selfDual` is false at rank ≥ 2 (zero flow
-constrains only the determinant), witnessed by `diag(2π, π/2)`. -/
+These results are cheap now that `dual` is a first-class
+`QuadraticAction`. Here zero flow does not force self-duality at
+rank ≥ 2 (it constrains only the determinant), witnessed by
+`diag(2π, π/2)`. -/
 
 section DualityAlgebra
 
@@ -1276,8 +1273,7 @@ theorem QuadraticAction.dualityFlow_eq {r : ℕ} (A : QuadraticAction r) :
 
 
 /-- Zero flow characterizes couplings of determinant `π^r` — a
-determinant condition, **not** self-duality (see the falsification
-below). -/
+determinant condition, **not** self-duality. -/
 theorem QuadraticAction.dualityFlow_eq_zero_iff {r : ℕ}
     (A : QuadraticAction r) :
     A.dualityFlow = 0 ↔ A.Q.det = Real.pi ^ r := by
@@ -1296,8 +1292,8 @@ theorem QuadraticAction.dualityFlow_eq_zero_iff {r : ℕ}
     rw [h, div_self (ne_of_gt (pow_pos Real.pi_pos r)), Real.log_one, mul_zero]
 
 
-/-- **Falsification of the plan's `dualityFlow_zero_iff_selfDual`** at
-rank ≥ 2: `Q = diag(2π, π/2)` has determinant `π²`, hence zero flow,
+/-- **Zero flow does not imply self-duality** at rank ≥ 2:
+`Q = diag(2π, π/2)` has determinant `π²`, hence zero flow,
 but `Q² = diag(4π², π²/4) ≠ π²·1`, so it is not self-dual. Zero flow
 sees only the determinant; self-duality is a condition on the whole
 form. -/

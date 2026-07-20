@@ -17,7 +17,7 @@ a point comes from. For injective `f` every fiber has size 1, so
 `fiberInfoCost = 0`; for non-injective `f` some fiber has size ≥ 2, so
 `fiberInfoCost > 0`.
 
-The **ratchet** (completion path, C8 — now *derived*): reversing `f`,
+The **ratchet**: reversing `f`,
 i.e. choosing a section `s : B → A`, is not free. The sections of `f`
 are counted exactly — there are `∏_b |f⁻¹{b}|` of them
 (`card_sections`) — so the information in a reverse description,
@@ -29,8 +29,8 @@ fiberInfoCost`. An injective `f` has at most one section
 genuine count: `descriptionCost f = log (#{functions A → B})`
 (`descriptionCost_eq`).
 
-The numerical (`ℝ`-valued) cost API is **restricted to finite types**
-(review #3, finding 1): `Nat.card` of an infinite type is `0`, so an
+The numerical (`ℝ`-valued) cost API is **restricted to finite types**:
+`Nat.card` of an infinite type is `0`, so an
 unrestricted `log (Nat.card ·)` silently prices infinite ambiguity at
 zero (`ℕ → Unit` would have had cost `0`). Finiteness is demanded by
 the definitions themselves; the extended (`ℝ≥0∞`-valued) costs
@@ -38,12 +38,10 @@ the definitions themselves; the extended (`ℝ≥0∞`-valued) costs
 and the only cost statement about infinite types is the
 cardinality-free ratchet `section_not_surjective_of_not_injective`.
 
-This file isolates the fiber-information layer. Basic.lean's old
-axiomatized transition-cost class (its reconciliation program was
-falsified in Phase 17) is deleted as of C9 —
-the ratchet below is derived, and `simplicial_ratchet` consumes it. The
+This file isolates the fiber-information layer. The ratchet below is
+derived, and `simplicial_ratchet` consumes it. The
 compression-map specialization — `#sections = |G_q|^{q^{b₁}}`, tying the
-count to the keystone K1–K3 — lives in `Meno/ResolutionCount.lean`. -/
+count to the keystone — lives in `Meno/ResolutionCount.lean`. -/
 
 namespace Meno
 
@@ -131,7 +129,7 @@ theorem fiberInfoCost_pos_of_not_injective [Fintype A] [Fintype B] [DecidableEq 
   · simp [hzero]
   · exact Real.log_nonneg (by exact_mod_cast hpos)
 
-/-! ## Counting sections: the coding theorem (C8)
+/-! ## Counting sections: the coding theorem
 
 `sectionCost` is no longer *defined* as `descriptionCost + fiberInfoCost`.
 The sections of `f` are counted (`card_sections`), and the log-count is
@@ -151,7 +149,7 @@ def sectionsEquivPiFiber (f : A → B) :
 /-- **The number of sections of `f`** is the product of the fiber sizes:
 each reverse description is a per-point choice of preimage. No
 surjectivity needed — an empty fiber contributes a `0` factor and there
-are then no sections. Finiteness of the domain is demanded (review #4):
+are then no sections. Finiteness of the domain is demanded:
 on an infinite domain `Nat.card` collapses to `0` and the equation,
 while true, would not be the advertised exact count. The general-
 cardinality content is `sectionsEquivPiFiber` alone. -/
@@ -164,7 +162,7 @@ sections. Beware the boundary: when *no* section exists this is
 `log 0 = 0` by Mathlib's junk convention — an impossible inverse is
 not free, it is impossible. `sectionCostE` below is the
 extended cost (`⊤` when no section exists); use it for cost
-readings. Finiteness of both types is demanded (review #3): on
+readings. Finiteness of both types is demanded: on
 infinite types `Nat.card` of the section type is `0` and this would
 price infinite ambiguity at zero. -/
 noncomputable def sectionCost [Finite A] [Finite B] (f : A → B) : ℝ :=
@@ -172,7 +170,7 @@ noncomputable def sectionCost [Finite A] [Finite B] (f : A → B) : ℝ :=
 
 /-- Sections are invariant under postcomposition by a codomain
 equivalence: relabeling outputs neither creates nor destroys reverse
-descriptions (review #8 — proved once; consumers transport). -/
+descriptions (proved once; consumers transport). -/
 def sectionsEquivCompEquiv {C : Type u} (f : A → B) (e : B ≃ C) :
     {s : C → A // ∀ c, e (f (s c)) = c} ≃ {s : B → A // ∀ b, f (s b) = b} where
   toFun s := ⟨fun b => s.val (e b), fun b => e.injective (s.prop (e b))⟩
@@ -190,7 +188,7 @@ def sectionsEquivCompEquiv {C : Type u} (f : A → B) (e : B ≃ C) :
     rw [Equiv.symm_apply_apply]
 
 /-- **Section cost is invariant under codomain relabeling** — the
-transport lemma (review #8): postcomposing with an equivalence changes
+transport lemma: postcomposing with an equivalence changes
 neither the sections nor their count. -/
 theorem sectionCost_comp_equiv {C : Type u} [Finite A] [Finite B] [Finite C]
     (f : A → B) (e : B ≃ C) :
@@ -199,11 +197,11 @@ theorem sectionCost_comp_equiv {C : Type u} [Finite A] [Finite B] [Finite C]
   exact congrArg Real.log
     (congrArg Nat.cast (Nat.card_congr (sectionsEquivCompEquiv f e)))
 
-/-- **The coding theorem** (C8): for a surjection the reverse-description
+/-- **The coding theorem**: for a surjection the reverse-description
 cost — genuinely counted — equals the fiber information cost. This is
-`card_sections` composed with `Real.log_prod`; the Phase-22 note is
-discharged, the identity `sectionCost = fiberInfoCost` is a counting
-theorem, not a definition. -/
+`card_sections` composed with `Real.log_prod`; the identity
+`sectionCost = fiberInfoCost` is a counting theorem, not a
+definition. -/
 theorem log_card_sections [Fintype A] [Fintype B] [DecidableEq B]
     {f : A → B} (hf : Function.Surjective f) :
     sectionCost f = fiberInfoCost f := by
@@ -239,7 +237,7 @@ theorem sectionCost_eq_zero_of_injective [Finite A] [Finite B]
       ∨ Nat.card {s : B → A // ∀ b, f (s b) = b} = 1) with h | h <;>
     rw [h] <;> simp
 
-/-- **The ratchet** (C8): a non-injective surjection has strictly
+/-- **The ratchet**: a non-injective surjection has strictly
 positive reverse-description cost — recovering the input is genuinely
 costly. -/
 theorem sectionCost_pos_of_not_injective [Fintype A] [Fintype B] [DecidableEq B]
@@ -372,7 +370,7 @@ theorem descriptionCost_eq [Fintype A] [Fintype B] (f : A → B) :
   rw [Nat.card_fun, Nat.cast_pow, Real.log_pow, Nat.card_eq_fintype_card,
     Nat.card_eq_fintype_card]
 
-/-! ## Shannon entropy and the uniform-lift chain rule (review #9)
+/-! ## Shannon entropy and the uniform-lift chain rule
 
 The gravity face of the carrier is priced by genuine distribution
 entropies, not only log-cardinalities: `shannonEntropy` is the Shannon
@@ -401,9 +399,9 @@ theorem sum_comp_card_fiber {X D : Type u} [Fintype X] [Fintype D]
     exact hfib d
   rw [hcard, nsmul_eq_mul]
 
-/-! ### The fiber-count observable (G2) -/
+/-! ### The fiber-count observable -/
 
-/-- **The fiber-count observable** (G2): the number of states a
+/-- **The fiber-count observable**: the number of states a
 description map places over each base point, as a real observable —
 the redundancy profile of the description. -/
 noncomputable def fiberCount {X D : Type u} (f : X → D) : D → ℝ :=
@@ -445,7 +443,7 @@ theorem fiberCount_pullback_base {X Y D : Type u} (f : X → D) (g : Y → D)
   push_cast
   rfl
 
-/-- **The counted cost, exact and non-uniform** (G5): a surjection's
+/-- **The counted cost, exact and non-uniform**: a surjection's
 reverse-description cost is the sum of the log fiber counts — the
 coding theorem (`sectionCost_eq_fiberInfoCost`) read through the
 redundancy profile. -/
@@ -456,7 +454,7 @@ theorem sectionCost_eq_sum_log_fiberCount {X D : Type u} [Fintype X]
   rw [sectionCost_eq_fiberInfoCost hf]
   rfl
 
-/-- **The entropy chain rule for a uniform lift** (review #9): pulling
+/-- **The entropy chain rule for a uniform lift**: pulling
 a distribution back along a constant-fiber map, dividing each mass
 evenly across the fiber, adds exactly the log of the fiber size. -/
 theorem shannonEntropy_comp_div {X D : Type u} [Fintype X] [Fintype D]
@@ -493,7 +491,7 @@ theorem card_eq_card_mul_of_fiber {X D : Type u} [Fintype X] [Fintype D]
       exact hfib d)]
   rw [Finset.sum_const, Finset.card_univ, smul_eq_mul]
 
-/-! ## The Gibbs entropy split: pricing meets entropy (review #12)
+/-! ## The Gibbs entropy split: pricing meets entropy
 
 For a finite sector action the Shannon entropy of its Gibbs
 distribution splits as complexity plus expected energy,
@@ -502,7 +500,7 @@ distribution splits as complexity plus expected energy,
 about a Gibbs law. Pointwise, `-log μ(k) = E k + log Z`; summing
 against `μ` gives the split. -/
 
-/-- **The Gibbs entropy split** (review #12): for a finite sector
+/-- **The Gibbs entropy split**: for a finite sector
 action, `H(gibbsMass) = K + ⟨E⟩`. -/
 theorem SectorAction.entropy_gibbs (A : SectorAction.{u}) [Fintype A.Λ] :
     shannonEntropy A.gibbsMass = A.complexity + A.gibbsExpect A.E := by
@@ -529,7 +527,7 @@ theorem SectorAction.entropy_gibbs (A : SectorAction.{u}) [Fintype A.Λ] :
     Finset.sum_neg_distrib, ← Finset.mul_sum, hsum, hexpect]
   ring
 
-/-- **Strict Gibbs fluctuation, finite form** (review #14): on a
+/-- **Strict Gibbs fluctuation, finite form**: on a
 finite sector action, an observable taking two distinct values has
 strictly positive variance — both moments are finite sums, and one of
 the two witnesses misses the mean. -/
@@ -546,7 +544,7 @@ theorem SectorAction.gibbsVariance_pos_of_ne (A : SectorAction.{u})
     exact fun heq => h heq.symm
   · exact A.gibbsVariance_pos f hsq hf (k₀ := k) hk
 
-/-! ## Finite distributions (review #10)
+/-! ## Finite distributions
 
 The distribution semantics of the gravity face, as one abstraction: a
 `FinDist` carries nonnegativity and normalization; `map` is the
@@ -554,8 +552,7 @@ pushforward, `uniformLift` the uniform fiber lift, `coupling` the
 shared-base coupling on the pullback. The lift pushforward law
 (`map_uniformLift`) and both coupling marginals (`coupling_fst`,
 `coupling_snd`) are proved once, here. The entropy face of gravity
-flows through the one engine — `SectorAction.entropy_gravity`, below
-(review #22: the parallel distribution-level identity is deleted).
+flows through the one engine — `SectorAction.entropy_gravity`, below.
 The graph instantiations — the Gibbs residue distribution and the
 uniform distribution — live in `Meno/ResolutionCount.lean`. -/
 
@@ -606,7 +603,7 @@ theorem mass_le_map [DecidableEq D] (f : X → D) (P : FinDist X) (x : X) :
   Finset.single_le_sum (fun y _ => P.nonneg y)
     (Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩)
 
-/-- **Pushforward along the identity is the identity** (review #17). -/
+/-- **Pushforward along the identity is the identity**. -/
 theorem map_id [DecidableEq X] (P : FinDist X) : P.map id = P := by
   apply ext
   funext x
@@ -614,7 +611,7 @@ theorem map_id [DecidableEq X] (P : FinDist X) : P.map id = P := by
   simp only [id_eq]
   rw [Finset.filter_eq', if_pos (Finset.mem_univ x), Finset.sum_singleton]
 
-/-- **Pushforward composes** (review #17): the two-step pushforward is
+/-- **Pushforward composes**: the two-step pushforward is
 the pushforward along the composite. -/
 theorem map_comp {E : Type u} [Fintype E] [DecidableEq D] [DecidableEq E]
     (f : X → D) (g : D → E) (P : FinDist X) :
@@ -659,7 +656,7 @@ theorem entropy_uniformLift [DecidableEq D] (f : X → D) {m : ℕ}
     (P.uniformLift f hm hfib).entropy = P.entropy + Real.log m :=
   shannonEntropy_comp_div f P.mass hm hfib P.sum_one P.nonneg
 
-/-- **The lift pushforward law** (review #10): pushing the uniform
+/-- **The lift pushforward law**: pushing the uniform
 lift forward recovers the base distribution. -/
 theorem map_uniformLift [DecidableEq D] (f : X → D) {m : ℕ}
     (hm : 0 < m) (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
@@ -753,8 +750,7 @@ theorem entropy_coupling [DecidableEq D] (f : X → D) (g : Y → D)
     (Nat.mul_pos hm hm') (card_base_fiber f g hf hg) P.sum_one P.nonneg
 
 omit [Fintype Y] in
-/-- **The first coupling marginal is the first uniform lift**
-(review #10). -/
+/-- **The first coupling marginal is the first uniform lift**. -/
 theorem coupling_fst [DecidableEq D] [DecidableEq X] (f : X → D)
     (g : Y → D) [Fintype (SGD.Pullback f g)] {m m' : ℕ}
     (hm : 0 < m) (hm' : 0 < m')
@@ -784,8 +780,7 @@ theorem coupling_fst [DecidableEq D] [DecidableEq X] (f : X → D)
   field_simp
 
 omit [Fintype X] in
-/-- **The second coupling marginal is the second uniform lift**
-(review #10). -/
+/-- **The second coupling marginal is the second uniform lift**. -/
 theorem coupling_snd [DecidableEq D] [DecidableEq Y] (f : X → D)
     (g : Y → D) [Fintype (SGD.Pullback f g)] {m m' : ℕ}
     (hm : 0 < m) (hm' : 0 < m')
@@ -814,7 +809,7 @@ theorem coupling_snd [DecidableEq D] [DecidableEq Y] (f : X → D)
   push_cast
   field_simp
 
-/-! ### The uniform entropy defect (review #11)
+/-! ### The uniform entropy defect
 
 `Δ(P) = log|X| − H(P)` measures how far a distribution sits below
 maximal ignorance. It is nonnegative (`defect_nonneg` — the maximum
@@ -827,15 +822,15 @@ the bridge from action-priced entropies to uniform counting. -/
 noncomputable def defect [Nonempty X] (P : FinDist X) : ℝ :=
   Real.log (Fintype.card X) - P.entropy
 
-/-! #### Full support and the relative entropy (reviews #17, #18)
+/-! #### Full support and the relative entropy
 
 `D(P ‖ Q) = ∑ₓ p(x)·log(p(x)/q(x))` is meaningful only against a
 fully supported reference — with a vanishing reference mass, Lean's
 totalized division and `Real.log 0 = 0` would silently zero the
 divergent term, making mutually singular distributions "agree". So
 the definition **requires the support proof**
-(`FinDist.FullSupport`): the invalid expression is unstatable
-(review #18). The Gibbs inequality (`relativeEntropy_nonneg`, strict
+(`FinDist.FullSupport`): the invalid expression is unstatable.
+The Gibbs inequality (`relativeEntropy_nonneg`, strict
 form `relativeEntropy_pos`, characterization
 `relativeEntropy_eq_zero_iff`) is proved **once**, here; the uniform
 entropy defect is the special case `Q = uniform`
@@ -846,8 +841,7 @@ lose relative entropy (`relativeEntropy_map_le` — data processing,
 below). -/
 
 /-- **Full support**: every mass is strictly positive. The
-admissibility certificate for relative-entropy references
-(review #18). -/
+admissibility certificate for relative-entropy references. -/
 def FullSupport (P : FinDist X) : Prop := ∀ x, 0 < P.mass x
 
 /-- The uniform distribution is fully supported. -/
@@ -898,7 +892,7 @@ theorem tilt_norm_pos (P : FinDist X) (φ : X → ℝ) :
     (fun y _ => mul_nonneg (Real.exp_pos _).le (P.nonneg y))
     ⟨x, Finset.mem_univ x, mul_pos (Real.exp_pos _) hx⟩
 
-/-- **The tilted distribution** (G9): reweight `P` by `exp (φ x)`
+/-- **The tilted distribution**: reweight `P` by `exp (φ x)`
 and renormalize. Normalizable with no support hypothesis
 (`tilt_norm_pos`). -/
 noncomputable def tilt (P : FinDist X) (φ : X → ℝ) : FinDist X where
@@ -909,14 +903,14 @@ noncomputable def tilt (P : FinDist X) (φ : X → ℝ) : FinDist X where
   sum_one := by
     rw [← Finset.sum_div, div_self (P.tilt_norm_pos φ).ne']
 
-/-- **Tilting preserves full support** (G9). -/
+/-- **Tilting preserves full support**. -/
 theorem FullSupport.tilt {P : FinDist X} (hP : P.FullSupport)
     (φ : X → ℝ) : (P.tilt φ).FullSupport := fun x =>
   div_pos (mul_pos (Real.exp_pos _) (hP x)) (P.tilt_norm_pos φ)
 
 /-- **The relative entropy** of `P` against a fully supported
-reference `Q` — the support proof is part of the definition
-(review #18), so the expression cannot be formed against an invalid
+reference `Q` — the support proof is part of the definition,
+so the expression cannot be formed against an invalid
 reference. -/
 noncomputable def relativeEntropy (P Q : FinDist X)
     (_ : Q.FullSupport) : ℝ :=
@@ -943,7 +937,7 @@ private lemma gibbs_term_le (P Q : FinDist X) (hQ : ∀ x, 0 < Q.mass x)
       _ ≤ P.mass x * -Real.log (Q.mass x / P.mass x) :=
           mul_le_mul_of_nonneg_left h2 hp.le
 
-/-- **The Gibbs inequality** (reviews #16, #17): the relative entropy
+/-- **The Gibbs inequality**: the relative entropy
 of a distribution against a fully supported reference is
 nonnegative. -/
 theorem relativeEntropy_nonneg (P Q : FinDist X)
@@ -956,7 +950,7 @@ theorem relativeEntropy_nonneg (P Q : FinDist X)
     _ ≤ ∑ x, P.mass x * Real.log (P.mass x / Q.mass x) :=
         Finset.sum_le_sum fun x _ => gibbs_term_le P Q hQ x
 
-/-- **The strict Gibbs inequality** (reviews #16, #17): distinct
+/-- **The strict Gibbs inequality**: distinct
 distributions have strictly positive relative entropy. -/
 theorem relativeEntropy_pos (P Q : FinDist X) (hQ : Q.FullSupport)
     (hne : P ≠ Q) :
@@ -996,7 +990,7 @@ theorem relativeEntropy_pos (P Q : FinDist X) (hQ : Q.FullSupport)
         Finset.sum_lt_sum (fun x _ => gibbs_term_le P Q hQ x)
           ⟨x₀, Finset.mem_univ x₀, hstrict⟩
 
-/-- **Zero relative entropy characterizes equality** (review #17). -/
+/-- **Zero relative entropy characterizes equality**. -/
 theorem relativeEntropy_eq_zero_iff (P Q : FinDist X)
     (hQ : Q.FullSupport) :
     P.relativeEntropy Q hQ = 0 ↔ P = Q := by
@@ -1009,7 +1003,7 @@ theorem relativeEntropy_eq_zero_iff (P Q : FinDist X)
     refine Finset.sum_eq_zero fun x _ => ?_
     rw [div_self (hQ x).ne', Real.log_one, mul_zero]
 
-/-- **The defect is a relative entropy** (review #17): the uniform
+/-- **The defect is a relative entropy**: the uniform
 entropy defect is exactly the relative entropy against the uniform
 distribution — `Δ(P) = D(P ‖ uniform)`. -/
 theorem defect_eq_relativeEntropy [Nonempty X] (P : FinDist X) :
@@ -1033,20 +1027,19 @@ theorem defect_eq_relativeEntropy [Nonempty X] (P : FinDist X) :
   ring
 
 /-- **The maximum entropy theorem**: the defect is nonnegative —
-`H(P) ≤ log|X|`. A special case of the Gibbs inequality
-(review #17). -/
+`H(P) ≤ log|X|`. A special case of the Gibbs inequality. -/
 theorem defect_nonneg [Nonempty X] (P : FinDist X) : 0 ≤ P.defect := by
   rw [P.defect_eq_relativeEntropy]
   exact relativeEntropy_nonneg P (uniform X) (uniform_fullSupport X)
 
 /-- **Zero defect characterizes the uniform distribution.** A special
-case of `relativeEntropy_eq_zero_iff` (review #17). -/
+case of `relativeEntropy_eq_zero_iff`. -/
 theorem defect_eq_zero_iff [Nonempty X] (P : FinDist X) :
     P.defect = 0 ↔ P = uniform X := by
   rw [P.defect_eq_relativeEntropy]
   exact relativeEntropy_eq_zero_iff P (uniform X) (uniform_fullSupport X)
 
-/-- **Uniform fiber lifting preserves the defect** (review #11): the
+/-- **Uniform fiber lifting preserves the defect**: the
 lift adds `log m` to the entropy and `log m` to the log-cardinality. -/
 theorem defect_uniformLift [DecidableEq D] [Nonempty D] [Nonempty X]
     (f : X → D) {m : ℕ} (hm : 0 < m)
@@ -1059,14 +1052,14 @@ theorem defect_uniformLift [DecidableEq D] [Nonempty D] [Nonempty X]
       (by exact_mod_cast hm.ne' : (m : ℝ) ≠ 0)]
   ring
 
-/-- **Conditional entropy along a map** (review #15): the expected
+/-- **Conditional entropy along a map**: the expected
 information remaining in `x` once `f x` is known —
 `H(P | f) = −∑ₓ p(x)·log(p(x)/p(f x))`. -/
 noncomputable def condEntropy [DecidableEq D] (f : X → D)
     (P : FinDist X) : ℝ :=
   -∑ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x))
 
-/-- **THE ENTROPY CHAIN RULE** (reviews #15, #18):
+/-- **THE ENTROPY CHAIN RULE**:
 `H(P) = H(f_*P) + H(P | f)` — **unconditionally**: zero-mass sectors
 drop from every term, and a zero-mass fiber has only zero-mass
 members. The single chain-rule engine; the conditional identity and
@@ -1094,7 +1087,7 @@ theorem entropy_eq_map_add_condEntropy [DecidableEq D] (f : X → D)
     ← hgroup]
   ring
 
-/-- **Zero conditional entropy at the identity** (review #18): a
+/-- **Zero conditional entropy at the identity**: a
 corollary of the chain rule and `map_id`. -/
 theorem condEntropy_id [DecidableEq X] (P : FinDist X) :
     P.condEntropy id = 0 := by
@@ -1102,8 +1095,8 @@ theorem condEntropy_id [DecidableEq X] (P : FinDist X) :
   rw [map_id] at h
   linarith
 
-/-- **The conditional-entropy chain rule along a composition**
-(reviews #17, #18): `H(P | g ∘ f) = H(P | f) + H(f_*P | g)` — a
+/-- **The conditional-entropy chain rule along a composition**:
+`H(P | g ∘ f) = H(P | f) + H(f_*P | g)` — a
 corollary of the unconditional entropy chain rule and `map_comp`,
 not a second termwise engine. -/
 theorem condEntropy_comp {E : Type u} [Fintype E] [DecidableEq D]
@@ -1116,7 +1109,7 @@ theorem condEntropy_comp {E : Type u} [Fintype E] [DecidableEq D]
   rw [map_comp f g P] at h1
   linarith
 
-/-- **Conditional entropy is strictly positive** (review #16) when a
+/-- **Conditional entropy is strictly positive** when a
 fully supported distribution has two points in one fiber. -/
 theorem condEntropy_pos [DecidableEq D] (f : X → D) (P : FinDist X)
     (hpos : ∀ x, 0 < P.mass x) {x y : X} (hxy : x ≠ y) (hf : f x = f y) :
@@ -1160,8 +1153,8 @@ theorem condEntropy_pos [DecidableEq D] (f : X → D) (P : FinDist X)
   show (0 : ℝ) < -∑ z, P.mass z * Real.log (P.mass z / (P.map f).mass (f z))
   linarith
 
-/-- **The conditional-entropy gap is a relative entropy**
-(review #17): along a constant-fiber map, the gap between the fiber
+/-- **The conditional-entropy gap is a relative entropy**:
+along a constant-fiber map, the gap between the fiber
 log and the conditional entropy is the relative entropy against the
 fiber-uniformization of the pushforward —
 `D(P ‖ (f_*P)↑) = log m − H(P | f)`. -/
@@ -1195,7 +1188,7 @@ theorem relativeEntropy_uniformLift_map [DecidableEq D] (f : X → D)
       = -∑ x, P.mass x * Real.log (P.mass x / (P.map f).mass (f x)) from rfl]
   ring
 
-/-- **The constant-fiber upper bound** (review #16): the conditional
+/-- **The constant-fiber upper bound**: the conditional
 entropy of a fully supported distribution along a constant-fiber map
 is at most the fiber log — with the gap the relative entropy against
 the fiber-uniformized distribution. -/
@@ -1208,7 +1201,7 @@ theorem condEntropy_le_log [DecidableEq D] (f : X → D) {m : ℕ}
   rw [relativeEntropy_uniformLift_map f hm hfib P hpos] at h
   linarith
 
-/-- **The strict constant-fiber bound** (review #16): strict unless
+/-- **The strict constant-fiber bound**: strict unless
 the distribution is its own fiber-uniformization. -/
 theorem condEntropy_lt_log [DecidableEq D] (f : X → D) {m : ℕ}
     (hm : 0 < m) (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
@@ -1220,7 +1213,7 @@ theorem condEntropy_lt_log [DecidableEq D] (f : X → D) {m : ℕ}
   rw [relativeEntropy_uniformLift_map f hm hfib P hpos] at h
   linarith
 
-/-- **DATA PROCESSING** (review #18): pushforward along a surjection
+/-- **DATA PROCESSING**: pushforward along a surjection
 can only lose relative entropy — `D(f_*P ‖ f_*Q) ≤ D(P ‖ Q)`.
 Termwise: for `p(x) > 0`,
 `p·log(p/q) − p·log(F∘f/G∘f) ≥ p − q·(F∘f)/(G∘f)` by
@@ -1297,7 +1290,7 @@ theorem relativeEntropy_map_le [DecidableEq D] (f : X → D)
     ≤ ∑ x, P.mass x * Real.log (P.mass x / Q.mass x)
   linarith
 
-/-- **Pushforward can only lose defect** (review #18): data
+/-- **Pushforward can only lose defect**: data
 processing at the uniform reference, given that the uniform
 distribution pushes to the uniform distribution. -/
 theorem defect_map_le [Nonempty X] [Nonempty D] [DecidableEq D]
@@ -1318,7 +1311,7 @@ theorem defect_map_le [Nonempty X] [Nonempty D] [DecidableEq D]
     _ ≤ P.relativeEntropy (uniform X) (uniform_fullSupport X) := h
 
 omit [Fintype X] [Fintype Y] in
-/-- **Shared-base coupling preserves the defect** (review #11): the
+/-- **Shared-base coupling preserves the defect**: the
 coupling adds `log(m·m')` to both sides. -/
 theorem defect_coupling [DecidableEq D] [Nonempty D] (f : X → D)
     (g : Y → D) [Fintype (SGD.Pullback f g)]
@@ -1338,7 +1331,7 @@ theorem defect_coupling [DecidableEq D] [Nonempty D] (f : X → D)
 
 end FinDist
 
-/-! ## Generic priced constructions (review #13)
+/-! ## Generic priced constructions
 
 The `FinDist` layer above carries the *distribution* semantics of the
 gravity face; here the same three constructions are built at the level
@@ -1367,7 +1360,7 @@ and `K(pair) + K(base) = K(lift) + K(lift)` (`complexity_gravity`). -/
 namespace SectorAction
 
 /-- The Gibbs distribution of a finite sector action, bundled as a
-`FinDist` (review #13). -/
+`FinDist`. -/
 noncomputable def gibbsDist (A : SectorAction.{u}) [Fintype A.Λ] :
     FinDist A.Λ where
   mass := A.gibbsMass
@@ -1385,7 +1378,7 @@ theorem gibbsDist_fullSupport (A : SectorAction.{u}) [Fintype A.Λ] :
 
 /-! ### Coarse-graining: fiber Boltzmann sums -/
 
-/-- **The unnormalized coarse weight** (review #13): the Boltzmann sum
+/-- **The unnormalized coarse weight**: the Boltzmann sum
 of a fiber of a projection — the total weight the fine action assigns
 to a coarse sector. -/
 noncomputable def coarseWeight (A : SectorAction.{u}) {B : Type u}
@@ -1423,7 +1416,7 @@ variable (A : SectorAction.{u}) {B : Type u} [Fintype B] (p : A.Λ → B)
   (b₀ : B) (hpos : ∀ b, 0 < A.coarseWeight p b)
   (hmax : ∀ b, A.coarseWeight p b ≤ A.coarseWeight p b₀)
 
-/-- **Coarse-graining a sector action** (review #13): project the
+/-- **Coarse-graining a sector action**: project the
 sector type along `p`, pricing each coarse sector by its fiber
 Boltzmann sum. The energy is the effective free energy measured from
 the modal sector `b₀` — nonnegative exactly because `b₀` is modal,
@@ -1456,8 +1449,8 @@ theorem coarseGrain_partFn :
     Finset.sum_congr rfl fun b _ => coarseGrain_weight A p b₀ hpos hmax b,
     ← Finset.sum_div, A.sum_coarseWeight p]
 
-/-- **The partition function factorizes through a coarse-graining**
-(review #13): `Z = W b₀ · Z_coarse`. -/
+/-- **The partition function factorizes through a coarse-graining**:
+`Z = W b₀ · Z_coarse`. -/
 theorem partFn_eq_coarseWeight_mul :
     A.partFn
       = A.coarseWeight p b₀ * (A.coarseGrain p b₀ hpos hmax).partFn := by
@@ -1465,8 +1458,8 @@ theorem partFn_eq_coarseWeight_mul :
   have h0 : A.coarseWeight p b₀ ≠ 0 := (hpos b₀).ne'
   field_simp
 
-/-- **The complexity decomposition through a coarse-graining**
-(review #13): `log Z = log W b₀ + K_coarse`. -/
+/-- **The complexity decomposition through a coarse-graining**:
+`log Z = log W b₀ + K_coarse`. -/
 theorem complexity_eq_coarseGrain :
     A.complexity
       = Real.log (A.coarseWeight p b₀)
@@ -1479,7 +1472,7 @@ theorem complexity_eq_coarseGrain :
 
 end CoarseGrain
 
-/-! ### Identity and composition of coarse-grainings (review #14)
+/-! ### Identity and composition of coarse-grainings
 
 Coarse-graining is not a family of disconnected snapshots: the
 identity projection changes nothing (`coarseWeight_id`,
@@ -1507,8 +1500,8 @@ private theorem mk_eq_mk {Λ : Type u} {E E' : Λ → ℝ}
   subst h
   rfl
 
-/-- **Coarse-graining along the identity is the identity**
-(review #14): at any zero-energy ground sector as the modal choice,
+/-- **Coarse-graining along the identity is the identity**:
+at any zero-energy ground sector as the modal choice,
 the coarse action is the action itself. -/
 theorem coarseGrain_id (A : SectorAction.{u}) [Fintype A.Λ] {z : A.Λ}
     (hz : A.E z = 0)
@@ -1541,7 +1534,7 @@ private def compFiberEquiv {α B C : Type u} (p : α → B) (p' : B → C)
       show p k' = p k ↔ p k' = b
       rw [hk])).mpr rfl
 
-/-- **Coarse weights compose** (review #14): the fiber of a composite
+/-- **Coarse weights compose**: the fiber of a composite
 projection decomposes as the fibers over the intermediate fiber. -/
 theorem coarseWeight_comp (A : SectorAction.{u}) {B C : Type u}
     (p : A.Λ → B) (p' : B → C) (c : C) :
@@ -1580,7 +1573,7 @@ theorem coarseGrain_coarseWeight (A : SectorAction.{u}) {B C : Type u}
     _ = A.coarseWeight (fun k => p' (p k)) c / A.coarseWeight p b₀ := by
         rw [coarseWeight_comp A p p' c]
 
-/-- **Coarse-grainings compose** (review #14): coarse-graining a
+/-- **Coarse-grainings compose**: coarse-graining a
 coarse-graining is the coarse-graining along the composite — the
 modal normalizations cancel out of the free-energy differences. -/
 theorem coarseGrain_comp (A : SectorAction.{u}) {B C : Type u}
@@ -1603,7 +1596,7 @@ theorem coarseGrain_comp (A : SectorAction.{u}) {B C : Type u}
     Real.log_div (hpos'' c).ne' (hpos b₀).ne']
   ring
 
-/-! ### Covariance gravity: the priced lift and coupling, unconditioned (G2)
+/-! ### Covariance gravity: the priced lift and coupling, unconditioned
 
 The gravity face without fiber hypotheses. `lift` pulls the energy of
 a finite-sector action back along a surjective map from a finite type
@@ -1626,7 +1619,7 @@ section CovarianceGravity
 variable (A : SectorAction.{u}) {X Y : Type u} [Fintype X] [Fintype Y]
   (f : X → A.Λ) (g : Y → A.Λ)
 
-/-- **The Gibbs covariance** of two observables (G2): the correlation
+/-- **The Gibbs covariance** of two observables: the correlation
 of their profiles under the Gibbs law. Its diagonal is the standing
 `gibbsVariance` (`gibbsCov_self`). -/
 noncomputable def gibbsCov (φ ψ : A.Λ → ℝ) : ℝ :=
@@ -1641,7 +1634,7 @@ theorem gibbsCov_self (φ : A.Λ → ℝ) :
       funext fun k => (pow_two (φ k)).symm,
     ← pow_two (A.gibbsExpect φ)]
 
-/-- **The priced lift, unconditioned** (G2): pull the energy of a
+/-- **The priced lift, unconditioned**: pull the energy of a
 sector action back along a surjective map from a finite type —
 surjectivity carries the zero-energy sector upstairs; no
 constant-fiber assumption. -/
@@ -1658,7 +1651,7 @@ noncomputable def lift (hf : Function.Surjective f) : SectorAction.{u} where
 instance (hf : Function.Surjective f) : Fintype (A.lift f hf).Λ :=
   inferInstanceAs (Fintype X)
 
-/-- **The priced coupling, unconditioned** (G2): the pullback
+/-- **The priced coupling, unconditioned**: the pullback
 `SGD.Pullback f g` priced by the base energy at the shared image. -/
 noncomputable def couple [Fintype (SGD.Pullback f g)]
     (hf : Function.Surjective f) (hg : Function.Surjective g) :
@@ -1675,7 +1668,7 @@ noncomputable def couple [Fintype (SGD.Pullback f g)]
   E_nonneg p := A.E_nonneg _
   summable := (hasSum_fintype _).summable
 
-/-- **The gravity defect** (G2): what coupling-then-base costs beyond
+/-- **The gravity defect**: what coupling-then-base costs beyond
 the two lifts — the four-term combination whose vanishing is the
 constant-fiber gravity identity. -/
 noncomputable def gravityDefect [Fintype (SGD.Pullback f g)]
@@ -1732,7 +1725,7 @@ theorem gibbsExpect_fiberCount_mul_pos (hf : Function.Surjective f)
     rw [Pi.mul_apply]
     nlinarith [one_le_fiberCount hf d, one_le_fiberCount hg d])
 
-/-- **The double-sum covariance identity** (G2): the Gibbs covariance
+/-- **The double-sum covariance identity**: the Gibbs covariance
 is half the doubly-indexed mean of coordinate products —
 `Cov(φ,ψ) = ½ Σ_{d,d'} μ_d μ_{d'} (φ_d − φ_{d'})(ψ_d − ψ_{d'})`. -/
 theorem gibbsCov_double_sum (φ ψ : A.Λ → ℝ) :
@@ -1760,7 +1753,7 @@ theorem gibbsCov_double_sum (φ ψ : A.Λ → ℝ) :
   simp only [Pi.mul_apply]
   ring
 
-/-! #### The currency (G9): the cumulant functional's KL identity
+/-! #### The currency: the cumulant functional's KL identity
 
 The exact law of the currency face: the gap between the cumulant
 functional and the Gibbs mean **is** a relative entropy — against
@@ -1780,7 +1773,7 @@ theorem gibbsExpect_pos_of_pos (φ : A.Λ → ℝ) (hφ : ∀ k, 0 < φ k) :
     (fun d _ => mul_pos (hφ d) (A.gibbsMass_pos d))
     ⟨z, Finset.mem_univ z⟩
 
-/-- **THE KL IDENTITY** (G9, the exact law): the gap between the
+/-- **THE KL IDENTITY** (the exact law): the gap between the
 cumulant functional and the Gibbs mean is the relative entropy of
 the Gibbs law against its own tilt by the observable —
 `cgf φ − ⟨φ⟩ = D(gibbs ‖ tilt φ gibbs)`. -/
@@ -1819,7 +1812,7 @@ theorem cgf_sub_gibbsExpect_eq_relativeEntropy (φ : A.Λ → ℝ) :
   rw [h1, A.gibbsExpect_eq_sum φ,
     Finset.sum_congr rfl fun x _ => mul_comm (A.gibbsMass x) (φ x)]
 
-/-- **The Gibbs–Jensen bound through the house engine** (G9): the
+/-- **The Gibbs–Jensen bound through the house engine**: the
 mean never exceeds the cumulant functional — the KL identity plus
 the Gibbs inequality. -/
 theorem gibbsExpect_le_cgf (φ : A.Λ → ℝ) :
@@ -1829,7 +1822,7 @@ theorem gibbsExpect_le_cgf (φ : A.Λ → ℝ) :
     (A.gibbsDist.tilt φ) (A.gibbsDist_fullSupport.tilt φ)
   linarith
 
-/-- **The gap's boundary** (G9): the cumulant functional meets the
+/-- **The gap's boundary**: the cumulant functional meets the
 mean exactly at constant observables — zero relative entropy
 characterizes the Gibbs law as its own tilt. -/
 theorem cgf_sub_gibbsExpect_eq_zero_iff (φ : A.Λ → ℝ) :
@@ -1865,7 +1858,7 @@ theorem cgf_sub_gibbsExpect_eq_zero_iff (φ : A.Λ → ℝ) :
       mul_comm (Real.exp (φ x)), mul_div_assoc,
       div_self (Real.exp_pos (φ x)).ne', mul_one]
 
-/-- **The bilinear boundary** (G9): the cumulant functional's
+/-- **The bilinear boundary**: the cumulant functional's
 additivity defect on a pair vanishes exactly at zero Gibbs
 covariance of the exponentiated observables — the gravity boundary's
 proof, generalized. -/
@@ -1932,7 +1925,7 @@ theorem lift_partFn (hf : Function.Surjective f) :
   field_simp [A.partFn_pos.ne']
 
 /-- **The lift's complexity — the priced increment is the log
-Gibbs-mean redundancy** (G2; consumed by G5):
+Gibbs-mean redundancy**:
 `K(lift f) = K + log ⟨fiberCount f⟩`. -/
 theorem lift_complexity (hf : Function.Surjective f) :
     (A.lift f hf).complexity
@@ -1977,7 +1970,7 @@ theorem couple_complexity [Fintype (SGD.Pullback f g)]
       (A.gibbsExpect_fiberCount_mul_pos f g hf hg).ne']
   rfl
 
-/-- **THE COVARIANCE GRAVITY LAW** (G2, the exact law): sharing two
+/-- **THE COVARIANCE GRAVITY LAW** (the exact law): sharing two
 descriptions over one base saves exactly the base — corrected by the
 log-correlation of their redundancy profiles. The correction term is
 a fluctuation quantity: gravity's exactness is measured by the
@@ -1994,7 +1987,7 @@ theorem gravity_defect [Fintype (SGD.Pullback f g)]
     lift_complexity A g hg]
   ring
 
-/-- **The gravity recognition** (G9): the defect is the cumulant
+/-- **The gravity recognition**: the defect is the cumulant
 functional's additivity defect at the two log-redundancies — a
 rewrite of `gravity_defect`, since `Real.exp` inverts `Real.log` on
 the positive redundancy profiles. -/
@@ -2033,13 +2026,10 @@ theorem gravityDefect_eq_cgf [Fintype (SGD.Pullback f g)]
         = fiberCount g from funext fun k => Real.exp_log (hposg k)]
   rw [A.gravity_defect f g hf hg, h1, h2, h3]
 
-/-- **The boundary** (G2): the defect vanishes exactly at zero
+/-- **The boundary**: the defect vanishes exactly at zero
 covariance of the redundancy profiles — the constant-fiber gravity
 identity (`complexity_gravity`) is the zero-covariance chart, not a
-law of coupling. Demoted at G9 (rule 3): re-derived from the generic
-`cgf_bilinear_eq_zero_iff` through the gravity recognition
-(`gravityDefect_eq_cgf`); the direct log-injectivity route is
-retired. -/
+law of coupling. -/
 theorem gravity_defect_eq_zero_iff [Fintype (SGD.Pullback f g)]
     (hf : Function.Surjective f) (hg : Function.Surjective g) :
     A.gravityDefect f g hf hg = 0
@@ -2054,7 +2044,7 @@ theorem gravity_defect_eq_zero_iff [Fintype (SGD.Pullback f g)]
     show Real.exp ∘ (fun d => Real.log (fiberCount g d)) = fiberCount g
       from funext fun d => Real.exp_log (hposg d)]
 
-/-- **The direction theorem** (G2): comonotone redundancy binds — if
+/-- **The direction theorem**: comonotone redundancy binds — if
 the two fiber-count profiles move together across every sector pair,
 the defect is nonnegative, by the double-sum covariance identity. -/
 theorem gravityDefect_nonneg_of_comonotone [Fintype (SGD.Pullback f g)]
@@ -2083,10 +2073,10 @@ theorem gravityDefect_nonneg_of_comonotone [Fintype (SGD.Pullback f g)]
 
 end CovarianceGravity
 
-/-! ### Time, non-uniform (G5)
+/-! ### Time, non-uniform
 
 The ratchet, unconditioned. The priced increment of the lift is the
-log Gibbs-mean redundancy (`lift_complexity`, delivered at G2), the
+log Gibbs-mean redundancy (`lift_complexity`), the
 counted cost stays exact and non-uniform
 (`sectionCost_eq_sum_log_fiberCount`), and between them sits Jensen:
 the Gibbs-mean log-redundancy bounds the priced increment from below
@@ -2096,9 +2086,9 @@ constant redundancy — full Gibbs support makes the boundary exact
 defect is the Jensen gap of redundancy, one more fluctuation
 quantity. **The impossibility anchor is the standing
 `sectionCostE_eq_zero_iff`**: free reversal is impossible off
-bijections. The strictness witness is G2's two-sector pair
+bijections. The strictness witness is the two-sector pair
 (`twoSector_jensen_gap_pos`, at the file's tail); the
-constant-redundancy chart is the demoted `sectionCost_uniformLift`
+constant-redundancy chart is `sectionCost_uniformLift`
 below. -/
 
 section TimeNonUniform
@@ -2106,7 +2096,7 @@ section TimeNonUniform
 variable (A : SectorAction.{u}) {X : Type u} [Fintype X]
   (f : X → A.Λ) [Fintype A.Λ]
 
-/-- **The time recognition** (G9): the priced increment of the lift
+/-- **The time recognition**: the priced increment of the lift
 is the cumulant functional of the log-redundancy — a rewrite of
 `lift_complexity`, since `Real.exp` inverts `Real.log` on the
 redundancy profile (`one_le_fiberCount`). -/
@@ -2120,25 +2110,19 @@ theorem lift_complexity_eq_cgf (hf : Function.Surjective f) :
       = fiberCount f from funext fun k => Real.exp_log
     (lt_of_lt_of_le one_pos (one_le_fiberCount hf k))]
 
-/-- **THE JENSEN RATCHET BOUND** (G5, the law with correction term):
+/-- **THE JENSEN RATCHET BOUND** (the law with correction term):
 the Gibbs-mean log-redundancy is at most the priced increment of the
 lift — `⟨log ∘ fiberCount f⟩ ≤ K(lift f) − K`. The gap is the Jensen
-defect of the redundancy profile. Demoted at G9 (rule 3): re-derived
-from the KL identity through the time recognition
-(`lift_complexity_eq_cgf`, `gibbsExpect_le_cgf`); the external
-`strictConcaveOn_log_Ioi` route is retired. -/
+defect of the redundancy profile. -/
 theorem lift_complexity_ge_gibbs_log_rate (hf : Function.Surjective f) :
     A.gibbsExpect (fun d => Real.log (fiberCount f d))
       ≤ (A.lift f hf).complexity - A.complexity := by
   rw [A.lift_complexity_eq_cgf f hf]
   exact A.gibbsExpect_le_cgf _
 
-/-- **The boundary** (G5): the Jensen gap vanishes exactly at
+/-- **The boundary**: the Jensen gap vanishes exactly at
 constant redundancy — every sector carries positive Gibbs mass, so
-full support makes the boundary exact. Demoted at G9 (rule 3):
-re-derived from the KL identity's boundary
-(`cgf_sub_gibbsExpect_eq_zero_iff`) through the time recognition;
-the external `StrictConcaveOn` route is retired. -/
+full support makes the boundary exact. -/
 theorem lift_complexity_sub_eq_iff_fiberCount_const
     (hf : Function.Surjective f) :
     (A.lift f hf).complexity - A.complexity
@@ -2165,7 +2149,7 @@ variable (A : SectorAction.{u}) [Fintype A.Λ] {X : Type u} [Fintype X]
   (f : X → A.Λ) {m : ℕ} (hm : 0 < m)
   (hfib : ∀ d, Nat.card {x : X // f x = d} = m)
 
-/-- **The priced uniform lift** (review #13): pull a finite sector
+/-- **The priced uniform lift**: pull a finite sector
 action back along a constant-fiber map. Energy is pulled back
 unchanged — each fine sector prices exactly as its coarse image, so
 each Boltzmann weight is copied `m` times across the fiber. -/
@@ -2218,7 +2202,7 @@ theorem uniformLift_gibbsMass (x : X) :
   rfl
 
 /-- **The lift's Gibbs distribution is the `FinDist` uniform lift of
-the base's** (review #13). -/
+the base's**. -/
 theorem uniformLift_gibbsDist [DecidableEq A.Λ] :
     (A.uniformLift f hm hfib).gibbsDist
       = A.gibbsDist.uniformLift f hm hfib := by
@@ -2228,7 +2212,7 @@ theorem uniformLift_gibbsDist [DecidableEq A.Λ] :
   exact uniformLift_gibbsMass A f hm hfib x
 
 /-- **Pulled-back observables keep their expectation through the
-lift** (review #13). -/
+lift**. -/
 theorem uniformLift_gibbsExpect (φ : A.Λ → ℝ) :
     (A.uniformLift f hm hfib).gibbsExpect (fun x => φ (f x))
       = A.gibbsExpect φ := by
@@ -2244,8 +2228,7 @@ theorem uniformLift_gibbsExpect (φ : A.Λ → ℝ) :
   refine Finset.sum_congr rfl fun d _ => ?_
   field_simp
 
-/-- **Pulled-back observables keep their variance through the lift**
-(review #13). -/
+/-- **Pulled-back observables keep their variance through the lift**. -/
 theorem uniformLift_gibbsVariance (φ : A.Λ → ℝ) :
     (A.uniformLift f hm hfib).gibbsVariance (fun x => φ (f x))
       = A.gibbsVariance φ := by
@@ -2255,20 +2238,20 @@ theorem uniformLift_gibbsVariance (φ : A.Λ → ℝ) :
   rw [uniformLift_gibbsExpect A f hm hfib φ,
     uniformLift_gibbsExpect A f hm hfib (fun d => φ d ^ 2)]
 
-/-- The lift's expected energy is the base's (review #13). -/
+/-- The lift's expected energy is the base's. -/
 theorem uniformLift_gibbsExpect_E :
     (A.uniformLift f hm hfib).gibbsExpect (A.uniformLift f hm hfib).E
       = A.gibbsExpect A.E :=
   uniformLift_gibbsExpect A f hm hfib A.E
 
-/-- The lift's energy variance is the base's (review #13). -/
+/-- The lift's energy variance is the base's. -/
 theorem uniformLift_gibbsVariance_E :
     (A.uniformLift f hm hfib).gibbsVariance (A.uniformLift f hm hfib).E
       = A.gibbsVariance A.E :=
   uniformLift_gibbsVariance A f hm hfib A.E
 
 omit [Fintype A.Λ] in
-/-- **The lift decomposes as base ⊗ free sectors** (review #21): the
+/-- **The lift decomposes as base ⊗ free sectors**: the
 priced uniform lift is energy-equivalent to the independent product
 of the base with a free action on any `m`-element sector type — the
 structured form of the fiber decomposition `uniformLift_partFn`
@@ -2284,8 +2267,8 @@ theorem uniformLift_energyEquiv (W : Type u) [Fintype W] [Nonempty W]
   show A.E (f x) + 0 = A.E (f x)
   rw [add_zero]
 
-/-- **TIME, GENERIC AND PRICED — the constant-redundancy chart**
-(review #14; demoted at G5, PLAN rule 3): for a constant-fiber map
+/-- **TIME, GENERIC AND PRICED — the constant-redundancy chart**:
+for a constant-fiber map
 into a finite sector action's sector type, the normalized section
 cost is exactly the complexity increment of the priced uniform lift —
 `sectionCost f / |Λ| = K(uniformLift) − K(base)`. This is the
@@ -2294,9 +2277,7 @@ counted cost is `Σ_d log (fiberCount f d)`
 (`sectionCost_eq_sum_log_fiberCount`), the priced increment is
 `log ⟨fiberCount f⟩` (`lift_complexity`, with `uniformLift = lift`
 by proof irrelevance), and constant redundancy collapses both sides
-to `log m`. The independent route through
-`sectionCost_eq_fiberInfoCost` and `uniformLift_complexity` is
-retired. -/
+to `log m`. -/
 theorem sectionCost_uniformLift :
     sectionCost f / Fintype.card A.Λ
       = (A.uniformLift f hm hfib).complexity - A.complexity := by
@@ -2338,7 +2319,7 @@ variable (A : SectorAction.{u}) [Fintype A.Λ] {X Y : Type u} [Fintype X]
   (hf : ∀ d, Nat.card {x : X // f x = d} = m)
   (hg : ∀ d, Nat.card {y : Y // g y = d} = m')
 
-/-- **The priced shared-base coupling** (review #13): price the
+/-- **The priced shared-base coupling**: price the
 pullback of two constant-fiber maps by the base energy at the shared
 image. -/
 noncomputable def coupling : SectorAction.{u} where
@@ -2403,7 +2384,7 @@ theorem coupling_gibbsMass (p : SGD.Pullback f g) :
 
 omit [Fintype X] [Fintype Y] in
 /-- **The coupling's Gibbs distribution is the `FinDist` shared-base
-coupling of the base's** (review #13). -/
+coupling of the base's**. -/
 theorem coupling_gibbsDist [DecidableEq A.Λ] :
     (A.coupling f g hm hm' hf hg).gibbsDist
       = A.gibbsDist.coupling f g hm hm' hf hg := by
@@ -2415,7 +2396,7 @@ theorem coupling_gibbsDist [DecidableEq A.Λ] :
 
 omit [Fintype X] [Fintype Y] in
 /-- **Pulled-back observables keep their expectation through the
-coupling** (review #13). -/
+coupling**. -/
 theorem coupling_gibbsExpect (φ : A.Λ → ℝ) :
     (A.coupling f g hm hm' hf hg).gibbsExpect
         (fun p => φ (SGD.Pullback.base p))
@@ -2438,7 +2419,7 @@ theorem coupling_gibbsExpect (φ : A.Λ → ℝ) :
 
 omit [Fintype X] [Fintype Y] in
 /-- **Pulled-back observables keep their variance through the
-coupling** (review #13). -/
+coupling**. -/
 theorem coupling_gibbsVariance (φ : A.Λ → ℝ) :
     (A.coupling f g hm hm' hf hg).gibbsVariance
         (fun p => φ (SGD.Pullback.base p))
@@ -2452,7 +2433,7 @@ theorem coupling_gibbsVariance (φ : A.Λ → ℝ) :
     coupling_gibbsExpect A f g hm hm' hf hg (fun d => φ d ^ 2)]
 
 omit [Fintype X] [Fintype Y] in
-/-- The coupling's expected energy is the base's (review #13). -/
+/-- The coupling's expected energy is the base's. -/
 theorem coupling_gibbsExpect_E :
     (A.coupling f g hm hm' hf hg).gibbsExpect
         (A.coupling f g hm hm' hf hg).E
@@ -2460,7 +2441,7 @@ theorem coupling_gibbsExpect_E :
   coupling_gibbsExpect A f g hm hm' hf hg A.E
 
 omit [Fintype X] [Fintype Y] in
-/-- The coupling's energy variance is the base's (review #13). -/
+/-- The coupling's energy variance is the base's. -/
 theorem coupling_gibbsVariance_E :
     (A.coupling f g hm hm' hf hg).gibbsVariance
         (A.coupling f g hm hm' hf hg).E
@@ -2468,7 +2449,7 @@ theorem coupling_gibbsVariance_E :
   coupling_gibbsVariance A f g hm hm' hf hg A.E
 
 omit [Fintype A.Λ] in
-/-- **The coupling decomposes as base ⊗ (free ⊗ free)** (review #21):
+/-- **The coupling decomposes as base ⊗ (free ⊗ free)**:
 the priced shared-base coupling is energy-equivalent to the
 independent product of the base with two free actions — the
 decomposition that carries the gravity theorem's sharing content. -/
@@ -2489,19 +2470,15 @@ theorem coupling_energyEquiv (W W' : Type u) [Fintype W] [Nonempty W]
   rw [add_zero, add_zero]
 
 omit [Fintype A.Λ] in
-/-- **THE GRAVITY THEOREM — the zero-covariance chart** (reviews #13,
-#21, #25, #28, #29; demoted at G2, PLAN rule 3):
+/-- **THE GRAVITY THEOREM — the zero-covariance chart**:
 `K(coupling) + K(base) = K(lift) + K(lift)` — merging two
 descriptions over a shared base saves exactly the base's
 complexity. This is the **constant-fiber instance of the covariance
 gravity law** (`gravity_defect`): constant redundancy profiles have
 zero Gibbs covariance, so the defect vanishes and the four-term
 identity closes. The fiber hypotheses force the base finite; no
-Fintype instance is taken in the statement (review #29) — the proof
-constructs finiteness from surjectivity. The decomposition route
-(`coupling_energyEquiv`, `uniformLift_energyEquiv`,
-`complexity_prod`) remains standing as structure; the independent
-proof route through it is retired. Counting gravity is the
+Fintype instance is taken in the statement — the proof
+constructs finiteness from surjectivity. Counting gravity is the
 zero-energy corollary (`counting_gravity`, below); the entropy form
 is the Gibbs-split corollary (`entropy_gravity`). -/
 theorem complexity_gravity :
@@ -2548,8 +2525,8 @@ theorem complexity_gravity :
   linarith
 
 omit [Fintype A.Λ] in
-/-- **The action-level partition-function gravity identity**
-(reviews #13, #21): `Z_pair · Z_base = Z_lift · Z_lift` — the
+/-- **The action-level partition-function gravity identity**:
+`Z_pair · Z_base = Z_lift · Z_lift` — the
 complexity gravity identity exponentiated, since every partition
 function is positive. -/
 theorem partFn_gravity :
@@ -2564,7 +2541,7 @@ theorem partFn_gravity :
     Real.exp_log (A.uniformLift g hm' hg).partFn_pos] at h
   exact h
 
-/-- **THE PRICED ENTROPY GRAVITY IDENTITY** (review #14): the
+/-- **THE PRICED ENTROPY GRAVITY IDENTITY**: the
 four-term entropy identity of the Gibbs laws, derived from the four
 Gibbs entropy splits `H = K + ⟨E⟩`, the complexity gravity identity,
 and the expectation transports — entropy gravity is a corollary of
@@ -2588,7 +2565,7 @@ end SectorAction
 
 /-! ## Counting gravity — the zero-energy corollary -/
 
-/-- **COUNTING GRAVITY** (review #25): for uniform-fiber maps into a
+/-- **COUNTING GRAVITY**: for uniform-fiber maps into a
 shared finite nonempty base,
 `log |X ×_D Y| + log |D| = log |X| + log |Y|`. Not a parallel
 type-level theory: this is `SectorAction.complexity_gravity`
@@ -2629,7 +2606,7 @@ theorem counting_gravity {X Y D : Type u} [Fintype X] [Fintype Y]
     uniformAction_complexity, uniformAction_complexity] at key
   simpa [Nat.card_eq_fintype_card] using key
 
-/-! ## The two-sector witness: the defect is not identically zero (G2)
+/-! ## The two-sector witness: the defect is not identically zero
 
 The strictness anchor and the face's negative. Base `Bool` with
 energies `0` and `1`; one map with redundancy profile `(1, 2)` used
@@ -2638,7 +2615,7 @@ strict Gibbs fluctuation of the non-constant profile — so **there is
 no correlation-free general coupling**: the constant-fiber identity
 is the zero-covariance chart, not a law of coupling. -/
 
-/-- **The two-sector base** (G2 strictness): sectors `Bool`, energies
+/-- **The two-sector base**: sectors `Bool`, energies
 `0` and `1`. -/
 noncomputable def twoSectorAction : SectorAction.{0} where
   Λ := Bool
@@ -2677,7 +2654,7 @@ theorem twoSectorMap_fiberCount_true :
       decide]
   norm_num
 
-/-- **THE STRICTNESS WITNESS** (G2): at the two-sector base with the
+/-- **THE STRICTNESS WITNESS**: at the two-sector base with the
 `(1, 2)` redundancy profile on both legs, the defect is
 `log⟨m²⟩ − 2 log⟨m⟩ > 0` — strict Gibbs fluctuation of a
 non-constant profile. -/
@@ -2721,7 +2698,7 @@ theorem twoSector_gravityDefect_pos :
   push_cast at hlog
   linarith
 
-/-- **THE IMPOSSIBILITY** (G2): there is no correlation-free general
+/-- **THE IMPOSSIBILITY**: there is no correlation-free general
 coupling — the defect is not identically zero, so the uniform
 identity (`complexity_gravity`) is the zero-covariance chart, not a
 law of coupling. -/
@@ -2736,7 +2713,7 @@ theorem exists_gravity_defect_ne_zero :
     twoSectorMap_surjective, twoSectorMap_surjective,
     ne_of_gt twoSector_gravityDefect_pos⟩
 
-/-- **The strictness of the ratchet's Jensen gap** (G5): at the
+/-- **The strictness of the ratchet's Jensen gap**: at the
 two-sector witness the Gibbs-mean log-redundancy is strictly below
 the priced increment — the ratchet's defect is a genuine fluctuation
 quantity. -/
@@ -2759,7 +2736,7 @@ theorem twoSector_jensen_gap_pos :
     rw [twoSectorMap_fiberCount_false, twoSectorMap_fiberCount_true] at h01
     norm_num at h01
 
-/-- **The strictness of the currency's Jensen gap** (G9): at the
+/-- **The strictness of the currency's Jensen gap**: at the
 two-sector witness the cumulant functional strictly exceeds the
 Gibbs mean of the log-redundancy — through the time recognition and
 the standing witness (`twoSector_jensen_gap_pos`), single route. -/
@@ -2773,7 +2750,7 @@ theorem twoSector_cgf_gap_pos :
     twoSectorMap_surjective] at h
   linarith
 
-/-- **The strictness of the currency's additivity defect** (G9): at
+/-- **The strictness of the currency's additivity defect**: at
 the two-sector witness the cumulant functional is strictly
 superadditive on the pair of log-redundancies — through the gravity
 recognition and the standing witness
@@ -2790,7 +2767,7 @@ theorem twoSector_cgf_bilinear_pos :
   rwa [twoSectorAction.gravityDefect_eq_cgf twoSectorMap twoSectorMap
     twoSectorMap_surjective twoSectorMap_surjective] at h
 
-/-- **THE IMPOSSIBILITY** (G9): there is no linear currency — the
+/-- **THE IMPOSSIBILITY**: there is no linear currency — the
 cumulant functional is not additive in the observable, witnessed by
 the two-sector data through the strict additivity defect. -/
 theorem cgf_not_additive :
