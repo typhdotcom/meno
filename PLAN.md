@@ -898,7 +898,7 @@ from the program with prejudice (recorded in the Disposition table).
 `LoopKernel.lean` is retained -- it has consumers (`SectorPresentation`,
 `Groupoid`).
 
-### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21, #23, #25 receipt, RECLOSED Phases 54, 57, 59, 61)
+### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21, #23, #25, #26 receipt, RECLOSED Phases 54, 57, 59, 61, 62)
 
 Three standing requirements, all met:
 
@@ -5239,3 +5239,35 @@ resolving; no deleted name cited). The substantive-review leg pends
 resubmission. Cumulative: twenty-five reviews, one hundred one
 findings, one hundred one confirmed and repaired; two acceptances
 (Phases 56, 60).
+
+## Phase 62 addendum: twenty-sixth external review (the second gatekeeper) — Phase 61 verified at source; one finding, one confirmed, one repaired; THE MIRROR'S SHADOW (2026-07-19)
+
+Review #26 verified every Phase-61 repair at source and reproduced
+every claim of its report — the excision complete, the kept
+substrate live, `complexity_gravity` byte-identical in statement,
+`counting_gravity` on the prescribed route with nonemptiness
+derived rather than assumed, the certificate re-derivation, the
+groupoid cascade with its claimed survivors genuinely live, and
+every document restatement — then returned **REJECT on one residue
+in the excision's blast radius**. Per C12.1 (duplication without
+identification, its original now deleted) the conjunction reopened
+at receipt; C9's acceptance content is untouched by the finding and
+stays closed. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| F5 | **The groupoid sigma sub-layer was a consumerless mirror of the deleted framework, and Phase 61 rewrote its narrative instead of sweeping it**: eleven declarations (Groupoid.lean ~302–620) forming a closed dependency component — `sigmaPartFn`/`sigmaComplexity` read only by the bounds; `partFn_eq_exp_complexity`, `sigmaPartFn_pos`, `sigmaComplexity_equiv`, `sigmaComplexity_le_logCard_max`, `sigmaComplexity_sigma_le_logCard_max` read only inside the component; terminals `sigmaComplexity_pullback_le_logCard_maxFiber` (the excised refactoring bound restated for groupoid objects), `sigmaComplexity_prod_family_le_logCard_max_split`, `sigmaComplexity_ge_sup` read by **nothing** — no external file, no README citation, no certificate field. Its stated purpose was the mirror table Phase 61 deleted; the legacy-layer policy does not protect it (no spine object derived, no identification proved). Phase 61's rewritten section docstring gave it a fresh justification comparing it to a type-level measure the same commit deleted — narrative written over dead code, violating the Phase-58 sweep amendment (invoked for the trivial/congr cascade, then stopped) and the spirit of Phase 61's own certificate-badge rule | **CONFIRMED** — the dependency graph reproduced exactly: tree-wide grep shows the component confined to Groupoid.lean, internally closed, three unread terminals; zero mentions in README or PLAN Part I | **The closed component deleted** — all eleven declarations, in two contiguous blocks (302–509, 555–628), flush against the live neighbors. Kept, consumers re-verified: `GroupoidObj.Equiv`, `prod_summable`, `GroupoidObj.prod`, `groupoidObj_prod_partFn`, `GroupoidObj.prod_complexity`, `groupoidComplexity_prod`, and the `toLoopKernelObj`/geodesic/duality-facing API. The section docstring rewritten to state only what remains and who consumes it (the product law and `Equiv`, read by `Meno/Duality.lean`) — no capacity-bound narrative survives, since no capacity bound does. The sweep this time reached the file header too: its "trivial/congruence/product laws" line — stale since Phase 61's own cascade — truthed to the product law alone |
+
+**Discipline check.** C12 REOPENED at review #26 receipt (C12.1),
+RECLOSED this phase by the deletion; C9 stays closed — its
+acceptance content is untouched. The certificate is untouched
+(nothing it pins is affected) and needs no re-derivation; the
+review's positive verifications of Phase 61 are recorded above per
+rule 1. `lake build Meno` green (3349 jobs, 33 source files), zero
+`sorry`, zero `axiom`, zero warnings; zero `sigma*` references
+remain in the tree. The substantive-review leg pends resubmission —
+the review's own closing: the resubmission "has nothing else
+standing between it and acceptance that this review can see."
+Cumulative: twenty-six reviews, one hundred two findings, one
+hundred two confirmed and repaired; two acceptances (Phases 56,
+60).
