@@ -279,9 +279,10 @@ theorem theta_bindingEnergy :
   norm_num
 
 /-- Attraction, stated as an inequality: the joint sector is strictly
-cheaper than its parts — **the sign criterion's strictness instance**
-(G6 demotion, transitively through `theta_interaction`): the theta
-cycles overlap with `⟨c₁,c₂⟩ = 2 > 0`, so binding is attraction. -/
+cheaper than its parts — **the closed form's instance at the
+Gram-data level** (demoted at G6, transitively through
+`theta_interaction`). The criterion's own strictness witness is
+`theta_binding_attractive_class`. -/
 theorem theta_binding_attractive :
     thetaHarmonicGramData.energy (![1, 0] + ![0, 1])
       < thetaHarmonicGramData.energy ![1, 0]
@@ -289,6 +290,22 @@ theorem theta_binding_attractive :
   have h := theta_bindingEnergy
   unfold HarmonicGramData.bindingEnergy at h
   linarith
+
+/-- **THE CRITERION'S STRICTNESS WITNESS** (G6): the intrinsic
+binding energy of the theta classes is positive — the cycles overlap
+with `⟨c₁,c₂⟩ = 2 > 0`, and the sign criterion forces attraction.
+Proved through the iff's constructive direction
+(`binding_attractive_iff`), load-testing the criterion, the chart
+identity, and the intrinsic definition in one statement. -/
+theorem theta_binding_attractive_class :
+    0 < thetaGraph.bindingEnergyClass
+        (thetaGraph.h1Basis thetaLatticeBasis 0)
+        (thetaGraph.h1Basis thetaLatticeBasis 1) := by
+  refine (thetaGraph.binding_attractive_iff thetaLatticeBasis).mpr ?_
+  rw [cyclesR_thetaLatticeBasis,
+    show thetaCycles 0 ⬝ᵥ thetaCycles 1 = gramOf thetaCycles 0 1 from rfl,
+    gramOf_thetaCycles]
+  norm_num
 
 
 end Binding

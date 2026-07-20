@@ -19,10 +19,14 @@ is positive (`ofCycles_interaction_fin_two`,
   of the statement: `bindingEnergyClass` is defined on the intrinsic
   classes through `harmonicEnergy`, and **every** basis chart
   computes it (`bindingEnergyClass_chart`).
-* **The strictness witness** is the theta graph
-  (`Meno/ThetaHarmonic.lean`): `⟨c₁,c₂⟩ = 2`, `det = 12` —
-  `theta_interaction` and `theta_binding_attractive` are re-derived
-  as instances of the closed form (demotion, PLAN rule 3).
+* **The strictness witness** (`theta_binding_attractive_class`,
+  `Meno/ThetaHarmonic.lean`): the intrinsic binding of the theta
+  classes is positive — `⟨c₁,c₂⟩ = 2 > 0` forces attraction through
+  the criterion's own iff.
+* **The demotion** (PLAN rule 3): `theta_interaction` and
+  `theta_binding_attractive` are re-derived as instances of the
+  closed form — `⟨c₁,c₂⟩ = 2`, `det = 12`; the literal-matrix route
+  is retired.
 * **The boundary witness** (`wedge_binding_zero`): the wedge's basis
   cycles share no edge, the overlap is zero — disjoint matter does
   not bind. -/

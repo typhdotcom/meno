@@ -369,9 +369,12 @@ form: interaction `= −⟨c₁,c₂⟩ / det`
 consistent orientation**, with the left side the intrinsic binding
 energy of the classes.
 
-**The strictness witness.** Theta: `⟨c₁,c₂⟩ = 2`, `det = 12` —
+**The strictness witness.** Theta: `⟨c₁,c₂⟩ = 2`, `det = 12` — the
+criterion's own strictness anchor is
+`theta_binding_attractive_class` (`0 < bindingEnergyClass` at the
+theta classes, through the iff's constructive direction);
 `theta_interaction` and `theta_binding_attractive` re-derived as
-instances (rule 3).
+closed-form instances (rule 3).
 
 **The boundary witness.** The wedge: `⟨c₁,c₂⟩ = 0`
 (`gramOf_wedgeCycles` diagonal) — disjoint matter does not bind;
@@ -496,7 +499,7 @@ completion object — no coverage bundle, no review chronology.
 | G3 arithmetic gravity | — | **OPEN** |
 | G4 symmetry no-go | impossibility `cycle_no_invariant_representative`; law `cycle_equivariant_section_iff`; strictness `cycle_four_two_no_equivariant_section`, `cycle_four_two_no_invariant_representative`; boundary `cycle_three_two_equivariant_section` | **CLOSED** |
 | G5 non-uniform time | laws `lift_complexity` (G2) + `sectionCost_eq_sum_log_fiberCount`; Jensen `lift_complexity_ge_gibbs_log_rate` with boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; demotion `sectionCost_uniformLift` to the constant-redundancy chart; impossibility `sectionCostE_eq_zero_iff` (standing, restated) | **CLOSED** |
-| G6 binding sign | closed form `ofCycles_interaction_fin_two` / `ofCycles_bindingEnergy_fin_two`; iff `binding_attractive_iff` on the intrinsic `bindingEnergyClass` (invariance via `bindingEnergyClass_chart`); strictness `theta_interaction` / `theta_binding_attractive` demoted to instances; boundary `wedge_binding_zero` | **CLOSED** |
+| G6 binding sign | closed form `ofCycles_interaction_fin_two` / `ofCycles_bindingEnergy_fin_two`; iff `binding_attractive_iff` on the intrinsic `bindingEnergyClass` (invariance via `bindingEnergyClass_chart`); strictness `theta_binding_attractive_class` (the criterion's own anchor), with `theta_interaction` / `theta_binding_attractive` demoted to closed-form instances; boundary `wedge_binding_zero` | **CLOSED** |
 | G7 dichotomy | — | **OPEN** |
 | G8 self-reference | — | **OPEN** |
 | R README rewrite | — | **OPEN** |
