@@ -40,10 +40,10 @@ basis-coordinate quadratic action is a form-preserving chart of it
 (`chartAction_h1Basis`).
 
 **Sharing (gravity).** When two descriptions couple over a shared
-base, encoding the base once is cheaper, and the savings equal
-exactly the base's complexity. Gravity is that identity — one priced
-theorem, with a structured proof through the decomposition of
-coupling and lift over the base; counting is its zero-energy special
+base, encoding the base once is cheaper — and the defect from
+exactness is the log-correlation of the two descriptions' redundancy
+profiles (`gravity_defect`). Sharing saves exactly the base
+precisely at zero covariance; counting is the zero-energy special
 case.
 
 **Obstruction (matter).** A nonzero cohomology class is locally
@@ -273,7 +273,7 @@ whose losses are priced in one currency.
 | Result | Statement |
 | :--- | :--- |
 | `SectorAction.complexity_gravity` | **The gravity theorem**: `K(coupling) + K(base) = K(lift) + K(lift)` (`Meno/InfoRatchet.lean`) |
-| `coupling_energyEquiv`, `uniformLift_energyEquiv` | The decompositions behind the structured proof: `coupling ≈ base ⊗ (free ⊗ free)`, `lift ≈ base ⊗ free` — read through `SectorAction.EnergyEquiv` and `complexity_congr`, closed by `complexity_prod` |
+| `coupling_energyEquiv`, `uniformLift_energyEquiv` | Energy-level decompositions of the constant-fiber constructions: `coupling ≈ base ⊗ (free ⊗ free)`, `lift ≈ base ⊗ free` — read through `SectorAction.EnergyEquiv` and `complexity_congr`; retained as structure, the former proof route of `complexity_gravity`, retired at G2 |
 | `partFn_gravity` | The partition-function form — the exponential of the complexity form |
 | `counting_gravity` | **Counting is the zero-energy corollary**: `log \|X ×_D Y\| + log \|D\| = log \|X\| + log \|Y\|` for uniform-fiber maps into a finite shared base — the gravity theorem instantiated at `uniformAction D` |
 | `uniformAction` | A finite type as a sector lattice with zero energy — `Z = \|A\|`, `K = log \|A\|` (`uniformAction_partFn`, `uniformAction_complexity`, `Meno/UniformAction.lean`) |
