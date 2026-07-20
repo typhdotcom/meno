@@ -216,6 +216,21 @@ action, not only against counts (`Meno/InfoRatchet.lean`,
 | `twoSector_jensen_gap_pos` | **The strictness** (G5): at the two-sector witness the Jensen gap is strictly positive |
 | `SectorAction.sectionCost_uniformLift` | **The constant-redundancy chart** (demoted at G5, rule 3): `sectionCost f / \|Λ\| = K(uniformLift) − K(base)` — both sides collapse to `log m` at constant fibers |
 
+### Self-reference
+
+The diagonal corner (G8): **no description system enumerates its own
+binary predicates, and the shortfall is priced.** The scope is stated
+plainly: this is the Lawvere/Cantor core in Meno's vocabulary — the
+fixed-point-free diagonal on `ZMod 2`-valued predicates — not a
+formalization of the incompleteness theorems (`Meno/Diagonal.lean`).
+
+| Result | Statement |
+| :--- | :--- |
+| `no_self_enumeration` | **The impossibility** (G8): for every type `A`, in every universe, with no finiteness hypothesis, there is no surjection `A → (A → ZMod 2)` — the direct diagonal |
+| `descriptionCost_split` | **The exact law** (G8): on a nonempty finite carrier the forward cost of a binary predicate is the enumerable budget plus its own correction term — `descriptionCost f = log \|A\| + log (\|A → ZMod 2\| / \|A\|)` |
+| `log_card_lt_descriptionCost` | **The strictness — the cost corollary** (G8): the correction term is strictly positive at every nonempty finite carrier — `log \|A\| < descriptionCost f` — derived through the counting shadow of the diagonal itself, not from an independent numeric bound |
+| `log_card_eq_descriptionCost_iff` | **The boundary** (G8): budget equals price **iff** the carrier is empty — the shortfall vanishes exactly where there is nothing to describe |
+
 ### Symmetry
 
 The no-go face (G4): descriptions exist and are priced (K1–K3), and a
@@ -481,6 +496,7 @@ Meno/
 ├── InfoRatchet.lean           Fiber information; the coding theorem; THE GRAVITY THEOREM and its counting corollary; finite distributions
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
+├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine
 ├── CycleHarmonic.lean         Flagship bridge: walk route ≡ period route; T-duality on C_n

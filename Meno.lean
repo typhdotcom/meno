@@ -42,6 +42,9 @@ import Meno.Symmetry
 -- Arithmetic gravity on the resolution tower (G3)
 import Meno.TowerGravity
 
+-- Self-reference: the diagonal corner (G8)
+import Meno.Diagonal
+
 -- Concrete consumers of the whole stack
 import Meno.WedgePresentation
 import Meno.ThetaHarmonic

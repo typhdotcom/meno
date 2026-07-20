@@ -441,7 +441,7 @@ replaced by the dichotomy.
 failure is its face's falsification with the consequence prescribed
 at that face.
 
-### G8 — Self-reference (the diagonal corner) — OPEN
+### G8 — Self-reference (the diagonal corner) — CLOSED (Meno/Diagonal.lean)
 
 The diagonal kernel of the stake, exactly this and no more:
 
@@ -453,11 +453,27 @@ theorem no_self_enumeration (A : Type u) :
 by the direct diagonal (`g a := e a a + 1`; a preimage of `g`
 yields `0 = 1` in `ZMod 2`), with the cost corollary
 `Real.log (Nat.card A) < descriptionCost f` for any
-`f : A → ZMod 2` on a nontrivial finite `A`: **no description
-system enumerates its own binary predicates, and the shortfall is
-priced.** Scope stated plainly: this is the Lawvere/Cantor core in
-Meno's vocabulary, not a formalization of the incompleteness
-theorems.
+`f : A → ZMod 2` on a nonempty finite `A` (delivered above the
+planned nontrivial ceiling, rule 2 — nonempty is the exact
+frontier): **no description system enumerates its own binary
+predicates, and the shortfall is priced.** Scope stated plainly:
+this is the Lawvere/Cantor core in Meno's vocabulary, not a
+formalization of the incompleteness theorems.
+
+**The anchors as delivered.** The impossibility is the diagonal
+verbatim (`no_self_enumeration` — every type, every universe, no
+finiteness hypothesis). The exact law is the split
+`descriptionCost f = log |A| + log (|A → ZMod 2| / |A|)`
+(`descriptionCost_split`), whose correction term is the log-ratio
+of the predicate space to the carrier. The strictness is the cost
+corollary itself (`log_card_lt_descriptionCost`) — the correction
+term strictly positive at every nonempty finite carrier — proved
+through the counting shadow of the diagonal (were the predicate
+space no larger than the carrier, a finite retraction would produce
+the forbidden surjection), not from an independent numeric bound.
+The boundary is equality iff the carrier is empty
+(`log_card_eq_descriptionCost_iff`): the price collapses to the
+enumerable budget exactly where there is nothing to describe.
 
 **Falsification:** none (the diagonal is unconditional).
 
@@ -511,5 +527,5 @@ completion object — no coverage bundle, no review chronology.
 | G5 non-uniform time | laws `lift_complexity` (G2) + `sectionCost_eq_sum_log_fiberCount`; Jensen `lift_complexity_ge_gibbs_log_rate` with boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; demotion `sectionCost_uniformLift` to the constant-redundancy chart; impossibility `sectionCostE_eq_zero_iff` (standing, restated) | **CLOSED** |
 | G6 binding sign | closed form `ofCycles_interaction_fin_two` / `ofCycles_bindingEnergy_fin_two`; iff `binding_attractive_iff` on the intrinsic `bindingEnergyClass` (invariance via `bindingEnergyClass_chart`); strictness `theta_binding_attractive_class` (the criterion's own anchor), with `theta_interaction` / `theta_binding_attractive` demoted to closed-form instances; boundary `wedge_binding_zero` | **CLOSED** |
 | G7 dichotomy | — | **OPEN** |
-| G8 self-reference | — | **OPEN** |
+| G8 self-reference | impossibility `no_self_enumeration` (every type, every universe, no finiteness); law `descriptionCost_split` (budget + log-ratio correction term); strictness — the cost corollary — `log_card_lt_descriptionCost` (correction positive at every nonempty finite carrier, via the diagonal's counting shadow); boundary `log_card_eq_descriptionCost_iff` (equality iff empty carrier) | **CLOSED** |
 | R README rewrite | — | **OPEN** |
