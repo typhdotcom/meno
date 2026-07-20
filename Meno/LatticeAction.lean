@@ -247,9 +247,6 @@ noncomputable def formExt : (ℝ ⊗[ℤ] Q.Λ) →ₗ[ℝ] (ℝ ⊗[ℤ] Q.Λ) 
 theorem formExt_posDef (x : ℝ ⊗[ℤ] Q.Λ) (hx : x ≠ 0) : 0 < Q.formExt x x :=
   Q.posDef_baseChange x hx
 
-theorem form_add_right (a b₁ b₂ : Q.Λ) :
-    Q.form a (b₁ + b₂) = Q.form a b₁ + Q.form a b₂ := by
-  rw [Q.form_comm, Q.form_add_left, Q.form_comm b₁ a, Q.form_comm b₂ a]
 
 theorem form_zero_left (b : Q.Λ) : Q.form 0 b = 0 := by
   have h := Q.form_add_left 0 0 b
@@ -793,10 +790,6 @@ inverse is the identity. -/
 @[simp] theorem symm_symm (e : Q.Equiv Q') : e.symm.symm = e :=
   ext (by ext x; rfl)
 
-/-- **Rank invariance.** -/
-theorem rank_eq (e : Q.Equiv Q') : Q.rank = Q'.rank := by
-  show Module.finrank ℤ Q.Λ = Module.finrank ℤ Q'.Λ
-  exact e.toLinearEquiv.finrank_eq
 
 /-- **Energy invariance** — the diagonal of `form_eq`. -/
 theorem energy_eq (e : Q.Equiv Q') (a : Q.Λ) :
@@ -897,25 +890,6 @@ theorem partFn_dualDual :
     Q.dual.dual.toSectorAction.partFn = Q.toSectorAction.partFn :=
   (Q.dualDual).partFn_eq.symm
 
-/-- **Dual-double naturality** (review #11): the involution commutes
-with every form-preserving equivalence — reflexivity is natural. -/
-theorem dualDual_naturality {Q' : QuadLatticeAction.{u}} (e : Q.Equiv Q') :
-    (Q.dualDual).trans e = (e.dual.dual).trans Q'.dualDual := by
-  refine Equiv.ext ?_
-  refine LinearEquiv.toLinearMap_injective ?_
-  ext x
-  show e.toLinearEquiv ((Module.evalEquiv ℤ Q.Λ).symm x)
-    = (Module.evalEquiv ℤ Q'.Λ).symm
-        (e.toLinearEquiv.dualMap.dualMap x)
-  apply (Module.evalEquiv ℤ Q'.Λ).injective
-  rw [LinearEquiv.apply_symm_apply]
-  have h := Module.Dual.eval_comp_comp_evalEquiv_eq
-    (f := e.toLinearEquiv.toLinearMap)
-  have hx := congrArg (fun L => L x) h
-  simp only [LinearMap.coe_comp, Function.comp_apply,
-    LinearEquiv.coe_coe] at hx
-  rw [Module.evalEquiv_apply]
-  exact hx
 
 /-- **The reciprocal-discriminant law** (review #10):
 `disc(Q^∨) = π^{2·rank} / disc(Q)`. -/
@@ -1369,15 +1343,6 @@ theorem meanEnergy_one :
     = ∑' a, Q.form a a * Q.toSectorAction.gibbsMass a
   rw [Q.scaledSector_one_gibbsMass]
 
-/-- **`β = 1` recovers the Gibbs variance** (review #17). -/
-theorem scaledSector_one_gibbsVariance :
-    (Q.scaledSector 1 one_pos).gibbsVariance (fun a => Q.form a a)
-      = Q.toSectorAction.gibbsVariance (fun a => Q.form a a) := by
-  show (∑' a, Q.form a a ^ 2 * (Q.scaledSector 1 one_pos).gibbsMass a)
-      - (∑' a, Q.form a a * (Q.scaledSector 1 one_pos).gibbsMass a) ^ 2
-    = (∑' a, Q.form a a ^ 2 * Q.toSectorAction.gibbsMass a)
-      - (∑' a, Q.form a a * Q.toSectorAction.gibbsMass a) ^ 2
-  rw [Q.scaledSector_one_gibbsMass]
 
 /-- **Scaled-moment invariance under equivalence** (review #17): a
 form-preserving equivalence preserves the β-scaled partition

@@ -529,7 +529,7 @@ fixing a representative for **every** class at once
 zero-of-injective lemma survive with explicit junk-value caveats in
 their docstrings; no theorem statement was weakened.
 
-### C9 -- Gravity and the ratchet through SectorAction — CLOSED (Phase 36; REOPENED at reviews #18, #21, #25 receipt, RECLOSED Phases 54, 57, 61)
+### C9 -- Gravity and the ratchet through SectorAction — CLOSED (Phase 36; REOPENED at reviews #18, #21, #25, #28 receipt, RECLOSED Phases 54, 57, 61, 64)
 
 **Delivered.** **There is one gravity theorem** (reviews #21, #25):
 `SectorAction.complexity_gravity` (`Meno/InfoRatchet.lean`) —
@@ -898,7 +898,7 @@ from the program with prejudice (recorded in the Disposition table).
 `LoopKernel.lean` is retained -- it has consumers (`SectorPresentation`,
 `Groupoid`).
 
-### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21, #23, #25, #26, #27 receipt, RECLOSED Phases 54, 57, 59, 61, 62, 63)
+### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21, #23, #25, #26, #27, #28 receipt, RECLOSED Phases 54, 57, 59, 61, 62, 63, 64)
 
 Three standing requirements, all met:
 
@@ -5294,3 +5294,70 @@ warnings — unchanged from Phase 62, as it must be. The
 substantive-review leg pends resubmission. Cumulative: twenty-seven
 reviews, one hundred three findings, one hundred three confirmed
 and repaired; two acceptances (Phases 56, 60).
+
+## Phase 64 addendum: twenty-eighth external review (the second gatekeeper) — four findings, four confirmed, four repaired; THE REACHABLE TREE (2026-07-20)
+
+Review #28 verified the Phase-61 excision correct on the kept side —
+the pullback substrate live, `complexity_gravity` byte-identical —
+and returned **REJECT** on four findings: the inversion rebuilt one
+level down (F1), the hierarchy-axioms mirror still standing (F2),
+the one-level-deep consumer-verification method itself (F3), and
+three documentation claims the math does not support (F4). Every
+claim verified at source before repair (rule 1). The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| F1 | **`counting_gravity`'s only reader was the certificate** (Completion.lean:375/425) while its natural consumer existed and was wired to a different proof: `carrier_gravity_complexity` (ResolutionCount.lean:1946) — literally `counting_gravity` at the compression — was proved by `carrier_gravity_entropy` plus three bridge splits plus `linarith`, with the exact instantiation pattern (`Nat.card_pos`, `card_carrierCompression_fiber`) sitting nineteen lines above in `carrier_gravity_entropy`. A parallel construction, one level down from the one Phase 61 removed | **CONFIRMED** — grep showed the certificate as the sole reader; the entropy-route proof and the in-scope hypotheses verified at the cited lines | `carrier_gravity_complexity` re-proved as `counting_gravity` at `G.carrierCompression q` with `Nat.card_pos` and `card_carrierCompression_fiber`, closing with `uniformAction_complexity` rewrites and `Nat.card_eq_fintype_card` — `counting_gravity` now has its model consumer. The deficit-cancellation content stated as its own theorem, **`carrier_gravity_deficits_cancel`** (the uniform-entropy deficits at all three levels are the same `Δ` and cancel across the identity — from the three bridge splits), with a README row. The ResolutionCount docstring corrected (it had said "nothing left to corroborate", false after Phase 61); the README carrier row names the route |
+| F2 | **The groupoid product chain and the `GroupoidObj.dual` component were dead transitively**: `groupoidComplexity_prod → GroupoidObj.prod_complexity → rank_complexity_bound → ∅` (zero readers, zero citations, zero certificate fields — the surviving row of the table Phase 62 deleted); `GroupoidObj.Equiv`'s three readers all unread terminals; the whole dual component (`dual`, `dual_partFn`, `dual_dual_equiv`, `quadraticObj_dual_equiv`, `self_dual`, `dual_pair_variational`) closed and unreachable, a groupoid-side mirror of the spine's dual with **no identification proved** — so the legacy-layer rationale does not cover it. Groupoid.lean:116's "keeps exactly what downstream code consumes" was false | **CONFIRMED** — every named declaration verified zero-consumer by hand-grep and by the sweep (F3) | All named declarations deleted, plus the cascade the sweep exposed: `GroupoidObj.meanEnergy_T_dual` and `gibbsExpect_wind_sq_eq` (dual-component stragglers surviving only by name-collision with the live bundle theorem), `groupoidComplexity`, `GroupoidObj.complexity`, and the legacy `dualityFlow` def (zero readers each). Groupoid.lean's header and section docstrings rewritten to what survives; Duality.lean's header rewritten to the consumed scalar theory |
+| F3 | **The consumer-verification method was one level deep and kept failing** — reviews #25/#26/#27/#28 each found residue the previous pass missed, because a by-name grep answers "is this read?" and never "is its reader read?". Work order: a transitive reachability sweep tree-wide; roots = README-cited results; certificate fields are not roots; every unreachable declaration deleted or retained under an explicitly stated predicate; survivors enumerated | **CONFIRMED** — and the verified scale exceeded the reviewer's estimate ("roughly forty in Groupoid/Duality/Hodge/Zeta/CycleHarmonic alone"): the sweep, with comments stripped so docstring mentions are not readers, found **hundreds** of unreachable declarations tree-wide, including 18 more certificate-only targets (the F1 class, times eighteen: `theta_gauge_count`, `spanning_of_card_eq_b1`, `wedge_exists_matter`, …), whole superseded proof routes (the scalar differentiation cluster abandoned by reviews #15–#17, the jacobiTheta duality route superseded by Poisson summation, the pre-spine walk-model chapters), and entirely unclaimed developments (all of Zeta.lean) | **The sweep executed tree-wide.** Retention ran through public claims first: the 18 certificate-only targets are acceptance results and received the README rows they should always have had; the ζ functional equation and ζ(3) flagships, the jacobiTheta identification with its two-tradition duality corroboration, the spine self-dual/duality-flow family (with its honest negative `exists_dualityFlow_eq_zero_not_selfDual`), the theta binding-attraction trio, and the groupoid→spine bridge identifications were claimed as the public results they are — each statement read at source before its row was written. Everything else unreachable was **deleted: 329 declarations, ~3,500 lines, across 25 files** — the complete name-by-name record is `scripts/deleted.txt` (Phase 64 section), machine-checked against the tree at every audit. Three deletions were reverted on build/audit evidence of real readers invisible to the textual graph and are recorded as live: `mem_of_smul_mem` and `h1Reduction_nsmul_eq_zero` (read from *anonymous instances*, which are consumed by elaboration and now count as roots) and `cochainQuotEquivR` (certificate-assigned through an anonymous constructor, now claimed in README's real-keystone row). End state, machine-checked: **1212 named model declarations — 1184 reachable from public claims, 28 elaboration-retained (instances and `@[simp]`/`@[ext]` lemmas, enumerated by the audit), 0 unreachable; every certificate assignment target model-live** |
+| F4 | **Documentation the math does not support**: (a) README's "four machine legs are re-checked by every build" — no checker existed; a build checks two legs; (b) "physical content carried by the decomposition theorems" (README and InfoRatchet.lean) — `complexity_gravity` follows in two rewrites from the independently proved `coupling_complexity` and `uniformLift_complexity`, so the decomposition is a structured proof, not the sole carrier; (c) Groupoid.lean:116 false per F2 | **CONFIRMED** — lakefile has one target, no scripts existed; the two independent evaluations verified at InfoRatchet.lean:1708/1874 | (a) Both arms of the order's disjunction: the README sentence corrected — a build checks two legs; the import-DAG, recorded-deletion, citation, and reachability legs are review obligations machine-assisted by **`scripts/audit.py`** (new, committed: citations resolve, deletions stay deleted, architecture matches the tree, reachability from public claims, certificate targets model-live) — and the checker written. (b) Both texts restated: the decomposition is the structure of the proof, not a dependency of the fact. (c) Fixed in F2's rewrite |
+
+**The sweep, recorded.** Roots: the 317 backticked identifiers of
+README (all resolving), plus anonymous instances (elaboration-live).
+Edges: identifier tokens in comment-stripped declaration spans —
+docstring mentions are **not** readers; qualified-suffix, prefix,
+and projection-notation matching, conservative toward liveness.
+Certificate fields are not roots (Phase-61 rule, now mechanized:
+Completion.lean contributes no edges, and its assignment targets are
+separately checked model-live). Retention predicates, applied: a
+declaration lives iff it is **publicly claimed** (a README row),
+**transitively feeds a public claim**, or is **consumed by
+elaboration** (instances, `@[simp]`/`@[ext]` lemmas — 28, enumerated
+by the audit run). The legacy-layer predicate — derives a spine
+object or proves an identification with one — is enforced through
+the claims: the identifications *are* the claimed rows
+(`cycleCanonicalObj_partFn_eq_partitionFn`,
+`cycleLoopKernel_partFn_eq_partitionFn`,
+`cycleSectorPresentation_partFn_eq_gramData`,
+`cycleCanonicalObj_T_duality`, `cycleLoopKernel_dualVia_partFn`,
+`scalarPartFn_eq_jacobiTheta`, `meno_mellin`,
+`meno_zeta_functional_equation_real`,
+`riemannZeta_three_eq_meno_spectral_integral`, …). Docstring
+truthing followed the deletions: every killed name was grepped
+against the tree, and the dozen stale narrative sites (including
+three hollowed-out file headers — Duality, Hodge, Simplicial — and
+thirteen empty section headers) were rewritten to what exists.
+
+**Rule-3 amendments.** (1) **Liveness is transitive and machine
+checked**: `scripts/audit.py` runs at every review; "is it read?"
+is never again answered one level deep. (2) **The README table is
+the retention mechanism**: to keep a result is to claim it publicly,
+where substantive review can judge it — retention by prose rationale
+alone is retired. (3) **Deletion records are machine-checkable
+artifacts** (`scripts/deleted.txt`), not prose cells: the Phase-63
+class of record defect (a deletion the ledger did not know about)
+is now caught by audit leg 2, and this phase's record was generated
+from the executed kill list, not from the prescription.
+
+**Discipline check.** C9 REOPENED at receipt (F1 touches the gravity
+branch), RECLOSED on the rewire — `counting_gravity` consumed in the
+model, the deficit cancellation stated as content, statements
+byte-identical. C12 REOPENED at receipt (Part-I files, the README,
+and the closure legs all touched), RECLOSED on the sweep's end
+state. **The certificate is untouched** — no field added, removed,
+or reassigned; every assignment target verified model-live.
+`lake build Meno` green (3349 jobs, 33 source files), zero `sorry`,
+zero `axiom`, zero warnings; `scripts/audit.py` **PASS** on all four
+legs. The substantive-review leg pends resubmission. Cumulative:
+twenty-eight reviews, one hundred seven findings, one hundred seven
+confirmed and repaired; two acceptances (Phases 56, 60).

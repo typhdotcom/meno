@@ -39,17 +39,6 @@ open MeasureTheory Set Real QuadraticAction
     avoid the `1/0³ = 0` case. -/
 noncomputable def aperyConst : ℝ := ∑' k : ℕ, 1 / ((k : ℝ) + 1) ^ 3
 
-private lemma summable_apery : Summable (fun k : ℕ => 1 / ((k : ℝ) + 1) ^ 3) := by
-  have h : Summable (fun n : ℕ => 1 / (n : ℝ) ^ 3) :=
-    Real.summable_one_div_nat_pow.mpr (by norm_num : (1:ℕ) < 3)
-  have hshift : Summable (fun k : ℕ => 1 / ((k + 1 : ℕ) : ℝ) ^ 3) :=
-    (summable_nat_add_iff 1).mpr h
-  exact hshift.congr fun k => by push_cast; rfl
-
-theorem aperyConst_pos : 0 < aperyConst := by
-  refine summable_apery.tsum_pos (fun k => ?_) 0 ?_
-  · positivity
-  · norm_num
 
 /-- Our real-valued `aperyConst` matches Mathlib's `riemannZeta 3` after casting to ℂ. -/
 theorem aperyConst_eq_riemannZeta_three :
@@ -297,83 +286,6 @@ theorem dual_partFn_sub_one_eq_residual (α : ℝ) (hα : 0 < α) :
   rw [hsqrt] at h
   rw [h]; ring
 
-/-- Change of variables `α = π²/β` in the Meno Mellin integrand. Decomposes
-    into the rpow-inversion `α ↦ α⁻¹` (via `integral_comp_rpow_Ioi` at `p = -1`)
-    composed with the scaling `α ↦ π² · α` (via `integral_comp_mul_left_Ioi`).
-    No duality used — this is a pure measure-theoretic substitution. -/
-private lemma menoMellin_cov_pi_sq {s : ℝ} :
-    menoMellin s = Real.pi ^ (2 * s) *
-      ∫ β in Ioi 0, (scalarPartFn (Real.pi ^ 2 / β) - 1) * β ^ (-s - 1) := by
-  have hpi_pos : (0 : ℝ) < Real.pi := Real.pi_pos
-  have hpi2_pos : (0 : ℝ) < Real.pi ^ 2 := sq_pos_of_pos hpi_pos
-  have hpi2_ne : (Real.pi ^ 2 : ℝ) ≠ 0 := ne_of_gt hpi2_pos
-  have hscale := MeasureTheory.integral_comp_mul_left_Ioi
-    (fun α => (scalarPartFn α - 1) * α ^ (s - 1)) 0 hpi2_pos
-  simp only [mul_zero, smul_eq_mul] at hscale
-  have hinv := MeasureTheory.integral_comp_rpow_Ioi
-    (g := fun y => (scalarPartFn (Real.pi ^ 2 * y) - 1) * (Real.pi ^ 2 * y) ^ (s - 1))
-    (p := -1) (by norm_num : (-1 : ℝ) ≠ 0)
-  simp only [abs_neg, abs_one, one_mul, smul_eq_mul] at hinv
-  have hmellin : menoMellin s = Real.pi ^ 2 *
-      ∫ x in Ioi 0, x ^ ((-1 : ℝ) - 1) *
-        ((scalarPartFn (Real.pi ^ 2 * x ^ ((-1 : ℝ))) - 1) *
-         (Real.pi ^ 2 * x ^ ((-1 : ℝ))) ^ (s - 1)) := by
-    unfold menoMellin
-    rw [hinv, hscale]
-    field_simp
-  rw [hmellin, ← integral_const_mul, ← integral_const_mul]
-  refine setIntegral_congr_ae measurableSet_Ioi ?_
-  filter_upwards with x hx
-  have hxpos : (0 : ℝ) < x := hx
-  have hxnn : (0 : ℝ) ≤ x := hxpos.le
-  have h1 : x ^ ((-1 : ℝ)) = x⁻¹ := Real.rpow_neg_one x
-  rw [h1]
-  have h2 : Real.pi ^ 2 * x⁻¹ = Real.pi ^ 2 / x := by rw [div_eq_mul_inv]
-  rw [h2]
-  set Z := scalarPartFn (Real.pi ^ 2 / x) - 1
-  have h3 : (Real.pi ^ 2 / x) ^ (s - 1) =
-            Real.pi ^ (2 * (s - 1)) * x ^ (-(s - 1)) := by
-    rw [Real.div_rpow hpi2_pos.le hxnn, div_eq_mul_inv, ← Real.rpow_neg hxnn,
-        show (Real.pi ^ 2 : ℝ) = Real.pi ^ ((2 : ℝ)) from (Real.rpow_two Real.pi).symm,
-        ← Real.rpow_mul hpi_pos.le]
-  rw [h3]
-  have h4 : x ^ ((-1 : ℝ) - 1) = x ^ ((-2) : ℝ) := by congr 1; ring
-  rw [h4]
-  have h5 : x ^ ((-2) : ℝ) * x ^ (-(s - 1)) = x ^ (-s - 1) := by
-    rw [← Real.rpow_add hxpos]; congr 1; ring
-  have h6 : (Real.pi ^ 2 : ℝ) * Real.pi ^ (2 * (s - 1)) = Real.pi ^ (2 * s) := by
-    rw [show (Real.pi ^ 2 : ℝ) = Real.pi ^ ((2 : ℝ)) from (Real.rpow_two Real.pi).symm,
-        ← Real.rpow_add hpi_pos]
-    congr 1; ring
-  calc Real.pi ^ 2 * (x ^ ((-2) : ℝ) * (Z * (Real.pi ^ (2 * (s - 1)) * x ^ (-(s - 1)))))
-      = (Real.pi ^ 2 * Real.pi ^ (2 * (s - 1))) * (Z * (x ^ ((-2) : ℝ) * x ^ (-(s - 1)))) := by
-        ring
-    _ = Real.pi ^ (2 * s) * (Z * x ^ (-s - 1)) := by rw [h5, h6]
-
-/-- **Meno-side duality representation of `menoMellin`**. Combines the CoV
-    `α = π²/β` with the pointwise T-duality identity to write `menoMellin s`
-    as a Mellin-like integral at exponent `−s` against the T-dual of `Z − 1`:
-    `menoMellin s = π^(2s) · ∫ (√(β/π)·(Z(β)−1) + (√(β/π)−1)) · β^(-s-1) dβ`.
-
-    This is an unconditional Lean Bochner equation — both sides are defined
-    as `MeasureTheory.integral` expressions that agree by measurable CoV
-    followed by pointwise a.e. duality. The classical-Mellin meaning of
-    either side requires `1/2 < s` (the regime where `meno_mellin` applies).
-
-    This representation is used as an intermediate in the Riemann 1859
-    split derivation (`menoMellin_split_at_pi`): the split at `β = π` of
-    its RHS produces the Meno-side FE after folding the `(0, π)` piece onto
-    `(π, ∞)` via a sub-interval CoV. -/
-theorem menoMellin_duality_representation {s : ℝ} :
-    menoMellin s = Real.pi ^ (2 * s) *
-      ∫ β in Ioi 0, (Real.sqrt (β / Real.pi) * (scalarPartFn β - 1) +
-                       (Real.sqrt (β / Real.pi) - 1)) * β ^ (-s - 1) := by
-  rw [menoMellin_cov_pi_sq]
-  congr 1
-  refine setIntegral_congr_ae measurableSet_Ioi ?_
-  filter_upwards with β hβ
-  have hβpos : (0 : ℝ) < β := hβ
-  rw [dual_partFn_sub_one_eq_residual β hβpos]
 
 /-- The spectral integral `∫(Z−1)·√α dα` is the Mellin transform at exponent `3/2`.
     This is the hinge: once this is known, every `s = 3/2` statement reduces to a
@@ -406,12 +318,6 @@ theorem zeta_three_eq_meno_integral :
   unfold aperyConst
   field_simp
 
-/-- Direct closed form: `menoSpectralIntegral = √π · ζ(3)`. -/
-theorem menoSpectralIntegral_eq_sqrt_pi_mul_aperyConst :
-    menoSpectralIntegral = Real.sqrt Real.pi * aperyConst := by
-  have hsqrt_pi_ne : Real.sqrt Real.pi ≠ 0 := (Real.sqrt_pos.mpr Real.pi_pos).ne'
-  rw [zeta_three_eq_meno_integral]
-  field_simp
 
 /-- **Complex headline**: `ζ(3) = (1/√π)·∫(Z−1)·√α dα` stated against Mathlib's
     `riemannZeta 3`. Composition of `aperyConst_eq_riemannZeta_three` with the

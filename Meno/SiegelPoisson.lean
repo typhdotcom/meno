@@ -122,16 +122,6 @@ private lemma gaussian_translate_le {M : Matrix (Fin d) (Fin d) ℝ}
   have hπc : (0 : ℝ) < Real.pi * c := mul_pos Real.pi_pos hc
   nlinarith [mul_le_mul_of_nonneg_left step2 hπc.le]
 
-/-- Pointwise summability of Gaussian translates over the lattice. -/
-theorem summable_gaussian_translates {M : Matrix (Fin d) (Fin d) ℝ}
-    (hM : M.PosDef) (x : Fin d → ℝ) :
-    Summable (fun n : Fin d → ℤ => gaussian M (x + fun i => (n i : ℝ))) := by
-  obtain ⟨c, hc, hcoer⟩ := hM.exists_coercivity
-  refine Summable.of_nonneg_of_le (fun n => (gaussian_pos M _).le)
-    (fun n => gaussian_translate_le hc hcoer
-      (B := ‖x‖) (fun i => by
-        rw [← Real.norm_eq_abs]; exact norm_le_pi_norm x i) n)
-    (summable_translate_weights c ‖x‖ hc)
 
 /-- The periodization of the Gaussian over the integer lattice `ℤ^d`. -/
 noncomputable def periodization (M : Matrix (Fin d) (Fin d) ℝ)
@@ -1177,16 +1167,6 @@ theorem QuadraticAction.duality {r : ℕ} (A : QuadraticAction r) :
     _ = ↑(A.Q.det / Real.pi ^ r : ℝ) ^ ((1 : ℂ) / 2)
           * ↑(A.toSectorAction.partFn) := by rw [← hpoisson]
 
-/-- Dedup witness: the diagonal-family dual (Phase 14) is the general
-dual restricted to diagonal Gram forms. The two dual constructions have
-the same Gram matrix, hence the same partition function — so
-`ofDiagonal_duality` is now a corollary of `QuadraticAction.duality`. -/
-theorem ofDiagonal_dual_partFn_eq {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) :
-    (QuadraticAction.ofDiagonal (fun i => Real.pi ^ 2 / α i)
-        (fun i => div_pos (sq_pos_of_pos Real.pi_pos) (hα i))).toSectorAction.partFn
-      = (QuadraticAction.ofDiagonal α hα).dual.toSectorAction.partFn :=
-  QuadraticAction.partFn_eq_of_Q_eq _ _ (by
-    rw [QuadraticAction.ofDiagonal_dual_Q, QuadraticAction.dual_Q])
 
 end Duality
 
@@ -1259,91 +1239,6 @@ theorem QuadraticAction.selfDual_iff {r : ℕ} (A : QuadraticAction r) :
       Matrix.mul_smul, Matrix.mul_one] at h2
     exact h2.symm
 
-/-- The identity matrix is positive definite. Hand-rolled, as with
-`posDef_smul'`. -/
-lemma posDef_one {r : ℕ} : (1 : Matrix (Fin r) (Fin r) ℝ).PosDef := by
-  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
-  · show (1 : Matrix (Fin r) (Fin r) ℝ)ᴴ = 1
-    exact Matrix.conjTranspose_one
-  · rw [Matrix.one_mulVec]
-    have hstar : star x = x := funext fun i => star_trivial _
-    rw [hstar]
-    obtain ⟨i, hi⟩ := Function.ne_iff.mp hx
-    refine Finset.sum_pos' (fun j _ => mul_self_nonneg (x j))
-      ⟨i, Finset.mem_univ i, mul_self_pos.mpr hi⟩
-
-/-- The sum of positive-definite matrices is positive definite. -/
-lemma posDef_add {r : ℕ} {A B : Matrix (Fin r) (Fin r) ℝ}
-    (hA : A.PosDef) (hB : B.PosDef) : (A + B).PosDef := by
-  refine posDef_iff_dotProduct_mulVec.mpr ⟨?_, fun x hx => ?_⟩
-  · show (A + B)ᴴ = A + B
-    rw [Matrix.conjTranspose_add]
-    congr 1
-    · exact (posDef_iff_dotProduct_mulVec.mp hA).1
-    · exact (posDef_iff_dotProduct_mulVec.mp hB).1
-  · rw [Matrix.add_mulVec, dotProduct_add]
-    exact add_pos ((posDef_iff_dotProduct_mulVec.mp hA).2 hx)
-      ((posDef_iff_dotProduct_mulVec.mp hB).2 hx)
-
-/-- **Sharpening (Phase 17, from external review)**: for a
-positive-definite form, `Q² = π²·1` already forces `Q = π·1` — the
-factor `Q + π·1` is positive definite, hence invertible, so
-`(Q − π·1)(Q + π·1) = 0` kills the first factor. The self-dual locus
-is a **single point**, while zero duality flow is the whole determinant
-hypersurface `det Q = π^r`: the gap between the two conditions is now
-exactly quantified. -/
-theorem QuadraticAction.selfDual_iff_eq {r : ℕ} (A : QuadraticAction r) :
-    A.selfDual ↔ A.Q = Real.pi • (1 : Matrix (Fin r) (Fin r) ℝ) := by
-  rw [QuadraticAction.selfDual_iff]
-  constructor
-  · intro h
-    have hsum : (A.Q + Real.pi • 1).PosDef :=
-      posDef_add A.Q_posDef (posDef_smul' posDef_one Real.pi_pos)
-    have hdet : IsUnit (A.Q + Real.pi • 1).det :=
-      isUnit_iff_ne_zero.mpr (ne_of_gt hsum.det_pos)
-    have hc1 : A.Q * (Real.pi • 1) = Real.pi • A.Q := by
-      rw [Matrix.mul_smul, Matrix.mul_one]
-    have hc2 : (Real.pi • (1 : Matrix (Fin r) (Fin r) ℝ)) * A.Q
-        = Real.pi • A.Q := by
-      rw [Matrix.smul_mul, Matrix.one_mul]
-    have hc3 : (Real.pi • (1 : Matrix (Fin r) (Fin r) ℝ)) * (Real.pi • 1)
-        = (Real.pi ^ 2) • 1 := by
-      rw [Matrix.smul_mul, Matrix.one_mul, smul_smul]
-      congr 1
-      ring
-    have hzero : (A.Q - Real.pi • 1) * (A.Q + Real.pi • 1) = 0 := by
-      rw [Matrix.sub_mul, Matrix.mul_add, Matrix.mul_add, h, hc1, hc2, hc3]
-      abel
-    have hcancel := congrArg (fun M => M * (A.Q + Real.pi • 1)⁻¹) hzero
-    simp only [Matrix.zero_mul] at hcancel
-    rw [Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hdet, Matrix.mul_one]
-      at hcancel
-    exact sub_eq_zero.mp hcancel
-  · intro h
-    rw [h, Matrix.smul_mul, Matrix.one_mul, smul_smul]
-    congr 1
-    ring
-
-/-- Rank 1: the unique self-dual coupling is `α = π` — the fixed point
-the legacy `Duality.lean` layer knows as the variational minimum. -/
-theorem QuadraticAction.ofScalar_selfDual_iff (α : ℝ) (hα : 0 < α) :
-    (QuadraticAction.ofScalar α hα).selfDual ↔ α = Real.pi := by
-  rw [QuadraticAction.selfDual_iff,
-    show (QuadraticAction.ofScalar α hα).Q = !![α] from rfl]
-  constructor
-  · intro h
-    have h00 := congrFun (congrFun h 0) 0
-    simp [Matrix.mul_apply, Matrix.smul_apply] at h00
-    have hfac : (α - Real.pi) * (α + Real.pi) = 0 := by linear_combination h00
-    rcases mul_eq_zero.mp hfac with h0 | h0
-    · linarith
-    · linarith [Real.pi_pos]
-  · rintro rfl
-    ext i j
-    fin_cases i
-    fin_cases j
-    simp [Matrix.mul_apply, Matrix.smul_apply]
-    try ring
 
 /-- Real form of the general Siegel–Poisson duality, with the real
 `rpow` prefactor. -/
@@ -1379,12 +1274,6 @@ theorem QuadraticAction.dualityFlow_eq {r : ℕ} (A : QuadraticAction r) :
     Real.log_rpow ha]
   ring
 
-/-- The flow is antisymmetric under the duality involution. -/
-theorem QuadraticAction.dualityFlow_dual {r : ℕ} (A : QuadraticAction r) :
-    A.dual.dualityFlow = -A.dualityFlow := by
-  unfold QuadraticAction.dualityFlow
-  rw [A.dual_dual]
-  ring
 
 /-- Zero flow characterizes couplings of determinant `π^r` — a
 determinant condition, **not** self-duality (see the falsification
@@ -1406,20 +1295,6 @@ theorem QuadraticAction.dualityFlow_eq_zero_iff {r : ℕ}
   · intro h
     rw [h, div_self (ne_of_gt (pow_pos Real.pi_pos r)), Real.log_one, mul_zero]
 
-/-- Self-dual actions have zero flow (via `det(Q²) = det(π²·1)`). -/
-theorem QuadraticAction.selfDual.dualityFlow_eq_zero {r : ℕ}
-    {A : QuadraticAction r} (h : A.selfDual) : A.dualityFlow = 0 := by
-  rw [A.dualityFlow_eq_zero_iff]
-  have h' := A.selfDual_iff.mp h
-  have hdet : A.Q.det * A.Q.det = (Real.pi ^ 2) ^ r := by
-    have hc := congrArg Matrix.det h'
-    rwa [Matrix.det_mul, Matrix.det_smul, Matrix.det_one, mul_one,
-      Fintype.card_fin] at hc
-  have hfac : (A.Q.det - Real.pi ^ r) * (A.Q.det + Real.pi ^ r) = 0 := by
-    linear_combination hdet
-  rcases mul_eq_zero.mp hfac with h0 | h0
-  · linarith
-  · linarith [A.Q_posDef.det_pos, pow_pos Real.pi_pos r]
 
 /-- **Falsification of the plan's `dualityFlow_zero_iff_selfDual`** at
 rank ≥ 2: `Q = diag(2π, π/2)` has determinant `π²`, hence zero flow,

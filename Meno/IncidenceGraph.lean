@@ -548,6 +548,7 @@ theorem chain_mem_cycleLattice {w : G.V} (c : G.Walk w w) :
     c.chain ℤ ∈ G.cycleLattice :=
   G.mem_cycleLattice.mpr (Walk.boundary_chain_closed c)
 
+
 /-- **Saturation**: the cycle lattice is division-closed — a multiple
 of a cochain is a cycle only if the cochain is. This is where
 torsion-freeness of `ℤ^E ⧸ H₁` comes from. -/
@@ -560,6 +561,7 @@ theorem mem_of_smul_mem {c : ℤ} (hc : c ≠ 0) {x : G.E → ℤ}
   rcases mul_eq_zero.mp hv with h0 | h0
   · exact absurd h0 hc
   · exact h0
+
 
 /-- **The first Betti number, intrinsically**: the rank of the
 integral cycle lattice. No presentation, no chosen basis — this is

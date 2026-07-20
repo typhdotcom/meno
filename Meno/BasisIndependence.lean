@@ -149,10 +149,6 @@ theorem classForm_add_left (κ₁ κ₂ κ') :
   push_cast [Pi.add_apply]
   ring
 
-/-- Positive-definiteness of the intrinsic form. -/
-theorem classForm_posDef (κ) (hκ : κ ≠ 0) : 0 < G.classForm κ κ := by
-  rw [G.classForm_self]
-  exact G.harmonicEnergy_pos hκ
 
 /-- **Basis charts preserve the form** (review #7): the Gram
 interaction of any basis at the keystone coordinates is the intrinsic
@@ -240,9 +236,6 @@ the sector lattice `H¹(G;ℤ)` with the harmonic energy
 noncomputable def classSectorAction : SectorAction.{v} :=
   (G.classQuadAction).toSectorAction
 
-/-- The carrier's energy is the harmonic energy — definitionally. -/
-theorem classSectorAction_E :
-    (G.classSectorAction).E = G.harmonicEnergy := rfl
 
 /-- **The carrier's rank is `b₁`** (review #8): the intrinsic lattice
 is finite free of exactly the graph's first Betti number. -/
@@ -307,10 +300,6 @@ theorem basisGramData_duality {n : ℕ}
   rw [hdualpartFn, hpartFn, hdet, hrank]
   exact (G.classQuadAction).duality
 
-/-- The carrier's sector lattice is `H¹(G;ℤ)` — definitionally. -/
-theorem classSectorAction_Λ :
-    (G.classSectorAction).Λ
-      = ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) := rfl
 
 /-- **Every basis action is a chart of the carrier** (energy half):
 the keystone equivalence carries the basis-coordinate energy to the
@@ -342,18 +331,6 @@ theorem basisGramData_partFn_eq_classSectorAction {n : ℕ}
       = (G.classSectorAction).partFn := by
   rw [G.basisGramData_partFn B, G.classSectorAction_partFn]
 
-
-/-- **Uncertainty on the intrinsic carrier** (review #7): the Gibbs
-variance of any observable of the matter classes, against the
-carrier's Boltzmann weights, is nonnegative — Gibbs fluctuation
-specialized from the generic `SectorAction` law to
-`classSectorAction`. -/
-theorem classSectorAction_gibbsVariance_nonneg
-    (f : ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) → ℝ)
-    (hsq : Summable (fun κ => f κ ^ 2 * (G.classSectorAction).gibbsMass κ))
-    (hf : Summable (fun κ => f κ * (G.classSectorAction).gibbsMass κ)) :
-    0 ≤ (G.classSectorAction).gibbsVariance f :=
-  (G.classSectorAction).gibbsVariance_nonneg f hsq hf
 
 /-! ### The energy moments of the intrinsic carrier (review #14)
 
@@ -497,7 +474,7 @@ its sector action (`classSectorActionβ`), and the response theory:
 the carrier's β-scaled partition function and mean energy are the
 cycle-basis chart's (`classScaledPartFn_eq`, `classMeanEnergy_eq`),
 so the rank-generic engine of `Meno/Fluctuation.lean` differentiates
-them (`hasDerivAt_classScaledPartFn`), gives
+them and gives
 **`d⟨E⟩/dβ = −Var_β(E)` intrinsically**
 (`hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance`), and the strict
 carrier variance makes the mean energy **strictly decreasing** on
@@ -510,27 +487,12 @@ noncomputable def classQuadActionβ (β : ℝ) (hβ : 0 < β) :
     QuadLatticeAction.{v} :=
   (G.classQuadAction).scale β hβ
 
-/-- **`β = 1` recovers the carrier** (review #16). -/
-theorem classQuadActionβ_one :
-    G.classQuadActionβ 1 one_pos = G.classQuadAction :=
-  (G.classQuadAction).scale_one
 
 /-- The β-scaled carrier as a sector action: `E = β·harmonicEnergy`. -/
 noncomputable def classSectorActionβ (β : ℝ) (hβ : 0 < β) :
     SectorAction.{v} :=
   (G.classQuadActionβ β hβ).toSectorAction
 
-/-- **`β = 1` recovers the carrier's sector action** (review #16). -/
-theorem classSectorActionβ_one :
-    G.classSectorActionβ 1 one_pos = G.classSectorAction := by
-  show (G.classQuadActionβ 1 one_pos).toSectorAction
-    = (G.classQuadAction).toSectorAction
-  rw [G.classQuadActionβ_one]
-
-/-- The scaled carrier's energy is the scaled harmonic energy —
-definitionally. -/
-theorem classSectorActionβ_E (β : ℝ) (hβ : 0 < β) :
-    (G.classSectorActionβ β hβ).E = fun κ => β * G.harmonicEnergy κ := rfl
 
 /-- The carrier's β-scaled partition function — the bundle's,
 specialized (review #16). -/
@@ -552,40 +514,6 @@ bundle's, specialized (review #16). -/
 noncomputable def classMeanEnergy (β : ℝ) : ℝ :=
   (G.classQuadAction).meanEnergy β
 
-/-- The scaled carrier's Gibbs mean energy, in moment form — the
-bundle theorem, specialized (review #16). -/
-theorem classSectorActionβ_gibbsExpect_energy (β : ℝ) (hβ : 0 < β) :
-    (G.classSectorActionβ β hβ).gibbsExpect G.harmonicEnergy
-      = G.classScaledMoment β / G.classScaledPartFn β :=
-  (G.classQuadAction).scaledSector_gibbsExpect_energy β hβ
-
-/-- **`β = 1` recovers the partition function** (review #16) — the
-bundle recovery law `scaledPartFn_one`, specialized (review #17). -/
-theorem classScaledPartFn_one :
-    G.classScaledPartFn 1 = (G.classSectorAction).partFn :=
-  (G.classQuadAction).scaledPartFn_one
-
-/-- **`β = 1` recovers the Gibbs mass** (review #17) — the bundle
-recovery law `scaledSector_one_gibbsMass`, specialized. -/
-theorem classSectorActionβ_one_gibbsMass :
-    (G.classSectorActionβ 1 one_pos).gibbsMass
-      = (G.classSectorAction).gibbsMass :=
-  (G.classQuadAction).scaledSector_one_gibbsMass
-
-/-- **`β = 1` recovers the Gibbs expectation** (review #16) — the
-bundle recovery law `meanEnergy_one`, specialized (review #17). -/
-theorem classMeanEnergy_one :
-    G.classMeanEnergy 1
-      = (G.classSectorAction).gibbsExpect G.harmonicEnergy :=
-  (G.classQuadAction).meanEnergy_one
-
-/-- **`β = 1` recovers the Gibbs variance** (review #16) — the bundle
-recovery law `scaledSector_one_gibbsVariance`, specialized
-(review #17). -/
-theorem classSectorActionβ_one_gibbsVariance :
-    (G.classSectorActionβ 1 one_pos).gibbsVariance G.harmonicEnergy
-      = (G.classSectorAction).gibbsVariance G.harmonicEnergy :=
-  (G.classQuadAction).scaledSector_one_gibbsVariance
 
 /-- The carrier's β-scaled partition function is the chart's. -/
 theorem classScaledPartFn_eq (β : ℝ) :
@@ -665,14 +593,6 @@ theorem classMeanEnergy_eq :
   rw [G.classScaledMoment_eq β, G.classScaledPartFn_eq β]
   rfl
 
-/-- **The carrier's partition function differentiates**
-(review #15): `Z′ = −M₁` at every `β > 0`. -/
-theorem hasDerivAt_classScaledPartFn (β : ℝ) (hβ : 0 < β) :
-    HasDerivAt G.classScaledPartFn (-G.classScaledMoment β) β := by
-  rw [show G.classScaledPartFn
-      = (G.basisGramData G.cycleBasis).toQuadraticAction.scaledPartFn from
-    funext G.classScaledPartFn_eq, G.classScaledMoment_eq β]
-  exact (G.basisGramData G.cycleBasis).toQuadraticAction.hasDerivAt_scaledPartFn hβ
 
 /-- The scaled carrier's Gibbs variance of the harmonic energy, in
 moment form. -/
@@ -744,21 +664,6 @@ theorem hasDerivAt_classMeanEnergy_eq_neg_gibbsVariance (β : ℝ)
   exact (G.basisGramData G.cycleBasis).toQuadraticAction.hasDerivAt_meanEnergy_eq_neg_gibbsVariance
     β hβ
 
-/-- **The scaled carrier's energy variance is strictly positive** on
-any graph with cycles, at every inverse temperature (review #15). -/
-theorem classSectorActionβ_gibbsVariance_energy_pos (hb : 0 < G.b1)
-    (β : ℝ) (hβ : 0 < β) :
-    0 < (G.classSectorActionβ β hβ).gibbsVariance G.harmonicEnergy := by
-  rw [G.classSectorActionβ_gibbsVariance_eq β hβ]
-  obtain ⟨i⟩ : Nonempty (Fin G.b1) := ⟨⟨0, hb⟩⟩
-  refine (G.basisGramData G.cycleBasis).toQuadraticAction.scaledSector_gibbsVariance_energy_pos
-    β hβ (k₀ := (Pi.single i 1 : Fin G.b1 → ℤ)) ?_
-  have hne : (Pi.single i 1 : Fin G.b1 → ℤ) ≠ 0 := by
-    intro h0
-    have h3 := congrFun h0 i
-    rw [Pi.single_eq_same, Pi.zero_apply] at h3
-    exact one_ne_zero h3
-  exact ((G.basisGramData G.cycleBasis).energy_pos_of_ne_zero _ hne).ne'
 
 /-- **STRICT DISSIPATION ON THE INTRINSIC CARRIER** (review #15): on
 any graph with cycles, the Gibbs mean energy strictly decreases in

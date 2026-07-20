@@ -68,28 +68,6 @@ noncomputable def cycleHarmonicGramData (n : ℕ) (hn : n ≥ 3) :
       have hsq : 0 < (x 0) ^ 2 := by positivity
       exact mul_pos hα hsq
 
-/-- Energy of the cycle harmonic Gram data: `(1/n) · k²`. -/
-theorem cycleHarmonicGramData_energy (n : ℕ) (hn : n ≥ 3) (k : Fin 1 → ℤ) :
-    (cycleHarmonicGramData n hn).energy k = (k 0 : ℝ) ^ 2 / n := by
-  show ∑ i : Fin 1, ∑ j : Fin 1,
-      !![(1 : ℝ) / n] i j * (k i : ℝ) * (k j : ℝ) = (k 0 : ℝ) ^ 2 / n
-  simp [Matrix.cons_val_fin_one]; ring
-
-/-- **The variational identity**: the Gram-form energy at integer winding `k`
-equals `harmonicEnergy_k n hn k`, the minimum 1-cochain energy over the
-winding-`k` class. This is the bridge from the graph layer to the
-abstract `HarmonicGramData`. -/
-theorem cycleHarmonicGramData_energy_eq_harmonicEnergy_k
-    (n : ℕ) (hn : n ≥ 3) (k : Fin 1 → ℤ) :
-    (cycleHarmonicGramData n hn).energy k = harmonicEnergy_k n hn (k 0) := by
-  rw [cycleHarmonicGramData_energy, cycleGraph_harmonicEnergy_k]
-
-/-- The induced `QuadraticAction` has the same Gram matrix `!![1/n]` as
-`QuadraticAction.ofScalar (1/n) _`. -/
-theorem cycleHarmonicGramData_toQuadraticAction_Q (n : ℕ) (hn : n ≥ 3) :
-    (cycleHarmonicGramData n hn).toQuadraticAction.Q
-    = (QuadraticAction.ofScalar (1 / n) (one_div_pos.mpr
-        (by exact_mod_cast (show 0 < n by omega) : (0 : ℝ) < n))).Q := rfl
 
 /-- **Spine partition function = scalar partition function** at α = 1/n.
 A consequence of Q-matrix equality. -/
@@ -194,36 +172,6 @@ at `τ = i/(πn)`. Its two public statements survive here as corollaries
 of the spine's single theta identification
 `QuadraticAction.scalarPartFn_eq_jacobiTheta`. -/
 
-/-- The n-cycle partition function is the Jacobi theta function at
-`τ = i/(πn)`. -/
-theorem partitionFn_eq_jacobiTheta (n : ℕ) (hn : n ≥ 3) :
-    (↑(partitionFn n hn) : ℂ) = jacobiTheta (Complex.I / (↑Real.pi * ↑n)) := by
-  rw [← scalarPartFn_one_div_n_eq_partitionFn n hn,
-      QuadraticAction.scalarPartFn_eq_jacobiTheta]
-  congr 1
-  show Complex.I * ↑(1 / (n : ℝ)) / ↑Real.pi = Complex.I / (↑Real.pi * ↑n)
-  have hpi : (↑Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt Real.pi_pos)
-  have hn0 : ((n : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
-  push_cast
-  field_simp
-
-/-- **T-duality in theta form** (formerly `Theta.partitionFn_T_duality`):
-`ϑ₃(iπn) = (1/(πn))^(1/2) · Z(Cₙ)`. A corollary of the spine flagship. -/
-theorem partitionFn_T_duality_theta (n : ℕ) (hn : n ≥ 3) :
-    jacobiTheta (Complex.I * ↑Real.pi * ↑n) =
-      (↑(1 / (Real.pi * ↑n) : ℝ) : ℂ) ^ ((1 : ℂ) / 2) * ↑(partitionFn n hn) := by
-  have hθ : (↑(QuadraticAction.scalarPartFn (Real.pi ^ 2 * n)) : ℂ)
-      = jacobiTheta (Complex.I * ↑Real.pi * ↑n) := by
-    rw [QuadraticAction.scalarPartFn_eq_jacobiTheta]
-    congr 1
-    show Complex.I * ↑(Real.pi ^ 2 * (n : ℝ)) / ↑Real.pi = Complex.I * ↑Real.pi * ↑n
-    have hpi : (↑Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt Real.pi_pos)
-    push_cast
-    field_simp
-  have harg : ((1 : ℝ) / (Real.pi * n)) = (1 / (n : ℝ)) / Real.pi := by
-    field_simp
-  rw [← hθ, harg]
-  exact partitionFn_T_duality_via_spine n hn
 
 /-! ## Rank 2: the wedge of two cycles
 
@@ -240,9 +188,8 @@ wedge's (`Meno/WedgePresentation.lean`, C1/C5): the two basis cycles
 have disjoint edge supports, chain Gram `diag(n₁, n₂)` (vertex-free,
 `Meno/PeriodHarmonic.lean`), spanning by the Euler criterion on the
 `n₁ + n₂ − 1`-vertex graph, and the period Gram is the inverse. The
-identification with the data below lives in the `PeriodUnification`
-section (`wedgePeriodData_gram_eq`,
-`wedgeHarmonicGramData_energy_isLeast`). A simplicial wedge complex
+cycle-side identification lives in the `PeriodUnification` section
+(`cyclePeriodData_energy_eq`). A simplicial wedge complex
 with its own Hodge decomposition still does not exist in
 `Simplicial.lean` — the derivation is cohomological (periods), not
 chain-level. -/
@@ -314,12 +261,6 @@ derivations of the spine's first mass. -/
 
 section PeriodUnification
 
-/-- The period-model Gram data of `C_n` has the same Gram matrix as the
-walk-derived data: `[[1/n]]` both ways. -/
-theorem cyclePeriodData_gram_eq (n : ℕ) (hn : n ≥ 3) :
-    (cyclePeriodData n (by omega)).gram = (cycleHarmonicGramData n hn).gram := by
-  rw [cyclePeriodData_gram]
-  rfl
 
 /-- The energies agree at every sector. -/
 theorem cyclePeriodData_energy_eq (n : ℕ) (hn : n ≥ 3) (k : Fin 1 → ℤ) :
@@ -333,26 +274,6 @@ theorem cyclePeriodData_energy_eq (n : ℕ) (hn : n ≥ 3) (k : Fin 1 → ℤ) :
         rw [cyclePeriodData_gram]
     _ = (cycleHarmonicGramData n hn).energy k := rfl
 
-/-- **Two variational stories, one number**: the walk-based harmonic
-minimum `harmonicEnergy_k n hn k` of `Simplicial.lean` — historically
-the spine's first mass, `k²/n` — is the least energy among 1-cochains
-on the period-model cycle graph with period `k`. -/
-theorem harmonicEnergy_k_isLeast_periods (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
-    IsLeast {E : ℝ | ∃ ω : Fin n → ℝ,
-        (∀ j, ω ⬝ᵥ cycleAllOnes n j = ((![k] : Fin 1 → ℤ) j : ℝ)) ∧ E = ω ⬝ᵥ ω}
-      (harmonicEnergy_k n hn k) := by
-  have h := HarmonicGramData.ofCycles_energy_isLeast (V := Fin n)
-    (cycleAllOnes n)
-    (by
-      rw [gramOf_cycleAllOnes]
-      exact posDef_fin_one _ (by exact_mod_cast (show 0 < n by omega))) ![k]
-  have hchain : (cyclePeriodData n (by omega)).energy ![k]
-      = harmonicEnergy_k n hn k := by
-    rw [cyclePeriodData_energy_eq n hn,
-      cycleHarmonicGramData_energy_eq_harmonicEnergy_k n hn]
-    norm_num
-  rw [← hchain]
-  exact h
 
 /-! ### The wedge: assertion retired
 
@@ -363,15 +284,6 @@ period machinery now derives that form from the wedge graph itself
 the asserted data — matrix, energies, and partition function — and the
 asserted energy is certified as the variational minimum. -/
 
-/-- The period-model Gram data of the wedge has the same Gram matrix
-as the asserted data: `diag(1/n₁, 1/n₂)` both ways. -/
-theorem wedgePeriodData_gram_eq (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
-    (wedgePeriodData n₁ n₂ (by omega) (by omega)).gram
-      = (wedgeHarmonicGramData n₁ n₂ h₁ h₂).gram :=
-  calc (wedgePeriodData n₁ n₂ (by omega) (by omega)).gram
-      = !![1 / (n₁ : ℝ), 0; 0, 1 / (n₂ : ℝ)] :=
-        wedgePeriodData_gram n₁ n₂ (by omega) (by omega)
-    _ = (wedgeHarmonicGramData n₁ n₂ h₁ h₂).gram := rfl
 
 /-- The energies agree at every sector. -/
 theorem wedgePeriodData_energy_eq (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3)
@@ -386,28 +298,7 @@ theorem wedgePeriodData_energy_eq (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : 
         rw [wedgePeriodData_gram]
     _ = (wedgeHarmonicGramData n₁ n₂ h₁ h₂).energy k := rfl
 
-/-- The partition functions agree: the asserted analytic layer *is*
-the derived one. -/
-theorem wedgePeriodData_partFn_eq (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) :
-    (wedgePeriodData n₁ n₂ (by omega)
-        (by omega)).toQuadraticAction.toSectorAction.partFn
-      = (wedgeHarmonicGramData n₁ n₂
-          h₁ h₂).toQuadraticAction.toSectorAction.partFn :=
-  QuadraticAction.partFn_eq_of_Q_eq _ _ (wedgePeriodData_gram_eq n₁ n₂ h₁ h₂)
 
-/-- **The Phase-13 assertion, retired**: the energy of the asserted
-`diag(1/n₁, 1/n₂)` Gram data is the least cochain energy at prescribed
-periods over the actual wedge graph's cycles. The last documented
-assertion debt in the harmonic layer is now a theorem. -/
-theorem wedgeHarmonicGramData_energy_isLeast (n₁ n₂ : ℕ)
-    (h₁ : n₁ ≥ 3) (h₂ : n₂ ≥ 3) (k : Fin 2 → ℤ) :
-    IsLeast {E : ℝ | ∃ ω : Fin n₁ ⊕ Fin n₂ → ℝ,
-        (∀ j, ω ⬝ᵥ wedgeCycles n₁ n₂ j = (k j : ℝ)) ∧ E = ω ⬝ᵥ ω}
-      ((wedgeHarmonicGramData n₁ n₂ h₁ h₂).energy k) := by
-  rw [← wedgePeriodData_energy_eq n₁ n₂ h₁ h₂ k]
-  exact HarmonicGramData.ofCycles_energy_isLeast (V := Fin n₁ ⊕ Fin n₂)
-    (wedgeCycles n₁ n₂)
-    (gramOf_wedgeCycles_posDef n₁ n₂ (by omega) (by omega)) k
 /-- The wedge lattice basis's cast cycles are the real wedge cycles. -/
 theorem cyclesR_wedgeLatticeBasis (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
     (wedgeGraph n₁ n₂ h₁ h₂).cyclesR (wedgeLatticeBasis n₁ n₂ h₁ h₂)

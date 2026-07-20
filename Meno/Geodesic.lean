@@ -37,17 +37,6 @@ class Geodesic (C : Type u) [Category.{v} C] where
 
 namespace Geodesic
 
-/-- Triangle subadditivity over three composable morphisms. -/
-theorem length_comp_three {C : Type u} [Category.{v} C] [Geodesic C]
-    {X Y Z W : C} (f : X ⟶ Y) (g : Y ⟶ Z) (h : Z ⟶ W) :
-    Geodesic.length (f ≫ g ≫ h) ≤
-      Geodesic.length f + Geodesic.length g + Geodesic.length h := by
-  have h1 : Geodesic.length (f ≫ g ≫ h) ≤
-      Geodesic.length f + Geodesic.length (g ≫ h) :=
-    Geodesic.length_comp_le f (g ≫ h)
-  have h2 : Geodesic.length (g ≫ h) ≤ Geodesic.length g + Geodesic.length h :=
-    Geodesic.length_comp_le g h
-  linarith
 
 end Geodesic
 

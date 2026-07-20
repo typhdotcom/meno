@@ -174,13 +174,6 @@ theorem harmonicEnergy_zero : G.harmonicEnergy 0 = 0 := by
   rw [map_zero]
   exact (G.basisGramData G.cycleBasis).energy_zero
 
-/-- The harmonic energy is nonnegative on every class. -/
-theorem harmonicEnergy_nonneg
-    (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :
-    0 ≤ G.harmonicEnergy κ := by
-  have h := (G.basisGramData G.cycleBasis).toQuadraticAction.energy_nonneg
-    (G.h1QuotEquiv κ)
-  rwa [(G.basisGramData G.cycleBasis).toQuadraticAction_energy] at h
 
 end IncidenceGraph
 

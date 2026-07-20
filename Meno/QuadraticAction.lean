@@ -469,195 +469,16 @@ noncomputable def ofDiagonal₂ (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
 @[simp] theorem ofDiagonal₂_Q (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
     (ofDiagonal₂ α β hα hβ).Q = !![α, 0; 0, β] := rfl
 
-/-- Hand-rolled pairing equivalence `(Fin 2 → ℤ) ≃ ℤ × ℤ` with a
-one-β-step `toFun`. `piFinTwoEquiv`'s coercion is expensive to unfold
-inside `tsum` unification; this one is not. -/
-private def finTwoPair : (Fin 2 → ℤ) ≃ ℤ × ℤ where
-  toFun k := (k 0, k 1)
-  invFun p := ![p.1, p.2]
-  left_inv k := by funext i; fin_cases i <;> rfl
-  right_inv p := rfl
 
-/-- **Partition function factorization** for the diagonal rank-2 action:
-`Z(diag(α,β)) = Z(α) · Z(β)`. The lattice `ℤ²` decouples mode by mode. -/
-theorem ofDiagonal₂_partFn (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
-    (ofDiagonal₂ α β hα hβ).toSectorAction.partFn
-    = scalarPartFn α * scalarPartFn β := by
-  rw [(ofDiagonal₂ α β hα hβ).partFn_eq]
-  simp_rw [ofDiagonal₂_Q]
-  have hsplit : ∀ k : Fin 2 → ℤ,
-      Real.exp (-(∑ i, ∑ j, (!![α, 0; 0, β] : Matrix (Fin 2) (Fin 2) ℝ) i j
-          * (k i : ℝ) * (k j : ℝ)))
-      = Real.exp (-α * (k 0 : ℝ) ^ 2) * Real.exp (-β * (k 1 : ℝ) ^ 2) := by
-    intro k
-    rw [← Real.exp_add]
-    congr 1
-    simp [Fin.sum_univ_two]
-    ring
-  have hfact := tsum_mul_tsum_of_summable_norm
-    (f := fun m : ℤ => Real.exp (-α * (m : ℝ) ^ 2))
-    (g := fun l : ℤ => Real.exp (-β * (l : ℝ) ^ 2))
-    (summable_norm_iff.mpr (summable_scalarPartFn α hα))
-    (summable_norm_iff.mpr (summable_scalarPartFn β hβ))
-  calc ∑' k : Fin 2 → ℤ, Real.exp
-        (-(∑ i, ∑ j, (!![α, 0; 0, β] : Matrix (Fin 2) (Fin 2) ℝ) i j
-            * (k i : ℝ) * (k j : ℝ)))
-      = ∑' k : Fin 2 → ℤ,
-          Real.exp (-α * (k 0 : ℝ) ^ 2) * Real.exp (-β * (k 1 : ℝ) ^ 2) :=
-        tsum_congr hsplit
-    _ = ∑' p : ℤ × ℤ, Real.exp (-α * (p.1 : ℝ) ^ 2) * Real.exp (-β * (p.2 : ℝ) ^ 2) :=
-        finTwoPair.tsum_eq (fun p : ℤ × ℤ =>
-          Real.exp (-α * (p.1 : ℝ) ^ 2) * Real.exp (-β * (p.2 : ℝ) ^ 2))
-    _ = scalarPartFn α * scalarPartFn β := hfact.symm
+/-! ## The diagonal constructor
 
-/-- Determinant of the diagonal Gram form: `det diag(α,β) = αβ`. -/
-theorem ofDiagonal₂_det (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
-    (ofDiagonal₂ α β hα hβ).Q.det = α * β := by
-  show (!![α, 0; 0, β] : Matrix (Fin 2) (Fin 2) ℝ).det = α * β
-  rw [Matrix.det_fin_two]
-  simp
+`ofDiagonal` builds the rank-`r` action with Gram `diag(α)`. Its
+duality theory was superseded by the full non-diagonal Siegel–Poisson
+proof (`Meno/SiegelPoisson.lean`, multidimensional Poisson summation)
+and is deleted (review #28); what remains is the constructor itself,
+consumed as the rank-2 witness that the duality flow can vanish off
+the self-dual locus (`exists_dualityFlow_eq_zero_not_selfDual`). -/
 
-/-- The dual coupling matrix is exactly `π² · Q⁻¹`: the diagonal case of
-the Siegel–Poisson dual Gram form. -/
-theorem ofDiagonal₂_dual_Q (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
-    (ofDiagonal₂ (Real.pi ^ 2 / α) (Real.pi ^ 2 / β)
-        (div_pos (sq_pos_of_pos Real.pi_pos) hα)
-        (div_pos (sq_pos_of_pos Real.pi_pos) hβ)).Q
-    = Real.pi ^ 2 • (ofDiagonal₂ α β hα hβ).Q⁻¹ := by
-  show (!![Real.pi ^ 2 / α, 0; 0, Real.pi ^ 2 / β] : Matrix (Fin 2) (Fin 2) ℝ)
-    = Real.pi ^ 2 • (!![α, 0; 0, β] : Matrix (Fin 2) (Fin 2) ℝ)⁻¹
-  have hinv : (!![α, 0; 0, β] : Matrix (Fin 2) (Fin 2) ℝ)⁻¹ = !![α⁻¹, 0; 0, β⁻¹] := by
-    apply Matrix.inv_eq_right_inv
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [Matrix.mul_apply, Fin.sum_univ_two,
-        mul_inv_cancel₀ (ne_of_gt hα), mul_inv_cancel₀ (ne_of_gt hβ)]
-  rw [hinv]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [div_eq_mul_inv]
-
-/-- **Diagonal Siegel–Poisson duality (rank 2)**:
-`Z(π²·Q⁻¹) = √(det Q / π²) · Z(Q)` for `Q = diag(α, β)` — proved by two
-scalar S-transformations and prefactor multiplication. The first matrix
-duality in the spine, no multidimensional Poisson summation required. -/
-theorem ofDiagonal₂_duality (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
-    (↑((ofDiagonal₂ (Real.pi ^ 2 / α) (Real.pi ^ 2 / β)
-        (div_pos (sq_pos_of_pos Real.pi_pos) hα)
-        (div_pos (sq_pos_of_pos Real.pi_pos) hβ)).toSectorAction.partFn) : ℂ)
-    = ↑(α * β / Real.pi ^ 2 : ℝ) ^ ((1 : ℂ) / 2)
-      * ↑((ofDiagonal₂ α β hα hβ).toSectorAction.partFn) := by
-  rw [ofDiagonal₂_partFn, ofDiagonal₂_partFn,
-      Complex.ofReal_mul, Complex.ofReal_mul,
-      scalarPartFn_duality α hα, scalarPartFn_duality β hβ]
-  have hA : (0 : ℝ) ≤ α / Real.pi := (div_pos hα Real.pi_pos).le
-  have hB : (0 : ℝ) ≤ β / Real.pi := (div_pos hβ Real.pi_pos).le
-  have hmul : (↑(α / Real.pi : ℝ) : ℂ) ^ ((1 : ℂ) / 2)
-        * (↑(β / Real.pi : ℝ) : ℂ) ^ ((1 : ℂ) / 2)
-      = (↑(α * β / Real.pi ^ 2 : ℝ) : ℂ) ^ ((1 : ℂ) / 2) := by
-    rw [← Complex.mul_cpow_ofReal_nonneg hA hB, ← Complex.ofReal_mul]
-    congr 2
-    field_simp
-  rw [← hmul]
-  ring
-
-/-- The duality in determinant form: the prefactor is `√(det Q / π²)`. -/
-theorem ofDiagonal₂_duality_det_form (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
-    (↑((ofDiagonal₂ (Real.pi ^ 2 / α) (Real.pi ^ 2 / β)
-        (div_pos (sq_pos_of_pos Real.pi_pos) hα)
-        (div_pos (sq_pos_of_pos Real.pi_pos) hβ)).toSectorAction.partFn) : ℂ)
-    = ↑((ofDiagonal₂ α β hα hβ).Q.det / Real.pi ^ 2 : ℝ) ^ ((1 : ℂ) / 2)
-      * ↑((ofDiagonal₂ α β hα hβ).toSectorAction.partFn) := by
-  rw [ofDiagonal₂_det]
-  exact ofDiagonal₂_duality α β hα hβ
-
-/-! ## Rank-r diagonal action and rank-r diagonal Siegel–Poisson duality
-
-The general diagonal case. The lattice `ℤ^r` decouples coordinate by
-coordinate (Fubini for counting measure, `tsum_finPi_factor`), each mode
-obeys the scalar duality, and the prefactors multiply into
-`√(det Q / π^r)`. This closes the matrix Siegel–Poisson target for
-**all diagonal Gram forms at every rank** by elementary factoring; the
-non-diagonal case is proved at full generality in
-`Meno/SiegelPoisson.lean` (Phase 15, multidimensional Poisson
-summation) and consumed by the theta graph's rank-2 non-diagonal Gram
-form (`Meno/ThetaHarmonic.lean`).
-
-`summable_finPi_prod`, `tsum_finPi_factor`, `diag_quadForm_eq` were
-relocated upstream from `Hodge.lean` (where they were private); they are
-pure analysis and belong to the spine. -/
-
-/-- Diagonal quadratic form simplification: off-diagonal terms vanish,
-leaving a sum of independent squared terms. -/
-theorem diag_quadForm_eq (r : ℕ) (α : Fin r → ℝ)
-    (Q : Fin r → Fin r → ℝ)
-    (hQ_diag : ∀ i, Q i i = α i)
-    (hQ_off : ∀ i j, i ≠ j → Q i j = 0)
-    (k : Fin r → ℤ) :
-    ∑ i : Fin r, ∑ j : Fin r, Q i j * (k i : ℝ) * (k j : ℝ) =
-    ∑ i : Fin r, α i * (k i : ℝ) ^ 2 := by
-  congr 1; ext i
-  have h : ∀ j : Fin r, Q i j * (k i : ℝ) * (k j : ℝ) =
-      if j = i then α i * (k i : ℝ) ^ 2 else 0 := by
-    intro j
-    split_ifs with h
-    · subst h; rw [hQ_diag]; ring
-    · rw [hQ_off i j (fun heq => h heq.symm)]; ring
-  simp_rw [h, Finset.sum_ite_eq', Finset.mem_univ, if_true]
-
-/-- Product factorization of `tsum` over `Fin r → ℤ`: Fubini's theorem
-for counting measure on `ℤ^r` with non-negative product summands. -/
-theorem tsum_finPi_factor (r : ℕ) (f : Fin r → ℤ → ℝ)
-    (hf_nn : ∀ i z, 0 ≤ f i z)
-    (hf_sum : ∀ i, Summable (f i)) :
-    ∑' k : Fin r → ℤ, ∏ i, f i (k i) = ∏ i : Fin r, ∑' z, f i z := by
-  induction r with
-  | zero =>
-    simp only [Finset.univ_eq_empty, Finset.prod_empty]
-    exact tsum_eq_single default (fun b hb => absurd (Subsingleton.elim b default) hb)
-  | succ n ih =>
-    let e := Fin.succFunEquiv ℤ n
-    have hrw : ∀ k : Fin (n + 1) → ℤ,
-        ∏ i, f i (k i) = (∏ i : Fin n, f (Fin.castSucc i) ((e k).1 i)) * f (Fin.last n) (e k).2 := by
-      intro k; exact Fin.prod_univ_castSucc (fun i => f i (k i))
-    set F : (Fin n → ℤ) → ℝ := fun q => ∏ i : Fin n, f (Fin.castSucc i) (q i)
-    set G : ℤ → ℝ := f (Fin.last n)
-    have hF_nn : ∀ q, 0 ≤ F q := fun q =>
-      Finset.prod_nonneg (fun i _ => hf_nn (Fin.castSucc i) (q i))
-    have hG_nn : ∀ z, 0 ≤ G z := hf_nn (Fin.last n)
-    have hF_sum : Summable F :=
-      summable_finPi_prod n (fun i => f (Fin.castSucc i))
-        (fun i z => hf_nn (Fin.castSucc i) z)
-        (fun i => hf_sum (Fin.castSucc i))
-    have hG_sum : Summable G := hf_sum (Fin.last n)
-    have hFG : Summable (fun p : (Fin n → ℤ) × ℤ => F p.1 * G p.2) :=
-      summable_mul_of_summable_norm
-        (hF_sum.congr fun q => (Real.norm_eq_abs (F q) ▸ abs_of_nonneg (hF_nn q)).symm)
-        (hG_sum.congr fun z => (Real.norm_eq_abs (G z) ▸ abs_of_nonneg (hG_nn z)).symm)
-    have step1 : ∑' k : Fin (n + 1) → ℤ, ∏ i, f i (k i) =
-        ∑' p : (Fin n → ℤ) × ℤ, F p.1 * G p.2 := by
-      conv_lhs => arg 1; ext k; rw [hrw k]
-      exact e.tsum_eq (fun p => F p.1 * G p.2)
-    have step2 : ∑' p : (Fin n → ℤ) × ℤ, F p.1 * G p.2 =
-        (∑' q, F q) * (∑' z, G z) :=
-      (hF_sum.tsum_mul_tsum hG_sum hFG).symm
-    have step3 : ∑' q, F q = ∏ i : Fin n, ∑' z, f (Fin.castSucc i) z :=
-      ih (fun i => f (Fin.castSucc i))
-        (fun i z => hf_nn (Fin.castSucc i) z)
-        (fun i => hf_sum (Fin.castSucc i))
-    rw [step1, step2, step3]
-    exact (Fin.prod_univ_castSucc (fun i => ∑' z, f i z)).symm
-
-/-- The diagonal Boltzmann weight factors mode by mode. -/
-private lemma diag_weight_eq {r : ℕ} (α : Fin r → ℝ) (k : Fin r → ℤ) :
-    Real.exp (-(∑ i, ∑ j, Matrix.diagonal α i j * (k i : ℝ) * (k j : ℝ)))
-    = ∏ i, Real.exp (-α i * (k i : ℝ) ^ 2) := by
-  rw [diag_quadForm_eq r α (Matrix.diagonal α)
-        (fun i => Matrix.diagonal_apply_eq α i)
-        (fun i j hij => Matrix.diagonal_apply_ne α hij)]
-  rw [show -(∑ i : Fin r, α i * (k i : ℝ) ^ 2)
-      = ∑ i : Fin r, (-α i * (k i : ℝ) ^ 2) from by
-    rw [← Finset.sum_neg_distrib]; congr 1; ext i; ring]
-  exact Real.exp_sum Finset.univ _
 
 /-- Rank-r diagonal quadratic action: `Q = Matrix.diagonal α` with all
 entries positive. -/
@@ -685,46 +506,12 @@ noncomputable def ofDiagonal {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α
 @[simp] theorem ofDiagonal_Q {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) :
     (ofDiagonal α hα).Q = Matrix.diagonal α := rfl
 
-/-- **Rank-r partition function factorization**:
-`Z(diag(α₁,…,α_r)) = ∏ᵢ Z(αᵢ)`. -/
-theorem ofDiagonal_partFn {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) :
-    (ofDiagonal α hα).toSectorAction.partFn = ∏ i, scalarPartFn (α i) := by
-  rw [(ofDiagonal α hα).partFn_eq]
-  simp_rw [ofDiagonal_Q]
-  calc ∑' k : Fin r → ℤ, Real.exp
-        (-(∑ i, ∑ j, Matrix.diagonal α i j * (k i : ℝ) * (k j : ℝ)))
-      = ∑' k : Fin r → ℤ, ∏ i, Real.exp (-α i * (k i : ℝ) ^ 2) :=
-        tsum_congr (fun k => diag_weight_eq α k)
-    _ = ∏ i : Fin r, ∑' z : ℤ, Real.exp (-α i * (z : ℝ) ^ 2) :=
-        tsum_finPi_factor r (fun i z => Real.exp (-α i * (z : ℝ) ^ 2))
-          (fun i z => le_of_lt (Real.exp_pos _))
-          (fun i => summable_scalarPartFn (α i) (hα i))
-    _ = ∏ i, scalarPartFn (α i) := rfl
 
 /-- Determinant of the diagonal Gram form: `∏ αᵢ`. -/
 theorem ofDiagonal_det {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) :
     (ofDiagonal α hα).Q.det = ∏ i, α i := by
   rw [ofDiagonal_Q]; exact Matrix.det_diagonal
 
-/-- The dual coupling matrix is `π² · Q⁻¹` at every rank (diagonal
-case): inverse verified by explicit diagonal multiplication. -/
-theorem ofDiagonal_dual_Q {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) :
-    (ofDiagonal (fun i => Real.pi ^ 2 / α i)
-        (fun i => div_pos (sq_pos_of_pos Real.pi_pos) (hα i))).Q
-    = Real.pi ^ 2 • (ofDiagonal α hα).Q⁻¹ := by
-  rw [ofDiagonal_Q, ofDiagonal_Q]
-  have hinv : (Matrix.diagonal α)⁻¹ = Matrix.diagonal (fun i => (α i)⁻¹) := by
-    apply Matrix.inv_eq_right_inv
-    rw [Matrix.diagonal_mul_diagonal]
-    have : (fun i => α i * (α i)⁻¹) = fun _ => (1 : ℝ) := by
-      funext i; exact mul_inv_cancel₀ (ne_of_gt (hα i))
-    rw [this, Matrix.diagonal_one]
-  rw [hinv]
-  ext i j
-  by_cases h : i = j
-  · subst h
-    simp [Matrix.smul_apply, smul_eq_mul, Matrix.diagonal_apply_eq, div_eq_mul_inv]
-  · simp [Matrix.smul_apply, smul_eq_mul, Matrix.diagonal_apply_ne _ h]
 
 /-- Half-power of a product of non-negative reals, complex `cpow` form:
 `∏ᵢ (fᵢ)^(1/2) = (∏ᵢ fᵢ)^(1/2)`. Public: also used by the
@@ -740,52 +527,6 @@ lemma prod_cpow_half : ∀ (r : ℕ) (f : Fin r → ℝ), (∀ i, 0 ≤ f i) →
         Complex.mul_cpow_ofReal_nonneg
           (Finset.prod_nonneg fun i _ => hf _) (hf _)]
 
-/-- **Rank-r diagonal Siegel–Poisson duality**:
-`Z(π²·Q⁻¹) = √(det Q / π^r) · Z(Q)` for `Q = diag(α₁,…,α_r)`. Proved by
-`r` scalar S-transformations; the prefactors multiply into the
-determinant form. No multidimensional Poisson summation. -/
-theorem ofDiagonal_duality {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) :
-    (↑((ofDiagonal (fun i => Real.pi ^ 2 / α i)
-        (fun i => div_pos (sq_pos_of_pos Real.pi_pos) (hα i))).toSectorAction.partFn) : ℂ)
-    = ↑((∏ i, α i) / Real.pi ^ r : ℝ) ^ ((1 : ℂ) / 2)
-      * ↑((ofDiagonal α hα).toSectorAction.partFn) := by
-  rw [ofDiagonal_partFn, ofDiagonal_partFn, Complex.ofReal_prod, Complex.ofReal_prod]
-  calc ∏ i, (↑(scalarPartFn (Real.pi ^ 2 / α i)) : ℂ)
-      = ∏ i, ((↑(α i / Real.pi : ℝ) : ℂ) ^ ((1 : ℂ) / 2) * ↑(scalarPartFn (α i))) :=
-        Finset.prod_congr rfl (fun i _ => scalarPartFn_duality (α i) (hα i))
-    _ = (∏ i, (↑(α i / Real.pi : ℝ) : ℂ) ^ ((1 : ℂ) / 2))
-          * ∏ i, (↑(scalarPartFn (α i)) : ℂ) :=
-        Finset.prod_mul_distrib
-    _ = (↑(∏ i, α i / Real.pi : ℝ) : ℂ) ^ ((1 : ℂ) / 2)
-          * ∏ i, (↑(scalarPartFn (α i)) : ℂ) := by
-        rw [prod_cpow_half r (fun i => α i / Real.pi)
-              (fun i => (div_pos (hα i) Real.pi_pos).le),
-            Complex.ofReal_prod]
-    _ = ↑((∏ i, α i) / Real.pi ^ r : ℝ) ^ ((1 : ℂ) / 2)
-          * ∏ i, (↑(scalarPartFn (α i)) : ℂ) := by
-        congr 3
-        rw [Finset.prod_div_distrib, Finset.prod_const,
-            Finset.card_univ, Fintype.card_fin]
-
-/-- The rank-r duality in determinant form. -/
-theorem ofDiagonal_duality_det_form {r : ℕ} (α : Fin r → ℝ) (hα : ∀ i, 0 < α i) :
-    (↑((ofDiagonal (fun i => Real.pi ^ 2 / α i)
-        (fun i => div_pos (sq_pos_of_pos Real.pi_pos) (hα i))).toSectorAction.partFn) : ℂ)
-    = ↑((ofDiagonal α hα).Q.det / Real.pi ^ r : ℝ) ^ ((1 : ℂ) / 2)
-      * ↑((ofDiagonal α hα).toSectorAction.partFn) := by
-  rw [ofDiagonal_det]
-  exact ofDiagonal_duality α hα
-
-/-- The rank-2 hand-built action is the `r = 2` instance of the general
-diagonal family: same Gram matrix, hence same partition function. The
-dedup witness connecting `ofDiagonal₂` to `ofDiagonal`. -/
-theorem ofDiagonal₂_partFn_eq_ofDiagonal (α β : ℝ) (hα : 0 < α) (hβ : 0 < β) :
-    (ofDiagonal₂ α β hα hβ).toSectorAction.partFn
-    = (ofDiagonal ![α, β] (fun i => by fin_cases i <;> assumption)).toSectorAction.partFn := by
-  refine partFn_eq_of_Q_eq _ _ ?_
-  rw [ofDiagonal_Q]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [Matrix.diagonal]
 
 end QuadraticAction
 

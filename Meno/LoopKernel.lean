@@ -68,9 +68,6 @@ noncomputable def gibbsVariance (f : End L.base → ℝ) : ℝ :=
 
 theorem partFn_pos : 0 < L.partFn := L.toSectorAction.partFn_pos
 
-theorem partFn_ge_one : 1 ≤ L.partFn := L.toSectorAction.partFn_ge_one
-
-theorem complexity_nonneg : 0 ≤ L.complexity := L.toSectorAction.complexity_nonneg
 
 theorem gibbsMass_nonneg (g : End L.base) : 0 ≤ L.gibbsMass g :=
   L.toSectorAction.gibbsMass_nonneg g
@@ -81,8 +78,6 @@ theorem summable_gibbsMass : Summable L.gibbsMass :=
 theorem tsum_gibbsMass_eq_one : ∑' g, L.gibbsMass g = 1 :=
   L.toSectorAction.tsum_gibbsMass_eq_one
 
-theorem gibbsExpect_one : L.gibbsExpect (fun _ => 1) = 1 :=
-  L.toSectorAction.gibbsExpect_one
 
 theorem gibbsVariance_nonneg (f : End L.base → ℝ)
     (hsq : Summable (fun g => f g ^ 2 * L.gibbsMass g))

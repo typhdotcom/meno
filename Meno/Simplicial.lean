@@ -4,7 +4,15 @@ import Mathlib.Tactic
 import Meno.Basic
 import Meno.InfoRatchet
 
-/-! # The Simplicial Model -/
+/-! # The Simplicial Model
+
+The walk substrate of the corroborating route: graphs, 2-complexes,
+walks, homotopy, geodesic length, winding arithmetic on the cycle
+graph, and the discrete Hodge theory the groupoid bridge consumes.
+(Review #28: the standalone contractibility/geodesic-matter model,
+the disk/hollow-triangle binding chapters, and the parity arguments
+were consumerless pre-spine developments and are deleted; binding
+and matter live on the spine, `Meno/Binding.lean`, `Meno/Matter.lean`.) -/
 
 namespace Simplicial
 
@@ -27,8 +35,6 @@ structure Complex (V : Type u) extends Graph V where
 /-- A graph is symmetric if every edge has a reverse. -/
 def Graph.Symmetric (G : Graph V) : Prop := ∀ i j, G.edge i j → G.edge j i
 
-/-- A graph is irreflexive if no vertex has a self-loop. -/
-def Graph.Irreflexive (G : Graph V) : Prop := ∀ i, ¬G.edge i i
 
 variable {V : Type u}
 
@@ -56,10 +62,6 @@ def Walk.append : Walk G u v → Walk G v w → Walk G u w
       simp [Walk.append, Walk.length, Walk.length_append p q]
       omega
 
-/-- A cycle: a non-trivial loop. -/
-structure Cycle (G : Graph V) (v : V) where
-  walk : Walk G v v
-  nontrivial : walk.length > 0
 
 /-! ## Homotopy in a 2-Complex -/
 
@@ -114,9 +116,6 @@ theorem Homotopic₂.congr_append (C : Complex V) {p p' : Walk C.toGraph u v} {q
     simp only [Walk.append]
     exact Homotopic₂.congr_cons h (ih hq)
 
-/-- A cycle is contractible in a 2-complex if homotopic to trivial. -/
-def Cycle.isContractible₂ (C : Complex V) (c : Cycle C.toGraph v) : Prop :=
-  Homotopic₂ C c.walk (Walk.nil v)
 
 /-! ## Geodesic Length -/
 
@@ -160,114 +159,6 @@ theorem geodesicLength_achieved (C : Complex V) (p : Walk C.toGraph u v) :
   have hmem := Nat.sInf_mem hne
   exact hmem
 
-/-- Contractible cycles have geodesic length 0. -/
-theorem geodesicLength_zero_of_contractible (C : Complex V) (c : Cycle C.toGraph v)
-    (hc : c.isContractible₂ C) : geodesicLength C c.walk = 0 := by
-  apply Nat.eq_zero_of_le_zero
-  calc geodesicLength C c.walk
-      = geodesicLength C (Walk.nil v) := geodesicLength_eq_of_homotopic C hc
-    _ ≤ (Walk.nil v).length := geodesicLength_le_length C (Walk.nil v)
-    _ = 0 := rfl
-
-/-! ## Cycle Complexity -/
-
-/-- Complexity of a cycle: its geodesic length. -/
-noncomputable def cycleComplexity (C : Complex V) (c : Cycle C.toGraph v) : ℕ :=
-  geodesicLength C c.walk
-
-/-- Contractible cycles have zero complexity. -/
-theorem cycleComplexity_zero_of_contractible (C : Complex V) (c : Cycle C.toGraph v)
-    (hc : c.isContractible₂ C) : cycleComplexity C c = 0 :=
-  geodesicLength_zero_of_contractible C c hc
-
-/-- Non-contractible cycles have positive complexity. -/
-theorem cycleComplexity_pos_of_noncontractible (C : Complex V) (c : Cycle C.toGraph v)
-    (hc : ¬c.isContractible₂ C) : cycleComplexity C c > 0 := by
-  simp only [cycleComplexity]
-  have h : geodesicLength C c.walk ≠ 0 := by
-    intro hz
-    obtain ⟨q, hq, hlen⟩ := geodesicLength_achieved C c.walk
-    rw [hz] at hlen
-    cases q with
-    | nil _ => exact hc hq
-    | cons _ _ => simp [Walk.length] at hlen
-  exact Nat.pos_of_ne_zero h
-
-/-! ## Geodesic mass and geodesic matter
-
-Renamed from `Mass`/`IsMatter` (review #2, C12 audit): these are the
-**geodesic** (walk-length, `ℕ`-valued) notions of the simplicial
-model, distinct from the spine's spectral mass on `H¹` classes
-(`MatterSector.mass`, real-valued, variational). The two theories are
-*not* identified in general and must not share physical names; their
-flagship comparison on the cycle graph is
-`Meno.Simplicial.geodesic_harmonic_duality`
-(`Meno/Groupoid.lean`): geodesic mass `n`, spectral mass `1/n`,
-product `1`. -/
-
-/-- Geodesic mass of a cycle: its geodesic length in the fixed
-complex. -/
-noncomputable def geodesicMass (C : Complex V) (c : Cycle C.toGraph v) : ℕ :=
-  cycleComplexity C c
-
-/-- A cycle is geodesic matter if its geodesic mass is positive. -/
-def IsGeodesicMatter (C : Complex V) (c : Cycle C.toGraph v) : Prop :=
-  geodesicMass C c > 0
-
-/-- Contractible cycles have zero geodesic mass. -/
-theorem contractible_zero_geodesicMass (C : Complex V) (c : Cycle C.toGraph v)
-    (hc : c.isContractible₂ C) : geodesicMass C c = 0 :=
-  cycleComplexity_zero_of_contractible C c hc
-
-/-- Geodesic-matter cycles are non-contractible. -/
-theorem geodesicMatter_noncontractible (C : Complex V) (c : Cycle C.toGraph v)
-    (hm : IsGeodesicMatter C c) : ¬c.isContractible₂ C := by
-  intro hc
-  rw [IsGeodesicMatter, contractible_zero_geodesicMass C c hc] at hm
-  exact Nat.lt_irrefl 0 hm
-
-/-! ## Pure 1-Skeleton (No Faces) -/
-
-/-- Homotopy in a pure graph (no faces). Includes backtracking reduction. -/
-inductive Homotopic (G : Graph V) : Walk G u v → Walk G u v → Prop
-  | refl (p : Walk G u v) : Homotopic G p p
-  | symm {p q : Walk G u v} : Homotopic G p q → Homotopic G q p
-  | trans {p q r : Walk G u v} : Homotopic G p q → Homotopic G q r → Homotopic G p r
-  | backtrack {a b w} (hab : G.edge a b) (hba : G.edge b a) (tail : Walk G a w) :
-      Homotopic G (Walk.cons hab (Walk.cons hba tail)) tail
-  | congr_cons {a b w} (h : G.edge a b) {p q : Walk G b w} :
-      Homotopic G p q → Homotopic G (Walk.cons h p) (Walk.cons h q)
-
-/-- Backtracking changes length by exactly 2. -/
-theorem backtrack_length_diff {a b w : V} (hab : G.edge a b) (hba : G.edge b a)
-    (tail : Walk G a w) :
-    (Walk.cons hab (Walk.cons hba tail)).length = tail.length + 2 := by
-  simp [Walk.length]
-
-/-- Homotopy preserves length parity. -/
-theorem homotopic_length_parity {p q : Walk G u v} (h : Homotopic G p q) :
-    p.length % 2 = q.length % 2 := by
-  induction h with
-  | refl _ => rfl
-  | symm _ ih => exact ih.symm
-  | trans _ _ ih1 ih2 => exact ih1.trans ih2
-  | backtrack hab hba tail => simp [Walk.length]; omega
-  | congr_cons _ _ ih => simp [Walk.length]; omega
-
-/-- A cycle is contractible if it's homotopic to the trivial walk. -/
-def Cycle.isContractible (c : Cycle G v) : Prop :=
-  Homotopic G c.walk (Walk.nil v)
-
-/-- Odd-length cycles are NOT contractible in a pure 1-skeleton.
-    Even-length cycles may contract via backtracking (a→b→a ~ a). -/
-theorem odd_cycle_not_contractible (c : Cycle G v) (hodd : c.walk.length % 2 = 1) :
-    ¬c.isContractible := by
-  intro hcontr
-  have hparity := homotopic_length_parity hcontr
-  simp only [Walk.length] at hparity
-  omega
-
-/-! ## Examples -/
 
 /-! ## The Cycle Graph C_n -/
 
@@ -282,9 +173,6 @@ def CycleGraph (n : ℕ) (hn : n ≥ 3) : Complex (Fin n) where
   face_closed := fun _ _ _ h => h.elim
   face_cycle := fun _ _ _ h => h.elim
 
-/-- The cycle graph has no faces. -/
-theorem cycleGraph_no_faces (n : ℕ) (hn : n ≥ 3) : ∀ a b c, ¬(CycleGraph n hn).face a b c :=
-  fun _ _ _ h => h
 
 /-! ## Cycle Arithmetic -/
 
@@ -530,13 +418,6 @@ def Walk.repeatLoop {G : Graph V} {v : V} (p : Walk G v v) : ℕ → Walk G v v
   | 0 => Walk.nil v
   | k + 1 => p.append (Walk.repeatLoop p k)
 
-/-- Length of a repeated loop. -/
-theorem Walk.repeatLoop_length {G : Graph V} {v : V} (p : Walk G v v) :
-    ∀ k : ℕ, (Walk.repeatLoop p k).length = k * p.length
-  | 0 => by simp [Walk.repeatLoop, Walk.length]
-  | k + 1 => by
-      simp [Walk.repeatLoop, Walk.repeatLoop_length p k, Nat.succ_mul]
-      omega
 
 /-- Winding count of a repeated cycle-graph loop. -/
 theorem Walk.repeatLoop_windingCount {n : ℕ} {hn : n ≥ 3} {s : Fin n}
@@ -823,9 +704,6 @@ theorem cycleWalk_windingCount (n : ℕ) (hn : n ≥ 3) :
     (cycleWalk n hn).windingCount = (n : ℤ) := by
   simp [cycleWalk, cycleWalkAt, cycleForwardWalkAux_windingCount]
 
-theorem cycleWalkAt_length (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
-    (cycleWalkAt n hn s).length = n := by
-  simp [cycleWalkAt, cycleForwardWalkAux_length]
 
 theorem cycleWalkAt_windingCount (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
     (cycleWalkAt n hn s).windingCount = (n : ℤ) := by
@@ -836,19 +714,11 @@ def cycleTurnLoopNatAt (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℕ) :
     Walk (CycleGraph n hn).toGraph s s :=
   Walk.repeatLoop (cycleWalkAt n hn s) k
 
-/-- The canonical `k`-turn loop at the distinguished basepoint. -/
-def cycleTurnLoopNat (n : ℕ) (hn : n ≥ 3) (k : ℕ) :
-    Walk (CycleGraph n hn).toGraph (cycleBase n hn) (cycleBase n hn) :=
-  cycleTurnLoopNatAt n hn (cycleBase n hn) k
 
 theorem cycleTurnLoopNatAt_windingCount (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℕ) :
     (cycleTurnLoopNatAt n hn s k).windingCount = (k * n : ℤ) := by
   simp [cycleTurnLoopNatAt, Walk.repeatLoop_windingCount, cycleWalkAt_windingCount, mul_comm]
 
-theorem cycleTurnLoopNat_windingCount (n : ℕ) (hn : n ≥ 3) (k : ℕ) :
-    (cycleTurnLoopNat n hn k).windingCount = (k * n : ℤ) := by
-  simpa [cycleTurnLoopNat] using
-    cycleTurnLoopNatAt_windingCount n hn (cycleBase n hn) k
 
 theorem cycleTurnLoopNatAt_loopWinding (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℕ) :
     (cycleTurnLoopNatAt n hn s k).loopWinding = (k : ℤ) := by
@@ -860,25 +730,9 @@ theorem cycleTurnLoopNatAt_loopWinding (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k :
     Int.mul_ediv_cancel_left (k : ℤ) hn0
   simpa [mul_comm, mul_assoc, mul_left_comm] using hdiv
 
-theorem cycleTurnLoopNat_loopWinding (n : ℕ) (hn : n ≥ 3) (k : ℕ) :
-    (cycleTurnLoopNat n hn k).loopWinding = (k : ℤ) := by
-  simpa [cycleTurnLoopNat] using
-    cycleTurnLoopNatAt_loopWinding n hn (cycleBase n hn) k
-
-/-- The canonical cycle. -/
-def cycleCycle (n : ℕ) (hn : n ≥ 3) : Cycle (CycleGraph n hn).toGraph (cycleBase n hn) where
-  walk := cycleWalk n hn
-  nontrivial := by rw [cycleWalk_length]; omega
 
 /-! ## Main Topological Results -/
 
-/-- The cycle graph is not contractible: the canonical cycle cannot be homotoped to nil. -/
-theorem cycleGraph_not_contractible (n : ℕ) (hn : n ≥ 3) :
-    ¬(cycleCycle n hn).isContractible₂ (CycleGraph n hn) := by
-  intro hcontr
-  have hwc := windingCount_homotopy_invariant hcontr
-  simp only [cycleCycle, cycleWalk_windingCount, Walk.windingCount] at hwc
-  omega
 
 /-- Geodesic length of the canonical cycle on C_n is exactly n. -/
 theorem cycleGraph_geodesic_eq_n (n : ℕ) (hn : n ≥ 3) :
@@ -896,315 +750,6 @@ theorem cycleGraph_geodesic_eq_n (n : ℕ) (hn : n ≥ 3) :
       _ = q.windingCount.natAbs := by rw [hwc]
       _ ≤ q.length := windingCount_abs_le_length q
 
-/-! ## Path Cost -/
-
-/-- Walks between distinct vertices have positive length. -/
-theorem walk_cost_pos {G : Graph V} {v w : V} (p : Walk G v w) (hne : v ≠ w) :
-    p.length > 0 := by
-  cases p with
-  | nil _ => exact absurd rfl hne
-  | cons _ _ => simp [Walk.length]
-
-/-- A filled disk: triangle with a face. The boundary cycle CAN contract. -/
-def Disk : Complex (Fin 3) where
-  edge := fun i j => i ≠ j  -- complete graph on 3 vertices
-  face := fun a b c => a ≠ b ∧ b ≠ c ∧ a ≠ c  -- unoriented: any triple of distinct vertices
-  face_closed := fun _ _ _ h => h
-  face_cycle := fun _ _ _ ⟨hab, hbc, hac⟩ => ⟨hbc, hac.symm, hab.symm⟩
-
--- Edge proofs for disk
-private theorem disk_01 : Disk.edge 0 1 := by simp [Disk]
-private theorem disk_12 : Disk.edge 1 2 := by simp [Disk]
-private theorem disk_20 : Disk.edge 2 0 := by simp [Disk]
-private theorem disk_02 : Disk.edge 0 2 := by simp [Disk]
-
-/-- The boundary of the disk: 0 → 1 → 2 → 0 -/
-def diskBoundary : Walk Disk.toGraph 0 0 :=
-  Walk.cons disk_01 (Walk.cons disk_12 (Walk.cons disk_20 (Walk.nil 0)))
-
-/-- The boundary cycle. -/
-def diskCycle : Cycle Disk.toGraph 0 where
-  walk := diskBoundary
-  nontrivial := by decide
-
-/-- In the 2-complex with face, a triangle boundary step can shorten.
-    This demonstrates relaxation - the mechanism for potential energy. -/
-theorem disk_can_shorten :
-    Homotopic₂ Disk
-      (Walk.cons disk_01 (Walk.cons disk_12 (Walk.nil 2)))
-      (Walk.cons disk_02 (Walk.nil 2)) := by
-  exact Homotopic₂.face (by simp [Disk] : Disk.face 0 1 2) (Walk.nil 2)
-
-/-- The disk boundary IS contractible: 0→1→2→0 ~ nil via face + backtrack.
-    This is the central theorem: faces allow cycles to contract to nothing. -/
-theorem disk_contractible : diskCycle.isContractible₂ Disk := by
-  unfold Cycle.isContractible₂ diskCycle diskBoundary
-  exact Homotopic₂.trans (Homotopic₂.face (by simp [Disk]) _) (Homotopic₂.backtrack disk_02 disk_20 _)
-
-/-! ## Gluing: Interaction as Union -/
-
-/-- Union of two complexes over the same vertex set.
-    Edges and faces from either complex are available. -/
-def Complex.union (C₁ C₂ : Complex V) : Complex V where
-  edge := fun v w => C₁.edge v w ∨ C₂.edge v w
-  face := fun a b c => C₁.face a b c ∨ C₂.face a b c
-  face_closed := by
-    intro a b c hf
-    cases hf with
-    | inl h => exact ⟨Or.inl (C₁.face_closed a b c h).1,
-                      Or.inl (C₁.face_closed a b c h).2.1,
-                      Or.inl (C₁.face_closed a b c h).2.2⟩
-    | inr h => exact ⟨Or.inr (C₂.face_closed a b c h).1,
-                      Or.inr (C₂.face_closed a b c h).2.1,
-                      Or.inr (C₂.face_closed a b c h).2.2⟩
-  face_cycle := fun _ _ _ hf => hf.elim (Or.inl ∘ C₁.face_cycle _ _ _) (Or.inr ∘ C₂.face_cycle _ _ _)
-
-/-- A walk in C₁ can be lifted to the union. -/
-def Walk.toUnion₁ (C₁ C₂ : Complex V) : Walk C₁.toGraph u v → Walk (C₁.union C₂).toGraph u v
-  | .nil w => .nil w
-  | .cons h p => .cons (Or.inl h) (p.toUnion₁ C₁ C₂)
-
-/-- A walk in C₂ can be lifted to the union. -/
-def Walk.toUnion₂ (C₁ C₂ : Complex V) : Walk C₂.toGraph u v → Walk (C₁.union C₂).toGraph u v
-  | .nil w => .nil w
-  | .cons h p => .cons (Or.inr h) (p.toUnion₂ C₁ C₂)
-
-/-- Lifting preserves length. -/
-theorem Walk.toUnion₁_length (C₁ C₂ : Complex V) (p : Walk C₁.toGraph u v) :
-    (p.toUnion₁ C₁ C₂).length = p.length := by
-  induction p with
-  | nil _ => rfl
-  | cons _ _ ih => simp [Walk.toUnion₁, Walk.length, ih]
-
-/-- A cycle in C₁ lifts to a cycle in the union C₁ ∪ C₂. -/
-def Cycle.toUnion₁ (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) :
-    Cycle (C₁.union C₂).toGraph v where
-  walk := c.walk.toUnion₁ C₁ C₂
-  nontrivial := by simpa [Walk.toUnion₁_length] using c.nontrivial
-
-/-- Homotopy in C₁ lifts to homotopy in the union. -/
-theorem Homotopic₂.toUnion₁ (C₁ C₂ : Complex V) {p q : Walk C₁.toGraph u v}
-    (h : Homotopic₂ C₁ p q) : Homotopic₂ (C₁.union C₂) (p.toUnion₁ C₁ C₂) (q.toUnion₁ C₁ C₂) := by
-  induction h with
-  | refl p => exact Homotopic₂.refl _
-  | symm _ ih => exact Homotopic₂.symm ih
-  | trans _ _ ih1 ih2 => exact Homotopic₂.trans ih1 ih2
-  | backtrack hab hba tail =>
-    simp only [Walk.toUnion₁]
-    exact Homotopic₂.backtrack (Or.inl hab) (Or.inl hba) _
-  | face hf tail =>
-    simp only [Walk.toUnion₁]
-    have hf' : (C₁.union C₂).face _ _ _ := Or.inl hf
-    exact Homotopic₂.face hf' (tail.toUnion₁ C₁ C₂)
-  | face_rev hf hcb hba hca tail =>
-    simp only [Walk.toUnion₁]
-    exact Homotopic₂.face_rev (Or.inl hf) (Or.inl hcb) (Or.inl hba) (Or.inl hca) _
-  | congr_cons h _ ih =>
-    simp only [Walk.toUnion₁]
-    exact Homotopic₂.congr_cons (Or.inl h) ih
-
-/-- Lifting a homotopy class to union includes all lifted lengths. -/
-theorem homotopyLengths_lift_subset (C₁ C₂ : Complex V) (p : Walk C₁.toGraph u v) :
-    homotopyLengths C₁ p ⊆ homotopyLengths (C₁.union C₂) (p.toUnion₁ C₁ C₂) := by
-  intro n ⟨q, hq, hlen⟩
-  exact ⟨q.toUnion₁ C₁ C₂, Homotopic₂.toUnion₁ C₁ C₂ hq, by rw [Walk.toUnion₁_length, hlen]⟩
-
-/-- The union has at least as many reduction paths as C₁ alone.
-    Therefore geodesic length in union ≤ geodesic length in C₁. -/
-theorem geodesicLength_union_le₁ (C₁ C₂ : Complex V) (p : Walk C₁.toGraph u v) :
-    geodesicLength (C₁.union C₂) (p.toUnion₁ C₁ C₂) ≤ geodesicLength C₁ p := by
-  simp only [geodesicLength]
-  -- Union's homotopy set contains C₁'s homotopy set (via lifting)
-  -- So sInf of the larger set ≤ sInf of smaller set? No, opposite!
-  -- Actually: if S₁ ⊆ S₂, then sInf S₂ ≤ sInf S₁ (more elements, can be smaller)
-  -- But we have the opposite: C₁'s set lifts INTO union's set
-  -- Union may have MORE homotopic walks (via C₂'s faces), so LARGER set, so SMALLER sInf
-  apply csInf_le_csInf
-  · -- Union's homotopy lengths is bounded below by 0
-    exact ⟨0, fun _ _ => Nat.zero_le _⟩
-  · -- C₁'s homotopy lengths is nonempty
-    exact ⟨p.length, length_mem_homotopyLengths C₁ p⟩
-  · -- C₁'s lengths ⊆ union's lengths
-    exact homotopyLengths_lift_subset C₁ C₂ p
-
-/-! ## The geodesic binding drop -/
-
-/-- Two complexes share a face if they both contain the same triangle. -/
-def Complex.sharesFace (C₁ C₂ : Complex V) : Prop :=
-  ∃ a b c, C₁.face a b c ∧ C₂.face a b c
-
-/-- **Geodesic binding drop** (renamed from `cycleBindingEnergy`,
-review #2, C12 audit): the `ℕ`-valued drop in geodesic length when
-the union allows more reduction than either complex alone. Distinct
-from the spine's spectral binding (`HarmonicGramData.bindingEnergy`,
-real-valued; and the removed weight of `Meno/Binding.lean`); the two
-models share the structural shape "filling enables reduction" — both
-have exact decompositions (`geodesicBindingDrop_add_union` here,
-`TwoComplex.partFn_add_killed` there) — but no cross-model
-identification exists and none is claimed. -/
-noncomputable def geodesicBindingDrop (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) : ℕ :=
-  cycleComplexity C₁ c - cycleComplexity (C₁.union C₂) (c.toUnion₁ C₁ C₂)
-
-/-- Union cannot increase cycle complexity: extra faces only add reduction paths. -/
-theorem cycleComplexity_union_le (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) :
-    cycleComplexity (C₁.union C₂) (c.toUnion₁ C₁ C₂) ≤ cycleComplexity C₁ c := by
-  simpa [cycleComplexity, Cycle.toUnion₁] using geodesicLength_union_le₁ C₁ C₂ c.walk
-
-/-- Binding energy decomposes cycle complexity into residual + released parts. -/
-theorem geodesicBindingDrop_add_union (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) :
-    geodesicBindingDrop C₁ C₂ c + cycleComplexity (C₁.union C₂) (c.toUnion₁ C₁ C₂) =
-      cycleComplexity C₁ c := by
-  unfold geodesicBindingDrop
-  exact Nat.sub_add_cancel (cycleComplexity_union_le C₁ C₂ c)
-
-/-! ## Shared faces enable geodesic binding -/
-
-/-- A cycle becomes contractible in the union if C₂ provides the missing face. -/
-def Cycle.contractibleInUnion (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v) : Prop :=
-  (c.toUnion₁ C₁ C₂).isContractible₂ (C₁.union C₂)
-
-/-- When a cycle contracts in the union, the geodesic binding drop is
-its entire geodesic mass (`cycleComplexity C₁ c = geodesicMass C₁ c`,
-definitionally). Renamed from `binding_releases_mass` (review #3): the
-`ℕ`-valued drop is not identified with the spectral model's released
-rest mass and must not borrow its name. -/
-theorem geodesicBindingDrop_eq_geodesicMass (C₁ C₂ : Complex V)
-    (c : Cycle C₁.toGraph v) (hc : c.contractibleInUnion C₁ C₂) :
-    geodesicBindingDrop C₁ C₂ c = cycleComplexity C₁ c := by
-  simp only [geodesicBindingDrop]
-  have h := cycleComplexity_zero_of_contractible (C₁.union C₂) _ hc
-  simp only [h, Nat.sub_zero]
-
-/-! ## The geodesic mass defect: hollow triangle example -/
-
-/-- The hollow triangle: same edges as Disk, but NO face — a
-noncontractible cycle waiting to be filled (geodesic matter in the
-sense of `IsGeodesicMatter`). -/
-def HollowTriangle : Complex (Fin 3) where
-  edge := fun i j => i ≠ j
-  face := fun _ _ _ => False
-  face_closed := fun _ _ _ h => h.elim
-  face_cycle := fun _ _ _ h => h.elim
-
-/-- The hollow triangle has the same graph structure as the disk. -/
-theorem hollow_eq_disk_graph : HollowTriangle.toGraph = Disk.toGraph := rfl
-
--- Edge proofs for hollow (same as disk)
-private theorem hollow_01 : HollowTriangle.edge 0 1 := by simp [HollowTriangle]
-private theorem hollow_12 : HollowTriangle.edge 1 2 := by simp [HollowTriangle]
-private theorem hollow_20 : HollowTriangle.edge 2 0 := by simp [HollowTriangle]
-private theorem hollow_02 : HollowTriangle.edge 0 2 := by simp [HollowTriangle]
-
-/-- The boundary walk in the hollow triangle. -/
-def hollowBoundary : Walk HollowTriangle.toGraph 0 0 :=
-  Walk.cons hollow_01 (Walk.cons hollow_12 (Walk.cons hollow_20 (Walk.nil 0)))
-
-/-- The boundary cycle in the hollow triangle. -/
-def hollowCycle : Cycle HollowTriangle.toGraph 0 where
-  walk := hollowBoundary
-  nontrivial := by decide
-
-/-- In a complex with no faces, Homotopic₂ reduces to backtracking only.
-    This preserves length parity, so odd cycles cannot contract. -/
-theorem homotopic₂_no_faces_parity (C : Complex V) (hno : ∀ a b c, ¬C.face a b c)
-    {p q : Walk C.toGraph u v} (h : Homotopic₂ C p q) :
-    p.length % 2 = q.length % 2 := by
-  induction h with
-  | refl _ => rfl
-  | symm _ ih => exact ih.symm
-  | trans _ _ ih1 ih2 => exact ih1.trans ih2
-  | backtrack _ _ _ => simp [Walk.length]; omega
-  | face hf _ => exact (hno _ _ _ hf).elim
-  | face_rev hf _ _ _ _ => exact (hno _ _ _ hf).elim
-  | congr_cons _ _ ih => simp [Walk.length]; omega
-
-/-! ## CycleGraph and HollowTriangle -/
-
-/-- The hollow triangle has no faces. -/
-theorem hollow_no_faces : ∀ a b c, ¬HollowTriangle.face a b c := by
-  intro _ _ _ h; exact h
-
-/-- The hollow boundary cannot contract: odd length, no faces to help. -/
-theorem hollow_not_contractible₂ : ¬hollowCycle.isContractible₂ HollowTriangle := by
-  intro hcontr
-  have hparity := homotopic₂_no_faces_parity HollowTriangle hollow_no_faces hcontr
-  simp only [hollowCycle, hollowBoundary, Walk.length] at hparity
-  omega
-
-/-- The hollow cycle has positive complexity (it is matter). -/
-theorem hollow_positive_complexity : cycleComplexity HollowTriangle hollowCycle > 0 :=
-  cycleComplexity_pos_of_noncontractible HollowTriangle hollowCycle hollow_not_contractible₂
-
-/-- The union has Disk's face available. -/
-theorem union_has_disk_face : (HollowTriangle.union Disk).face 0 1 2 :=
-  Or.inr (by simp [Disk] : Disk.face 0 1 2)
-
-/-- **The Central Theorem**: The hollow cycle CONTRACTS in the union with Disk.
-    Disk's face provides the missing 2-cell, allowing the cycle to relax. -/
-theorem hollow_contractible_in_union : hollowCycle.contractibleInUnion HollowTriangle Disk := by
-  unfold Cycle.contractibleInUnion Cycle.isContractible₂
-  simp only [Cycle.toUnion₁, hollowCycle, hollowBoundary]
-  exact Homotopic₂.trans (Homotopic₂.face union_has_disk_face _)
-    (Homotopic₂.backtrack (Or.inl hollow_02) (Or.inl hollow_20) _)
-
-/-! ## General Triangle Filling -/
-
-/-- A triangle walk: three edges forming a→b→c→a. -/
-def triangleWalk (C : Complex V) {a b c : V}
-    (hab : C.edge a b) (hbc : C.edge b c) (hca : C.edge c a) : Walk C.toGraph a a :=
-  Walk.cons hab (Walk.cons hbc (Walk.cons hca (Walk.nil a)))
-
-/-- A triangle cycle. -/
-def triangleCycle (C : Complex V) {a b c : V}
-    (hab : C.edge a b) (hbc : C.edge b c) (hca : C.edge c a) : Cycle C.toGraph a where
-  walk := triangleWalk C hab hbc hca
-  nontrivial := by simp [triangleWalk, Walk.length]
-
-/-- **General Triangle Contraction**: A triangle cycle contracts when the face exists
-    and edges are bidirectional (allowing backtracking). -/
-theorem triangle_contracts (C : Complex V) {a b c : V}
-    (hab : C.edge a b) (hbc : C.edge b c) (hca : C.edge c a)
-    (hac : C.edge a c)  -- reverse edge for backtracking
-    (hface : C.face a b c) :
-    (triangleCycle C hab hbc hca).isContractible₂ C := by
-  unfold Cycle.isContractible₂ triangleCycle triangleWalk
-  -- a→b→c→a ~[face] a→c→a ~[backtrack] nil
-  exact Homotopic₂.trans (Homotopic₂.face hface _) (Homotopic₂.backtrack hac hca _)
-
-/-- Corollary: if `C₁` lacks a face that `C₂` provides, the triangle
-cycle contracts in the union — the geodesic binding situation.
-Renamed from `triangle_binding` (review #4): the name states what is
-proved, contractibility in the union. -/
-theorem triangle_contractibleInUnion (C₁ C₂ : Complex V) {a b c : V}
-    (hab : C₁.edge a b) (hbc : C₁.edge b c) (hca : C₁.edge c a) (hac : C₁.edge a c)
-    (hyes : C₂.face a b c) :
-    (triangleCycle C₁ hab hbc hca).contractibleInUnion C₁ C₂ := by
-  unfold Cycle.contractibleInUnion Cycle.isContractible₂ triangleCycle triangleWalk
-  simp only [Cycle.toUnion₁, Walk.toUnion₁]
-  apply Homotopic₂.trans
-  · exact Homotopic₂.face (Or.inr hyes) (Walk.cons (Or.inl hca) (Walk.nil a))
-  · exact Homotopic₂.backtrack (Or.inl hac) (Or.inl hca) (Walk.nil a)
-
-/-! ## Positive geodesic binding -/
-
-/-- **Positive geodesic binding**: when a noncontractible cycle gains
-contractibility from the union, the geodesic binding drop is strictly
-positive. Renamed from `simplicial_gravity` (review #3): this is
-binding positivity in the geodesic model, not an instance or analogue
-of the spine's gravity theorem — no such identification is proved and
-none is claimed. -/
-theorem geodesicBindingDrop_pos (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v)
-    (hmatter : ¬c.isContractible₂ C₁)
-    (hcontracts : c.contractibleInUnion C₁ C₂) :
-    geodesicBindingDrop C₁ C₂ c > 0 := by
-  rw [geodesicBindingDrop_eq_geodesicMass C₁ C₂ c hcontracts]
-  exact cycleComplexity_pos_of_noncontractible C₁ c hmatter
-
-/-- The hollow triangle's binding drop is positive. -/
-theorem hollowTriangle_bindingDrop_pos :
-    geodesicBindingDrop HollowTriangle Disk hollowCycle > 0 :=
-  geodesicBindingDrop_pos HollowTriangle Disk hollowCycle
-    hollow_not_contractible₂ hollow_contractible_in_union
 
 /-! ## Discrete Hodge Theory -/
 
@@ -1212,8 +757,6 @@ section Hodge
 
 open Finset BigOperators
 
-/-- 0-cochains: functions from vertices to ℝ. -/
-def C0 (V : Type*) := V → ℝ
 
 /-- 1-cochains: skew-symmetric edge functions. -/
 structure C1 (V : Type*) where
@@ -1240,10 +783,6 @@ def C1.sub (σ τ : C1 V) : C1 V where
   val := fun i j => σ.val i j - τ.val i j
   skew := by intro i j; rw [σ.skew, τ.skew]; ring
 
-/-- Gradient (coboundary d₀): discrete derivative φ ↦ (i,j) ↦ φ(j) - φ(i). -/
-def d0 {V : Type*} (φ : C0 V) : C1 V where
-  val := fun i j => φ j - φ i
-  skew := by intro i j; ring
 
 /-- Inner product on 1-cochains: ½ Σᵢⱼ σᵢⱼ · τᵢⱼ. -/
 noncomputable def innerC1 {V : Type*} [Fintype V] (σ τ : C1 V) : ℝ :=
@@ -1295,12 +834,6 @@ theorem energy_sub {V : Type*} [Fintype V] (σ τ : C1 V) :
   simp_rw [pw, Finset.sum_add_distrib, ← Finset.mul_sum]
   ring
 
-/-- A 1-cochain is exact if it's a gradient. -/
-def IsExact {V : Type*} (σ : C1 V) : Prop := ∃ φ : C0 V, d0 φ = σ
-
-/-- A 1-cochain is harmonic if orthogonal to all exact forms. -/
-def IsHarmonic {V : Type*} [Fintype V] (σ : C1 V) : Prop :=
-  ∀ φ : C0 V, innerC1 (d0 φ) σ = 0
 
 /-- The canonical harmonic 1-form on the n-cycle.
     Assigns ±1/n to forward/backward cycle edges. -/
@@ -1369,22 +902,6 @@ theorem winding_smul (n : ℕ) (hn : n ≥ 3) (c : ℝ) (σ : C1 (Fin n)) :
     winding n hn (C1.smul c σ) = c * winding n hn σ := by
   simp only [winding, C1.smul, ← Finset.mul_sum]
 
-theorem winding_add (n : ℕ) (hn : n ≥ 3) (σ τ : C1 (Fin n)) :
-    winding n hn (C1.add σ τ) = winding n hn σ + winding n hn τ := by
-  simp only [winding, C1.add, ← Finset.sum_add_distrib]
-
-theorem winding_sub (n : ℕ) (hn : n ≥ 3) (σ τ : C1 (Fin n)) :
-    winding n hn (C1.sub σ τ) = winding n hn σ - winding n hn τ := by
-  simp only [winding, C1.sub, ← Finset.sum_sub_distrib]
-
-/-- Exact forms have winding number 0 (telescoping sum). -/
-theorem winding_exact (n : ℕ) (hn : n ≥ 3) (φ : C0 (Fin n)) :
-    winding n hn (d0 φ) = 0 := by
-  simp only [winding, d0]
-  rw [Finset.sum_sub_distrib]
-  have : ∑ x : Fin n, φ (cycleNext n hn x) = ∑ x, φ x :=
-    Equiv.sum_comp (cycleNextEquiv n hn) φ
-  linarith
 
 /-- The harmonic form has winding number 1. -/
 theorem cycleHarmonicForm_winding (n : ℕ) (hn : n ≥ 3) :
@@ -1446,13 +963,6 @@ theorem innerC1_cycleHarmonicForm (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
   exact Equiv.sum_comp (cycleNextEquiv n hn).symm
     (fun j => σ.val j (cycleNext n hn j))
 
-/-- Harmonicity of the canonical form: orthogonal to all exact forms.
-    Corollary of the reproducing kernel: exact forms have winding 0 (telescoping),
-    so ⟨h, d₀φ⟩ = 0 · energy(h) = 0. -/
-theorem cycleHarmonicForm_isHarmonic (n : ℕ) (hn : n ≥ 3) :
-    IsHarmonic (cycleHarmonicForm n hn) := by
-  intro φ
-  rw [innerC1_comm, innerC1_cycleHarmonicForm, winding_exact, zero_mul]
 
 /-- The winding-k harmonic form: k times the canonical harmonic form.
     This is the instanton (minimum-energy configuration) in topological sector k. -/
@@ -1476,21 +986,6 @@ theorem energy_nonneg {V : Type*} [Fintype V] (σ : C1 V) : 0 ≤ energy σ := b
   apply Finset.sum_nonneg; intro j _
   exact mul_self_nonneg (σ.val i j)
 
-/-- **Positive definiteness**: energy is zero iff all components are zero. -/
-theorem energy_eq_zero_iff {V : Type*} [Fintype V] (σ : C1 V) :
-    energy σ = 0 ↔ ∀ i j : V, σ.val i j = 0 := by
-  simp only [energy, innerC1]
-  constructor
-  · intro h
-    have sum_zero : ∑ i : V, ∑ j : V, σ.val i j * σ.val i j = 0 :=
-      (mul_eq_zero.mp h).resolve_left (by norm_num : (1 / 2 : ℝ) ≠ 0)
-    intro i j
-    have h_i := (Finset.sum_eq_zero_iff_of_nonneg (fun i' _ =>
-        Finset.sum_nonneg (fun j' _ => mul_self_nonneg (σ.val i' j')))).mp sum_zero
-        i (Finset.mem_univ i)
-    exact mul_self_eq_zero.mp ((Finset.sum_eq_zero_iff_of_nonneg (fun j' _ =>
-        mul_self_nonneg (σ.val i j'))).mp h_i j (Finset.mem_univ j))
-  · intro h; simp [h]
 
 /-- **Hodge decomposition (Pythagoras)**: energy decomposes into topology + overhead.
 
@@ -1507,17 +1002,6 @@ theorem hodge_decomposition (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
       energy_smul, cycleHarmonicForm_energy, show winding n hn σ = w from rfl]
   ring
 
-/-- The Hodge residual has winding number zero: all topology is in the harmonic part. -/
-theorem hodge_residual_winding_zero (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
-    winding n hn (C1.sub σ (C1.smul (winding n hn σ) (cycleHarmonicForm n hn))) = 0 := by
-  rw [winding_sub, winding_smul, cycleHarmonicForm_winding, mul_one, sub_self]
-
-/-- **Hodge orthogonality**: the harmonic form is orthogonal to the residual.
-    This is the structural content that produces the energy decomposition. -/
-theorem hodge_orthogonality (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
-    innerC1 (cycleHarmonicForm n hn)
-      (C1.sub σ (C1.smul (winding n hn σ) (cycleHarmonicForm n hn))) = 0 := by
-  rw [innerC1_cycleHarmonicForm, hodge_residual_winding_zero, zero_mul]
 
 /-- Energy bound: any cochain on Cₙ has energy ≥ w²/n.
     Immediate from Hodge decomposition + non-negativity of residual energy. -/
@@ -1526,183 +1010,12 @@ theorem energy_ge_winding_sq (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
   linarith [hodge_decomposition n hn σ,
     energy_nonneg (C1.sub σ (C1.smul (winding n hn σ) (cycleHarmonicForm n hn)))]
 
-/-- **Hodge ratchet decomposition**:
-    total energy = reversible harmonic cost + irreversible residual cost. -/
-theorem hodge_ratchet_decomposition (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
-    energy σ = (winding n hn σ) ^ 2 / n +
-      energy (C1.sub σ (C1.smul (winding n hn σ) (cycleHarmonicForm n hn))) :=
-  hodge_decomposition n hn σ
-
-/-- **Hodge ratchet inequality**:
-    every representative pays at least harmonic (topological) energy. -/
-theorem hodge_ratchet_inequality (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
-    energy σ ≥ (winding n hn σ) ^ 2 / n :=
-  energy_ge_winding_sq n hn σ
-
-/-- The irreversible premium (residual energy) is always nonnegative. -/
-theorem hodge_ratchet_premium_nonneg (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) :
-    0 ≤ energy σ - (winding n hn σ) ^ 2 / n := by
-  linarith [energy_ge_winding_sq n hn σ]
-
-/-- Any section through winding classes pays at least harmonic energy in each class. -/
-theorem winding_section_energy_ge (n : ℕ) (hn : n ≥ 3)
-    (sec : ℤ → C1 (Fin n))
-    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ)) :
-    ∀ k : ℤ, energy (sec k) ≥ (k : ℝ) ^ 2 / n := by
-  intro k
-  have h := energy_ge_winding_sq n hn (sec k)
-  simpa [hsec k] using h
-
-/-- Finite-range quantitative ratchet: summed section energy dominates summed harmonic floor. -/
-theorem winding_section_energy_sum_ge (n : ℕ) (hn : n ≥ 3)
-    (sec : ℤ → C1 (Fin n))
-    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ))
-    (S : Finset ℤ) :
-    (Finset.sum S (fun k => energy (sec k))) ≥
-      (Finset.sum S (fun k => (k : ℝ) ^ 2 / n)) := by
-  refine Finset.sum_le_sum ?_
-  intro k hk
-  exact winding_section_energy_ge n hn sec hsec k
-
-/-- Section premium in winding class `k`: excess over harmonic floor. -/
-noncomputable def windingSectionPremium (n : ℕ)
-    (sec : ℤ → C1 (Fin n)) (k : ℤ) : ℝ :=
-  energy (sec k) - (k : ℝ) ^ 2 / n
-
-/-- Finite premium over a set of winding sectors. -/
-noncomputable def windingSectionPremiumSum (n : ℕ)
-    (sec : ℤ → C1 (Fin n)) (S : Finset ℤ) : ℝ :=
-  Finset.sum S (fun k => windingSectionPremium n sec k)
-
-/-- Premium decomposition: total premium = total energy - total harmonic floor. -/
-theorem windingSectionPremiumSum_eq (n : ℕ)
-    (sec : ℤ → C1 (Fin n)) (S : Finset ℤ) :
-    windingSectionPremiumSum n sec S =
-      (Finset.sum S (fun k => energy (sec k))) -
-      (Finset.sum S (fun k => (k : ℝ) ^ 2 / n)) := by
-  simp [windingSectionPremiumSum, windingSectionPremium, Finset.sum_sub_distrib]
-
-/-- Premium is pointwise nonnegative for winding-correct sections. -/
-theorem windingSectionPremium_nonneg (n : ℕ) (hn : n ≥ 3)
-    (sec : ℤ → C1 (Fin n))
-    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ))
-    (k : ℤ) :
-    0 ≤ windingSectionPremium n sec k := by
-  have h := winding_section_energy_ge n hn sec hsec k
-  simpa [windingSectionPremium] using sub_nonneg.mpr h
-
-/-- Finite premium is nonnegative for winding-correct sections. -/
-theorem windingSectionPremiumSum_nonneg (n : ℕ) (hn : n ≥ 3)
-    (sec : ℤ → C1 (Fin n))
-    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ))
-    (S : Finset ℤ) :
-    0 ≤ windingSectionPremiumSum n sec S := by
-  unfold windingSectionPremiumSum
-  exact Finset.sum_nonneg (fun k hk => windingSectionPremium_nonneg n hn sec hsec k)
-
-/-- Extensivity law: premium is additive over disjoint sector families. -/
-theorem windingSectionPremiumSum_union_disjoint (n : ℕ)
-    (sec : ℤ → C1 (Fin n))
-    (S T : Finset ℤ) (hdisj : Disjoint S T) :
-    windingSectionPremiumSum n sec (S ∪ T) =
-      windingSectionPremiumSum n sec S + windingSectionPremiumSum n sec T := by
-  simp [windingSectionPremiumSum, Finset.sum_union, hdisj]
-
-/-- Uniform growth witness on symmetric winding ranges:
-    the section-energy sum over `[-N, N]` is at least the endpoint harmonic energy. -/
-theorem winding_section_energy_Icc_ge_endpoint (n : ℕ) (hn : n ≥ 3)
-    (sec : ℤ → C1 (Fin n))
-    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ))
-    (N : ℕ) :
-    (Finset.sum (Finset.Icc (-(N : ℤ)) (N : ℤ)) (fun k => energy (sec k))) ≥
-      ((N : ℝ) ^ 2 / n) := by
-  have hsum := winding_section_energy_sum_ge n hn sec hsec
-    (Finset.Icc (-(N : ℤ)) (N : ℤ))
-  have hmem : (N : ℤ) ∈ Finset.Icc (-(N : ℤ)) (N : ℤ) := by
-    refine Finset.mem_Icc.mpr ?_
-    constructor
-    · omega
-    · exact le_rfl
-  have hsingle :
-      ((N : ℝ) ^ 2 / n) ≤
-        (Finset.sum (Finset.Icc (-(N : ℤ)) (N : ℤ)) (fun k => (k : ℝ) ^ 2 / n)) := by
-    have hn0 : (0 : ℝ) ≤ n := by positivity
-    exact Finset.single_le_sum
-      (fun k hk => by
-        exact div_nonneg (sq_nonneg (k : ℝ)) hn0)
-      hmem
-  exact le_trans hsingle hsum
-
-/-- Canonical divergence: section energy over symmetric windows `[-N,N]` is unbounded. -/
-theorem winding_section_energy_Icc_unbounded (n : ℕ) (hn : n ≥ 3)
-    (sec : ℤ → C1 (Fin n))
-    (hsec : ∀ k : ℤ, winding n hn (sec k) = (k : ℝ)) :
-    ∀ m : ℕ, ∃ N : ℕ,
-      (Finset.sum (Finset.Icc (-(N : ℤ)) (N : ℤ)) (fun k => energy (sec k))) ≥ (m : ℝ) := by
-  intro m
-  let N : ℕ := m * n + 1
-  refine ⟨N, ?_⟩
-  have hbase := winding_section_energy_Icc_ge_endpoint n hn sec hsec N
-  have hn0 : (0 : ℝ) < n := by exact_mod_cast (show 0 < n by omega)
-  have hNsq : ((m : ℝ) * n) ≤ (N : ℝ) ^ 2 := by
-    have hmn_leN : (m * n : ℕ) ≤ N := by
-      dsimp [N]
-      omega
-    have h1 : (m * n : ℝ) ≤ (N : ℝ) := by exact_mod_cast hmn_leN
-    have hNnonneg : (0 : ℝ) ≤ (N : ℝ) := by positivity
-    have hNone : (1 : ℝ) ≤ (N : ℝ) := by
-      have : (1 : ℕ) ≤ N := by
-        dsimp [N]
-        omega
-      exact_mod_cast this
-    have hNleSq : (N : ℝ) ≤ (N : ℝ) ^ 2 := by
-      have hmul := mul_le_mul_of_nonneg_left hNone hNnonneg
-      simpa [pow_two, one_mul] using hmul
-    exact le_trans h1 hNleSq
-  have hdiv : ((m : ℝ) * n) / n ≤ (N : ℝ) ^ 2 / n :=
-    div_le_div_of_nonneg_right hNsq (le_of_lt hn0)
-  have hm_eq : ((m : ℝ) * n) / n = (m : ℝ) := by
-    have hn0' : (n : ℝ) ≠ 0 := ne_of_gt hn0
-    field_simp [hn0']
-  have hm_le_endpoint : (m : ℝ) ≤ (N : ℝ) ^ 2 / n := by
-    simpa [hm_eq] using hdiv
-  exact le_trans hm_le_endpoint hbase
-
-/-- **Uniqueness of the instanton**: if a cochain achieves minimum energy in its
-    winding class, it IS the scaled harmonic form. Each topological sector has
-    exactly one ground state. -/
-theorem hodge_minimizer_eq (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n))
-    (hmin : energy σ = (winding n hn σ) ^ 2 / n) :
-    σ.val = (C1.smul (winding n hn σ) (cycleHarmonicForm n hn)).val := by
-  have hres : energy (C1.sub σ (C1.smul (winding n hn σ) (cycleHarmonicForm n hn))) = 0 := by
-    linarith [hodge_decomposition n hn σ,
-      energy_nonneg (C1.sub σ (C1.smul (winding n hn σ) (cycleHarmonicForm n hn)))]
-  have hzero := (energy_eq_zero_iff _).mp hres
-  funext i j
-  have := hzero i j
-  simp only [C1.sub] at this
-  linarith
 
 /-- Harmonic energy of the n-cycle: minimum energy over cochains with winding number 1.
     This is the mass of the n-cycle in the Hodge-theoretic sense. -/
 noncomputable def harmonicEnergy (n : ℕ) (hn : n ≥ 3) : ℝ :=
   ⨅ σ : { σ : C1 (Fin n) // winding n hn σ = 1 }, energy σ.val
 
-/-- **The 1/n Mass Spectrum**: harmonicEnergy of C_n equals 1/n.
-    Upper bound: cycleHarmonicForm achieves 1/n.
-    Lower bound: Hodge decomposition gives energy ≥ 1/n for any winding-1 cochain. -/
-theorem cycleGraph_harmonicEnergy (n : ℕ) (hn : n ≥ 3) :
-    harmonicEnergy n hn = 1 / n := by
-  haveI : Nonempty { σ : C1 (Fin n) // winding n hn σ = 1 } :=
-    ⟨⟨cycleHarmonicForm n hn, cycleHarmonicForm_winding n hn⟩⟩
-  apply le_antisymm
-  · have hbdd : BddBelow (Set.range (fun σ : { σ : C1 (Fin n) // winding n hn σ = 1 } =>
-        energy σ.val)) := ⟨0, by rintro _ ⟨⟨σ, -⟩, rfl⟩; exact energy_nonneg σ⟩
-    exact ciInf_le_of_le hbdd
-      ⟨cycleHarmonicForm n hn, cycleHarmonicForm_winding n hn⟩
-      (le_of_eq (cycleHarmonicForm_energy n hn))
-  · exact le_ciInf fun ⟨σ, hw⟩ => by
-      have := energy_ge_winding_sq n hn σ; rw [hw, one_pow] at this; exact this
 
 /-- Minimum energy over cochains with winding number k on the n-cycle.
     Generalizes `harmonicEnergy` from winding-1 to arbitrary sector k. -/
@@ -1755,48 +1068,6 @@ theorem summable_partitionFn (n : ℕ) (hn : n ≥ 3) :
 noncomputable def partitionFn (n : ℕ) (_ : n ≥ 3) : ℝ :=
   ∑' (k : ℤ), Real.exp (-(k : ℝ) ^ 2 / ↑n)
 
-theorem partitionFn_pos (n : ℕ) (hn : n ≥ 3) : 0 < partitionFn n hn := by
-  unfold partitionFn
-  calc 0 < Real.exp (-(0 : ℤ) ^ 2 / ↑n) := Real.exp_pos _
-    _ ≤ _ := (summable_partitionFn n hn).le_tsum 0 (fun k _ => le_of_lt (Real.exp_pos _))
-
-/-- The vacuum (k=0) sector contributes exp(0) = 1.
-    Particles (k ≠ 0) are exponentially suppressed. -/
-theorem partitionFn_ge_one (n : ℕ) (hn : n ≥ 3) : partitionFn n hn ≥ 1 := by
-  unfold partitionFn
-  have h := (summable_partitionFn n hn).le_tsum (0 : ℤ)
-    (fun k _ => le_of_lt (Real.exp_pos _))
-  simp at h; linarith
-
-/-- Nonzero sectors are exponentially suppressed relative to vacuum:
-    each has weight strictly less than 1. -/
-theorem sector_weight_lt_one_of_ne_zero (n : ℕ) (hn : n ≥ 3) {k : ℤ} (hk : k ≠ 0) :
-    Real.exp (-(k : ℝ) ^ 2 / ↑n) < 1 := by
-  have hn0 : (0 : ℝ) < n := by exact_mod_cast (show 0 < n by omega)
-  have hk0 : (0 : ℝ) < (k : ℝ) ^ 2 := by
-    have hk' : (k : ℝ) ≠ 0 := by exact_mod_cast hk
-    exact sq_pos_of_ne_zero hk'
-  have hneg : -(k : ℝ) ^ 2 / ↑n < 0 := by
-    have hpos : (k : ℝ) ^ 2 / ↑n > 0 := div_pos hk0 hn0
-    have hneg' : -((k : ℝ) ^ 2 / ↑n) < 0 := neg_neg_of_pos hpos
-    simpa [neg_div] using hneg'
-  calc Real.exp (-(k : ℝ) ^ 2 / ↑n) < Real.exp 0 := Real.exp_lt_exp.mpr hneg
-    _ = 1 := by simp
-
-/-- Each topological sector k contributes the Boltzmann weight
-    of the instanton action k²/n. -/
-theorem sector_weight (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
-    Real.exp (-(k : ℝ) ^ 2 / ↑n) =
-    Real.exp (-(energy (cycleHarmonicForm_k n hn k))) := by
-  rw [cycleHarmonicForm_k_energy]; congr 1; ring
-
-/-- The Boltzmann weight of sector k equals exp(−minimum energy in sector k).
-    This is the proper statistical-mechanical statement: each term in the partition
-    function is weighted by the instanton action, which is the infimum over all
-    cochains in that topological sector. -/
-theorem sector_weight_eq_min_energy (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
-    Real.exp (-(k : ℝ) ^ 2 / ↑n) = Real.exp (-(harmonicEnergy_k n hn k)) := by
-  rw [cycleGraph_harmonicEnergy_k]; congr 1; ring
 
 end PathIntegral
 
@@ -1812,149 +1083,17 @@ structure EC1 (G : Graph V) where
   skew : ∀ i j, val i j = -val j i
   support : ∀ i j, ¬G.edge i j → val i j = 0
 
-/-- The underlying C1 of an edge-supported cochain. -/
-def EC1.toC1 {G : Graph V} (σ : EC1 G) : C1 V where
-  val := σ.val
-  skew := σ.skew
 
 /-- Divergence at a vertex: Σ_w σ(v,w). -/
 noncomputable def EC1.div [Fintype V] {G : Graph V} (σ : EC1 G) (v : V) : ℝ :=
   ∑ w : V, σ.val v w
 
-/-- Harmonic = divergence-free at every vertex. -/
-def EC1.IsHarmonic [Fintype V] {G : Graph V} (σ : EC1 G) : Prop :=
-  ∀ v : V, σ.div v = 0
 
 /-! ### Cycle graph edge structure -/
 
-/-- On C_n, non-adjacent means neither next nor prev. -/
-private lemma cycleGraph_not_edge (n : ℕ) (hn : n ≥ 3) (i j : Fin n)
-    (h1 : j ≠ cycleNext n hn i) (h2 : j ≠ cyclePrev n hn i) :
-    ¬(CycleGraph n hn).edge i j := by
-  simp only [CycleGraph]; push_neg
-  exact ⟨h1, fun h => h2 ((eq_cycleNext_iff_cyclePrev n hn i j).mp h)⟩
-
-/-- next(i) ≠ prev(i) for n ≥ 3. -/
-private lemma cycleNext_ne_cyclePrev (n : ℕ) (hn : n ≥ 3) (i : Fin n) :
-    cycleNext n hn i ≠ cyclePrev n hn i := by
-  intro h
-  have h2 := congr_arg (cycleNext n hn) h
-  rw [cycleNext_cyclePrev] at h2
-  have h3 := congr_arg Fin.val h2
-  simp only [cycleNext, Fin.val_mk] at h3
-  have hi := i.isLt
-  by_cases h4 : i.val + 1 < n
-  · rw [Nat.mod_eq_of_lt h4] at h3
-    by_cases h5 : i.val + 2 < n
-    · rw [Nat.mod_eq_of_lt h5] at h3; omega
-    · rw [show i.val + 1 + 1 = n by omega, Nat.mod_self] at h3; omega
-  · rw [show i.val + 1 = n by omega, Nat.mod_self,
-        Nat.mod_eq_of_lt (show 1 < n by omega)] at h3; omega
-
-/-- On C_n, divergence of an EC1 at vertex i reduces to two neighbor terms. -/
-private theorem cycleEC1_div_eq (n : ℕ) (hn : n ≥ 3)
-    (σ : EC1 (CycleGraph n hn).toGraph) (i : Fin n) :
-    σ.div i = σ.val i (cycleNext n hn i) + σ.val i (cyclePrev n hn i) := by
-  simp only [EC1.div]
-  have hne := cycleNext_ne_cyclePrev n hn i
-  rw [← Finset.add_sum_erase _ _ (Finset.mem_univ (cycleNext n hn i))]
-  congr 1
-  have hmem : cyclePrev n hn i ∈ Finset.univ.erase (cycleNext n hn i) :=
-    Finset.mem_erase.mpr ⟨hne.symm, Finset.mem_univ _⟩
-  rw [← Finset.add_sum_erase _ _ hmem]
-  have : ∑ x ∈ (Finset.univ.erase (cycleNext n hn i)).erase (cyclePrev n hn i),
-      σ.val i x = 0 := by
-    apply Finset.sum_eq_zero
-    intro w hw; simp [Finset.mem_erase] at hw
-    exact σ.support i w (cycleGraph_not_edge n hn i w hw.2 hw.1)
-  linarith
-
-/-- Shift invariance: divergence-free forces constant value on forward edges. -/
-private theorem cycleEC1_harmonic_shift (n : ℕ) (hn : n ≥ 3)
-    (σ : EC1 (CycleGraph n hn).toGraph) (hσ : σ.IsHarmonic) (i : Fin n) :
-    σ.val (cycleNext n hn i) (cycleNext n hn (cycleNext n hn i)) =
-    σ.val i (cycleNext n hn i) := by
-  have hdiv := cycleEC1_div_eq n hn σ (cycleNext n hn i)
-  rw [hσ, cyclePrev_cycleNext] at hdiv
-  linarith [σ.skew (cycleNext n hn i) i]
-
-/-- By iterating the shift, forward-edge values are constant across all vertices. -/
-private theorem cycleEC1_harmonic_shift_iter (n : ℕ) (hn : n ≥ 3)
-    (σ : EC1 (CycleGraph n hn).toGraph) (hσ : σ.IsHarmonic) (k : ℕ) (i : Fin n) :
-    σ.val ((cycleNext n hn)^[k] i) (cycleNext n hn ((cycleNext n hn)^[k] i)) =
-    σ.val i (cycleNext n hn i) := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    rw [Function.iterate_succ', Function.comp]
-    rw [cycleEC1_harmonic_shift n hn σ hσ]
-    exact ih
-
-/-- On C_n, harmonic edge-supported forms are constant on forward edges. -/
-theorem cycleEC1_harmonic_constant (n : ℕ) (hn : n ≥ 3)
-    (σ : EC1 (CycleGraph n hn).toGraph) (hσ : σ.IsHarmonic) (i : Fin n) :
-    σ.val i (cycleNext n hn i) =
-    σ.val (⟨0, by omega⟩ : Fin n) (cycleNext n hn ⟨0, by omega⟩) := by
-  -- Every vertex i = next^[i.val](0)
-  have hi : i = (cycleNext n hn)^[i.val] ⟨0, by omega⟩ := by
-    ext; rw [cycleNext_iterate_val]; simp [Nat.mod_eq_of_lt i.isLt]
-  rw [hi]
-  exact cycleEC1_harmonic_shift_iter n hn σ hσ i.val ⟨0, by omega⟩
-
-/-- Winding of a harmonic EC1 on C_n equals n times the forward-edge constant. -/
-theorem cycleEC1_harmonic_winding (n : ℕ) (hn : n ≥ 3)
-    (σ : EC1 (CycleGraph n hn).toGraph) (hσ : σ.IsHarmonic) :
-    winding n hn σ.toC1 =
-    ↑n * σ.val (⟨0, by omega⟩ : Fin n) (cycleNext n hn ⟨0, by omega⟩) := by
-  simp only [winding, EC1.toC1]
-  rw [show ∑ i, σ.val i (cycleNext n hn i) =
-      ∑ _ : Fin n, σ.val ⟨0, by omega⟩ (cycleNext n hn ⟨0, by omega⟩) from
-    Finset.sum_congr rfl fun i _ => cycleEC1_harmonic_constant n hn σ hσ i]
-  simp [Finset.sum_const, nsmul_eq_mul]
-
-/-- **Harmonic uniqueness on C_n**: every harmonic edge-supported form equals
-    its winding number times the canonical harmonic form.
-    This is the concrete content of b₁(C_n) = 1. -/
-theorem cycleEC1_harmonic_eq_smul (n : ℕ) (hn : n ≥ 3)
-    (σ : EC1 (CycleGraph n hn).toGraph) (hσ : σ.IsHarmonic) :
-    σ.val = (C1.smul (winding n hn σ.toC1) (cycleHarmonicForm n hn)).val := by
-  funext i j
-  simp only [C1.smul, cycleHarmonicForm]
-  by_cases hf : j = cycleNext n hn i
-  · subst hf
-    rw [if_pos rfl, cycleEC1_harmonic_constant n hn σ hσ i,
-        cycleEC1_harmonic_winding n hn σ hσ]
-    have hn0 : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
-    field_simp
-  · by_cases hb : i = cycleNext n hn j
-    · rw [if_neg hf, if_pos hb]
-      -- σ(i,j) = -σ(j,i) and i = next(j), so σ(j,i) = σ(j, next(j)) = c
-      have hskew := σ.skew i j
-      have hconst := cycleEC1_harmonic_constant n hn σ hσ j
-      have hwinding := cycleEC1_harmonic_winding n hn σ hσ
-      -- σ(j, next(j)) = σ(j, i) since i = next(j)
-      have hji : σ.val j i = σ.val j (cycleNext n hn j) := by rw [hb]
-      rw [hskew, hji, hconst, hwinding]
-      have hn0 : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
-      field_simp
-    · rw [if_neg hf, if_neg hb, mul_zero]
-      exact σ.support i j (by simp only [CycleGraph]; push_neg; exact ⟨hf, hb⟩)
 
 end EdgeHodge
 
-/-! ## Complex Intersection -/
-
-/-- Intersection of two complexes: edges and faces present in both. -/
-def Complex.inter (C₁ C₂ : Complex V) : Complex V where
-  edge := fun v w => C₁.edge v w ∧ C₂.edge v w
-  face := fun a b c => C₁.face a b c ∧ C₂.face a b c
-  face_closed := by
-    intro a b c ⟨h₁, h₂⟩
-    exact ⟨⟨(C₁.face_closed a b c h₁).1, (C₂.face_closed a b c h₂).1⟩,
-           ⟨(C₁.face_closed a b c h₁).2.1, (C₂.face_closed a b c h₂).2.1⟩,
-           ⟨(C₁.face_closed a b c h₁).2.2, (C₂.face_closed a b c h₂).2.2⟩⟩
-  face_cycle := fun a b c ⟨h₁, h₂⟩ =>
-    ⟨C₁.face_cycle a b c h₁, C₂.face_cycle a b c h₂⟩
 
 /-! ## Mayer-Vietoris -/
 
@@ -1964,40 +1103,6 @@ open Classical Finset
 
 variable [Fintype V] [DecidableEq V]
 
-/-- The set of ordered edge pairs. -/
-noncomputable def Complex.edgeFinset (C : Complex V) : Finset (V × V) :=
-  Finset.univ.filter (fun p => C.edge p.1 p.2)
-
-/-- Edge set of union = union of edge sets. -/
-theorem edgeFinset_union (C₁ C₂ : Complex V) :
-    (C₁.union C₂).edgeFinset = C₁.edgeFinset ∪ C₂.edgeFinset := by
-  ext p; simp [Complex.edgeFinset, Complex.union, Finset.mem_union, Finset.mem_filter]
-
-/-- Edge set of intersection = intersection of edge sets. -/
-theorem edgeFinset_inter (C₁ C₂ : Complex V) :
-    (C₁.inter C₂).edgeFinset = C₁.edgeFinset ∩ C₂.edgeFinset := by
-  ext p; simp [Complex.edgeFinset, Complex.inter, Finset.mem_inter, Finset.mem_filter]
-
-/-- Inclusion-exclusion for edge counts. -/
-theorem edgeCount_inclusion_exclusion (C₁ C₂ : Complex V) :
-    (C₁.union C₂).edgeFinset.card + (C₁.inter C₂).edgeFinset.card =
-    C₁.edgeFinset.card + C₂.edgeFinset.card := by
-  rw [edgeFinset_union, edgeFinset_inter]
-  exact Finset.card_union_add_card_inter _ _
-
-/-- Euler defect: |E_ordered| − 2|V| + 2 = 2(1 − χ).
-    Equals 2·b₁ for connected graphs with symmetric edges. -/
-noncomputable def bettiOneZ (C : Complex V) : ℤ :=
-  (C.edgeFinset.card : ℤ) - 2 * (Fintype.card V : ℤ) + 2
-
-/-- **Euler inclusion-exclusion**: bettiOneZ is additive under union/intersection.
-    On connected complexes this reduces to Mayer-Vietoris for b₁. -/
-theorem bettiOneZ_mayer_vietoris (C₁ C₂ : Complex V) :
-    bettiOneZ (C₁.union C₂) + bettiOneZ (C₁.inter C₂) =
-    bettiOneZ C₁ + bettiOneZ C₂ := by
-  unfold bettiOneZ
-  have h := edgeCount_inclusion_exclusion C₁ C₂
-  linarith [h]
 
 end MayerVietoris
 
@@ -2007,67 +1112,12 @@ section CycleBridge
 
 open Finset
 
-/-- The cycle graph has exactly 2n ordered edges. -/
-theorem cycleGraph_edgeFinset_card (n : ℕ) (hn : n ≥ 3) :
-    (CycleGraph n hn).edgeFinset.card = 2 * n := by
-  have inj_fwd : Function.Injective (fun i : Fin n => (i, cycleNext n hn i)) :=
-    fun a b h => (Prod.mk.inj h).1
-  have inj_bwd : Function.Injective (fun i : Fin n => (i, cyclePrev n hn i)) :=
-    fun a b h => (Prod.mk.inj h).1
-  -- Edge set decomposes into forward and backward images
-  have h_eq : (CycleGraph n hn).edgeFinset =
-      univ.image (fun i : Fin n => (i, cycleNext n hn i)) ∪
-      univ.image (fun i : Fin n => (i, cyclePrev n hn i)) := by
-    ext ⟨i, j⟩
-    simp only [Complex.edgeFinset, CycleGraph, mem_filter, mem_univ, true_and,
-               mem_union, mem_image, Prod.mk.injEq]
-    constructor
-    · rintro (rfl | h)
-      · exact Or.inl ⟨i, rfl, rfl⟩
-      · exact Or.inr ⟨i, rfl, ((eq_cycleNext_iff_cyclePrev n hn i j).mp h).symm⟩
-    · rintro (⟨k, rfl, rfl⟩ | ⟨k, rfl, rfl⟩)
-      · exact Or.inl rfl
-      · exact Or.inr ((eq_cycleNext_iff_cyclePrev n hn k (cyclePrev n hn k)).mpr rfl)
-  -- Forward and backward images are disjoint
-  have h_disj : Disjoint
-      (univ.image (fun i : Fin n => (i, cycleNext n hn i)))
-      (univ.image (fun i : Fin n => (i, cyclePrev n hn i))) := by
-    rw [Finset.disjoint_left]
-    intro p hf hb
-    simp only [mem_image, mem_univ, true_and] at hf hb
-    obtain ⟨a, ha⟩ := hf
-    obtain ⟨b, hb'⟩ := hb
-    have heq := ha.trans hb'.symm
-    have h1 : a = b := congr_arg Prod.fst heq
-    have h2 : cycleNext n hn a = cyclePrev n hn b := congr_arg Prod.snd heq
-    subst h1
-    exact absurd h2 (cycleNext_ne_cyclePrev n hn a)
-  rw [h_eq, card_union_of_disjoint h_disj,
-      card_image_of_injective _ inj_fwd, card_image_of_injective _ inj_bwd,
-      card_univ, Fintype.card_fin]
-  omega
-
-/-- **Bridge theorem**: bettiOneZ of the cycle graph equals 2.
-    Since `cycleEC1_harmonic_eq_smul` proves the harmonic subspace of C_n is
-    1-dimensional (b₁ = 1), this confirms bettiOneZ = 2 · b₁ on cycle graphs,
-    linking the edge-counting formula to the Hodge-theoretic Betti number. -/
-theorem bettiOneZ_cycleGraph (n : ℕ) (hn : n ≥ 3) :
-    bettiOneZ (CycleGraph n hn) = 2 := by
-  simp only [bettiOneZ, cycleGraph_edgeFinset_card, Fintype.card_fin]; omega
 
 /-- The cycle graph is symmetric: every edge has a reverse. -/
 theorem cycleGraph_symmetric (n : ℕ) (hn : n ≥ 3) :
     (CycleGraph n hn).toGraph.Symmetric := by
   intro i j h; exact h.symm
 
-/-- The cycle graph is irreflexive: no self-loops. -/
-theorem cycleGraph_irreflexive (n : ℕ) (hn : n ≥ 3) :
-    (CycleGraph n hn).toGraph.Irreflexive := by
-  intro i h
-  simp only [CycleGraph] at h
-  rcases h with heq | heq
-  · exact (cycleNext_not_both n hn i i heq) heq
-  · exact (cycleNext_not_both n hn i i heq) heq
 
 end CycleBridge
 
@@ -2098,47 +1148,6 @@ def Complex.prod (C₁ : Complex V₁) (C₂ : Complex V₂) : Complex (V₁ × 
     · exact Or.inl ⟨C₁.face_cycle a₁ b₁ c₁ hf₁, hb, (ha.trans hb).symm⟩
     · exact Or.inr ⟨hb, (ha.trans hb).symm, C₂.face_cycle a₂ b₂ c₂ hf₂⟩
 
-open Classical Finset in
-/-- Edge count of a product complex: edges decompose into factor-1 edges × V₂ and V₁ × factor-2 edges.
-    Disjointness follows from irreflexivity of C₁ (an edge in both factors would require a self-loop). -/
-theorem prod_edgeFinset_card [Fintype V₁] [Fintype V₂] [DecidableEq V₁] [DecidableEq V₂]
-    (C₁ : Complex V₁) (C₂ : Complex V₂)
-    (hirr : C₁.toGraph.Irreflexive) :
-    (C₁.prod C₂).edgeFinset.card =
-      C₁.edgeFinset.card * Fintype.card V₂ + Fintype.card V₁ * C₂.edgeFinset.card := by
-  -- Define the two image sets
-  let S₁ := univ.filter (fun p : (V₁ × V₂) × (V₁ × V₂) => C₁.edge p.1.1 p.2.1 ∧ p.1.2 = p.2.2)
-  let S₂ := univ.filter (fun p : (V₁ × V₂) × (V₁ × V₂) => p.1.1 = p.2.1 ∧ C₂.edge p.1.2 p.2.2)
-  -- Edge set is the union
-  have h_eq : (C₁.prod C₂).edgeFinset = S₁ ∪ S₂ := by
-    ext ⟨⟨a₁, a₂⟩, ⟨b₁, b₂⟩⟩
-    simp [Complex.edgeFinset, Complex.prod, S₁, S₂, mem_filter, mem_union]
-  -- The two sets are disjoint by irreflexivity
-  have h_disj : Disjoint S₁ S₂ := by
-    rw [Finset.disjoint_left]; intro ⟨⟨a₁, a₂⟩, ⟨b₁, b₂⟩⟩ h1 h2
-    simp [S₁, S₂, mem_filter] at h1 h2
-    exact hirr a₁ (h2.1 ▸ h1.1)
-  -- S₁ bijects with edgeFinset C₁ × V₂
-  have h_card₁ : S₁.card = C₁.edgeFinset.card * Fintype.card V₂ := by
-    have : S₁ = (C₁.edgeFinset ×ˢ univ).image
-        (fun p : (V₁ × V₁) × V₂ => ((p.1.1, p.2), (p.1.2, p.2))) := by
-      ext ⟨⟨a₁, a₂⟩, ⟨b₁, b₂⟩⟩
-      simp [S₁, Complex.edgeFinset, mem_filter, mem_image, mem_product]
-    rw [this, card_image_of_injective]
-    · rw [card_product, card_univ]
-    · intro ⟨⟨a₁, a₂⟩, v₁⟩ ⟨⟨b₁, b₂⟩, v₂⟩ h
-      simp at h; ext <;> simp_all
-  -- S₂ bijects with V₁ × edgeFinset C₂
-  have h_card₂ : S₂.card = Fintype.card V₁ * C₂.edgeFinset.card := by
-    have : S₂ = (univ ×ˢ C₂.edgeFinset).image
-        (fun p : V₁ × (V₂ × V₂) => ((p.1, p.2.1), (p.1, p.2.2))) := by
-      ext ⟨⟨a₁, a₂⟩, ⟨b₁, b₂⟩⟩
-      simp [S₂, Complex.edgeFinset, mem_filter, mem_image, mem_product, and_comm]
-    rw [this, card_image_of_injective]
-    · rw [card_product, card_univ]
-    · intro ⟨v₁, ⟨a₁, a₂⟩⟩ ⟨v₂, ⟨b₁, b₂⟩⟩ h
-      simp at h; ext <;> simp_all
-  rw [h_eq, card_union_of_disjoint h_disj, h_card₁, h_card₂]
 
 end Products
 
@@ -2245,10 +1254,6 @@ def cycleTurnLoopIntAt (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℤ) :
   else
     (cycleTurnLoopNatAt n hn s k.natAbs).reverse (cycleGraph_symmetric n hn)
 
-/-- Integer-turn loop at the distinguished basepoint. -/
-def cycleTurnLoopInt (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
-    Walk (CycleGraph n hn).toGraph (cycleBase n hn) (cycleBase n hn) :=
-  cycleTurnLoopIntAt n hn (cycleBase n hn) k
 
 theorem cycleTurnLoopIntAt_loopWinding (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k : ℤ) :
     (cycleTurnLoopIntAt n hn s k).loopWinding = k := by
@@ -2284,10 +1289,6 @@ theorem cycleTurnLoopIntAt_loopWinding (n : ℕ) (hn : n ≥ 3) (s : Fin n) (k :
       (Int.mul_eq_mul_right_iff hn0).1 hwc_mul'
     exact hloop.trans hnatAbs.symm
 
-theorem cycleTurnLoopInt_loopWinding (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
-    (cycleTurnLoopInt n hn k).loopWinding = k := by
-  simpa [cycleTurnLoopInt] using
-    cycleTurnLoopIntAt_loopWinding n hn (cycleBase n hn) k
 
 /-- Surjectivity of integer winding sectors at any cycle vertex. -/
 theorem cycleLoopWinding_surjective_at (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
@@ -2296,11 +1297,6 @@ theorem cycleLoopWinding_surjective_at (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
   intro k
   exact ⟨cycleTurnLoopIntAt n hn s k, cycleTurnLoopIntAt_loopWinding n hn s k⟩
 
-/-- Surjectivity of integer winding sectors at the cycle basepoint. -/
-theorem cycleLoopWinding_surjective (n : ℕ) (hn : n ≥ 3) :
-    ∀ k : ℤ, ∃ p : Walk (CycleGraph n hn).toGraph (cycleBase n hn) (cycleBase n hn),
-      p.loopWinding = k := by
-  simpa using cycleLoopWinding_surjective_at n hn (cycleBase n hn)
 
 theorem cycleLoopWinding_complete (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
     ∀ p q : Walk (CycleGraph n hn).toGraph s s,
@@ -2395,11 +1391,6 @@ noncomputable def cycleLoopClassEquivInt
     simpa [cycleLoopWindingClass] using
       (Classical.choose_spec (cycleLoopWinding_surjective_at n hn s k))
 
-/-- Basepoint specialization of `cycleLoopClassEquivInt`. -/
-noncomputable def cycleLoopClassEquivInt_base
-    (n : ℕ) (hn : n ≥ 3) :
-    HomotopyClass₂ (CycleGraph n hn) (cycleBase n hn) (cycleBase n hn) ≃ ℤ :=
-  cycleLoopClassEquivInt n hn (cycleBase n hn)
 
 /-- Any bidirectional edge makes the quotient map non-injective:
     the backtrack v→w→v is homotopic to nil, but they're distinct walks. -/
@@ -2413,119 +1404,6 @@ theorem homotopyClass₂_non_injective (C : Complex V)
     have := congr_arg Walk.length h
     simp [Walk.length] at this
 
-/-- Repeating a single backtrack loop is always homotopic to nil. -/
-theorem repeatBacktrack_homotopic_nil (C : Complex V)
-    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v) :
-    ∀ k : ℕ,
-      Homotopic₂ C
-        (Walk.repeatLoop (Walk.cons h_edge (Walk.cons h_back (Walk.nil v))) k)
-        (Walk.nil v)
-  | 0 => by exact Homotopic₂.refl _
-  | k + 1 => by
-      have hstep :
-          Homotopic₂ C
-            (Walk.cons h_edge (Walk.cons h_back (Walk.nil v)))
-            (Walk.nil v) :=
-        Homotopic₂.backtrack h_edge h_back (Walk.nil v)
-      have hk := repeatBacktrack_homotopic_nil C h_edge h_back k
-      have happ :=
-        Homotopic₂.congr_append C hstep hk
-      simpa [Walk.repeatLoop, Walk.nil_append] using happ
-
-/-- Quantitative lossiness: the homotopy quotient collapses arbitrarily long loops
-    into the trivial class whenever a bidirectional edge exists. -/
-theorem homotopyClass₂_unbounded_fiber (C : Complex V)
-    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v) :
-    ∀ m : ℕ, ∃ p : Walk C.toGraph v v,
-      Walk.toHomotopyClass₂ C p = Walk.toHomotopyClass₂ C (Walk.nil v) ∧
-      p.length ≥ m := by
-  intro m
-  let p : Walk C.toGraph v v := Walk.repeatLoop (Walk.cons h_edge (Walk.cons h_back (Walk.nil v))) m
-  refine ⟨p, ?_, ?_⟩
-  · apply Quot.sound
-    simpa [p] using repeatBacktrack_homotopic_nil C h_edge h_back m
-  · have hp : p.length = m * 2 := by
-      simp [p, Walk.repeatLoop_length, Walk.length]
-    rw [hp]
-    omega
-
-/-- Uniform per-class strengthening: for any loop representative `p₀`,
-    the fiber over its homotopy class contains arbitrarily long loops. -/
-theorem homotopyClass₂_unbounded_fiber_at (C : Complex V)
-    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v)
-    (p₀ : Walk C.toGraph v v) :
-    ∀ m : ℕ, ∃ p : Walk C.toGraph v v,
-      Walk.toHomotopyClass₂ C p = Walk.toHomotopyClass₂ C p₀ ∧
-      p.length ≥ m := by
-  intro m
-  let k : ℕ := m + p₀.length
-  let loop : Walk C.toGraph v v :=
-    Walk.repeatLoop (Walk.cons h_edge (Walk.cons h_back (Walk.nil v))) k
-  let p : Walk C.toGraph v v := p₀.append loop
-  refine ⟨p, ?_, ?_⟩
-  · apply Quot.sound
-    have hloop : Homotopic₂ C loop (Walk.nil v) := by
-      simpa [loop] using repeatBacktrack_homotopic_nil C h_edge h_back k
-    have happ :
-        Homotopic₂ C (p₀.append loop) (p₀.append (Walk.nil v)) :=
-      Homotopic₂.congr_append_right C p₀ hloop
-    simpa [Walk.append_nil, p, loop] using happ
-  · have hp : p.length = p₀.length + loop.length := by
-      simp [p, Walk.length_append]
-    have hloopLen : loop.length = k * 2 := by
-      simp [loop, Walk.repeatLoop_length, Walk.length]
-    have hk : p₀.length ≤ k := Nat.le_add_left _ _
-    have hm : m ≤ k := Nat.le_add_right _ _
-    rw [hp, hloopLen]
-    omega
-
-/-- Uniform fiber theorem: every homotopy class has arbitrarily long representatives
-    whenever the complex has a bidirectional edge at the basepoint. -/
-theorem homotopyClass₂_unbounded_fiber_uniform (C : Complex V)
-    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v) :
-    ∀ c : HomotopyClass₂ C v v, ∀ m : ℕ, ∃ p : Walk C.toGraph v v,
-      Walk.toHomotopyClass₂ C p = c ∧ p.length ≥ m := by
-  intro c
-  refine Quot.inductionOn c ?_
-  intro p₀ m
-  simpa using homotopyClass₂_unbounded_fiber_at C h_edge h_back p₀ m
-
-/-- Cycle specialization: each winding sector has arbitrarily long loop representatives. -/
-theorem cycleLoopWinding_fiber_unbounded_length (n : ℕ) (hn : n ≥ 3) (s : Fin n) :
-    ∀ k : ℤ, ∀ m : ℕ, ∃ p : Walk (CycleGraph n hn).toGraph s s,
-      p.loopWinding = k ∧ p.length ≥ m := by
-  intro k m
-  obtain ⟨p₀, hp₀⟩ := cycleLoopWinding_surjective_at n hn s k
-  have h_edge : (CycleGraph n hn).edge s (cycleNext n hn s) := Or.inl rfl
-  have h_back : (CycleGraph n hn).edge (cycleNext n hn s) s := Or.inr rfl
-  obtain ⟨p, hpClass, hpLen⟩ :=
-    homotopyClass₂_unbounded_fiber_at (C := CycleGraph n hn) h_edge h_back p₀ m
-  have hw :
-      p.loopWinding = p₀.loopWinding := by
-    have hwClass := congrArg (cycleLoopWindingClass n hn s) hpClass
-    simpa [Walk.toHomotopyClass₂, cycleLoopWindingClass_mk] using hwClass
-  refine ⟨p, ?_, hpLen⟩
-  simpa [hp₀] using hw
-
-/-- Quantitative geodesic collapse: there are arbitrarily long loops whose
-    geodesic length is zero (hence arbitrarily large overestimate by raw length). -/
-theorem geodesicLength_unbounded_gap (C : Complex V)
-    {v w : V} (h_edge : C.edge v w) (h_back : C.edge w v) :
-    ∀ m : ℕ, ∃ p : Walk C.toGraph v v,
-      geodesicLength C p = 0 ∧ p.length ≥ m := by
-  intro m
-  let p : Walk C.toGraph v v := Walk.repeatLoop (Walk.cons h_edge (Walk.cons h_back (Walk.nil v))) m
-  refine ⟨p, ?_, ?_⟩
-  · have hhom : Homotopic₂ C p (Walk.nil v) := by
-      simpa [p] using repeatBacktrack_homotopic_nil C h_edge h_back m
-    have hnil : geodesicLength C (Walk.nil v) = 0 := by
-      exact Nat.eq_zero_of_le_zero (by
-        simpa [Walk.length] using geodesicLength_le_length C (Walk.nil v))
-    simpa [hnil] using geodesicLength_eq_of_homotopic C hhom
-  · have hp : p.length = m * 2 := by
-      simp [p, Walk.repeatLoop_length, Walk.length]
-    rw [hp]
-    omega
 
 /-- The quotient map Walk → HomotopyClass is non-injective whenever
     the complex has a bidirectional edge (backtrack ≠ nil but same class). -/

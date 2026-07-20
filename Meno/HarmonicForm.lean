@@ -41,8 +41,8 @@ derived (`HarmonicGramData.summable`), never stored (review #5).
 **Honesty note (Phase 17)**: this structure is positive-definite matrix
 data and nothing more — it does not carry a variational field, and
 nothing here ties `gram` to a graph or to a minimization. The
-variational identity is proved *per instance*, outside the structure
-(e.g. `cycleHarmonicGramData_energy_eq_harmonicEnergy_k` for the cycle);
+variational identity lives at the graph level
+(`IncidenceGraph.harmonicEnergy_isLeast`, `Meno/HarmonicClass.lean`);
 constructing it from graph topology for a non-diagonal example is the
 theta-graph program. -/
 structure HarmonicGramData (V : Type u) where

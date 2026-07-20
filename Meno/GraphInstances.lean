@@ -9,8 +9,8 @@ only `Meno/GraphHomology.lean` and `Meno/ThetaGraph.lean`, so the
 "unpriced topology" grouping of `Meno.lean` is true by the import DAG
 (review #5, finding 1):
 
-* `cycleGraph_preconnected`, `cycleGraph_b1` — `C_n` is connected and
-  has `b₁ = 1`, by walks and Euler's formula.
+* `cycleGraph` — `C_n`, with `b₁ = 1` derived through its lattice
+  basis (`cycleGraph_b1'`).
 * **The genuine wedge** (`wedgeGraph`): `C_{n₁} ∨ C_{n₂}` on
   `n₁ + n₂ − 1` vertices — connected, `b₁ = 2` by Euler, with no
   spectator vertex.
@@ -32,42 +32,6 @@ universe u v
 
 /-! ## The cycle graph -/
 
-theorem cycleGraph_preconnected (n : ℕ) (hn : 0 < n) :
-    ∀ u v, (cycleGraph n hn).Reaches u v := by
-  haveI : NeZero n := ⟨hn.ne'⟩
-  have hbase : ∀ (m : ℕ) (hm : m < n),
-      (cycleGraph n hn).Reaches ⟨0, hn⟩ ⟨m, hm⟩ := by
-    intro m
-    induction m with
-    | zero => intro hm; exact ⟨.nil _⟩
-    | succ k ih =>
-      intro hm
-      have hk : k < n := by omega
-      have h1n : 1 < n := by omega
-      have hadd : (⟨k, hk⟩ : Fin n) + 1 = ⟨k + 1, hm⟩ := by
-        apply Fin.ext
-        rw [Fin.val_add, Fin.val_one', Nat.mod_eq_of_lt h1n]
-        exact Nat.mod_eq_of_lt hm
-      rw [← hadd]
-      obtain ⟨p⟩ := ih hk
-      exact ⟨p.append
-        (IncidenceGraph.Walk.consF (G := cycleGraph n hn)
-          (⟨k, hk⟩ : Fin n) (.nil _))⟩
-  intro u v
-  obtain ⟨p⟩ := hbase u.val u.isLt
-  obtain ⟨q⟩ := hbase v.val v.isLt
-  exact ⟨p.reverse.append q⟩
-
-/-- `b₁(C_n) = 1`, by Euler: `n − n + 1`. -/
-theorem cycleGraph_b1 (n : ℕ) (hn : 0 < n) : (cycleGraph n hn).b1 = 1 := by
-  have h := (cycleGraph n hn).b1_eq
-  have hc : (cycleGraph n hn).componentCard = 1 :=
-    (cycleGraph n hn).componentCard_eq_one ⟨⟨0, hn⟩⟩
-      (cycleGraph_preconnected n hn)
-  have hV : Fintype.card (cycleGraph n hn).V = n := Fintype.card_fin n
-  have hE : Fintype.card (cycleGraph n hn).E = n := Fintype.card_fin n
-  rw [hc] at h
-  omega
 
 /-! ### The cycle graph's boundary and cycle facts
 
@@ -200,8 +164,7 @@ theorem cyclesZ_cycleLatticeBasis (n : ℕ) (hn : 0 < n) :
     (cycleGraph n hn).cyclesZ (cycleLatticeBasis n hn) = cycleCyclesZ n :=
   (cycleGraph n hn).cyclesZ_basisOfCycles _ _ _ _
 
-/-- `b₁(C_n) = 1` **through the basis** — corroborating the Euler
-computation (`cycleGraph_b1`) by `card_eq_b1`. -/
+/-- `b₁(C_n) = 1` **through the basis** — by `card_eq_b1`. -/
 theorem cycleGraph_b1' (n : ℕ) (hn : 0 < n) : (cycleGraph n hn).b1 = 1 :=
   ((cycleGraph n hn).card_eq_b1 (cycleLatticeBasis n hn)).symm
 

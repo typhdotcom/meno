@@ -724,48 +724,6 @@ theorem finrank_ker_boundaryLin_eq :
       _ ≤ _ := Submodule.finrank_mono hspan_ker
   omega
 
-/-- **Real spanning, by dimension** (review #7): the cast basis is
-independent with cardinality the kernel's dimension, hence spans. -/
-theorem spanning (ω : G.E → ℝ) (hω : ∀ v, G.boundary ω v = 0) :
-    ∃ a : Fin n → ℝ, ω = fun e => ∑ i, a i * G.cyclesR B i e := by
-  have hmemc : ∀ i, G.cyclesR B i ∈ LinearMap.ker (G.boundaryLin ℝ) := by
-    intro i
-    rw [LinearMap.mem_ker]
-    funext v
-    exact G.cyclesR_closed B i v
-  set c' : Fin n → LinearMap.ker (G.boundaryLin ℝ) :=
-    fun i => ⟨G.cyclesR B i, hmemc i⟩ with hc'
-  have hsum_coe : ∀ (g : Fin n → ℝ),
-      ((∑ i, g i • c' i : LinearMap.ker (G.boundaryLin ℝ)) : G.E → ℝ)
-        = fun e => ∑ i, g i * G.cyclesR B i e := by
-    intro g
-    rw [AddSubmonoidClass.coe_finset_sum]
-    funext e
-    rw [Finset.sum_apply]
-    rfl
-  have hli : LinearIndependent ℝ c' := by
-    rw [Fintype.linearIndependent_iff]
-    intro g hg
-    have hcoe := congrArg Subtype.val hg
-    rw [hsum_coe g] at hcoe
-    have hgz := G.cast_independent B g hcoe
-    intro i
-    exact congrFun hgz i
-  have hcard : Fintype.card (Fin n)
-      = Module.finrank ℝ (LinearMap.ker (G.boundaryLin ℝ)) := by
-    rw [Fintype.card_fin, G.finrank_ker_boundaryLin_eq B]
-  have hspan : Submodule.span ℝ (Set.range c') = ⊤ := by
-    apply Submodule.eq_top_of_finrank_eq
-    rw [finrank_span_eq_card hli, hcard]
-  have hmem : (⟨ω, by rw [LinearMap.mem_ker]; funext v; exact hω v⟩ :
-      LinearMap.ker (G.boundaryLin ℝ)) ∈ Submodule.span ℝ (Set.range c') := by
-    rw [hspan]
-    trivial
-  obtain ⟨a, ha⟩ := (Submodule.mem_span_range_iff_exists_fun ℝ).mp hmem
-  refine ⟨a, ?_⟩
-  have hcoe := congrArg Subtype.val ha
-  rw [hsum_coe a] at hcoe
-  exact hcoe.symm
 
 /-! ### Stokes and exactness -/
 
@@ -952,6 +910,7 @@ instance : Module.Finite ℤ ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
 theorem h1QuotEquiv_mk (τ : G.E → ℤ) :
     G.h1QuotEquiv (Submodule.Quotient.mk τ)
       = fun j => τ ⬝ᵥ G.fundCyclesZ j := rfl
+
 
 /-- Real cochains modulo gradients are `ℝ^{b₁}` — for every finite
 graph (C4 acceptance), through the fundamental basis. -/

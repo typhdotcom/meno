@@ -12,10 +12,14 @@ import Mathlib.Analysis.SpecialFunctions.Log.Basic
 
 /-! # Fundamental Groupoid and Groupoid Complexity
 
-The simplicial model builds a groupoid from any 2-complex with symmetric edges:
-objects = vertices, morphisms = homotopy classes of walks. The partition function
-over automorphisms defines complexity C(G) = log Z, with its product law proved
-directly on it. -/
+The simplicial model builds a groupoid from any 2-complex with symmetric
+edges: objects = vertices, morphisms = homotopy classes of walks. The
+partition function over automorphisms is the groupoid's Boltzmann sum;
+its complexity theory lives on the spine, reached through
+`GroupoidObj.toLoopKernelObj`. The cycle instance factors through the
+spine presentation and recovers `partitionFn n` with its T-duality
+(reviews #25–#28: the local complexity laws, the product law, and the
+dual-object machinery were consumerless mirrors and are deleted). -/
 
 namespace Simplicial
 
@@ -95,13 +99,6 @@ noncomputable def groupoidPartitionFn
     (_hsum : Summable (fun g => Real.exp (-K g))) : ℝ :=
   ∑' g : End x, Real.exp (-K g)
 
-/-- Complexity of a groupoid object: log of the partition function. -/
-noncomputable def groupoidComplexity
-    {C : Type*} [Groupoid C] (x : C)
-    (K : End x → ℝ)
-    (hsum : Summable (fun g => Real.exp (-K g))) : ℝ :=
-  Real.log (groupoidPartitionFn x K hsum)
-
 /-- The partition function is positive (sum of exponentials). -/
 theorem groupoidPartitionFn_pos
     {C : Type*} [Groupoid C] (x : C)
@@ -109,28 +106,6 @@ theorem groupoidPartitionFn_pos
     (hsum : Summable (fun g => Real.exp (-K g))) :
     0 < groupoidPartitionFn x K hsum := by
   exact hsum.tsum_pos (fun g => le_of_lt (Real.exp_pos _)) (𝟙 x) (Real.exp_pos _)
-
-/-! ## Complexity laws of the groupoid measure
-
-Groupoid complexity is `C(x) = log Z` over automorphism Boltzmann
-sums. This section keeps exactly what downstream code consumes:
-additivity under a factoring of `Z` (`groupoidComplexity_prod`,
-feeding `GroupoidObj.prod_complexity`) and, below, the
-energy-preserving equivalence (`GroupoidObj.Equiv`) — both read by
-the duality wrappers in `Meno/Duality.lean`. (Reviews #25, #26: the
-former hierarchy-axioms mirror of the deleted type-level classes,
-its trivial and congruence laws, and the consumerless sigma
-capacity sub-layer are deleted.) -/
-
-/-- When the partition function factors, complexity is additive. -/
-theorem groupoidComplexity_prod
-    {C : Type*} [Groupoid C] (x : C)
-    (K : End x → ℝ) (hsum : Summable (fun g => Real.exp (-K g)))
-    (Z₁ Z₂ : ℝ) (hZ₁ : 0 < Z₁) (hZ₂ : 0 < Z₂)
-    (hfactor : groupoidPartitionFn x K hsum = Z₁ * Z₂) :
-    groupoidComplexity x K hsum = Real.log Z₁ + Real.log Z₂ := by
-  simp only [groupoidComplexity, hfactor,
-    Real.log_mul (ne_of_gt hZ₁) (ne_of_gt hZ₂)]
 
 /-! ## Cycle Graph Instance -/
 
@@ -252,11 +227,12 @@ theorem cycleGroupoid_partitionFn_eq_base_canonical_energy (n : ℕ) (hn : n ≥
 
 /-! ## Groupoid objects
 
-The bundled domain of groupoid complexity: a groupoid with a chosen
-base object and a summable energy on its endomorphisms. The product
-law (`GroupoidObj.prod_complexity`) and the energy-preserving
-equivalence (`GroupoidObj.Equiv`) are consumed by the duality
-wrappers in `Meno/Duality.lean`. -/
+The bundled domain of the groupoid measure: a groupoid with a chosen
+base object and a summable energy on its endomorphisms. Its analytic
+content is read through the spine — `GroupoidObj.toLoopKernelObj`
+repackages any grounded object as a loop kernel, and the Gibbs
+wrappers in `Meno/Duality.lean` are definitionally the sector
+action's (`GroupoidObj.gibbsMass_eq_sector`). -/
 
 section Bridge
 
@@ -284,64 +260,8 @@ noncomputable def GroupoidObj.toLoopKernelObj (E : GroupoidObj)
   energy_nonneg := h_nonneg
   summable := E.summable
 
-noncomputable def GroupoidObj.complexity (E : GroupoidObj) : ℝ :=
-  groupoidComplexity (C := E.G) E.base E.energy E.summable
-
 noncomputable def GroupoidObj.partFn (E : GroupoidObj) : ℝ :=
   groupoidPartitionFn (C := E.G) E.base E.energy E.summable
-
-/-- The bridge preserves partition functions definitionally: both sides
-are `∑' g : End base, exp (-energy g)`. -/
-theorem GroupoidObj.toLoopKernelObj_partFn (E : GroupoidObj)
-    (h_id : E.energy (𝟙 E.base) = 0) (h_nonneg : ∀ g, 0 ≤ E.energy g) :
-    (E.toLoopKernelObj h_id h_nonneg).partFn = E.partFn := rfl
-
-open scoped BigOperators
-
-
-/-- Equivalence of groupoid objects: endomorphism equivalence preserving energy. -/
-def GroupoidObj.Equiv (E₁ E₂ : GroupoidObj) : Prop :=
-  ∃ (e : End E₁.base ≃* End E₂.base), ∀ g, E₂.energy (e g) = E₁.energy g
-
-set_option maxHeartbeats 400000 in
-private lemma prod_summable (E₁ E₂ : GroupoidObj) :
-    Summable (fun g : End E₁.base × End E₂.base =>
-      Real.exp (-(E₁.energy g.1 + E₂.energy g.2))) := by
-  rw [show (fun g : End E₁.base × End E₂.base =>
-      Real.exp (-(E₁.energy g.1 + E₂.energy g.2))) =
-      fun g => Real.exp (-E₁.energy g.1) * Real.exp (-E₂.energy g.2) from
-    funext fun g => by rw [neg_add, Real.exp_add]]
-  exact Summable.mul_of_nonneg E₁.summable E₂.summable
-    (fun _ => le_of_lt (Real.exp_pos _)) (fun _ => le_of_lt (Real.exp_pos _))
-
-/-- Product of groupoid objects with independent energies. -/
-noncomputable def GroupoidObj.prod (E₁ E₂ : GroupoidObj) : GroupoidObj where
-  G := E₁.G × E₂.G
-  base := (E₁.base, E₂.base)
-  energy g := E₁.energy (Prod.fst g) + E₂.energy (Prod.snd g)
-  summable := prod_summable E₁ E₂
-
-set_option maxHeartbeats 400000 in
-private theorem groupoidObj_prod_partFn (E₁ E₂ : GroupoidObj) :
-    (E₁.prod E₂).partFn = E₁.partFn * E₂.partFn := by
-  unfold GroupoidObj.partFn groupoidPartitionFn GroupoidObj.prod
-  simp only []
-  rw [show (fun g : End (E₁.base, E₂.base) =>
-      Real.exp (-(E₁.energy (Prod.fst g) + E₂.energy (Prod.snd g)))) =
-      fun g => Real.exp (-E₁.energy (Prod.fst g)) * Real.exp (-E₂.energy (Prod.snd g)) from
-    funext fun g => by rw [neg_add, Real.exp_add]]
-  exact (E₁.summable.tsum_mul_tsum E₂.summable
-    (Summable.mul_of_nonneg E₁.summable E₂.summable
-      (fun _ => le_of_lt (Real.exp_pos _)) (fun _ => le_of_lt (Real.exp_pos _)))).symm
-
-theorem GroupoidObj.prod_complexity (E₁ E₂ : GroupoidObj) :
-    (E₁.prod E₂).complexity = E₁.complexity + E₂.complexity := by
-  unfold GroupoidObj.complexity groupoidComplexity
-  have := groupoidObj_prod_partFn E₁ E₂
-  unfold GroupoidObj.partFn at this
-  rw [this]
-  exact Real.log_mul (ne_of_gt (groupoidPartitionFn_pos _ _ _))
-                     (ne_of_gt (groupoidPartitionFn_pos _ _ _))
 
 
 end Bridge
@@ -356,8 +276,7 @@ The canonical cycle groupoid object factors through the analytic spine:
       ──scalarPartFn_one_div_n_eq_partitionFn──▶ partitionFn n hn
 
 and its T-duality is a corollary of the spine flagship
-`Meno.partitionFn_T_duality_via_spine` — no reference to
-`quadraticPartFn_duality` or the `GroupoidObj.dual` machinery.
+`Meno.partitionFn_T_duality_via_spine` — no local duality machinery.
 
 The Gram form of the presentation is **the same** `!![1/n]` as
 `Meno.cycleHarmonicGramData`: its symmetry and positive-definiteness
@@ -449,10 +368,10 @@ theorem cycleSectorPresentation_partFn_eq_gramData (n : ℕ) (hn : n ≥ 3) :
 
 /-- **Cycle groupoid T-duality, rederived through the spine.** The
 canonical cycle groupoid object's partition function obeys T-duality as
-a corollary of `Meno.partitionFn_T_duality_via_spine`. This supersedes
-the route through `GroupoidObj.dual` / `quadraticPartFn_duality` for the
-canonical cycle: no winding hypothesis, no dual-object construction —
-the spine carries the duality. -/
+a corollary of `Meno.partitionFn_T_duality_via_spine`: no winding
+hypothesis, no dual-object construction — the spine carries the
+duality (the former local dual-object route is deleted, reviews
+#25–#28). -/
 theorem cycleCanonicalObj_T_duality (n : ℕ) (hn : n ≥ 3) :
     (↑(Meno.QuadraticAction.scalarPartFn (Real.pi ^ 2 * n)) : ℂ) =
     ↑((1 / (n : ℝ)) / Real.pi) ^ ((1 : ℂ) / 2)

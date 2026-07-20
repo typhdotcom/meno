@@ -10,8 +10,8 @@ The concrete graphs' lattice bases live with their topology in
 remains here are the C5 acceptance witnesses that consume the priced
 stack:
 
-* the genuine wedge has **matter** (`wedgeGraph_exists_matter`) —
-  nontrivial topology forces it;
+* the genuine wedge has **matter** (`wedge_exists_matter`,
+  `Meno/CycleHarmonic.lean`) — nontrivial topology forces it;
 * each hand-built basis is a **unimodular recombination** of its
   graph's fundamental basis — instances of C3's
   `exists_unimodular_relating`. (The theta instance lives with its
@@ -27,11 +27,6 @@ namespace Meno
 open scoped BigOperators
 open Matrix
 
-/-- The genuine wedge has matter: nontrivial topology (`b₁ = 2`)
-forces it. -/
-theorem wedgeGraph_exists_matter (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
-    Nonempty (MatterSector (wedgeGraph n₁ n₂ h₁ h₂)) :=
-  exists_matter _ (by rw [wedgeGraph_b1 n₁ n₂ h₁ h₂]; norm_num)
 
 /-! ## C5's acceptance witnesses -/
 

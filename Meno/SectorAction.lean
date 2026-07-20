@@ -50,12 +50,6 @@ theorem weight_pos (k : A.Λ) : 0 < A.weight k := Real.exp_pos _
 
 theorem weight_nonneg (k : A.Λ) : 0 ≤ A.weight k := (A.weight_pos k).le
 
-theorem weight_le_one (k : A.Λ) : A.weight k ≤ 1 := by
-  show Real.exp (-A.E k) ≤ 1
-  rw [show (1 : ℝ) = Real.exp 0 from Real.exp_zero.symm]
-  exact Real.exp_le_exp.mpr (by linarith [A.E_nonneg k])
-
-theorem summable_weight : Summable A.weight := A.summable
 
 /-- Partition function `Z = ∑' k, exp(-E k)`. -/
 noncomputable def partFn : ℝ := ∑' k, A.weight k
@@ -81,20 +75,6 @@ theorem partFn_pos : 0 < A.partFn := by
   obtain ⟨z, _⟩ := A.E_zero
   exact A.summable.tsum_pos (fun k => A.weight_nonneg k) z (A.weight_pos z)
 
-/-- The partition function is at least 1: the zero-energy witness contributes
-`e⁰ = 1`, and all other weights are non-negative. -/
-theorem partFn_ge_one : 1 ≤ A.partFn := by
-  obtain ⟨z, hz⟩ := A.E_zero
-  have h1 : A.weight z = 1 := by
-    show Real.exp (-A.E z) = 1
-    rw [hz, neg_zero, Real.exp_zero]
-  have hle : ∑ k ∈ ({z} : Finset A.Λ), A.weight k ≤ ∑' k, A.weight k :=
-    A.summable.sum_le_tsum {z} (fun k _ => A.weight_nonneg k)
-  simpa [h1] using hle
-
-/-- Complexity is non-negative: `log Z ≥ log 1 = 0`. -/
-theorem complexity_nonneg : 0 ≤ A.complexity :=
-  Real.log_nonneg A.partFn_ge_one
 
 /-- The Gibbs density is non-negative. -/
 theorem gibbsMass_nonneg (k : A.Λ) : 0 ≤ A.gibbsMass k :=
@@ -116,10 +96,6 @@ theorem tsum_gibbsMass_eq_one : ∑' k, A.gibbsMass k = 1 := by
   rw [tsum_div_const]
   exact div_self (ne_of_gt A.partFn_pos)
 
-/-- Expectation of the constant observable `1` is `1`. -/
-theorem gibbsExpect_one : A.gibbsExpect (fun _ => 1) = 1 := by
-  show ∑' k, 1 * A.gibbsMass k = 1
-  simp [A.tsum_gibbsMass_eq_one]
 
 /-- The centered second moment is summable when both raw moments
 are. -/
@@ -283,18 +259,6 @@ noncomputable def sum (A : SectorAction.{u}) (B : SectorAction.{v}) :
     · refine B.summable.congr ?_
       intro b; rfl
 
-/-- Partition function of a disjoint sum is the sum of partition functions. -/
-theorem partFn_sum (A : SectorAction.{u}) (B : SectorAction.{v}) :
-    (A.sum B).partFn = A.partFn + B.partFn := by
-  show ∑' s : A.Λ ⊕ B.Λ, (A.sum B).weight s = (∑' a, A.weight a) + (∑' b, B.weight b)
-  have hA : Summable (fun a => (A.sum B).weight (Sum.inl a)) := by
-    refine A.summable.congr ?_
-    intro a; rfl
-  have hB : Summable (fun b => (A.sum B).weight (Sum.inr b)) := by
-    refine B.summable.congr ?_
-    intro b; rfl
-  rw [Summable.tsum_sum (f := (A.sum B).weight) hA hB]
-  congr 1
 
 end SectorAction
 

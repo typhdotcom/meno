@@ -374,18 +374,6 @@ noncomputable def IncidenceGraph.classPartFn (G : IncidenceGraph.{u, v}) : ℝ :
   ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
     Real.exp (-G.harmonicEnergy κ)
 
-/-- The class-level partition function *is* the intrinsic carrier's
-(`classSectorAction`, `Meno/BasisIndependence.lean`) — definitionally. -/
-theorem IncidenceGraph.classPartFn_eq_classSectorAction
-    (G : IncidenceGraph.{u, v}) :
-    G.classPartFn = (G.classSectorAction).partFn := rfl
-
-/-- The class-level partition function is the graph's partition
-function — the fundamental instance of
-`basisGramData_partFn_eq_tsum_classes` (C3). -/
-theorem IncidenceGraph.classPartFn_eq_partFn (G : IncidenceGraph.{u, v}) :
-    G.classPartFn = G.partFn :=
-  (G.basisGramData_partFn_eq_tsum_classes G.cycleBasis).symm
 
 namespace TwoComplex
 

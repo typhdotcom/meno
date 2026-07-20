@@ -73,13 +73,6 @@ theorem thetaCyclesZ_mem (i : Fin 2) :
   rw [thetaGraph_boundary_eq_sum]
   fin_cases i <;> fin_cases w <;> decide
 
-/-- The cast basis vectors are cycles: their real boundary vanishes at
-every vertex. -/
-theorem thetaGraph_boundary_cycles (i : Fin 2) (w : Fin 5) :
-    thetaGraph.boundary (thetaCycles i) w = 0 := by
-  rw [thetaGraph_boundary_eq_sum]
-  fin_cases i <;> fin_cases w <;>
-    simp +decide [thetaSrc, thetaTgt, thetaCycles, Fin.sum_univ_six]
 
 /-- **The cycle space is exactly the span of the basis** (`b₁ = 2`):
 a cochain with vanishing boundary is determined by its flows on the
@@ -99,19 +92,6 @@ theorem eq_comb_of_theta_boundary_eq_zero (ω : Fin 6 → ℝ)
   funext e
   fin_cases e <;> simp +decide [thetaCycles] <;> linarith
 
-/-- **Real spanning**: a closed real cochain is a combination of the
-cast basis cycles. -/
-theorem theta_spanningR (ω : Fin 6 → ℝ)
-    (h : ∀ w, thetaGraph.boundary ω w = 0) :
-    ∃ a : Fin 2 → ℝ,
-      ω = fun e => ∑ i, a i * ((thetaCyclesZ i e : ℤ) : ℝ) := by
-  refine ⟨![ω 0, ω 2], ?_⟩
-  have hc := eq_comb_of_theta_boundary_eq_zero ω h
-  funext e
-  rw [congrFun hc e, Fin.sum_univ_two]
-  show ω 0 * thetaCycles 0 e + ω 2 * thetaCycles 1 e
-    = ω 0 * ((thetaCyclesZ 0 e : ℤ) : ℝ) + ω 2 * ((thetaCyclesZ 1 e : ℤ) : ℝ)
-  rw [thetaCycles_eq_cast, thetaCycles_eq_cast]
 
 /-- **Independence of the casts**: a real dependency among the cast
 basis cycles vanishes — read off the flows on the first and second

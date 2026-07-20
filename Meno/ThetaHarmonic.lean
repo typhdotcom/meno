@@ -129,36 +129,6 @@ theorem thetaGram_offDiag_ne_zero :
     (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ) 0 1 ≠ 0 := by
   norm_num
 
-/-- **The variational identity at the theta graph**: the Gram-data
-energy of the sector `k ∈ ℤ²` is the least energy among 1-cochains
-with periods `k` against the basis cycles — attained. The Gram form
-`[[1/3,−1/6],[−1/6,1/3]]` is *derived* from `K₂,₃`'s topology by
-minimization, fulfilling the honesty note in `HarmonicForm`. -/
-theorem thetaGramData_energy_isLeast (k : Fin 2 → ℤ) :
-    IsLeast {E : ℝ | ∃ ω : Fin 6 → ℝ,
-        (∀ j, ω ⬝ᵥ thetaCycles j = (k j : ℝ)) ∧ E = ω ⬝ᵥ ω}
-      (thetaHarmonicGramData.energy k) := by
-  have hdet : IsUnit (gramOf thetaCycles).det := by
-    rw [gramOf_thetaCycles]
-    exact isUnit_iff_ne_zero.mpr (ne_of_gt thetaChainGram_posDef.det_pos)
-  have h := isLeast_energy_periods thetaCycles hdet (fun j => (k j : ℝ))
-  have hval : thetaHarmonicGramData.energy k
-      = (fun j => (k j : ℝ)) ⬝ᵥ
-          ((gramOf thetaCycles)⁻¹.mulVec (fun j => (k j : ℝ))) := by
-    show ∑ i, ∑ j, (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ) i j
-        * (k i : ℝ) * (k j : ℝ) = _
-    rw [quadForm_dotProduct, gramOf_thetaCycles, thetaChainGram_inv]
-  rw [hval]
-  exact h
-
-/-- The canonical matter sector of the theta graph: winding `(1, 0)`
-(once around the first-and-third-path cycle), with harmonic minimum
-action `1/3`. -/
-theorem thetaGramData_energy_one_zero :
-    thetaHarmonicGramData.energy ![1, 0] = 1/3 := by
-  show ∑ i, ∑ j, (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ) i j
-      * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![1, 0] : Fin 2 → ℤ) j : ℝ) = 1/3
-  norm_num [Fin.sum_univ_two]
 
 /-- The theta graph has matter: the intrinsic class of the single-edge
 cochain with periods `(1, 0)` (C6). Mass, the variational identity,
@@ -297,27 +267,6 @@ theorem theta_binding_attractive :
   unfold HarmonicGramData.bindingEnergy at h
   linarith
 
-/-- Inverse of the parametric shared-cycle chain Gram. -/
-theorem sharedCycles_chainGram_inv (n₁ n₂ k : ℝ) (hD : n₁ * n₂ - k ^ 2 ≠ 0) :
-    (!![n₁, k; k, n₂] : Matrix (Fin 2) (Fin 2) ℝ)⁻¹
-      = (n₁ * n₂ - k ^ 2)⁻¹ • !![n₂, -k; -k, n₁] := by
-  apply Matrix.inv_eq_right_inv
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.mul_apply, Fin.sum_univ_two] <;>
-    field_simp <;> ring
-
-/-- **The exact binding oracle**: two cycles of lengths `n₁, n₂`
-sharing `k` co-oriented edges bind (at unit sectors) with energy
-`2k/(n₁n₂ − k²)` — minus twice the period-Gram off-diagonal. The
-time-capsule's `2k/(n₁n₂)` is this to leading order in `k²/(n₁n₂)`.
-Theta: `2·2/(4·4 − 2²) = 1/3 = theta_bindingEnergy`. -/
-theorem sharedCycles_binding (n₁ n₂ k : ℝ) (hD : 0 < n₁ * n₂ - k ^ 2) :
-    -2 * ((!![n₁, k; k, n₂] : Matrix (Fin 2) (Fin 2) ℝ)⁻¹ 0 1)
-      = 2 * k / (n₁ * n₂ - k ^ 2) := by
-  rw [sharedCycles_chainGram_inv n₁ n₂ k (ne_of_gt hD)]
-  simp [Matrix.smul_apply]
-  field_simp
 
 end Binding
 
@@ -327,14 +276,15 @@ The time capsule's third idea, formalized at theta. A 1-cochain is a
 system of local constraints ("the potential difference across `e` is
 `ω e`"). A **global potential** solves them all; going around a cycle
 shows a solution can exist only if the periods vanish. The converse
-holds too: `thetaExactness` — zero periods ⟺ a potential exists. So a
+holds too — zero periods ⟺ a potential exists, the every-graph
+theorem `period_eq_zero_iff_exists_grad`. So a
 nonzero sector is a constraint system that is locally consistent
 everywhere and globally unsatisfiable — and its minimum-energy
 representative (`periodRep`) carries positive energy precisely because
 no potential can flatten it. Matter is trapped paradox.
 
 This pair (period map surjective — `periodRep_periods`; kernel exactly
-the gradients — `thetaExactness`) is the rank-2 case of the capsule's
+the gradients — `period_eq_zero_iff_exists_grad`) is the rank-2 case of the capsule's
 keystone: the incompressible residue of local re-description is `b₁`
 period coordinates. The description-cost half was completed in C8
 (`log_card_sections`, `theta_residue_count`, `theta_gauge_count`):
@@ -342,49 +292,6 @@ the keystone is a coding theorem now, not a design problem. -/
 
 section Gauge
 
-/-- Gradients — the substrate's `IncidenceGraph.grad`, not a
-specialized copy (review #3, finding 4) — have vanishing periods:
-local re-description is invisible to the sectors. -/
-theorem thetaGrad_period (f : Fin 5 → ℝ) (i : Fin 2) :
-    thetaGraph.grad f ⬝ᵥ thetaCycles i = 0 := by
-  fin_cases i <;>
-    simp +decide [IncidenceGraph.grad, dotProduct, thetaSrc, thetaTgt,
-      thetaCycles, Fin.sum_univ_six]
-
-/-- **Exactness at the theta graph**: a cochain has vanishing periods
-iff it is a gradient. The forward direction constructs the potential
-explicitly by integrating along the first path and using the two period
-conditions to certify consistency across the others. -/
-theorem thetaExactness (ω : Fin 6 → ℝ) :
-    (∀ i, ω ⬝ᵥ thetaCycles i = 0) ↔ ∃ f : Fin 5 → ℝ, thetaGraph.grad f = ω := by
-  constructor
-  · intro h
-    have h0 := h 0
-    have h1 := h 1
-    simp +decide [dotProduct, thetaCycles, Fin.sum_univ_six] at h0 h1
-    refine ⟨![0, ω 4 + ω 5, ω 0, ω 2, ω 4], ?_⟩
-    funext e
-    fin_cases e <;>
-      simp +decide [IncidenceGraph.grad, thetaSrc, thetaTgt] <;> linarith
-  · rintro ⟨f, rfl⟩ i
-    exact thetaGrad_period f i
-
-/-- **Matter admits no potential**: the minimum-energy representative
-of a nonzero sector is not a gradient. The constraint system it
-encodes is locally consistent and globally unsatisfiable. -/
-theorem matter_no_potential (k : Fin 2 → ℤ) (hk : k ≠ 0) :
-    ¬ ∃ f : Fin 5 → ℝ,
-      thetaGraph.grad f = periodRep thetaCycles (fun i => (k i : ℝ)) := by
-  intro hpot
-  have hdet : IsUnit (gramOf thetaCycles).det := by
-    rw [gramOf_thetaCycles]
-    exact isUnit_iff_ne_zero.mpr (ne_of_gt thetaChainGram_posDef.det_pos)
-  have hzero := (thetaExactness _).mpr hpot
-  apply hk
-  funext i
-  have hper := periodRep_periods thetaCycles hdet (fun i => (k i : ℝ)) i
-  rw [hzero i] at hper
-  exact_mod_cast hper.symm
 
 end Gauge
 
@@ -562,36 +469,6 @@ theorem theta_towerMap_triangle :
       = thetaGraph.h1TowerMap 2 8 (by norm_num) :=
   thetaGraph.h1TowerMap_comp 2 4 8 (by norm_num) (by norm_num)
 
-/-- **The tower fibers on theta** (review #15): dropping `4 → 2`
-merges exactly `2^{b₁} = 4` fine classes into each coarse class. -/
-theorem theta_tower_fiber_card
-    (ξ : IncidenceGraph.H1Reduction thetaGraph 2) :
-    Nat.card {η : IncidenceGraph.H1Reduction thetaGraph 4 //
-        thetaGraph.h1TowerMap 2 4 (by norm_num) η = ξ} = 4 := by
-  have h := thetaGraph.card_h1TowerMap_fiber 2 4 2 (by norm_num)
-    (by norm_num) ξ
-  rw [h, ← thetaGraph.card_eq_b1 thetaLatticeBasis]
-  norm_num
-
-/-- **The ratchet along the theta tower** (review #15): reversing
-`4 → 2` costs `b₁·log 2 = 2·log 2` per coarse sector. -/
-theorem theta_tower_sectionCost :
-    sectionCost (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num)))
-        / Nat.card (IncidenceGraph.H1Reduction thetaGraph 2)
-      = 2 * Real.log 2 := by
-  have h := thetaGraph.sectionCost_h1TowerMap 2 4 2 (by norm_num)
-    (by norm_num)
-  rw [h, ← thetaGraph.card_eq_b1 thetaLatticeBasis]
-  norm_num
-
-/-- **What the theta tower forgets, priced** (review #15): the Gibbs
-conditional-entropy chain at `4 → 2`. -/
-theorem theta_tower_entropy_chain :
-    shannonEntropy (thetaGraph.residueMass 4)
-      = shannonEntropy (thetaGraph.residueMass 2)
-        + (thetaGraph.residueDist 4).condEntropy
-            (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num))) :=
-  thetaGraph.residue_tower_entropy_chain 2 4 (by norm_num)
 
 /-- **The two prices identified on theta** (review #16): at `4 → 2`,
 the Gibbs price equals the ratchet cost minus the deficit gained —
@@ -721,17 +598,5 @@ theorem theta_gibbsVariance_T_dual (β : ℝ) (hβ : 0 < β) :
   rw [h, div_eq_div_iff (by positivity) (by positivity)]
   ring
 
-/-- The theta tower's conditional entropy is the difference of the
-two residue actions' `K + ⟨E⟩` decompositions (review #15). -/
-theorem theta_tower_condEntropy_eq :
-    (thetaGraph.residueDist 4).condEntropy
-        (⇑(thetaGraph.h1TowerMap 2 4 (by norm_num)))
-      = ((thetaGraph.residueAction 4).complexity
-          + (thetaGraph.residueAction 4).gibbsExpect
-              (thetaGraph.residueAction 4).E)
-        - ((thetaGraph.residueAction 2).complexity
-          + (thetaGraph.residueAction 2).gibbsExpect
-              (thetaGraph.residueAction 2).E) :=
-  thetaGraph.residue_tower_condEntropy_eq 2 4 (by norm_num)
 
 end Meno

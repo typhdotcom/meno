@@ -43,8 +43,7 @@ universe u v
 /-- **The one fiber-to-kernel equivalence** (review #9): the fiber of a
 linear map over any attained value is a coset of its kernel — shift by
 a chosen preimage. Every K3 fiber statement below (`card_fiber`,
-`compressionFiberEquivGauge`, `carrierFiberEquivGauge`) derives from
-this single construction. -/
+`carrierFiberEquivGauge`) derives from this single construction. -/
 def fiberEquivKer {R : Type*} {M : Type*} {N : Type*} [Ring R]
     [AddCommGroup M] [AddCommGroup N] [Module R M] [Module R N]
     (f : M →ₗ[R] N) {y : N} (x₀ : M) (hx₀ : f x₀ = y) :
@@ -416,16 +415,6 @@ noncomputable instance gaugeFintype :
 instance gaugeNonempty : Nonempty ↥(LinearMap.range (G.gradLin (ZMod q))) :=
   ⟨0⟩
 
-/-- The compression residue's uniform partition function is `q^{b₁}`:
-the Boltzmann sum over the residue simply counts the incompressible
-classes. -/
-theorem uniformAction_quotient_partFn :
-    (uniformAction
-        ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))).partFn
-      = (q : ℝ) ^ G.b1 := by
-  rw [uniformAction_partFn, ← Nat.card_eq_fintype_card, G.card_quotient_eq q]
-  push_cast
-  ring
 
 /-- **The information face inhabits the carrier** (review #5,
 finding 5): the compression residue, as a uniform sector action, has
@@ -461,8 +450,8 @@ Review #6, finding 1: the residue is not merely a finite type sharing
 the `uniformAction` API — it is the **finite reduction of the one
 integral carrier**. The intrinsic carrier's lattice is
 `H¹(G;ℤ) = (G.E → ℤ) ⧸ range ∂ᵀℤ` (the sector lattice of
-`classSectorAction`, `Meno/BasisIndependence.lean`, definitionally by
-`classSectorAction_Λ`). Coefficient reduction `h1Res` maps it onto the
+`classSectorAction`, `Meno/BasisIndependence.lean`,
+definitionally). Coefficient reduction `h1Res` maps it onto the
 resolution-`q` residue, its kernel is exactly `q·H¹(G;ℤ)`
 (`ker_h1Res`), so the residue **is** `H¹(G;ℤ) ⧸ q·H¹(G;ℤ)`
 (`h1ResQuotEquiv`), the coordinates commute with the keystones
@@ -683,6 +672,7 @@ abbrev H1Reduction (q : ℕ) [NeZero q] : Type v :=
         ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
           ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))
 
+
 /-- `H¹(G;ℤ) ⧸ q·H¹(G;ℤ)` is `q`-torsion. -/
 theorem h1Reduction_nsmul_eq_zero (ξ : H1Reduction G q) : q • ξ = 0 := by
   obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
@@ -716,14 +706,6 @@ noncomputable def h1ResQuotEquivZMod :
     map_add' := map_add _
     map_smul' := ZMod.map_smul (G.h1ResQuotEquiv q).toLinearMap.toAddMonoidHom }
 
-/-- **The reduction's rank-`b₁` basis** (review #8): the standard
-basis of `(ZMod q)^{b₁}`, pulled back along the keystone at the
-fundamental basis. -/
-noncomputable def h1ReductionBasis :
-    Module.Basis (Fin G.b1) (ZMod q) (H1Reduction G q) :=
-  (Pi.basisFun (ZMod q) (Fin G.b1)).map
-    ((G.h1ResQuotEquivZMod q).trans
-      (G.latticeQuotEquivQ G.cycleBasis q)).symm
 
 /-- **Reading a description as a finite sector of the carrier** — a
 `ZMod q`-linear map (review #8): the class map followed by the
@@ -764,18 +746,6 @@ theorem ker_carrierCompression :
         (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) = 0 from
       (Submodule.Quotient.mk_eq_zero _).mpr h, map_zero]
 
-/-- **K3, extracted as an equivalence** (review #7): every fiber of
-the mod-`q` class map is the gauge group — the one fiber-to-kernel
-equivalence (review #9) at the `Quotient.out` representative, with the
-kernel read off by `Submodule.ker_mkQ`. -/
-noncomputable def compressionFiberEquivGauge
-    (x : (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :
-    {y : G.E → ZMod q // (Submodule.Quotient.mk y :
-        (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) = x}
-      ≃ ↥(LinearMap.range (G.gradLin (ZMod q))) :=
-  (fiberEquivKer (Submodule.mkQ (LinearMap.range (G.gradLin (ZMod q))))
-      (Quotient.out x) (Quotient.out_eq x)).trans
-    (Equiv.subtypeEquivRight fun ω => by rw [Submodule.ker_mkQ])
 
 /-- **Every `carrierCompression` fiber is the gauge group, by
 kernel/cosets** (review #8): the one fiber-to-kernel equivalence
@@ -839,11 +809,9 @@ Here the **intrinsic Gibbs distribution** of `classSectorAction`
   `carrierCompression`; `descriptionEntropy_split` is
   `H(description) = H(residue) + log |gauge|`.
 * `pairDist` — the shared-pair **coupling** on the self-pullback
-  (review #10): normalized (`pairMass_sum`), with **both marginals
-  the description distribution** (`pairDist_fst`, `pairDist_snd`),
-  and the pushforward of the description distribution recovering the
-  residue distribution (`descriptionDist_map`) — all through the
-  `FinDist` abstraction of `Meno/InfoRatchet.lean`.
+  (review #10): normalized by construction, with **both marginals
+  the description distribution** (`pairDist_fst`, `pairDist_snd`) —
+  all through the `FinDist` abstraction of `Meno/InfoRatchet.lean`.
 * **`carrier_gravity_entropy`** — the four-term gravity identity
   `H(pair) + H(residue) = H(description) + H(description)`: since
   review #14 a **corollary of the priced calculus**
@@ -1154,26 +1122,6 @@ noncomputable def descriptionMass : (G.E → ZMod q) → ℝ :=
 @[simp] theorem descriptionDist_mass :
     (G.descriptionDist q).mass = G.descriptionMass q := rfl
 
-theorem descriptionMass_pos (ω : G.E → ZMod q) :
-    0 < G.descriptionMass q ω := by
-  show 0 < G.residueMass q (G.carrierCompression q ω)
-    / (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q))) : ℝ)
-  exact div_pos (G.residueMass_pos q _) (by exact_mod_cast Nat.card_pos)
-
-/-- Normalization — from the bundled distribution, not recomputed
-(review #11). -/
-theorem descriptionMass_sum :
-    ∑ ω : G.E → ZMod q, G.descriptionMass q ω = 1 :=
-  (G.descriptionDist q).sum_one
-
-/-- **The lift pushforward law, on the carrier** (review #10): pushing
-the description distribution forward through `carrierCompression`
-recovers the residue distribution — `descriptionMass` genuinely
-disintegrates `residueMass` over the gauge fibers. -/
-theorem descriptionDist_map :
-    (G.descriptionDist q).map (G.carrierCompression q) = G.residueDist q :=
-  FinDist.map_uniformLift (G.carrierCompression q) Nat.card_pos
-    (G.card_carrierCompression_fiber q) (G.residueDist q)
 
 /-- **H(description) = H(residue) + log |gauge|** (review #9): the
 entropy chain rule at the uniform gauge lift — a description prices a
@@ -1204,17 +1152,6 @@ noncomputable def pairMass
     ℝ :=
   (G.pairDist q).mass p
 
-theorem pairMass_nonneg
-    (p : SGD.Pullback (G.carrierCompression q) (G.carrierCompression q)) :
-    0 ≤ G.pairMass q p :=
-  (G.pairDist q).nonneg p
-
-/-- **Normalization** (review #10): the shared-pair masses sum to
-one. -/
-theorem pairMass_sum :
-    ∑ p : SGD.Pullback (G.carrierCompression q) (G.carrierCompression q),
-      G.pairMass q p = 1 :=
-  (G.pairDist q).sum_one
 
 /-- **The first marginal is the description distribution**
 (review #10). -/
@@ -1234,26 +1171,6 @@ theorem pairDist_snd :
     (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
     (G.residueDist q)
 
-/-- The pair entropy splits as residue entropy plus two gauge logs —
-Phase 45's identity, now a corollary of the coupling chain rule. -/
-theorem pairEntropy_split :
-    shannonEntropy (G.pairMass q)
-      = shannonEntropy (G.residueMass q)
-        + 2 * Real.log
-            (Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) := by
-  have hg : ((Nat.card ↥(LinearMap.range (G.gradLin (ZMod q)))) : ℝ) ≠ 0 := by
-    exact_mod_cast (Nat.card_pos).ne'
-  have h := FinDist.entropy_coupling (G.carrierCompression q)
-    (G.carrierCompression q) Nat.card_pos Nat.card_pos
-    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
-    (G.residueDist q)
-  rw [Nat.cast_mul, Real.log_mul hg hg] at h
-  show (G.pairDist q).entropy
-    = shannonEntropy (G.residueMass q) + 2 * Real.log _
-  refine h.trans ?_
-  show shannonEntropy (G.residueMass q) + (Real.log _ + Real.log _)
-    = shannonEntropy (G.residueMass q) + 2 * Real.log _
-  ring
 
 /-! ### The uniform entropy defect: pricing meets counting (review #11)
 
@@ -1932,28 +1849,54 @@ theorem carrier_gravity_entropy :
     G.descriptionAction_gibbsMass q] at h
   exact h
 
-/-- **GRAVITY ON THE CARRIER** (reviews #7, #10, #14, #21): pairs of
-descriptions representing the **same finite sector of the intrinsic
-carrier** — sharing the sector is worth exactly one copy of its
-complexity. Proved **once**: the uniform identity is the priced
-entropy gravity identity (`carrier_gravity_entropy`, itself a
-corollary of the gravity theorem `SectorAction.complexity_gravity`)
-plus the common
-deficit `Δ` on every term — counting is pricing plus one deficit, on
-both sides. Review #21 deleted the parallel SGD-bridge proof of this
-statement: with one gravity theorem, there is
-nothing left to corroborate. -/
+/-- **THE DEFICIT CANCELLATION** (review #28): the gap between
+uniform complexity and Shannon entropy is the **same** deficit
+`Δ = residueDefect` at all three levels of the carrier identity —
+pair, residue, description — so the deficits cancel across the
+gravity identity. This is the numerical bridge between the two
+faces on the carrier: entropy gravity and counting gravity differ
+term-by-term by deficits that sum to the same amount on both sides.
+Formerly the proof route of `carrier_gravity_complexity`; stated as
+its own theorem because it is content, not a route — the counting
+identity itself follows in one step from `counting_gravity`. -/
+theorem carrier_gravity_deficits_cancel :
+    ((uniformAction (SGD.Pullback (G.carrierCompression q)
+          (G.carrierCompression q))).complexity
+        - shannonEntropy (G.pairMass q))
+      + ((uniformAction (H1Reduction G q)).complexity
+          - shannonEntropy (G.residueMass q))
+      = ((uniformAction (G.E → ZMod q)).complexity
+          - shannonEntropy (G.descriptionMass q))
+        + ((uniformAction (G.E → ZMod q)).complexity
+          - shannonEntropy (G.descriptionMass q)) := by
+  have h1 := G.uniformComplexity_pair_split q
+  have h2 := G.uniformComplexity_residue_split q
+  have h3 := G.uniformComplexity_description_split q
+  linarith
+
+/-- **GRAVITY ON THE CARRIER** (reviews #7, #10, #14, #21, #28):
+pairs of descriptions representing the **same finite sector of the
+intrinsic carrier** — sharing the sector is worth exactly one copy
+of its complexity. **The zero-energy corollary instantiated on the
+carrier**: `counting_gravity` at `G.carrierCompression q`, with
+`Nat.card_pos` and `card_carrierCompression_fiber` as the fiber
+arguments — the same instantiation pattern as
+`carrier_gravity_entropy` directly above. The entropy route is
+recorded separately as `carrier_gravity_deficits_cancel`: the
+identity also follows from entropy gravity because the three
+uniform-entropy deficits cancel. -/
 theorem carrier_gravity_complexity :
     (uniformAction (SGD.Pullback (G.carrierCompression q)
         (G.carrierCompression q))).complexity
       + (uniformAction (H1Reduction G q)).complexity
       = (uniformAction (G.E → ZMod q)).complexity
         + (uniformAction (G.E → ZMod q)).complexity := by
-  have h := G.carrier_gravity_entropy q
-  have h1 := G.uniformComplexity_pair_split q
-  have h2 := G.uniformComplexity_residue_split q
-  have h3 := G.uniformComplexity_description_split q
-  linarith
+  have key := counting_gravity
+    (G.carrierCompression q) (G.carrierCompression q)
+    Nat.card_pos Nat.card_pos
+    (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
+  simp only [uniformAction_complexity]
+  simpa [Nat.card_eq_fintype_card] using key
 
 /-! #### Strict fluctuation and the strict bridges (review #14)
 
@@ -2283,30 +2226,6 @@ theorem h1TowerMap_comp (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
   obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
   rfl
 
-/-- **Residue weights compose across the tower** (review #15):
-pushing the finest weights forward in two steps agrees with the one
-step — both compute the coarse coset weight. -/
-theorem residueWeight_tower_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'')
-    (ξ : H1Reduction G q) :
-    ∑' η : {η : H1Reduction G q' // G.h1TowerMap q q' h₁ η = ξ},
-      (∑' ζ : {ζ : H1Reduction G q'' //
-          G.h1TowerMap q' q'' h₂ ζ = η.val},
-        G.residueWeight q'' ζ.val)
-      = ∑' ζ : {ζ : H1Reduction G q'' //
-          G.h1TowerMap q q'' (h₁.trans h₂) ζ = ξ},
-          G.residueWeight q'' ζ.val :=
-  calc ∑' η : {η : H1Reduction G q' // G.h1TowerMap q q' h₁ η = ξ},
-        (∑' ζ : {ζ : H1Reduction G q'' //
-            G.h1TowerMap q' q'' h₂ ζ = η.val},
-          G.residueWeight q'' ζ.val)
-      = ∑' η : {η : H1Reduction G q' // G.h1TowerMap q q' h₁ η = ξ},
-          G.residueWeight q' η.val :=
-        tsum_congr fun η => (G.residueWeight_tower q' q'' h₂ η.val).symm
-    _ = G.residueWeight q ξ := (G.residueWeight_tower q q' h₁ ξ).symm
-    _ = ∑' ζ : {ζ : H1Reduction G q'' //
-          G.h1TowerMap q q'' (h₁.trans h₂) ζ = ξ},
-          G.residueWeight q'' ζ.val :=
-        G.residueWeight_tower q q'' (h₁.trans h₂) ξ
 
 /-- **Residue distributions compose across the tower** (review #15):
 the two-step pushforward of the finest Gibbs law equals the one-step

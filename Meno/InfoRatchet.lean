@@ -84,13 +84,6 @@ theorem recoveryCost_nonneg [Finite A] (f : A → B) (b : B) :
   · simp [hzero]
   · exact Real.log_nonneg (by exact_mod_cast hpos)
 
-theorem fiberInfoCost_nonneg [Finite A] [Fintype B] [DecidableEq B] (f : A → B) :
-    0 ≤ fiberInfoCost f := by
-  unfold fiberInfoCost
-  refine Finset.sum_nonneg (fun b _ => ?_)
-  rcases (Nat.card (f ⁻¹' {b})).eq_zero_or_pos with hzero | hpos
-  · simp [hzero]
-  · exact Real.log_nonneg (by exact_mod_cast hpos)
 
 /-- Injective functions have zero fiber-info cost: every fiber is a
 singleton (or empty), and `log 1 = log 0 = 0`. -/
@@ -272,15 +265,6 @@ theorem section_not_surjective_of_not_injective {f : A → B}
   have hb : b₁ = b₂ := by rw [← hr b₁, ← hr b₂, ha]
   rw [hb]
 
-/-- Sections exist exactly for surjections. -/
-theorem sections_nonempty_iff_surjective (f : A → B) :
-    Nonempty {s : B → A // ∀ b, f (s b) = b} ↔ Function.Surjective f := by
-  constructor
-  · rintro ⟨s⟩ b
-    exact ⟨s.1 b, s.2 b⟩
-  · intro hf
-    choose s hs using hf
-    exact ⟨⟨s, hs⟩⟩
 
 open Classical in
 /-- **The extended reverse-description cost**: `⊤` when no section
@@ -397,8 +381,7 @@ entropies, not only log-cardinalities: `shannonEntropy` is the Shannon
 entropy (nats) of a mass function on a finite type;
 `shannonEntropy_comp_div` is the chain rule for a uniform lift along a
 constant-fiber map — the lifted entropy exceeds the base entropy by
-exactly the log of the fiber size; `shannonEntropy_uniform` identifies
-the uniform case with the log-cardinality complexity. The carrier
+exactly the log of the fiber size. The carrier
 instantiation — the intrinsic Gibbs distribution pushed through
 `H¹(G;ℤ) → H1Reduction G q` — lives in `Meno/ResolutionCount.lean`. -/
 
@@ -444,15 +427,6 @@ theorem shannonEntropy_comp_div {X D : Type u} [Fintype X] [Fintype D]
     Finset.sum_sub_distrib, ← Finset.sum_mul, hp1, one_mul]
   ring
 
-/-- Entropy of the uniform distribution is the log-cardinality — the
-bridge from distribution entropy to `uniformAction` complexity. -/
-theorem shannonEntropy_uniform (X : Type u) [Fintype X] [Nonempty X] :
-    shannonEntropy (fun _ : X => ((Fintype.card X : ℝ))⁻¹)
-      = Real.log (Fintype.card X) := by
-  have hpos : (0 : ℝ) < Fintype.card X := by exact_mod_cast Fintype.card_pos
-  unfold shannonEntropy
-  rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, Real.log_inv]
-  field_simp
 
 /-- A map with constant fiber count `m` multiplies cardinalities. -/
 theorem card_eq_card_mul_of_fiber {X D : Type u} [Fintype X] [Fintype D]
@@ -663,9 +637,6 @@ noncomputable def uniform (X : Type u) [Fintype X] [Nonempty X] :
       mul_inv_cancel₀
         (Nat.cast_ne_zero.mpr Fintype.card_pos.ne' : (Fintype.card X : ℝ) ≠ 0)]
 
-theorem entropy_uniform (X : Type u) [Fintype X] [Nonempty X] :
-    (uniform X).entropy = Real.log (Fintype.card X) :=
-  shannonEntropy_uniform X
 
 /-- Lifting the uniform distribution uniformly is uniform. -/
 theorem uniformLift_uniform [DecidableEq D] [Nonempty D] [Nonempty X]
@@ -792,29 +763,6 @@ theorem coupling_snd [DecidableEq D] [DecidableEq Y] (f : X → D)
   push_cast
   field_simp
 
-omit [Fintype X] [Fintype Y] in
-/-- Coupling the uniform distribution is uniform on the pullback. -/
-theorem coupling_uniform [DecidableEq D] [Nonempty D] (f : X → D)
-    (g : Y → D) [Fintype (SGD.Pullback f g)]
-    [Nonempty (SGD.Pullback f g)] {m m' : ℕ}
-    (hm : 0 < m) (hm' : 0 < m')
-    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
-    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') :
-    (uniform D).coupling f g hm hm' hf hg
-      = uniform (SGD.Pullback f g) := by
-  apply ext
-  funext p
-  show (Fintype.card D : ℝ)⁻¹ / ((m * m' : ℕ) : ℝ)
-    = (Fintype.card (SGD.Pullback f g) : ℝ)⁻¹
-  rw [card_eq_card_mul_of_fiber
-    (fun p : SGD.Pullback f g => SGD.Pullback.base p)
-    (card_base_fiber f g hf hg)]
-  have hD : (0 : ℝ) < Fintype.card D := by exact_mod_cast Fintype.card_pos
-  have hmm : (0 : ℝ) < ((m * m' : ℕ) : ℝ) := by
-    exact_mod_cast Nat.mul_pos hm hm'
-  push_cast
-  rw [mul_inv]
-  field_simp
 
 /-! ### The uniform entropy defect (review #11)
 
@@ -888,14 +836,6 @@ noncomputable def relativeEntropy (P Q : FinDist X)
     (_ : Q.FullSupport) : ℝ :=
   ∑ x, P.mass x * Real.log (P.mass x / Q.mass x)
 
-/-- The relative entropy depends only on the distributions — proof
-irrelevance in the support certificate, congruence in the
-reference. -/
-theorem relativeEntropy_congr_right (P : FinDist X) {Q Q' : FinDist X}
-    (h : Q = Q') (hQ : Q.FullSupport) :
-    P.relativeEntropy Q hQ = P.relativeEntropy Q' (h ▸ hQ) := by
-  subst h
-  rfl
 
 private lemma gibbs_term_le (P Q : FinDist X) (hQ : ∀ x, 0 < Q.mass x)
     (x : X) :
@@ -1091,22 +1031,6 @@ theorem condEntropy_comp {E : Type u} [Fintype E] [DecidableEq D]
   rw [map_comp f g P] at h1
   linarith
 
-/-- **Conditional entropy is nonnegative** (review #16): each mass is
-at most its fiber's total. -/
-theorem condEntropy_nonneg [DecidableEq D] (f : X → D) (P : FinDist X) :
-    0 ≤ P.condEntropy f := by
-  refine neg_nonneg.mpr (Finset.sum_nonpos fun x _ => ?_)
-  rcases eq_or_lt_of_le (P.nonneg x) with h0 | hp
-  · rw [← h0, zero_mul]
-  · have hmap : P.mass x ≤ (P.map f).mass (f x) := by
-      refine Finset.single_le_sum (fun y _ => P.nonneg y) ?_
-      exact Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
-    have hmpos : 0 < (P.map f).mass (f x) := lt_of_lt_of_le hp hmap
-    have hratio : P.mass x / (P.map f).mass (f x) ≤ 1 :=
-      (div_le_one hmpos).mpr hmap
-    have hlog : Real.log (P.mass x / (P.map f).mass (f x)) ≤ 0 :=
-      Real.log_nonpos (div_nonneg (P.nonneg x) hmpos.le) hratio
-    exact mul_nonpos_iff.mpr (Or.inl ⟨hp.le, hlog⟩)
 
 /-- **Conditional entropy is strictly positive** (review #16) when a
 fully supported distribution has two points in one fiber. -/
@@ -1450,11 +1374,6 @@ theorem sum_coarseWeight (A : SectorAction.{u}) {B : Type u} [Fintype B]
         hσ.tsum_sigma.symm
     _ = ∑' k : A.Λ, A.weight k := Equiv.tsum_eq (Equiv.sigmaFiberEquiv p) _
 
-/-- **The effective free energy** of a coarse sector (review #13):
-`F b = −log W b`. -/
-noncomputable def coarseFreeEnergy (A : SectorAction.{u}) {B : Type u}
-    (p : A.Λ → B) (b : B) : ℝ :=
-  -Real.log (A.coarseWeight p b)
 
 section CoarseGrain
 
@@ -1477,14 +1396,6 @@ noncomputable def coarseGrain : SectorAction.{u} where
 instance : Fintype (A.coarseGrain p b₀ hpos hmax).Λ :=
   inferInstanceAs (Fintype B)
 
-/-- The coarse energy is the free-energy difference from the modal
-sector: `E b = F b − F b₀` (review #13). -/
-theorem coarseGrain_E (b : B) :
-    (A.coarseGrain p b₀ hpos hmax).E b
-      = A.coarseFreeEnergy p b - A.coarseFreeEnergy p b₀ := by
-  show Real.log (A.coarseWeight p b₀) - Real.log (A.coarseWeight p b)
-    = -Real.log (A.coarseWeight p b) - -Real.log (A.coarseWeight p b₀)
-  ring
 
 /-- The coarse Boltzmann weight is the fiber-weight ratio against the
 modal fiber. -/
@@ -1525,18 +1436,6 @@ theorem complexity_eq_coarseGrain :
     Real.log_div (ne_of_gt A.partFn_pos) (ne_of_gt (hpos b₀))]
   ring
 
-/-- **The coarse Gibbs mass is the fiber Gibbs mass** (review #13):
-`μ_coarse b = W b / Z` — the pushforward of the fine Gibbs law. -/
-theorem coarseGrain_gibbsMass (b : B) :
-    (A.coarseGrain p b₀ hpos hmax).gibbsMass b
-      = A.coarseWeight p b / A.partFn := by
-  show (A.coarseGrain p b₀ hpos hmax).weight b
-      / (A.coarseGrain p b₀ hpos hmax).partFn = _
-  rw [coarseGrain_weight A p b₀ hpos hmax b,
-    coarseGrain_partFn A p b₀ hpos hmax]
-  have h0 : A.coarseWeight p b₀ ≠ 0 := (hpos b₀).ne'
-  have hZ : A.partFn ≠ 0 := ne_of_gt A.partFn_pos
-  field_simp
 
 end CoarseGrain
 
@@ -1983,17 +1882,21 @@ theorem coupling_energyEquiv (W W' : Type u) [Fintype W] [Nonempty W]
   rw [add_zero, add_zero]
 
 omit [Fintype A.Λ] in
-/-- **THE GRAVITY THEOREM** (reviews #13, #21, #25):
+/-- **THE GRAVITY THEOREM** (reviews #13, #21, #25, #28):
 `K(coupling) + K(base) = K(lift) + K(lift)` — merging two
 descriptions over a shared base saves exactly the base's
-complexity, with **no finiteness of the base**. The physical
-content is in the decomposition lemmas — `coupling ≈ A ⊗
+complexity, with **no finiteness of the base**. The proof is
+structured through the decomposition lemmas — `coupling ≈ A ⊗
 (free ⊗ free)` (`coupling_energyEquiv`) and `lift ≈ A ⊗ free`
 (`uniformLift_energyEquiv`) — after which the identity is the
 additivity of complexity over independent products
-(`complexity_prod`). Counting gravity is the zero-energy corollary
-(`counting_gravity`, below); the entropy form is the Gibbs-split
-corollary (`entropy_gravity`). -/
+(`complexity_prod`). The identity does not depend on that route:
+`coupling_complexity` and `uniformLift_complexity` evaluate the
+same four terms independently and close it in two rewrites — the
+decomposition is the structure of the proof, not the sole carrier
+of the content (review #28). Counting gravity is the zero-energy
+corollary (`counting_gravity`, below); the entropy form is the
+Gibbs-split corollary (`entropy_gravity`). -/
 theorem complexity_gravity :
     (A.coupling f g hm hm' hf hg).complexity + A.complexity
       = (A.uniformLift f hm hf).complexity

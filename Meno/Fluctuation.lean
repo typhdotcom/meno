@@ -271,8 +271,6 @@ noncomputable def scaledSector (β : ℝ) (hβ : 0 < β) : SectorAction.{0} wher
   E_nonneg k := mul_nonneg hβ.le (A.energy_nonneg k)
   summable := A.summable_scaledWeight hβ
 
-theorem scaledSector_partFn (β : ℝ) (hβ : 0 < β) :
-    (A.scaledSector β hβ).partFn = A.scaledPartFn β := rfl
 
 /-- The scaled sector's Gibbs mean of the energy is `⟨E⟩(β)`. -/
 theorem scaledSector_gibbsExpect_energy (β : ℝ) (hβ : 0 < β) :
