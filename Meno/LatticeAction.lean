@@ -8,8 +8,8 @@ import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 /-! # The Quadratic-Lattice Action: real positivity, charts, and the intrinsic dual
 
-The thesis's carrier bundle, made lattice-honest twice over (reviews
-#8, #9): a `QuadLatticeAction` is a finite free `ℤ`-module with a
+The thesis's carrier bundle, rebuilt on the lattice twice over
+(reviews #8, #9): a `QuadLatticeAction` is a finite free `ℤ`-module with a
 symmetric bi-additive `ℝ`-valued form whose **real scalar extension**
 `ℝ ⊗[ℤ] Λ` is positive definite — positivity on integral points alone
 is *not* stored, because it does not suffice (review #9's
@@ -214,8 +214,8 @@ structure QuadLatticeAction where
   form : Λ → Λ → ℝ
   form_comm : ∀ a b, form a b = form b a
   form_add_left : ∀ a₁ a₂ b, form (a₁ + a₂) b = form a₁ b + form a₂ b
-  /-- Positive-definiteness on the **real scalar extension** — the
-  genuinely lattice-honest positivity (review #9). -/
+  /-- Positive-definiteness on the **real scalar extension** —
+  integral positivity alone does not suffice (review #9). -/
   posDef_baseChange : ∀ x : ℝ ⊗[ℤ] Λ, x ≠ 0 →
     0 < bilinBaseChange form form_comm form_add_left x x
 
@@ -246,7 +246,6 @@ noncomputable def formExt : (ℝ ⊗[ℤ] Q.Λ) →ₗ[ℝ] (ℝ ⊗[ℤ] Q.Λ) 
 
 theorem formExt_posDef (x : ℝ ⊗[ℤ] Q.Λ) (hx : x ≠ 0) : 0 < Q.formExt x x :=
   Q.posDef_baseChange x hx
-
 
 theorem form_zero_left (b : Q.Λ) : Q.form 0 b = 0 := by
   have h := Q.form_add_left 0 0 b
@@ -790,7 +789,6 @@ inverse is the identity. -/
 @[simp] theorem symm_symm (e : Q.Equiv Q') : e.symm.symm = e :=
   ext (by ext x; rfl)
 
-
 /-- **Energy invariance** — the diagonal of `form_eq`. -/
 theorem energy_eq (e : Q.Equiv Q') (a : Q.Λ) :
     Q'.form (e.toLinearEquiv a) (e.toLinearEquiv a) = Q.form a a :=
@@ -889,7 +887,6 @@ the bundled involution. -/
 theorem partFn_dualDual :
     Q.dual.dual.toSectorAction.partFn = Q.toSectorAction.partFn :=
   (Q.dualDual).partFn_eq.symm
-
 
 /-- **The reciprocal-discriminant law** (review #10):
 `disc(Q^∨) = π^{2·rank} / disc(Q)`. -/
@@ -1305,8 +1302,7 @@ theorem meanEnergy_strictAntiOn (h : ∃ a, Q.form a a ≠ 0) :
 `β = 1` recovers the unscaled bundle **once, on the bundle**: the
 sector action (`scaledSector_one`), the partition function
 (`scaledPartFn_one`), the Gibbs mass (`scaledSector_one_gibbsMass`),
-the Gibbs expectation (`meanEnergy_one`), and the Gibbs variance
-(`scaledSector_one_gibbsVariance`). The scaled moments are invariant
+and the Gibbs expectation (`meanEnergy_one`). The scaled moments are invariant
 under form-preserving equivalence (`Equiv.scaledPartFn_eq`,
 `Equiv.scaledMoment_eq`, `Equiv.scaledMoment2_eq`,
 `Equiv.meanEnergy_eq`). Graph carriers consume these as direct
@@ -1342,7 +1338,6 @@ theorem meanEnergy_one :
   show (∑' a, Q.form a a * (Q.scaledSector 1 one_pos).gibbsMass a)
     = ∑' a, Q.form a a * Q.toSectorAction.gibbsMass a
   rw [Q.scaledSector_one_gibbsMass]
-
 
 /-- **Scaled-moment invariance under equivalence** (review #17): a
 form-preserving equivalence preserves the β-scaled partition
@@ -1693,71 +1688,6 @@ theorem meanEnergy_self_dual (e : Q.Equiv Q.dual) :
   have h := Q.meanEnergy_T_dual 1 one_pos
   rw [inv_one, e.meanEnergy_eq, one_pow, one_mul, mul_one] at h
   linarith
-
-/-! ### The thermal-duality certificate (review #18)
-
-The laws connecting temperature, duality, and response, bundled as
-one **derived** `Prop` certificate per bundled lattice action — a
-statement acceptance can inspect whole, with one derivation
-(`thermalDualityLaws`). Never a field of `QuadLatticeAction`. -/
-
-/-- **The thermal-duality laws** of a bundled lattice action
-(review #18): the scale algebra, the scaling of the discriminant,
-equivalence invariance of the scaled moments, the dual involution,
-the inversion of temperature through the dual, and the partition,
-mean-energy, and variance functional equations with the self-dual
-fixed point. -/
-structure ThermalDualityLaws (Q : QuadLatticeAction.{u}) : Prop where
-  scale_one : Q.scale 1 one_pos = Q
-  scale_scale : ∀ (β β' : ℝ) (hβ : 0 < β) (hβ' : 0 < β'),
-    (Q.scale β hβ).scale β' hβ' = Q.scale (β' * β) (mul_pos hβ' hβ)
-  disc_scale : ∀ (β : ℝ) (hβ : 0 < β),
-    (Q.scale β hβ).disc = β ^ Q.rank * Q.disc
-  moments_equiv : ∀ {Q' : QuadLatticeAction.{u}}, Q.Equiv Q' →
-    ∀ β : ℝ,
-    Q'.scaledPartFn β = Q.scaledPartFn β
-      ∧ Q'.scaledMoment β = Q.scaledMoment β
-      ∧ Q'.scaledMoment2 β = Q.scaledMoment2 β
-      ∧ Q'.meanEnergy = Q.meanEnergy
-  dual_involution : ∀ x y : Q.Λ,
-    Q.dual.dual.form (Module.evalEquiv ℤ Q.Λ x)
-        (Module.evalEquiv ℤ Q.Λ y)
-      = Q.form x y
-  scale_dual : ∀ (β : ℝ) (hβ : 0 < β),
-    (Q.scale β hβ).dual = Q.dual.scale β⁻¹ (inv_pos.mpr hβ)
-  partFn_equation : ∀ (β : ℝ), 0 < β →
-    Q.dual.scaledPartFn β⁻¹
-      = (β ^ Q.rank * Q.disc / Real.pi ^ Q.rank) ^ ((1 : ℝ) / 2)
-        * Q.scaledPartFn β
-  mean_equation : ∀ (β : ℝ), 0 < β →
-    Q.meanEnergy β + β⁻¹ ^ 2 * Q.dual.meanEnergy β⁻¹
-      = Q.rank / (2 * β)
-  variance_equation : ∀ (β : ℝ) (hβ : 0 < β),
-    (Q.scaledSector β hβ).gibbsVariance (fun a => Q.form a a)
-      + 2 * β⁻¹ ^ 3 * Q.dual.meanEnergy β⁻¹
-      - β⁻¹ ^ 4 * ((Q.dual.scaledSector β⁻¹
-          (inv_pos.mpr hβ)).gibbsVariance (fun φ => Q.dual.form φ φ))
-      = Q.rank / (2 * β ^ 2)
-  selfDual_fixed : Nonempty (Q.Equiv Q.dual) →
-    Q.meanEnergy 1 = Q.rank / 4
-
-/-- **Every bundled lattice action satisfies the thermal-duality
-laws** (review #18) — one derivation, assembled from the proved
-engine. -/
-theorem thermalDualityLaws (Q : QuadLatticeAction.{u}) :
-    ThermalDualityLaws Q where
-  scale_one := Q.scale_one
-  scale_scale := fun β β' hβ hβ' => Q.scale_scale β β' hβ hβ'
-  disc_scale := fun β hβ => Q.disc_scale β hβ
-  moments_equiv := fun e β =>
-    ⟨e.scaledPartFn_eq β, e.scaledMoment_eq β, e.scaledMoment2_eq β,
-      e.meanEnergy_eq⟩
-  dual_involution := fun x y => Q.dual_dual x y
-  scale_dual := fun β hβ => Q.scale_dual β hβ
-  partFn_equation := fun β hβ => Q.scaled_duality β hβ
-  mean_equation := fun β hβ => Q.meanEnergy_T_dual β hβ
-  variance_equation := fun β hβ => Q.gibbsVariance_T_dual β hβ
-  selfDual_fixed := fun ⟨e⟩ => Q.meanEnergy_self_dual e
 
 end QuadLatticeAction
 

@@ -415,7 +415,6 @@ noncomputable instance gaugeFintype :
 instance gaugeNonempty : Nonempty ↥(LinearMap.range (G.gradLin (ZMod q))) :=
   ⟨0⟩
 
-
 /-- **The information face inhabits the carrier** (review #5,
 finding 5): the compression residue, as a uniform sector action, has
 complexity exactly `b₁ · log q` — the incompressible content of a
@@ -644,7 +643,6 @@ theorem uniformComplexity_split_carrier :
   rw [G.uniformComplexity_split q, G.uniformAction_quotient_complexity q,
     G.uniformAction_h1ResQuot_complexity q]
 
-
 /-! ## Gravity and time on the carrier's reduction (review #7)
 
 `H1Reduction G q` **names** the finite reduction of the intrinsic
@@ -671,7 +669,6 @@ abbrev H1Reduction (q : ℕ) [NeZero q] : Type v :=
       (LinearMap.id :
         ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ]
           ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))))
-
 
 /-- `H¹(G;ℤ) ⧸ q·H¹(G;ℤ)` is `q`-torsion. -/
 theorem h1Reduction_nsmul_eq_zero (ξ : H1Reduction G q) : q • ξ = 0 := by
@@ -705,7 +702,6 @@ noncomputable def h1ResQuotEquivZMod :
     right_inv := (G.h1ResQuotEquiv q).right_inv
     map_add' := map_add _
     map_smul' := ZMod.map_smul (G.h1ResQuotEquiv q).toLinearMap.toAddMonoidHom }
-
 
 /-- **Reading a description as a finite sector of the carrier** — a
 `ZMod q`-linear map (review #8): the class map followed by the
@@ -745,7 +741,6 @@ theorem ker_carrierCompression :
     rw [show (Submodule.Quotient.mk ω :
         (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) = 0 from
       (Submodule.Quotient.mk_eq_zero _).mpr h, map_zero]
-
 
 /-- **Every `carrierCompression` fiber is the gauge group, by
 kernel/cosets** (review #8): the one fiber-to-kernel equivalence
@@ -1122,7 +1117,6 @@ noncomputable def descriptionMass : (G.E → ZMod q) → ℝ :=
 @[simp] theorem descriptionDist_mass :
     (G.descriptionDist q).mass = G.descriptionMass q := rfl
 
-
 /-- **H(description) = H(residue) + log |gauge|** (review #9): the
 entropy chain rule at the uniform gauge lift — a description prices a
 finite sector of the carrier plus one free gauge choice. -/
@@ -1152,7 +1146,6 @@ noncomputable def pairMass
     ℝ :=
   (G.pairDist q).mass p
 
-
 /-- **The first marginal is the description distribution**
 (review #10). -/
 theorem pairDist_fst :
@@ -1170,7 +1163,6 @@ theorem pairDist_snd :
     Nat.card_pos Nat.card_pos
     (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)
     (G.residueDist q)
-
 
 /-! ### The uniform entropy defect: pricing meets counting (review #11)
 
@@ -2182,11 +2174,6 @@ theorem h1TowerMap_id :
   obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
   rfl
 
-/-- **Proof-witness independence** (review #15): the tower map does
-not depend on the divisibility witness. -/
-theorem h1TowerMap_proof_irrel (h₁ h₂ : q ∣ q') :
-    G.h1TowerMap q q' h₁ = G.h1TowerMap q q' h₂ := rfl
-
 /-- **Surjectivity** (review #15): every coarse class is hit — both
 reductions are quotients of the same carrier. -/
 theorem h1TowerMap_surjective (hdvd : q ∣ q') :
@@ -2225,7 +2212,6 @@ theorem h1TowerMap_comp (h₁ : q ∣ q') (h₂ : q' ∣ q'') :
   refine LinearMap.ext fun ξ => ?_
   obtain ⟨κ, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
   rfl
-
 
 /-- **Residue distributions compose across the tower** (review #15):
 the two-step pushforward of the finest Gibbs law equals the one-step
@@ -2580,114 +2566,6 @@ theorem residue_tower_price_trans (h₁ : q ∣ q') (h₂ : q' ∣ q'')
 
 end TowerPriceComp
 
-/-! ### The resolution-tower certificate (review #18)
-
-The tower's laws, bundled as one **derived** `Prop` certificate per
-graph — a statement acceptance can inspect whole, with one
-derivation (`resolutionTowerLaws`). Never a field of
-`IncidenceGraph`. -/
-
-/-- **The resolution-tower laws** of a graph (review #18): the tower
-maps form a category (identity, witness-independence, composition,
-surjectivity); distributions and actions push forward, with the
-identity and composition laws; the identity step has zero price and
-zero cost; prices and costs add; deficits telescope and are
-monotone; and genuine refinements are strictly priced. -/
-structure ResolutionTowerLaws (G : IncidenceGraph.{u, v}) : Prop where
-  map_id : ∀ (q : ℕ) [NeZero q],
-    G.h1TowerMap q q dvd_rfl = LinearMap.id
-  map_proof_irrel : ∀ (q q' : ℕ) [NeZero q] [NeZero q']
-    (h₁ h₂ : q ∣ q'), G.h1TowerMap q q' h₁ = G.h1TowerMap q q' h₂
-  map_comp : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
-    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
-    (G.h1TowerMap q q' h₁).comp (G.h1TowerMap q' q'' h₂)
-      = G.h1TowerMap q q'' (h₁.trans h₂)
-  map_surjective : ∀ (q q' : ℕ) [NeZero q] [NeZero q'] (h : q ∣ q'),
-    Function.Surjective (G.h1TowerMap q q' h)
-  dist_push : ∀ (q q' : ℕ) [NeZero q] [NeZero q'] (h : q ∣ q'),
-    (G.residueDist q').map (⇑(G.h1TowerMap q q' h)) = G.residueDist q
-  dist_comp : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
-    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
-    ((G.residueDist q'').map (⇑(G.h1TowerMap q' q'' h₂))).map
-        (⇑(G.h1TowerMap q q' h₁))
-      = (G.residueDist q'').map (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
-  action_push : ∀ (q q' : ℕ) [NeZero q] [NeZero q'] (h : q ∣ q'),
-    (G.residueAction q').coarseGrain (⇑(G.h1TowerMap q q' h)) 0
-        (G.residueAction_tower_weight_pos q q' h)
-        (G.residueAction_tower_weight_le q q' h)
-      = G.residueAction q
-  action_comp : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
-    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
-    (G.residueAction q').coarseGrain (⇑(G.h1TowerMap q q' h₁)) 0
-        (G.residueAction_tower_weight_pos q q' h₁)
-        (G.residueAction_tower_weight_le q q' h₁)
-      = (G.residueAction q'').coarseGrain
-          (⇑(G.h1TowerMap q q'' (h₁.trans h₂))) 0
-          (G.residueAction_tower_weight_pos q q'' (h₁.trans h₂))
-          (G.residueAction_tower_weight_le q q'' (h₁.trans h₂))
-  price_id : ∀ (q : ℕ) [NeZero q],
-    (G.residueDist q).condEntropy (⇑(G.h1TowerMap q q dvd_rfl)) = 0
-  cost_id : ∀ (q : ℕ) [NeZero q],
-    sectionCost (⇑(G.h1TowerMap q q dvd_rfl)) = 0
-  price_add : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
-    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
-    (G.residueDist q'').condEntropy
-        (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
-      = (G.residueDist q'').condEntropy (⇑(G.h1TowerMap q' q'' h₂))
-        + (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' h₁))
-  cost_add : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
-    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
-    sectionCost (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
-        / Nat.card (H1Reduction G q)
-      = sectionCost (⇑(G.h1TowerMap q' q'' h₂))
-            / Nat.card (H1Reduction G q')
-        + sectionCost (⇑(G.h1TowerMap q q' h₁))
-            / Nat.card (H1Reduction G q)
-  deficit_telescope : ∀ (q q' q'' c c' : ℕ) [NeZero q] [NeZero q']
-    [NeZero q''] (h₁ : q ∣ q') (h₂ : q' ∣ q''),
-    q' = c * q → q'' = c' * q' →
-    (G.residueDist q'').condEntropy
-        (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
-      = G.b1 * Real.log ((c' * c : ℕ))
-        - (G.residueDefect q'' - G.residueDefect q)
-  deficit_mono : ∀ (q q' : ℕ) [NeZero q] [NeZero q'],
-    q ∣ q' → G.residueDefect q ≤ G.residueDefect q'
-  price_strict : ∀ (q q' c : ℕ) [NeZero q] [NeZero q'],
-    0 < G.b1 → 1 < c → ∀ (hdvd : q ∣ q'), q' = c * q →
-    0 < (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
-      ∧ (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
-          < G.b1 * Real.log c
-      ∧ G.residueDefect q < G.residueDefect q'
-
-/-- **Every graph satisfies the resolution-tower laws** (review #18)
-— one derivation, assembled from the proved tower theorems. -/
-theorem resolutionTowerLaws (G : IncidenceGraph.{u, v}) :
-    ResolutionTowerLaws G where
-  map_id := fun q _ => G.h1TowerMap_id q
-  map_proof_irrel := fun q q' _ _ h₁ h₂ =>
-    G.h1TowerMap_proof_irrel q q' h₁ h₂
-  map_comp := fun q q' q'' _ _ _ h₁ h₂ =>
-    G.h1TowerMap_comp q q' q'' h₁ h₂
-  map_surjective := fun q q' _ _ h => G.h1TowerMap_surjective q q' h
-  dist_push := fun q q' _ _ h => G.residueDist_tower q q' h
-  dist_comp := fun q q' q'' _ _ _ h₁ h₂ =>
-    G.residueDist_tower_trans q q' q'' h₁ h₂
-  action_push := fun q q' _ _ h => G.residueAction_tower q q' h
-  action_comp := fun q q' q'' _ _ _ h₁ h₂ =>
-    G.residueAction_tower_trans q q' q'' h₁ h₂
-  price_id := fun q _ => G.residue_tower_price_id q
-  cost_id := fun q _ => G.sectionCost_h1TowerMap_id q
-  price_add := fun q q' q'' _ _ _ h₁ h₂ =>
-    G.residue_tower_condEntropy_trans q q' q'' h₁ h₂
-  cost_add := fun q q' q'' _ _ _ h₁ h₂ =>
-    G.sectionCost_h1TowerMap_trans q q' q'' h₁ h₂
-  deficit_telescope := fun q q' q'' c c' _ _ _ h₁ h₂ hq' hq'' =>
-    G.residue_tower_price_trans q q' q'' c c' h₁ h₂ hq' hq''
-  deficit_mono := fun q q' _ _ h => G.residueDefect_mono q q' h
-  price_strict := fun q q' c _ _ hb hc hdvd hq' =>
-    G.residue_tower_price_strict q q' c hb hc hdvd hq'
-
 end IncidenceGraph
-
 
 end Meno

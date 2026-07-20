@@ -1,22 +1,32 @@
 #!/usr/bin/env python3
-"""Meno review audit (introduced at review #28, Phase 64).
+"""Meno review audit (introduced at review #28, Phase 64; ghosts leg
+and the Completion.lean law-package boundary at review #29, Phase 65).
 
-Machine-assists four review obligations:
+Machine-assists five review obligations:
 
 1. CITATIONS   — every backticked identifier in README.md names something
                  real in Meno/ (a declaration, or at least a source token:
                  structure fields and file names resolve at the token tier).
 2. DELETIONS   — no name recorded deleted in scripts/deleted.txt is
                  declared anywhere in Meno/ (deletions stay deleted).
-3. ARCHITECTURE— README's architecture block lists exactly the files of
+3. GHOSTS      — no deny-list name is cited in living text: README.md,
+                 PLAN.md before the Part II marker, or Meno/*.lean
+                 comment text. Part II is the record and is exempt. A
+                 citation matching a deny name is exempt only if it
+                 resolves to a current declaration (a live theorem of
+                 the same last name in another namespace); re-declaring
+                 a deleted name to force that exemption trips leg 2.
+4. ARCHITECTURE— README's architecture block lists exactly the files of
                  Meno/, and Meno.lean imports exactly those files.
-4. REACHABILITY— every named declaration outside Completion.lean is
+5. REACHABILITY— every named declaration outside Completion.lean is
                  transitively reachable from a README-cited result, or is
                  an instance / attribute-tagged lemma (consumed by
                  elaboration, not by name — reported, not failed), and
                  every certificate field assignment targets a model-live
                  declaration (a certificate field is not a consumer —
-                 Phase 61 rule).
+                 Phase 61 rule; the three spine law packages live in
+                 Completion.lean since review #29, so a law package can
+                 never count as a model consumer).
 
 The reachability graph is textual and conservative: comments and
 docstrings are stripped before tokenizing (a docstring mention is not a
@@ -46,12 +56,14 @@ MODIFIERS = ("private", "protected", "noncomputable", "scoped",
 
 # ---------------------------------------------------------------- strip
 
-def strip_comments(text):
-    out, i, n, depth = [], 0, len(text), 0
+def split_comments(text):
+    code, comm, i, n, depth = [], [], 0, len(text), 0
     while i < n:
         if depth == 0 and text.startswith("--", i):
             j = text.find("\n", i)
-            i = n if j == -1 else j
+            j = n if j == -1 else j
+            comm.append(text[i:j])
+            i = j
             continue
         if text.startswith("/-", i):
             depth += 1; i += 2; continue
@@ -59,11 +71,16 @@ def strip_comments(text):
             depth -= 1; i += 2; continue
         c = text[i]
         if depth == 0:
-            out.append(c)
-        elif c == "\n":
-            out.append("\n")
+            code.append(c)
+        else:
+            comm.append(c)
+            if c == "\n":
+                code.append("\n")
         i += 1
-    return "".join(out)
+    return "".join(code), "".join(comm)
+
+def strip_comments(text):
+    return split_comments(text)[0]
 
 # ---------------------------------------------------------------- parse
 
@@ -188,7 +205,29 @@ def main():
         print(f"  RE-DECLARED: {n}")
     ok &= not redecl
 
-    # -- 3. architecture
+    # -- 3. ghosts — deny-list names cited in living text (review #29)
+    plan_text = (REPO / "PLAN.md").read_text()
+    part2 = plan_text.find("# Part II")
+    plan_head = plan_text[:part2] if part2 != -1 else plan_text
+    comment_text = "\n".join(
+        split_comments(f.read_text())[1] for f in sorted(MENO.glob("*.lean")))
+    cite_re = re.compile(r"`([A-Za-z][A-Za-z0-9_.'₀-₉]*)`")
+    ghosts = []
+    for label, text in (("README.md", readme),
+                        ("PLAN.md:Part-I", plan_head),
+                        ("Meno/ comments", comment_text)):
+        for c in sorted(set(cite_re.findall(text))):
+            hit = (c in deny
+                   or any(n.endswith("." + c) or c.endswith("." + n)
+                          for n in deny))
+            if hit and not resolve(c, cert_by_full, cert_by_last):
+                ghosts.append(f"{label}: {c}")
+    print(f"[ghosts]       deny-list names cited in living text: {len(ghosts)}")
+    for g in ghosts:
+        print(f"  GHOST: {g}")
+    ok &= not ghosts
+
+    # -- 4. architecture
     tree_files = sorted(p.name for p in MENO.glob("*.lean"))
     arch_files = sorted(set(re.findall(r"([A-Za-z][A-Za-z0-9]*\.lean)",
                        readme[readme.find("## Architecture"):readme.find("## Reading")])))
@@ -200,7 +239,7 @@ def main():
     print(f"[architecture] tree {len(tree_files)} files; README-block mismatch: {sorted(d1)}; import mismatch: {sorted(d2)}")
     ok &= not d1 and not d2
 
-    # -- 4. reachability
+    # -- 5. reachability
     roots = set()
     for c in cited:
         roots |= resolve(c, by_full, by_last)

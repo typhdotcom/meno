@@ -5,10 +5,11 @@ import Meno.WedgePresentation
 import Meno.UniformAction
 import Meno.Groupoid
 
-/-! # The semantic completion certificate (reviews #18, #19)
+/-! # The statement-coverage bundle (reviews #18, #19, #29)
 
-**Completion as a Lean object.** `MenoSemanticCompletion` is derived
-**mechanically from Part I**: every Part-I acceptance signature of
+**Coverage as a Lean object.** `MenoStatementCoverage` is derived
+from Part I — by hand, one field per acceptance signature, verified
+at review: every Part-I acceptance signature of
 C1–C10 appears as a field in exactly one law package —
 
 * `GraphTopologyLaws` (C1–C2): gauge, Euler, the fundamental basis,
@@ -29,15 +30,15 @@ C1–C10 appears as a field in exactly one law package —
   `SectorAction.complexity_gravity` with counting gravity as its
   zero-energy corollary (review #25);
 * `ThermalDualityLaws`, `InformationLaws`, `ResolutionTowerLaws`
-  (C9/C12 analytic, information, and resolution spines — defined
-  with their subjects);
+  (C9/C12 analytic, information, and resolution spines — defined in
+  this file, across the certificate boundary, since review #29);
 * `FlagshipLaws` (C5 + consumers): the concrete cycle, wedge, theta,
   binding, and geodesic results.
 
-`menoSemanticCompletion` is the **one derivation**, by direct
+`menoStatementCoverage` is the **one derivation**, by direct
 named-theorem assignment only.
 
-**Scope, honestly stated** (review #19). The certificate enforces
+**Scope** (reviews #19, #29). The bundle enforces
 **statement coverage**: every acceptance signature is a field, so
 deleting an underlying theorem breaks the derivation as written.
 Proof **provenance** — that each field is proved by the named engine
@@ -46,16 +47,232 @@ file's direct-assignment discipline, module boundaries, and
 substantive review; Lean's kernel does not distinguish routes.
 Repository invariants are outside the kernel entirely: C11's
 deletion state and C12's import-DAG and no-duplication constraints
-are facts about the source tree. **Closure therefore means**: this
-semantic certificate compiles, *and* the import DAG matches Part I,
-*and* the deletions hold, *and* `lake build Meno` is green with zero
-`sorry`/`axiom`/warnings, *and* substantive source review finds the
+are facts about the source tree. Closure is the five-leg
+conjunction, and the kernel carries one leg — this coverage bundle
+compiles; the others are the import DAG matching Part I, the
+recorded deletions holding, `lake build Meno` green with zero
+`sorry`/`axiom`/warnings, and substantive source review finding the
 derivation routes direct.
 -/
 
 namespace Meno
 
 universe u v w
+
+/-! ## The three spine law packages (reviews #18, #29)
+
+`ThermalDualityLaws`, `InformationLaws`, and `ResolutionTowerLaws`
+bundle the thermal, information, and resolution-tower spines, one
+`Prop` package per subject, each with one derivation. Review #29
+moved them across the certificate boundary into this file: a law
+package assembles model theorems for acceptance and is never a
+model consumer of them — every theorem a package bundles must earn
+its place in the tree through a public claim or a model reader. -/
+
+namespace QuadLatticeAction
+
+/-- **The thermal-duality laws** of a bundled lattice action
+(review #18): the scale algebra, the scaling of the discriminant,
+equivalence invariance of the scaled moments, the dual involution,
+the inversion of temperature through the dual, and the partition,
+mean-energy, and variance functional equations with the self-dual
+fixed point. -/
+structure ThermalDualityLaws (Q : QuadLatticeAction.{u}) : Prop where
+  scale_one : Q.scale 1 one_pos = Q
+  scale_scale : ∀ (β β' : ℝ) (hβ : 0 < β) (hβ' : 0 < β'),
+    (Q.scale β hβ).scale β' hβ' = Q.scale (β' * β) (mul_pos hβ' hβ)
+  disc_scale : ∀ (β : ℝ) (hβ : 0 < β),
+    (Q.scale β hβ).disc = β ^ Q.rank * Q.disc
+  moments_equiv : ∀ {Q' : QuadLatticeAction.{u}}, Q.Equiv Q' →
+    ∀ β : ℝ,
+    Q'.scaledPartFn β = Q.scaledPartFn β
+      ∧ Q'.scaledMoment β = Q.scaledMoment β
+      ∧ Q'.scaledMoment2 β = Q.scaledMoment2 β
+      ∧ Q'.meanEnergy = Q.meanEnergy
+  dual_involution : ∀ x y : Q.Λ,
+    Q.dual.dual.form (Module.evalEquiv ℤ Q.Λ x)
+        (Module.evalEquiv ℤ Q.Λ y)
+      = Q.form x y
+  scale_dual : ∀ (β : ℝ) (hβ : 0 < β),
+    (Q.scale β hβ).dual = Q.dual.scale β⁻¹ (inv_pos.mpr hβ)
+  partFn_equation : ∀ (β : ℝ), 0 < β →
+    Q.dual.scaledPartFn β⁻¹
+      = (β ^ Q.rank * Q.disc / Real.pi ^ Q.rank) ^ ((1 : ℝ) / 2)
+        * Q.scaledPartFn β
+  mean_equation : ∀ (β : ℝ), 0 < β →
+    Q.meanEnergy β + β⁻¹ ^ 2 * Q.dual.meanEnergy β⁻¹
+      = Q.rank / (2 * β)
+  variance_equation : ∀ (β : ℝ) (hβ : 0 < β),
+    (Q.scaledSector β hβ).gibbsVariance (fun a => Q.form a a)
+      + 2 * β⁻¹ ^ 3 * Q.dual.meanEnergy β⁻¹
+      - β⁻¹ ^ 4 * ((Q.dual.scaledSector β⁻¹
+          (inv_pos.mpr hβ)).gibbsVariance (fun φ => Q.dual.form φ φ))
+      = Q.rank / (2 * β ^ 2)
+  selfDual_fixed : Nonempty (Q.Equiv Q.dual) →
+    Q.meanEnergy 1 = Q.rank / 4
+
+/-- **Every bundled lattice action satisfies the thermal-duality
+laws** (review #18) — one derivation, assembled from the proved
+engine. -/
+theorem thermalDualityLaws (Q : QuadLatticeAction.{u}) :
+    ThermalDualityLaws Q where
+  scale_one := Q.scale_one
+  scale_scale := fun β β' hβ hβ' => Q.scale_scale β β' hβ hβ'
+  disc_scale := fun β hβ => Q.disc_scale β hβ
+  moments_equiv := fun e β =>
+    ⟨e.scaledPartFn_eq β, e.scaledMoment_eq β, e.scaledMoment2_eq β,
+      e.meanEnergy_eq⟩
+  dual_involution := fun x y => Q.dual_dual x y
+  scale_dual := fun β hβ => Q.scale_dual β hβ
+  partFn_equation := fun β hβ => Q.scaled_duality β hβ
+  mean_equation := fun β hβ => Q.meanEnergy_T_dual β hβ
+  variance_equation := fun β hβ => Q.gibbsVariance_T_dual β hβ
+  selfDual_fixed := fun ⟨e⟩ => Q.meanEnergy_self_dual e
+
+end QuadLatticeAction
+
+namespace FinDist
+
+/-- **The information laws** of a finite distribution (review #18):
+pushforward functoriality, the unconditional entropy chain rule with
+its conditional corollaries, the support-aware Gibbs inequality with
+its characterization, and data processing. -/
+structure InformationLaws {X : Type u} [Fintype X] [DecidableEq X]
+    (P : FinDist X) : Prop where
+  map_id : P.map id = P
+  map_comp : ∀ {D E : Type u} [Fintype D] [Fintype E] [DecidableEq D]
+    [DecidableEq E] (f : X → D) (g : D → E),
+    P.map (g ∘ f) = (P.map f).map g
+  entropy_chain : ∀ {D : Type u} [Fintype D] [DecidableEq D]
+    (f : X → D), P.entropy = (P.map f).entropy + P.condEntropy f
+  condEntropy_id : P.condEntropy id = 0
+  condEntropy_comp : ∀ {D E : Type u} [Fintype D] [Fintype E]
+    [DecidableEq D] [DecidableEq E] (f : X → D) (g : D → E),
+    P.condEntropy (g ∘ f) = P.condEntropy f + (P.map f).condEntropy g
+  relEntropy_nonneg : ∀ (Q : FinDist X) (hQ : Q.FullSupport),
+    0 ≤ P.relativeEntropy Q hQ
+  relEntropy_eq_zero_iff : ∀ (Q : FinDist X) (hQ : Q.FullSupport),
+    P.relativeEntropy Q hQ = 0 ↔ P = Q
+  dataProcessing : ∀ {D : Type u} [Fintype D] [DecidableEq D]
+    (f : X → D) (hf : Function.Surjective f) (Q : FinDist X)
+    (hQ : Q.FullSupport),
+    (P.map f).relativeEntropy (Q.map f) (hQ.map f hf)
+      ≤ P.relativeEntropy Q hQ
+
+/-- **Every finite distribution satisfies the information laws**
+(review #18) — one derivation, assembled from the proved engine. -/
+theorem informationLaws {X : Type u} [Fintype X] [DecidableEq X]
+    (P : FinDist X) : InformationLaws P where
+  map_id := P.map_id
+  map_comp := fun f g => map_comp f g P
+  entropy_chain := fun f => entropy_eq_map_add_condEntropy f P
+  condEntropy_id := P.condEntropy_id
+  condEntropy_comp := fun f g => condEntropy_comp f g P
+  relEntropy_nonneg := fun Q hQ => relativeEntropy_nonneg P Q hQ
+  relEntropy_eq_zero_iff := fun Q hQ => relativeEntropy_eq_zero_iff P Q hQ
+  dataProcessing := fun f hf Q hQ => relativeEntropy_map_le f hf P Q hQ
+
+end FinDist
+
+namespace IncidenceGraph
+
+/-- **The resolution-tower laws** of a graph (review #18): the tower
+maps form a category (identity, composition, surjectivity);
+distributions and actions push forward, with the
+identity and composition laws; the identity step has zero price and
+zero cost; prices and costs add; deficits telescope and are
+monotone; and genuine refinements are strictly priced. -/
+structure ResolutionTowerLaws (G : IncidenceGraph.{u, v}) : Prop where
+  map_id : ∀ (q : ℕ) [NeZero q],
+    G.h1TowerMap q q dvd_rfl = LinearMap.id
+  map_comp : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    (G.h1TowerMap q q' h₁).comp (G.h1TowerMap q' q'' h₂)
+      = G.h1TowerMap q q'' (h₁.trans h₂)
+  map_surjective : ∀ (q q' : ℕ) [NeZero q] [NeZero q'] (h : q ∣ q'),
+    Function.Surjective (G.h1TowerMap q q' h)
+  dist_push : ∀ (q q' : ℕ) [NeZero q] [NeZero q'] (h : q ∣ q'),
+    (G.residueDist q').map (⇑(G.h1TowerMap q q' h)) = G.residueDist q
+  dist_comp : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    ((G.residueDist q'').map (⇑(G.h1TowerMap q' q'' h₂))).map
+        (⇑(G.h1TowerMap q q' h₁))
+      = (G.residueDist q'').map (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+  action_push : ∀ (q q' : ℕ) [NeZero q] [NeZero q'] (h : q ∣ q'),
+    (G.residueAction q').coarseGrain (⇑(G.h1TowerMap q q' h)) 0
+        (G.residueAction_tower_weight_pos q q' h)
+        (G.residueAction_tower_weight_le q q' h)
+      = G.residueAction q
+  action_comp : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    (G.residueAction q').coarseGrain (⇑(G.h1TowerMap q q' h₁)) 0
+        (G.residueAction_tower_weight_pos q q' h₁)
+        (G.residueAction_tower_weight_le q q' h₁)
+      = (G.residueAction q'').coarseGrain
+          (⇑(G.h1TowerMap q q'' (h₁.trans h₂))) 0
+          (G.residueAction_tower_weight_pos q q'' (h₁.trans h₂))
+          (G.residueAction_tower_weight_le q q'' (h₁.trans h₂))
+  price_id : ∀ (q : ℕ) [NeZero q],
+    (G.residueDist q).condEntropy (⇑(G.h1TowerMap q q dvd_rfl)) = 0
+  cost_id : ∀ (q : ℕ) [NeZero q],
+    sectionCost (⇑(G.h1TowerMap q q dvd_rfl)) = 0
+  price_add : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    (G.residueDist q'').condEntropy
+        (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+      = (G.residueDist q'').condEntropy (⇑(G.h1TowerMap q' q'' h₂))
+        + (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' h₁))
+  cost_add : ∀ (q q' q'' : ℕ) [NeZero q] [NeZero q'] [NeZero q'']
+    (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    sectionCost (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+        / Nat.card (H1Reduction G q)
+      = sectionCost (⇑(G.h1TowerMap q' q'' h₂))
+            / Nat.card (H1Reduction G q')
+        + sectionCost (⇑(G.h1TowerMap q q' h₁))
+            / Nat.card (H1Reduction G q)
+  deficit_telescope : ∀ (q q' q'' c c' : ℕ) [NeZero q] [NeZero q']
+    [NeZero q''] (h₁ : q ∣ q') (h₂ : q' ∣ q''),
+    q' = c * q → q'' = c' * q' →
+    (G.residueDist q'').condEntropy
+        (⇑(G.h1TowerMap q q'' (h₁.trans h₂)))
+      = G.b1 * Real.log ((c' * c : ℕ))
+        - (G.residueDefect q'' - G.residueDefect q)
+  deficit_mono : ∀ (q q' : ℕ) [NeZero q] [NeZero q'],
+    q ∣ q' → G.residueDefect q ≤ G.residueDefect q'
+  price_strict : ∀ (q q' c : ℕ) [NeZero q] [NeZero q'],
+    0 < G.b1 → 1 < c → ∀ (hdvd : q ∣ q'), q' = c * q →
+    0 < (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
+      ∧ (G.residueDist q').condEntropy (⇑(G.h1TowerMap q q' hdvd))
+          < G.b1 * Real.log c
+      ∧ G.residueDefect q < G.residueDefect q'
+
+/-- **Every graph satisfies the resolution-tower laws** (review #18)
+— one derivation, assembled from the proved tower theorems. -/
+theorem resolutionTowerLaws (G : IncidenceGraph.{u, v}) :
+    ResolutionTowerLaws G where
+  map_id := fun q _ => G.h1TowerMap_id q
+  map_comp := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.h1TowerMap_comp q q' q'' h₁ h₂
+  map_surjective := fun q q' _ _ h => G.h1TowerMap_surjective q q' h
+  dist_push := fun q q' _ _ h => G.residueDist_tower q q' h
+  dist_comp := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.residueDist_tower_trans q q' q'' h₁ h₂
+  action_push := fun q q' _ _ h => G.residueAction_tower q q' h
+  action_comp := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.residueAction_tower_trans q q' q'' h₁ h₂
+  price_id := fun q _ => G.residue_tower_price_id q
+  cost_id := fun q _ => G.sectionCost_h1TowerMap_id q
+  price_add := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.residue_tower_condEntropy_trans q q' q'' h₁ h₂
+  cost_add := fun q q' q'' _ _ _ h₁ h₂ =>
+    G.sectionCost_h1TowerMap_trans q q' q'' h₁ h₂
+  deficit_telescope := fun q q' q'' c c' _ _ _ h₁ h₂ hq' hq'' =>
+    G.residue_tower_price_trans q q' q'' c c' h₁ h₂ hq' hq''
+  deficit_mono := fun q q' _ _ h => G.residueDefect_mono q q' h
+  price_strict := fun q q' c _ _ hb hc hdvd hq' =>
+    G.residue_tower_price_strict q q' c hb hc hdvd hq'
+
+end IncidenceGraph
 
 /- `thetaGraph` is reducible, so its projections reduce to concrete
 types in instance goals and the generic instances' graph
@@ -350,7 +567,7 @@ theorem resolutionCodingLaws (G : IncidenceGraph.{u, v}) :
 /-- **The coding-gravity laws** (C8's generic coding theorems and
 C9's generic gravity/time laws; graph-free after review #21's split
 — no vacuous graph quantifier): section counting, the coding theorem
-with its honest `ℝ≥0∞` boundary, the uniform action, the priced
+with its `ℝ≥0∞` boundary, the uniform action, the priced
 gravity and time identities of sector actions, and counting gravity
 as the zero-energy corollary of the gravity theorem
 `SectorAction.complexity_gravity` (review #25). -/
@@ -601,17 +818,17 @@ theorem flagshipLaws : FlagshipLaws where
   theta_variance_equation := theta_gibbsVariance_T_dual
   geodesic_duality := Simplicial.geodesic_harmonic_duality
 
-/-! ## The semantic completion certificate -/
+/-! ## The statement-coverage bundle -/
 
-/-- **THE SEMANTIC COMPLETION CERTIFICATE** (reviews #18, #19, #21):
+/-- **THE STATEMENT-COVERAGE BUNDLE** (reviews #18, #19, #21, #29):
 every Part-I acceptance family, one field each, assembled — the four
 graph-quantified Part-I law packages, the graph-free coding-gravity
-package, the three generic spine certificates, and the
-flagship consumers. "Semantic": Lean's kernel certifies these
-propositions; C11's deletion state and C12's import-DAG and
+package, the three spine law packages, and the
+flagship consumers. Lean's kernel certifies these propositions —
+statement coverage; C11's deletion state and C12's import-DAG and
 duplication constraints are repository invariants checked by the
 build and by review, not by the kernel. -/
-structure MenoSemanticCompletion : Prop where
+structure MenoStatementCoverage : Prop where
   topology : ∀ G : IncidenceGraph.{u, v}, GraphTopologyLaws G
   harmonic : ∀ G : IncidenceGraph.{u, v}, HarmonicCarrierLaws G
   matter_binding : ∀ G : IncidenceGraph.{u, v},
@@ -627,13 +844,13 @@ structure MenoSemanticCompletion : Prop where
     IncidenceGraph.ResolutionTowerLaws G
   flagship : FlagshipLaws
 
-/-- **THE PROGRAM IS SEMANTICALLY CLOSED** (reviews #18, #19): the
-certificate, derived — every field a direct named-theorem
-assignment. Closure in full is this certificate **plus** the
-repository invariants: the import DAG of Part I, the recorded
+/-- **THE COVERAGE BUNDLE, DERIVED** (reviews #18, #19, #29): every
+field a direct named-theorem assignment. Closure in full is the
+five-leg conjunction, of which this bundle is the kernel-checked
+leg; the others are the import DAG of Part I, the recorded
 deletions, `lake build Meno` green with zero `sorry`/`axiom`/
 warnings, and substantive source review of the derivation routes. -/
-theorem menoSemanticCompletion : MenoSemanticCompletion.{u, v, w} where
+theorem menoStatementCoverage : MenoStatementCoverage.{u, v, w} where
   topology := graphTopologyLaws
   harmonic := harmonicCarrierLaws
   matter_binding := matterBindingLaws

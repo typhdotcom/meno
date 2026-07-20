@@ -13,8 +13,8 @@ from positive-definiteness (`HarmonicGramData.summable`, review #5) —
 never stored.
 
 The Gram form is the data from which a `QuadraticAction` is built.
-**The structure carries no variational field** (Phase 17 honesty
-decision, restated Phase 22): the identity "energy k = least cochain
+**The structure carries no variational field** (Phase 17 decision,
+restated Phase 22): the identity "energy k = least cochain
 energy at periods k" is proved *outside* the structure — generically
 for cycle-built data by `HarmonicGramData.ofCycles_energy_isLeast`
 (`Meno/PeriodHarmonic.lean`), and per legacy instance by the
@@ -38,7 +38,7 @@ universe u
 harmonic 1-cochain basis. Summability of the Boltzmann weight is
 derived (`HarmonicGramData.summable`), never stored (review #5).
 
-**Honesty note (Phase 17)**: this structure is positive-definite matrix
+**Scope note (Phase 17)**: this structure is positive-definite matrix
 data and nothing more — it does not carry a variational field, and
 nothing here ties `gram` to a graph or to a minimization. The
 variational identity lives at the graph level

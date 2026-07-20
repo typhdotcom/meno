@@ -3,7 +3,7 @@
 **Implementation Plan** — main body rewritten in Phase 28 (2026-07-17)
 under the Completion Discipline; the original plan and all per-session
 addenda are preserved verbatim in Part II. Read the Status Ledger for
-the honest state of the program.
+the current state of the program.
 
 ---
 
@@ -49,7 +49,7 @@ Completion Path C1-C12 below is fully CLOSED as of Phase 37):
 The Completion Path is stated below as **C1-C12**: one path each, with
 acceptance theorems. At adoption (Phase 28), C10 and C11 were CLOSED
 and the rest OPEN; as of Phase 37 all twelve are CLOSED. The Status
-Ledger is the honest per-item record. (Amended Phase 39, review #3
+Ledger is the per-item record. (Amended Phase 39, review #3
 finding 3: this paragraph previously still declared C1-C9 and C12
 open.)
 
@@ -82,7 +82,7 @@ are the same path.
    at execution time.
 6. **Retraction.** The Phase 27 final ledger's completion vocabulary is
    retracted as a set of completion states (the ledger itself stands in
-   Part II as an honest record of what was believed when it was written).
+   Part II as the record of what was believed when it was written).
    In particular the sentence "the answer to 'what's left' is: nothing
    that isn't named, gated, and stated" is superseded: at adoption time
    (Phase 28) the answer was C1-C9 and C12. (Amended Phase 38, review #2
@@ -127,9 +127,9 @@ theta, and the **genuine wedge** `wedgeGraph`
 (`Meno/GraphInstances.lean`) on `Option (Fin (n₁−1) ⊕ Fin (n₂−1))` —
 `n₁ + n₂ − 1` vertices, no spectator — with `wedgeGraph_preconnected`
 (`c = 1`) and `wedgeGraph_b1 : b₁ = 2` by Euler. Cycle and theta have
-`b₁ = 1` and `b₁ = 2` (`cycleGraph_b1`, `thetaGraph_b1`), each
-corroborated through its lattice basis (`cycleGraph_b1'`,
-`thetaGraph_b1'`, `wedgeGraph_b1'` via `card_eq_b1`).
+`b₁ = 1` and `b₁ = 2` (`cycleGraph_b1'`, `thetaGraph_b1`), the theta
+and wedge counts corroborated through their lattice bases
+(`thetaGraph_b1'`, `wedgeGraph_b1'` via `card_eq_b1`).
 
 **Consumers.** The wedge closed forms (diagonal Gram
 `!![1/n₁, 0; 0, 1/n₂]`) and wedge matter (`wedgeMatter₁_mass = 1/n₁`)
@@ -260,8 +260,7 @@ between harmonic `H¹` sectors and priced `H₁` cycles
 composition, and associativity laws, the **inverse laws**
 `trans_symm`/`symm_trans` (with `symm_symm`), **contravariant
 functoriality** of the dual — `dual_trans :
-(e ⬝ e')^∨ = e'^∨ ⬝ e^∨`, `dual_refl`, `dual_symm` — and dual-double
-naturality (`dualDual_naturality`), yielding the symmetric
+(e ⬝ e')^∨ = e'^∨ ⬝ e^∨`, `dual_refl`, `dual_symm` — yielding the symmetric
 topological statement `classQuadAction ≃q cycleAction.dual`
 (`classActionEquivCycleDual`); the analytic cancellation is the named
 theorem `dual_prefactor_mul_one` (the two duality prefactors multiply
@@ -366,7 +365,7 @@ the sector's `latticeQuotEquiv` coordinates equals the intrinsic
 mass. Consumers:
 `thetaMatter` (class of a single-edge cochain; `thetaMatter_coords =
 (1,0)`, `thetaMatter_mass = 1/3` through the chart), `wedgeMatter₁`
-(intrinsic, `wedgeMatter₁_mass = 1/n₁`), `wedgeGraph_exists_matter`
+(intrinsic, `wedgeMatter₁_mass = 1/n₁`), `wedge_exists_matter`
 (via `b₁ = 2`).
 
 ### C7 -- Geometric binding on 2-complexes (the real Goal 7) — CLOSED (Phase 35)
@@ -421,7 +420,7 @@ codebase's native quotient model):
 - `attach_partFn_lt` — verbatim, from the release bound.
 - **Amendment**: `binding_release`'s sketched form
   `E_G(m) − E_X(image) = m.mass` presupposed an image the kill
-  theorem proves does not exist. Its honest realization is the pair:
+  theorem proves does not exist. Its realized form is the pair:
   `TwoComplex.energy_isLeast` (survivors keep their **exact** mass —
   the `X`-variational problem with face constraints has the same
   `IsLeast` value, because realizers of surviving classes satisfy the
@@ -492,7 +491,7 @@ hypothesis — an empty fiber makes both sides `0`), the redefined
 fiberInfoCost`, now a counting theorem via `Real.log_prod`. The
 definitional `sectionCost` and its `ring` identity are deleted;
 `sectionCost_eq_zero_of_injective` and `sectionCost_pos_of_not_injective`
-(surjective, non-injective) are the honest ratchet.
+(surjective, non-injective) are the ratchet.
 `descriptionCost_eq : descriptionCost f = log(Nat.card (A → B))`
 justifies the forward cost as a genuine count.
 
@@ -519,8 +518,8 @@ with `⊤` exactly when `f` has no section
 on surjections it agrees with the finite cost
 (`sectionCostE_eq_fiberInfoCost`); and **zero cost characterizes
 bijections** (`sectionCostE_eq_zero_iff : sectionCostE f = 0 ↔
-Bijective f`) — the honest form of "only lossless maps invert for
-free". The per-output cost is `recoveryCost f b = log |f⁻¹{b}|` with
+Bijective f`) — the extended-cost form of "only lossless maps invert
+for free". The per-output cost is `recoveryCost f b = log |f⁻¹{b}|` with
 `fiberInfoCost = Σ recoveryCost` (`rfl`), and the decoder-table cost
 `q^{b₁}·log|G_q|` is now correctly attributed: it is the cost of
 fixing a representative for **every** class at once
@@ -529,19 +528,19 @@ fixing a representative for **every** class at once
 zero-of-injective lemma survive with explicit junk-value caveats in
 their docstrings; no theorem statement was weakened.
 
-### C9 -- Gravity and the ratchet through SectorAction — CLOSED (Phase 36; REOPENED at reviews #18, #21, #25, #28 receipt, RECLOSED Phases 54, 57, 61, 64)
+### C9 -- Gravity and the ratchet through SectorAction — CLOSED (Phase 36; REOPENED at reviews #18, #21, #25, #28, #29 receipt, RECLOSED Phases 54, 57, 61, 64, 65)
 
 **Delivered.** **There is one gravity theorem** (reviews #21, #25):
 `SectorAction.complexity_gravity` (`Meno/InfoRatchet.lean`) —
 `K(coupling) + K(base) = K(lift) + K(lift)` for any sector action
-and any pair of uniform-fiber compressions onto its sectors, with
-**no finiteness of the base**. The physical content — merging,
+and any pair of uniform-fiber compressions onto its sectors. The
+physical content — merging,
 sharing, saving — is carried by the **decomposition theorems**
 `coupling_energyEquiv` (`coupling ≈ base ⊗ (free ⊗ free)`) and
 `uniformLift_energyEquiv` (`lift ≈ base ⊗ free`), read through
 `SectorAction.EnergyEquiv`/`complexity_congr`; the algebraic step
 is `complexity_prod`. Review #25 (the second gatekeeper) found the
-type-level hierarchy and the `AdditiveComplexityOn` engine
+type-level complexity hierarchy and its additivity engine
 certificate-only and excised them (see C12's `Basic.lean` paragraph);
 the other faces of gravity are corollaries of the priced theorem:
 
@@ -581,9 +580,8 @@ the other faces of gravity are corollaries of the priced theorem:
   entropy face of gravity flows through the gravity theorem
   (`SectorAction.entropy_gravity`; review #22 deleted the parallel
   distribution-level identity, consumerless since review #14). On the
-  carrier: `residueDist`, `descriptionDist` (its lift — pushforward
-  recovers it, `descriptionDist_map`), `pairDist` (a genuine
-  coupling: `pairMass_sum`, `pairDist_fst`, `pairDist_snd`);
+  carrier: `residueDist`, `descriptionDist`, `pairDist` (a genuine
+  coupling: `pairDist_fst`, `pairDist_snd`);
   `descriptionEntropy_split` is
   `H(description) = H(residue) + log|gauge|`;
   **`carrier_gravity_entropy`** is the **four-term gravity identity**
@@ -591,9 +589,7 @@ the other faces of gravity are corollaries of the priced theorem:
   `SectorAction.entropy_gravity` instantiated at the residue action;
   the uniform identity `carrier_gravity_complexity` is the priced
   identity plus the common deficit — proved **once** (review #21
-  deleted the parallel SGD-bridge proof of the same statement);
-  `pairEntropy_split` keeps the split form
-  `H(pair) = H(residue) + 2·log|gauge|`; and
+  deleted the parallel SGD-bridge proof of the same statement); and
   `sectionCost_carrierCompression_div` reads the time face as the
   conditional entropy `H(description) − H(residue)` per sector.
   The description branch flows entirely through the bundled API
@@ -671,8 +667,8 @@ the other faces of gravity are corollaries of the priced theorem:
   expectation and variance (`uniformLift_gibbsExpect`,
   `coupling_gibbsVariance`, …), and the **action-level gravity
   identities** hold once, generically: `K(pair) + K(base) = 2·K(lift)`
-  (`complexity_gravity` — **the** gravity theorem, with no
-  finiteness needed of the base; reviews #21, #25) and
+  (`complexity_gravity` — **the** gravity theorem; reviews #21,
+  #25) and
   `Z_pair · Z_base = Z_lift²` (`partFn_gravity` — its exponential). On the carrier: `descriptionAction` and
   `pairAction` (`descriptionAction_gibbsDist = descriptionDist`,
   `pairAction_gibbsDist = pairDist`), the priced gravity identities
@@ -733,11 +729,10 @@ the other faces of gravity are corollaries of the priced theorem:
   bridge packages** and **all three strict energy variances**
   (`theta_priced_faces`, review #15). The tower has its **laws**
   (review #15): identity (`h1TowerMap_id`), composition
-  (`h1TowerMap_comp`), proof-witness independence
-  (`h1TowerMap_proof_irrel`), surjectivity
-  (`h1TowerMap_surjective`), with weights, distributions, and
-  actions composing across it (`residueWeight_tower_trans`,
-  `residueDist_tower_trans`, `residueAction_tower_trans`) and the
+  (`h1TowerMap_comp`), surjectivity
+  (`h1TowerMap_surjective`), with distributions and
+  actions composing across it (`residueDist_tower_trans`,
+  `residueAction_tower_trans`) and the
   commuting triangle `8 → 4 → 2` on theta
   (`theta_towerMap_triangle`). **Resolution loss is priced**
   (review #15): each step `q' = c·q` merges `c^{b₁}` classes per
@@ -748,8 +743,7 @@ the other faces of gravity are corollaries of the priced theorem:
   `residue_tower_entropy_chain`), and the lost information is the
   difference of the two `K + ⟨E⟩` decompositions
   (`residue_tower_condEntropy_eq`) — all consumed on theta at
-  `4 → 2` (`theta_tower_fiber_card`, `theta_tower_sectionCost`,
-  `theta_tower_entropy_chain`, `theta_tower_condEntropy_eq`).
+  `4 → 2` (`theta_tower_price`).
   **Fluctuation–dissipation is intrinsic at every rank**
   (review #15, `Meno/Fluctuation.lean`): the inverse-temperature
   scaling of any quadratic action has summable energy moments at
@@ -790,10 +784,9 @@ the other faces of gravity are corollaries of the priced theorem:
   `meanEnergy_strictAntiOn`, `Meno/LatticeAction.lean`); the graph
   definitions are direct specializations (`classQuadActionβ :=
   classQuadAction.scale`, the carrier moments the bundle's), `β = 1`
-  recovers the carrier, its sector action, partition function,
-  expectation, and variance (`classQuadActionβ_one`,
-  `classSectorActionβ_one`, `classScaledPartFn_one`,
-  `classMeanEnergy_one`, `classSectorActionβ_one_gibbsVariance`),
+  recovers the sector action, partition function, and expectation,
+  stated once on the bundle (`scaledSector_one`, `scaledPartFn_one`,
+  `meanEnergy_one`),
   and the **genuinely non-diagonal** theta carrier consumes the
   intrinsic derivative and strict dissipation
   (`theta_hasDerivAt_classMeanEnergy`,
@@ -843,11 +836,11 @@ the other faces of gravity are corollaries of the priced theorem:
   consumes it non-diagonally (`theta_classMeanEnergy_T_dual` —
   `= 1/β`). `β = 1` recovery holds once on the bundle
   (`scaledSector_one`, `scaledPartFn_one`,
-  `scaledSector_one_gibbsMass`, `meanEnergy_one`,
-  `scaledSector_one_gibbsVariance`), the scaled moments are
+  `scaledSector_one_gibbsMass`, `meanEnergy_one`), the scaled
+  moments are
   `≃q`-invariants (`Equiv.scaledPartFn_eq`, `Equiv.scaledMoment_eq`,
-  `Equiv.scaledMoment2_eq`, `Equiv.meanEnergy_eq`), and all five
-  graph recovery theorems are direct specializations.
+  `Equiv.scaledMoment2_eq`, `Equiv.meanEnergy_eq`), and graph
+  carriers consume them as direct specializations.
   Since review #18 the item is **certified**: the relative entropy
   requires its support proof in the definition
   (`FinDist.FullSupport` — the invalid expression is unstatable),
@@ -868,11 +861,12 @@ the other faces of gravity are corollaries of the priced theorem:
   both transported to harmonic `H¹` vs priced `H₁`
   (`classGibbsVariance_T_dual`, `classMeanEnergy_self_dual`) and
   consumed on theta (`theta_gibbsVariance_T_dual`) — and the whole
-  is bundled in the **derived certificates**
+  is bundled in the **derived law packages**
   `QuadLatticeAction.ThermalDualityLaws`, `FinDist.InformationLaws`,
   `IncidenceGraph.ResolutionTowerLaws`, and — since Phase 55 renamed
-  and completed to full Part-I coverage — `MenoSemanticCompletion`
-  (`Meno/Completion.lean`), each with one derivation.
+  and completed to full Part-I coverage, renamed again at review
+  #29 — `MenoStatementCoverage`
+  (`Meno/Completion.lean`, all four), each with one derivation.
 
 The falsified endofunction-kernel design (Phase 17) stands
 falsified; its
@@ -898,7 +892,7 @@ from the program with prejudice (recorded in the Disposition table).
 `LoopKernel.lean` is retained -- it has consumers (`SectorPresentation`,
 `Groupoid`).
 
-### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21, #23, #25, #26, #27, #28 receipt, RECLOSED Phases 54, 57, 59, 61, 62, 63, 64)
+### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21, #23, #25, #26, #27, #28, #29 receipt, RECLOSED Phases 54, 57, 59, 61, 62, 63, 64, 65)
 
 Three standing requirements, all met:
 
@@ -932,35 +926,50 @@ code in each review cycle's ledger, not by a token scan. (This
 retires the Phase-44 vehicle; the Phase-44 principle — no shell
 script — stands, since nothing replaces the checker.)
 
-**The semantic completion certificate (rule-3 amendments, reviews
-#18, #19).** Completion is a **Lean object**, not a prose ledger:
-`Meno.MenoSemanticCompletion` (`Meno/Completion.lean`) is derived
-**mechanically from this Part** — every C1–C10 acceptance signature
+**The statement-coverage bundle (rule-3 amendments, reviews
+#18, #19, #29).** Statement coverage is a **Lean object**, not a
+prose ledger:
+`Meno.MenoStatementCoverage` (`Meno/Completion.lean`) is derived
+**from this Part** — by hand, one field per acceptance signature,
+verified at review: every C1–C10 acceptance signature
 is a field in exactly one law package: `GraphTopologyLaws` (C1–C2),
 `HarmonicCarrierLaws` (C3–C4), `MatterBindingLaws` (C6–C7),
 `ResolutionCodingLaws` (C8–C9 on the graph) and `CodingGravityLaws`
 (C8–C9 generic, **graph-free** — review #21 split the package so the
 generic laws are not vacuously quantified over a graph none of them
-mentions), the three spine certificates
+mentions), the three spine law packages
 `ThermalDualityLaws`/`InformationLaws`/`ResolutionTowerLaws`
-(defined with their subjects), and `FlagshipLaws` (C5 + the concrete
+(defined in `Meno/Completion.lean`, across the certificate
+boundary — review #29), and `FlagshipLaws` (C5 + the concrete
 cycle/wedge/theta/binding/geodesic consumers) — all **derived**
 `Prop` structures, never fields on core objects, with the one
-derivation `menoSemanticCompletion` by **direct named-theorem
-assignment only**. Scope, honestly (review #19): the certificate
+derivation `menoStatementCoverage` by **direct named-theorem
+assignment only**. Scope (reviews #19, #29): the bundle
 enforces **statement coverage** — deleting an underlying acceptance
 theorem breaks the derivation as written; proof **provenance** is
 enforced by the direct-assignment discipline, module boundaries, and
 substantive review, since Lean's kernel does not distinguish routes;
 and C11's deletion state and C12's import-DAG/no-duplication
 constraints are **repository invariants** outside the kernel.
-**Closure means**: the semantic certificate compiles, *and* the
+**Closure means**: the coverage bundle compiles, *and* the
 import DAG matches this Part, *and* the deletions hold, *and*
 `lake build Meno` is green with zero `sorry`/`axiom`/warnings, *and*
 substantive review finds the derivation routes direct **and the
 public claims accurate** (rule-3 amendment, review #23: the fifth
 leg includes C12.3 — the README reviewed *as a document*, not only
 its citations resolved).
+
+**The liveness semantics (rule-3 amendment, review #29).** A
+README-claimed result is a root; a certificate field is never a
+consumer — the three spine law packages live in
+`Meno/Completion.lean`, outside the model, so a law package cannot
+keep its own material alive; and a declaration that is neither
+README-claimed nor model-consumed fails `scripts/audit.py`, which
+runs at every review. A README row added in the same change as the
+declaration it would rescue is a FAIL condition of review. The
+audit's ghosts leg fails on any deny-list name cited in README, in
+this Part, or in `Meno/` comment text; Part II is the record and is
+exempt.
 
 **`Basic.lean`'s position** (rule-3 amendment, revised review #25):
 `Basic.lean` is the **pullback substrate** — `Fiber`, `FiberProd`,
@@ -972,11 +981,11 @@ layers (`Meno/ResolutionCount.lean`, `Meno/ThetaHarmonic.lean`).
 Review #21's repair-by-derivation path ("this inversion's repair,
 not the layer's excision") is **retracted as falsified by consumer
 analysis** (review #25, the second gatekeeper): after the Phase-57
-rewire, the type-level hierarchy
-(`ComplexityMeasure`/`SigmaComplexity`/`AdditiveComplexity`),
-`SGD.gravity`, the refactoring bounds, `Instances.lean`'s `logCard`
-theory, the three wrapper theorems, and the `AdditiveComplexityOn`
-engine with its three instances were consumed, outside their own
+rewire, the type-level complexity hierarchy — the measure classes,
+the type-level gravity and refactoring bounds, the log-cardinality
+realization, the three wrapper theorems, and the additivity
+engine with its three instances (the name-by-name record is
+`scripts/deleted.txt`, Phase 61) — was consumed, outside its own
 files, by exactly three certificate fields — bridge theorems in
 bundled `Prop` form, produced by the same process that cited them
 as consumers; the engine read only `prod_add` (one `abel`), four of
@@ -1095,7 +1104,7 @@ preserved in Part II; the main body carries only the present state).
 | 3 | `LoopKernel` | CLOSED; consumed by `SectorPresentation`, `Groupoid` |
 | 4 | `Geodesic` | CLOSED (Phase 27) = C10 |
 | 5 | `HarmonicForm` for any finite graph | CLOSED via C1-C4 (Phases 29-32): the fundamental-basis theorem covers **every** finite graph; intrinsic `harmonicEnergy` on `H¹(G;ℤ)` |
-| 6 | `SectorPresentation` | CLOSED (Phase 16 transport; `end_comm` forced the cohomological turn) |
+| 6 | `SectorPresentation` | CLOSED (Phase 16 transport; the endomorphism-commutation obstruction — Part II, Phase 16 — forced the cohomological turn) |
 | 7 | Matter + `binding_kills_matter` | CLOSED via C6 + C7 (Phases 33, 35): intrinsic `MatterSector`, `binding_kills_matter` proved on 2-complexes, exact spectral decomposition `partFn_add_killed`; the adoption-time mass-release placeholder deleted |
 | 8 | `InfoRatchet` ratchet theorem | CLOSED via C8 (Phase 34, hardened Phases 38-39): section cost **derived** by counting (`card_sections`, `log_card_sections`), finite-only numerical API, extended costs with `⊤` boundaries |
 | 9 | magnitude layer | EXCISED (C11, Phase 28): deleted with prejudice, not delivered |
@@ -5361,3 +5370,59 @@ zero `axiom`, zero warnings; `scripts/audit.py` **PASS** on all four
 legs. The substantive-review leg pends resubmission. Cumulative:
 twenty-eight reviews, one hundred seven findings, one hundred seven
 confirmed and repaired; two acceptances (Phases 56, 60).
+
+## Phase 65 addendum: twenty-ninth external review (a new reviewer, realigned twice by the user; the final text with singular work orders is authoritative) — seven findings, seven confirmed, seven repaired; THE RECORD MADE CURRENT (2026-07-20)
+
+The review's scope was the whole program — the full diff from PLAN.md's
+creation to `c8a42c47`, ~24,950 insertions — and its verdict on the
+mathematics was clean: "No traced proof is wrong; the analytic spine
+(Siegel–Poisson, the zeta chain, the keystones, fluctuation–dissipation,
+the modal bound) is substantive and stands." Every finding is about the
+record claiming more than the objects are. Each was verified at source
+before repair; each prescription was executed as ordered.
+
+| # | Finding | Verification | Repair |
+| :--- | :--- | :--- | :--- |
+| F1 | **"No finiteness of the base" is a claim of generality the hypotheses foreclose**: `0 < m` + uniform fibers make the compression surjective, so `[Fintype X]` forces `A.Λ` finite; only the instance *argument* is absent. Bolded in `InfoRatchet.lean`, twice in README, twice in Part I | **CONFIRMED** — the entailment checks (nonempty fibers ⇒ surjection ⇒ finite base); all five sites read | `InfoRatchet.lean`'s gravity docstring now states the fact — "the fiber hypotheses force the base finite; no Fintype instance is taken" — unbolded; the clause is deleted at both README sites and both Part I sites |
+| F2 | **Ghost citations in Part I**: deleted declarations cited as present state at nine sites (the reviewer counted fifteen names; the sites carry **sixteen** — 1+1+1+1+1+1+1+4+5) — `cycleGraph_b1`, `dualDual_naturality`, `wedgeGraph_exists_matter`, `descriptionDist_map`, `pairMass_sum`, `pairEntropy_split`, `residueWeight_tower_trans`, four `theta_tower_*`, five `class*_one` | **CONFIRMED** — all sixteen in `scripts/deleted.txt`; every prescribed replacement verified live before writing | All nine sites repaired per the per-name work orders (replacement, strike, or clause deletion). The ordered **ghosts leg** added to `scripts/audit.py`: any deny-list name backticked in README, in Part I (before the Part II marker), or in `Meno/` comment text FAILS; a match is exempt only if it resolves to a current declaration, and re-declaring a deleted name to force that exemption trips the deletions leg. **Its first run caught fourteen more ghosts** the review did not enumerate — the type-level-hierarchy deletion narratives (C9, C12's `Basic.lean` paragraph, `Basic.lean`'s own header), a second `β = 1` list citing `scaledSector_one_gibbsVariance`, the `end_comm` disposition cell, and a false "all five graph recovery theorems" claim riding the same list — all rewritten to describe deletions in plain prose against `scripts/deleted.txt`, never by backticked name. Ghosts now machine-zero |
+| F3 | **Ghost citations in model docstrings**: `LatticeAction.lean` β = 1 package lists deleted `scaledSector_one_gibbsVariance`; `SiegelPoisson.lean` supports "the plan's iff is true only at rank 1" by deleted `ofScalar_selfDual_iff` | **CONFIRMED** — both names in the deny-list; `scaledSector_one_gibbsMass` in the same list verified live | The variance clause struck from the list; the rank-1 sentence deleted — the docstring ends on the counterexample content. Recurrence is the ghosts leg's job |
+| F4 | **The certificate boundary launders consumption**: `ThermalDualityLaws`/`InformationLaws`/`ResolutionTowerLaws` sat in model files while the audit excluded only `Completion.lean`, so a law-package derivation counted as a model consumer of the theorems it bundles — `residue_tower_price_id`, `sectionCost_h1TowerMap_id`, `residueDefect_mono`, `scale_scale` had no other model consumer, `duality_dualDual` none at all | **CONFIRMED** — the three structures and derivations at `LatticeAction.lean:1710`, `InfoRatchet.lean:1266`, `ResolutionCount.lean:2596`; the five consumption claims verified by grep; all five README-claimed | The three packages and their derivations **moved into `Meno/Completion.lean`** (transcription diffed against the Phase-64 revision — one dropped argument caught and restored before building; `InformationLaws` given the explicit binders its old section variables supplied). The audit re-run reported **exactly one** stranded declaration: `h1TowerMap_proof_irrel` — proof `rfl`, content Lean's built-in proof irrelevance, claimed nowhere — **deleted with its bundle field `map_proof_irrel`** under the ordered review-22 precedent, and recorded. The five known cases stand as README-claimed roots. The liveness semantics stated in Part I (C12) as a standing rule, including: a README row added in the same change as the declaration it would rescue is a FAIL condition of review |
+| F5 | **"Derived mechanically from the plan's Part I" is false** — no mechanism exists; the correspondence is manual and verifying it is the fifth review leg | **CONFIRMED** — and the same false adverb stood at a third site the order did not name: Part I's own C12 paragraph ("derived **mechanically from this Part**") | "Mechanically" deleted at the README certificate section and `Completion.lean`'s header as ordered, and at the Part I site (same class, recorded here): all three now read "derived from Part I — by hand, one field per acceptance signature, verified at review" or the bare form |
+| F6 | **Self-certifying vocabulary**: "honest"/"honestly"/"honesty" throughout README, Part I, and model docstrings — a document cannot vouch for its own candor; each occurrence dresses a weaker claim as a virtue | **CONFIRMED** — inventory at repair time: README 3, Part I 7, `Meno/` docstrings 10 | All twenty struck. Fixed rewrites as ordered: "Scope, honestly" → "Scope"; "## Reading the thesis honestly" → "## Scope of the physical vocabulary"; "Honest negative" → "Negative result". Every other occurrence rewritten to state its content as fact ("honest extended cost" → "extended cost"; "honest ratchet" → "the ratchet"; "lattice-honest positivity" → "integral positivity alone does not suffice"; "Honesty note" → "Scope note"; …). No sentence proved empty once the adjective fell — none deleted. Part II untouched, machine-verified zero occurrences in living text |
+| F7 | **Two headline names claim more than their objects are**: (a) the gravity README prose bills depth where the identity is elementary given the constructions; (b) `MenoSemanticCompletion` names semantic completion while the object checks statement coverage only | **CONFIRMED** — (a) unwinding the definitions gives `(log m + log m′ + K) + K = (log m + K) + (log m′ + K)`; (b) the structure's own docstring conceded coverage scope since review #19 | (a) The README gravity lead now states: the identity is elementary given the constructions — the coupling prices the base once by definition — and what is established is **one statement** with the counting, entropy, partition-function, and carrier identities as literal instances. (b) Renamed `MenoSemanticCompletion` → `MenoStatementCoverage`, `menoSemanticCompletion` → `menoStatementCoverage`; README section "The certificate" → "The coverage bundle" (architecture line updated); "closure" removed from every kernel claim — closure is stated only as the five-leg conjunction, of which the bundle is the kernel-checked leg. The retired names entered the deny-list so the ghosts leg polices them |
+
+**Rule-3 amendments.** (1) **The liveness semantics is structural**
+(stated in Part I, C12): a README-claimed result is a root; a
+certificate field is never a consumer — enforced by construction now
+that the three spine law packages live in `Meno/Completion.lean`,
+outside the model; a declaration neither README-claimed nor
+model-consumed fails `scripts/audit.py`; and a README row added in the
+same change as the declaration it would rescue is a FAIL condition of
+review. (2) **Ghost citations are machine-caught**: the audit's ghosts
+leg fails on any deny-list name backticked in README, Part I, or
+`Meno/` comment text; Part II is the record and is exempt; deletion
+narratives in living text reference `scripts/deleted.txt`, not names.
+(3) **Self-certifying vocabulary is retired**: the honest-family words
+do not appear in living text; a sentence states its content as fact or
+is deleted.
+
+**Discipline check.** C9 REOPENED at receipt (F1 is the gravity
+theorem's billing), RECLOSED on the correction — no theorem statement
+changed anywhere this phase. C12 REOPENED at receipt (the record, the
+boundary, the naming), RECLOSED on the audit's PASS. **The coverage
+bundle changed this phase, by work order**: renamed (F7), the three
+spine law packages moved in (F4), and one field deleted — the first
+field removal in the bundle's history: `map_proof_irrel`, whose
+witness theorem was neither claimed nor consumed and whose content is
+Lean's built-in proof irrelevance (F4 fallout, ordered disposition).
+Every remaining field is intact with its direct assignment. No new
+theorems, no new abstractions, no new README rows — the constraint
+held. `lake build Meno` green (3349 jobs, 33 source files), zero
+`sorry`, zero `axiom`, zero warnings; `scripts/audit.py` **PASS** on
+all five legs — 317 citations resolved, 371 recorded deletions absent,
+0 ghosts, architecture exact, 1205 named model declarations with 1177
+reachable from public claims, 28 elaboration-retained, 0 unreachable,
+every certificate assignment target model-live. The substantive-review
+leg pends resubmission. Cumulative: twenty-nine reviews, one hundred
+fourteen findings, one hundred fourteen confirmed and repaired; two
+acceptances (Phases 56, 60).

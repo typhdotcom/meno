@@ -369,3 +369,7 @@ Simplicial.winding_section_energy_Icc_unbounded
 Simplicial.winding_section_energy_ge
 Simplicial.winding_section_energy_sum_ge
 Simplicial.winding_sub
+# Phase 65 (review #29) — the certificate-boundary fallout and retired names
+Meno.IncidenceGraph.h1TowerMap_proof_irrel
+Meno.MenoSemanticCompletion
+Meno.menoSemanticCompletion

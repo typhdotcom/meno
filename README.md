@@ -88,7 +88,7 @@ bundled lattice action.
 | `thetaGram_offDiag_ne_zero` | The theta Gram's off-diagonal is `−1/6 ≠ 0` — the non-diagonality of the flagship carrier is a theorem, not a remark |
 | `QuadraticAction.selfDual`, `QuadraticAction.selfDual_iff` | Self-duality of a bundled action is the quadratic condition `Q² = π²·1` (`Meno/SiegelPoisson.lean`) |
 | `QuadraticAction.dualityFlow`, `QuadraticAction.dualityFlow_eq`, `QuadraticAction.dualityFlow_eq_zero_iff` | The duality flow `K − K∨ = −½·log(det Q/π^r)` at every rank — zero exactly on the critical determinant `det Q = π^r` |
-| `exists_dualityFlow_eq_zero_not_selfDual` | Honest negative: at rank 2 the flow vanishes without self-duality — the critical surface is strictly bigger than the fixed locus |
+| `exists_dualityFlow_eq_zero_not_selfDual` | Negative result: at rank 2 the flow vanishes without self-duality — the critical surface is strictly bigger than the fixed locus |
 | `QuadraticAction.duality_via_lattice`, `dualVia_partFn_duality` | A coordinate action embeds canonically (`ofQuadraticAction`), so the coordinate duality is a corollary of the intrinsic one; the categorical duality consumes the corollary (`Meno/SectorPresentation.lean`) |
 | `disc_scale`, `scale_dual`, `scaled_duality` | Scaling multiplies the discriminant by `β^rank`, the dual of the scaled bundle is the inverse-scaled dual — `(β·Q)∨ = β⁻¹·(Q∨)`, an equality of bundles — and `Z_{Q∨}(β⁻¹) = √(β^rank·disc/π^rank)·Z_Q(β)` |
 | `QuadLatticeAction.meanEnergy_T_dual` | `⟨E⟩_Q(β) + β⁻²·⟨E⟩_{Q∨}(β⁻¹) = rank/(2β)` — differentiated once, for every bundled lattice action |
@@ -211,15 +211,17 @@ action, not only against counts (`Meno/InfoRatchet.lean`,
 There is **one gravity theorem**: the priced identity
 `SectorAction.complexity_gravity` — coupling two descriptions over a
 shared base costs the two lifts minus the base, for any sector
-action, with no finiteness of the base. Its structured proof goes
-through the decomposition theorems — the coupling is
-energy-equivalent to `base ⊗ (free ⊗ free)`, the lift to
-`base ⊗ free`, and the additivity of complexity over independent
+action. The identity is elementary given the constructions: the
+coupling prices the base once by definition — with uniform fibers it
+is energy-equivalent to `base ⊗ (free ⊗ free)` and the lift to
+`base ⊗ free`, so the additivity of complexity over independent
 products closes it; the identity also follows in two rewrites from
 the independently proved evaluations `coupling_complexity` and
 `uniformLift_complexity`, so the decomposition is the structure of
-the proof, not a dependency of the fact. Every other face of gravity
-is a corollary: **counting** is the zero-energy special case,
+the proof, not a dependency of the fact. What is established is that
+**one statement** has the counting, entropy, partition-function, and
+carrier identities as literal instances: **counting** is the
+zero-energy special case,
 **entropy** the Gibbs-split corollary, and on the graph carrier the
 identity holds priced by the action itself, with pricing and
 counting numerically bridged by the same deficit at all three
@@ -230,7 +232,7 @@ resolutions forming a tower whose losses are priced in one currency.
 
 | Result | Statement |
 | :--- | :--- |
-| `SectorAction.complexity_gravity` | **The gravity theorem**: `K(coupling) + K(base) = K(lift) + K(lift)` — no finiteness of the base (`Meno/InfoRatchet.lean`) |
+| `SectorAction.complexity_gravity` | **The gravity theorem**: `K(coupling) + K(base) = K(lift) + K(lift)` (`Meno/InfoRatchet.lean`) |
 | `coupling_energyEquiv`, `uniformLift_energyEquiv` | The decompositions behind the structured proof: `coupling ≈ base ⊗ (free ⊗ free)`, `lift ≈ base ⊗ free` — read through `SectorAction.EnergyEquiv` and `complexity_congr`, closed by `complexity_prod` |
 | `partFn_gravity` | The partition-function form — the exponential of the complexity form |
 | `counting_gravity` | **Counting is the zero-energy corollary**: `log \|X ×_D Y\| + log \|D\| = log \|X\| + log \|Y\|` for uniform-fiber maps into a finite shared base — the gravity theorem instantiated at `uniformAction D` |
@@ -273,7 +275,7 @@ and pairs are actions too (`Meno/InfoRatchet.lean`,
 | Result | Statement |
 | :--- | :--- |
 | `coarseGrain_id`, `coarseGrain_comp` | Coarse-graining has identity and composition laws |
-| `h1TowerMap`, `h1TowerMap_comp` | For `q ∣ q'` the finer reduction maps canonically onto the coarser — identity, composition, witness-independence, and surjectivity laws |
+| `h1TowerMap`, `h1TowerMap_comp` | For `q ∣ q'` the finer reduction maps canonically onto the coarser — identity, composition, and surjectivity laws |
 | `residueWeight_tower`, `residueMass_tower`, `residueDist_tower` | Residue weights, masses, and the Gibbs law push forward |
 | `residueAction_tower`, `residueDist_tower_trans`, `residueAction_tower_trans` | The coarse residue action **is** the coarse-graining of the finer one; distributions and actions compose across the tower |
 | `theta_residueAction_tower`, `theta_towerMap_triangle` | Concretely at theta, `4 → 2`, with the commuting triangle `8 → 4 → 2` |
@@ -342,14 +344,14 @@ identifications are proved.
 
 ---
 
-## The certificate
+## The coverage bundle
 
-All twelve goals of the Completion Path are closed, and the closure
-itself is a **Lean object**: the semantic completion certificate
-`MenoSemanticCompletion` (`Meno/Completion.lean`) is derived
-mechanically from the plan's Part I — every C1–C10 acceptance
+All twelve goals of the Completion Path are closed. One leg of that
+closure is a **Lean object**: the statement-coverage bundle
+`MenoStatementCoverage` (`Meno/Completion.lean`) is derived
+from the plan's Part I — every C1–C10 acceptance
 signature is a field in exactly one of **nine law packages**, and
-`menoSemanticCompletion` is its one derivation, by direct
+`menoStatementCoverage` is its one derivation, by direct
 named-theorem assignment. The graph-dependent packages are quantified
 over every finite multigraph `G`, the thermal package over every
 bundled lattice action `Q`, the information package over every finite
@@ -369,10 +371,10 @@ consumers.
 | `ResolutionTowerLaws` — `∀ G` | The tower category, pushforwards, additive prices and costs, telescoping monotone deficits, strict pricing of genuine refinements | `resolutionTowerLaws` |
 | `FlagshipLaws` | C5 and the concrete consumers: cycle, wedge, and theta results — bases, counts, dualities, priced faces, tower prices, the thermal circle, the geodesic–harmonic duality | `flagshipLaws` |
 
-Scope, honestly: the certificate enforces **statement coverage** —
+Scope: the bundle enforces **statement coverage** —
 deleting an acceptance theorem breaks the derivation. Proof provenance
 is enforced by the direct-assignment discipline and review. Closure in
-full is a conjunction: the certificate compiles, the import DAG
+full is a conjunction: the coverage bundle compiles, the import DAG
 matches Part I, the recorded deletions stay deleted, `lake build Meno`
 is green with zero `sorry`/`axiom`/warnings, and the derivation routes
 and public claims are held to substantive review. A build re-checks
@@ -423,7 +425,7 @@ Meno/
 ├── Hodge.lean                 Graph partition functions (identified with the spine)
 ├── Duality.lean               The scalar quadratic family and Gibbs wrappers (identified with the spine)
 ├── Zeta.lean                  Riemann functional equation through the spine's theta identification
-└── Completion.lean            THE SEMANTIC COMPLETION CERTIFICATE: every Part-I acceptance signature, one field each, one derivation
+└── Completion.lean            THE STATEMENT-COVERAGE BUNDLE: every Part-I acceptance signature, one field each, one derivation; the three spine law packages
 ```
 
 The legacy layer (`Meno/Simplicial.lean`–`Meno/Zeta.lean`) is retained
@@ -435,7 +437,7 @@ the identifications proved (`cyclePeriodData_energy_eq`,
 
 ---
 
-## Reading the thesis honestly
+## Scope of the physical vocabulary
 
 The words "gravity", "matter", "time", "uncertainty" name formal
 analogues inside a finite, discrete model: gravity is a

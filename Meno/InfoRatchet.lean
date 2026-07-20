@@ -56,7 +56,7 @@ variable {A B : Type u}
 /-- Fiber information cost of a function on a **finite** domain:
 `∑ b, log |f ⁻¹ {b}|`. Empty fibers (`b ∉ image f`) contribute
 `log 0 = 0` by Mathlib convention — the extended per-output cost
-`recoveryCostE` prices them honestly at `⊤`. -/
+`recoveryCostE` prices them at `⊤`. -/
 noncomputable def fiberInfoCost [Finite A] [Fintype B] [DecidableEq B]
     (f : A → B) : ℝ :=
   ∑ b : B, Real.log (Nat.card (f ⁻¹' {b}) : ℝ)
@@ -83,7 +83,6 @@ theorem recoveryCost_nonneg [Finite A] (f : A → B) (b : B) :
   rcases (Nat.card (f ⁻¹' {b})).eq_zero_or_pos with hzero | hpos
   · simp [hzero]
   · exact Real.log_nonneg (by exact_mod_cast hpos)
-
 
 /-- Injective functions have zero fiber-info cost: every fiber is a
 singleton (or empty), and `log 1 = log 0 = 0`. -/
@@ -163,7 +162,7 @@ theorem card_sections [Finite A] [Fintype B] (f : A → B) :
 /-- **The reverse-description count-cost**: the log-count of `f`'s
 sections. Beware the boundary: when *no* section exists this is
 `log 0 = 0` by Mathlib's junk convention — an impossible inverse is
-not free, it is impossible. `sectionCostE` below is the honest
+not free, it is impossible. `sectionCostE` below is the
 extended cost (`⊤` when no section exists); use it for cost
 readings. Finiteness of both types is demanded (review #3): on
 infinite types `Nat.card` of the section type is `0` and this would
@@ -224,8 +223,8 @@ theorem sectionCost_eq_fiberInfoCost [Fintype A] [Fintype B] [DecidableEq B]
 
 /-- An injective function has *at most one* section, so its log-count
 is zero. This does **not** say reversal is free: an injective
-non-surjective `f` has *no* section, and its honest extended cost is
-`⊤` (`sectionCostE_eq_top_iff`). Zero honest cost characterizes
+non-surjective `f` has *no* section, and its extended cost is
+`⊤` (`sectionCostE_eq_top_iff`). Zero extended cost characterizes
 bijections (`sectionCostE_eq_zero_iff`). -/
 theorem sectionCost_eq_zero_of_injective [Finite A] [Finite B]
     {f : A → B} (hf : Function.Injective f) :
@@ -264,7 +263,6 @@ theorem section_not_surjective_of_not_injective {f : A → B}
   obtain ⟨b₂, rfl⟩ := hsurj a₂
   have hb : b₁ = b₂ := by rw [← hr b₁, ← hr b₂, ha]
   rw [hb]
-
 
 open Classical in
 /-- **The extended reverse-description cost**: `⊤` when no section
@@ -426,7 +424,6 @@ theorem shannonEntropy_comp_div {X D : Type u} [Fintype X] [Fintype D]
   rw [Finset.mul_sum, Finset.sum_congr rfl fun d _ => hterm d,
     Finset.sum_sub_distrib, ← Finset.sum_mul, hp1, one_mul]
   ring
-
 
 /-- A map with constant fiber count `m` multiplies cardinalities. -/
 theorem card_eq_card_mul_of_fiber {X D : Type u} [Fintype X] [Fintype D]
@@ -637,7 +634,6 @@ noncomputable def uniform (X : Type u) [Fintype X] [Nonempty X] :
       mul_inv_cancel₀
         (Nat.cast_ne_zero.mpr Fintype.card_pos.ne' : (Fintype.card X : ℝ) ≠ 0)]
 
-
 /-- Lifting the uniform distribution uniformly is uniform. -/
 theorem uniformLift_uniform [DecidableEq D] [Nonempty D] [Nonempty X]
     (f : X → D) {m : ℕ} (hm : 0 < m)
@@ -763,7 +759,6 @@ theorem coupling_snd [DecidableEq D] [DecidableEq Y] (f : X → D)
   push_cast
   field_simp
 
-
 /-! ### The uniform entropy defect (review #11)
 
 `Δ(P) = log|X| − H(P)` measures how far a distribution sits below
@@ -835,7 +830,6 @@ reference. -/
 noncomputable def relativeEntropy (P Q : FinDist X)
     (_ : Q.FullSupport) : ℝ :=
   ∑ x, P.mass x * Real.log (P.mass x / Q.mass x)
-
 
 private lemma gibbs_term_le (P Q : FinDist X) (hQ : ∀ x, 0 < Q.mass x)
     (x : X) :
@@ -1030,7 +1024,6 @@ theorem condEntropy_comp {E : Type u} [Fintype E] [DecidableEq D]
   have h3 := entropy_eq_map_add_condEntropy g (P.map f)
   rw [map_comp f g P] at h1
   linarith
-
 
 /-- **Conditional entropy is strictly positive** (review #16) when a
 fully supported distribution has two points in one fiber. -/
@@ -1252,51 +1245,6 @@ theorem defect_coupling [DecidableEq D] [Nonempty D] (f : X → D)
       (by exact_mod_cast (Nat.mul_pos hm hm').ne' : ((m * m' : ℕ) : ℝ) ≠ 0)]
   ring
 
-/-! #### The information-law certificate (review #18)
-
-The laws of the information algebra, bundled as one **derived**
-`Prop` certificate per distribution — a statement acceptance can
-inspect whole, with one derivation (`informationLaws`), instead of a
-trail of scattered theorems. Never a field of `FinDist`. -/
-
-/-- **The information laws** of a finite distribution (review #18):
-pushforward functoriality, the unconditional entropy chain rule with
-its conditional corollaries, the support-aware Gibbs inequality with
-its characterization, and data processing. -/
-structure InformationLaws [DecidableEq X] (P : FinDist X) : Prop where
-  map_id : P.map id = P
-  map_comp : ∀ {D E : Type u} [Fintype D] [Fintype E] [DecidableEq D]
-    [DecidableEq E] (f : X → D) (g : D → E),
-    P.map (g ∘ f) = (P.map f).map g
-  entropy_chain : ∀ {D : Type u} [Fintype D] [DecidableEq D]
-    (f : X → D), P.entropy = (P.map f).entropy + P.condEntropy f
-  condEntropy_id : P.condEntropy id = 0
-  condEntropy_comp : ∀ {D E : Type u} [Fintype D] [Fintype E]
-    [DecidableEq D] [DecidableEq E] (f : X → D) (g : D → E),
-    P.condEntropy (g ∘ f) = P.condEntropy f + (P.map f).condEntropy g
-  relEntropy_nonneg : ∀ (Q : FinDist X) (hQ : Q.FullSupport),
-    0 ≤ P.relativeEntropy Q hQ
-  relEntropy_eq_zero_iff : ∀ (Q : FinDist X) (hQ : Q.FullSupport),
-    P.relativeEntropy Q hQ = 0 ↔ P = Q
-  dataProcessing : ∀ {D : Type u} [Fintype D] [DecidableEq D]
-    (f : X → D) (hf : Function.Surjective f) (Q : FinDist X)
-    (hQ : Q.FullSupport),
-    (P.map f).relativeEntropy (Q.map f) (hQ.map f hf)
-      ≤ P.relativeEntropy Q hQ
-
-/-- **Every finite distribution satisfies the information laws**
-(review #18) — one derivation, assembled from the proved engine. -/
-theorem informationLaws [DecidableEq X] (P : FinDist X) :
-    InformationLaws P where
-  map_id := P.map_id
-  map_comp := fun f g => map_comp f g P
-  entropy_chain := fun f => entropy_eq_map_add_condEntropy f P
-  condEntropy_id := P.condEntropy_id
-  condEntropy_comp := fun f g => condEntropy_comp f g P
-  relEntropy_nonneg := fun Q hQ => relativeEntropy_nonneg P Q hQ
-  relEntropy_eq_zero_iff := fun Q hQ => relativeEntropy_eq_zero_iff P Q hQ
-  dataProcessing := fun f hf Q hQ => relativeEntropy_map_le f hf P Q hQ
-
 end FinDist
 
 /-! ## Generic priced constructions (review #13)
@@ -1374,7 +1322,6 @@ theorem sum_coarseWeight (A : SectorAction.{u}) {B : Type u} [Fintype B]
         hσ.tsum_sigma.symm
     _ = ∑' k : A.Λ, A.weight k := Equiv.tsum_eq (Equiv.sigmaFiberEquiv p) _
 
-
 section CoarseGrain
 
 variable (A : SectorAction.{u}) {B : Type u} [Fintype B] (p : A.Λ → B)
@@ -1395,7 +1342,6 @@ noncomputable def coarseGrain : SectorAction.{u} where
 
 instance : Fintype (A.coarseGrain p b₀ hpos hmax).Λ :=
   inferInstanceAs (Fintype B)
-
 
 /-- The coarse Boltzmann weight is the fiber-weight ratio against the
 modal fiber. -/
@@ -1435,7 +1381,6 @@ theorem complexity_eq_coarseGrain :
   rw [coarseGrain_partFn A p b₀ hpos hmax,
     Real.log_div (ne_of_gt A.partFn_pos) (ne_of_gt (hpos b₀))]
   ring
-
 
 end CoarseGrain
 
@@ -1882,10 +1827,11 @@ theorem coupling_energyEquiv (W W' : Type u) [Fintype W] [Nonempty W]
   rw [add_zero, add_zero]
 
 omit [Fintype A.Λ] in
-/-- **THE GRAVITY THEOREM** (reviews #13, #21, #25, #28):
+/-- **THE GRAVITY THEOREM** (reviews #13, #21, #25, #28, #29):
 `K(coupling) + K(base) = K(lift) + K(lift)` — merging two
 descriptions over a shared base saves exactly the base's
-complexity, with **no finiteness of the base**. The proof is
+complexity. The fiber hypotheses force the base finite; no
+Fintype instance is taken (review #29). The proof is
 structured through the decomposition lemmas — `coupling ≈ A ⊗
 (free ⊗ free)` (`coupling_energyEquiv`) and `lift ≈ A ⊗ free`
 (`uniformLift_energyEquiv`) — after which the identity is the

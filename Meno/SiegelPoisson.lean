@@ -1300,8 +1300,7 @@ theorem QuadraticAction.dualityFlow_eq_zero_iff {r : ℕ}
 rank ≥ 2: `Q = diag(2π, π/2)` has determinant `π²`, hence zero flow,
 but `Q² = diag(4π², π²/4) ≠ π²·1`, so it is not self-dual. Zero flow
 sees only the determinant; self-duality is a condition on the whole
-form. The plan's iff is true only at rank 1
-(`ofScalar_selfDual_iff` + `dualityFlow_eq_zero_iff`). -/
+form. -/
 theorem exists_dualityFlow_eq_zero_not_selfDual :
     ∃ A : QuadraticAction 2, A.dualityFlow = 0 ∧ ¬ A.selfDual := by
   have hpos : ∀ i : Fin 2, 0 < (![2 * Real.pi, Real.pi / 2]) i := by
