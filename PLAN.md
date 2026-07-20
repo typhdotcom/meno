@@ -898,7 +898,7 @@ from the program with prejudice (recorded in the Disposition table).
 `LoopKernel.lean` is retained -- it has consumers (`SectorPresentation`,
 `Groupoid`).
 
-### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21, #23, #25, #26 receipt, RECLOSED Phases 54, 57, 59, 61, 62)
+### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21, #23, #25, #26, #27 receipt, RECLOSED Phases 54, 57, 59, 61, 62, 63)
 
 Three standing requirements, all met:
 
@@ -5256,7 +5256,7 @@ stays closed. The ledger:
 
 | # | Finding | Verdict | Repair |
 |---|---------|---------|--------|
-| F5 | **The groupoid sigma sub-layer was a consumerless mirror of the deleted framework, and Phase 61 rewrote its narrative instead of sweeping it**: eleven declarations (Groupoid.lean ~302–620) forming a closed dependency component — `sigmaPartFn`/`sigmaComplexity` read only by the bounds; `partFn_eq_exp_complexity`, `sigmaPartFn_pos`, `sigmaComplexity_equiv`, `sigmaComplexity_le_logCard_max`, `sigmaComplexity_sigma_le_logCard_max` read only inside the component; terminals `sigmaComplexity_pullback_le_logCard_maxFiber` (the excised refactoring bound restated for groupoid objects), `sigmaComplexity_prod_family_le_logCard_max_split`, `sigmaComplexity_ge_sup` read by **nothing** — no external file, no README citation, no certificate field. Its stated purpose was the mirror table Phase 61 deleted; the legacy-layer policy does not protect it (no spine object derived, no identification proved). Phase 61's rewritten section docstring gave it a fresh justification comparing it to a type-level measure the same commit deleted — narrative written over dead code, violating the Phase-58 sweep amendment (invoked for the trivial/congr cascade, then stopped) and the spirit of Phase 61's own certificate-badge rule | **CONFIRMED** — the dependency graph reproduced exactly: tree-wide grep shows the component confined to Groupoid.lean, internally closed, three unread terminals; zero mentions in README or PLAN Part I | **The closed component deleted** — all eleven declarations, in two contiguous blocks (302–509, 555–628), flush against the live neighbors. Kept, consumers re-verified: `GroupoidObj.Equiv`, `prod_summable`, `GroupoidObj.prod`, `groupoidObj_prod_partFn`, `GroupoidObj.prod_complexity`, `groupoidComplexity_prod`, and the `toLoopKernelObj`/geodesic/duality-facing API. The section docstring rewritten to state only what remains and who consumes it (the product law and `Equiv`, read by `Meno/Duality.lean`) — no capacity-bound narrative survives, since no capacity bound does. The sweep this time reached the file header too: its "trivial/congruence/product laws" line — stale since Phase 61's own cascade — truthed to the product law alone |
+| F5 | **The groupoid sigma sub-layer was a consumerless mirror of the deleted framework, and Phase 61 rewrote its narrative instead of sweeping it**: eleven declarations (Groupoid.lean ~302–620) forming a closed dependency component — `sigmaPartFn`/`sigmaComplexity` read only by the bounds; `partFn_eq_exp_complexity`, `sigmaPartFn_pos`, `sigmaComplexity_equiv`, `sigmaComplexity_le_logCard_max`, `sigmaComplexity_sigma_le_logCard_max` read only inside the component; terminals `sigmaComplexity_pullback_le_logCard_maxFiber` (the excised refactoring bound restated for groupoid objects), `sigmaComplexity_prod_family_le_logCard_max_split`, `sigmaComplexity_ge_sup` read by **nothing** — no external file, no README citation, no certificate field. Its stated purpose was the mirror table Phase 61 deleted; the legacy-layer policy does not protect it (no spine object derived, no identification proved). Phase 61's rewritten section docstring gave it a fresh justification comparing it to a type-level measure the same commit deleted — narrative written over dead code, violating the Phase-58 sweep amendment (invoked for the trivial/congr cascade, then stopped) and the spirit of Phase 61's own certificate-badge rule | **CONFIRMED** — the dependency graph reproduced exactly: tree-wide grep shows the component confined to Groupoid.lean, internally closed, three unread terminals; zero mentions in README or PLAN Part I | **The closed component deleted — fourteen declarations** (count corrected in place at review #27; this cell originally said eleven and did not record that the instances fell): the eleven defs/theorems named in the finding **plus three instance-suppliers the work order and the original cell both missed** — `instPullbackFintype`, `instFiberFintype`, `instFiberProdFintype` (Groupoid.lean:458–478 of the Phase-61 revision), which existed solely to discharge the deleted pullback bound's `Fintype` side conditions (`instPullbackFintype` was moreover a decidability-free duplicate of `pullbackFintype`). Their consumer verification, recorded: no `Fintype (SGD.Fiber …)` or `Fintype (SGD.FiberProd …)` goal exists anywhere else in the tree; live `Fintype (SGD.Pullback …)` needs are served by `pullbackFintype` (`Meno/UniformAction.lean`) and the graph-level wrappers (`Meno/ResolutionCount.lean`); the green build confirms no elaboration depended on them. The two blocks (302–509, 555–628) were deleted flush against the live neighbors. Kept, consumers re-verified: `GroupoidObj.Equiv`, `prod_summable`, `GroupoidObj.prod`, `groupoidObj_prod_partFn`, `GroupoidObj.prod_complexity`, `groupoidComplexity_prod`, and the `toLoopKernelObj`/geodesic/duality-facing API. The section docstring rewritten to state only what remains and who consumes it (the product law and `Equiv`, read by `Meno/Duality.lean`) — no capacity-bound narrative survives, since no capacity bound does. The sweep this time reached the file header too: its "trivial/congruence/product laws" line — stale since Phase 61's own cascade — truthed to the product law alone |
 
 **Discipline check.** C12 REOPENED at review #26 receipt (C12.1),
 RECLOSED this phase by the deletion; C9 stays closed — its
@@ -5271,3 +5271,26 @@ standing between it and acceptance that this review can see."
 Cumulative: twenty-six reviews, one hundred two findings, one
 hundred two confirmed and repaired; two acceptances (Phases 56,
 60).
+
+## Phase 63 addendum: twenty-seventh external review (the second gatekeeper) — Phase 62's tree verified faithful; one finding against its record, corrected in place (2026-07-19)
+
+Review #27 verified the Phase-62 deletion clean in the tree — zero
+`sigma*` references, the docstrings honest, C12.1 handled, C9 and
+the certificate untouched — and returned **REJECT on the record
+alone**: the diff and the ledger disagreed. No Lean change was
+required **or permitted** by the work order; the tree is in the
+state the reviewer would accept. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| F6 | **The Phase-62 deletion record under-reported the deletion set — eleven recorded, fourteen deleted**: the two deleted blocks also contained `instPullbackFintype`, `instFiberFintype`, `instFiberProdFintype`, three instances the work order did not name (an omission the reviewer owns in the same finding: the component was closed at fourteen, not eleven) and the Phase-62 ledger cell did not record. Deleting them was correct on the merits — component-internal, no other `Fintype (SGD.Fiber/FiberProd …)` goal in the tree, live pullback finiteness served by `pullbackFintype` and the graph wrappers, build green — but the record did not know they fell, which made "every deletion consumer-verified" an unsupported claim and broke the closure conjunction's "recorded deletions" leg: deleted instances vanish from by-name greps, so the ledger is exactly what a future audit has | **CONFIRMED** — the Phase-61 revision shows the three instances at Groupoid.lean:458–478, inside the deleted 302–509 block; absent from the current tree; the Phase-62 cell and report both said eleven | **The Phase-62 ledger cell corrected in place** (the Phase-55 precedent: a false record sentence is corrected where it stands, with the correction marked): the cell now states fourteen declarations — the eleven defs/theorems plus the three instance-suppliers by name — with their consumer verification recorded and a parenthetical noting the in-place correction at review #27. No Lean file modified |
+
+**Discipline check.** C12 REOPENED at review #27 receipt (the
+"recorded deletions" leg — the record, not the tree), RECLOSED on
+the correction; C9 and the certificate untouched; **no Lean file
+modified** (the work order forbade it). `lake build Meno` green
+(3349 jobs, 33 source files), zero `sorry`, zero `axiom`, zero
+warnings — unchanged from Phase 62, as it must be. The
+substantive-review leg pends resubmission. Cumulative: twenty-seven
+reviews, one hundred three findings, one hundred three confirmed
+and repaired; two acceptances (Phases 56, 60).
