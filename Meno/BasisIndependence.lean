@@ -534,6 +534,50 @@ theorem classScaledPartFn_eq (β : ℝ) :
       (G.latticeQuotEquiv G.cycleBasis κ) = G.harmonicEnergy κ from
     G.basisGramData_energy_latticeQuot G.cycleBasis κ]
 
+/-- The β-scaled carrier partition function is positive at `0 < β` —
+the scaled bundle's sector action computes it. -/
+theorem classScaledPartFn_pos (β : ℝ) (hβ : 0 < β) :
+    0 < G.classScaledPartFn β :=
+  (G.classSectorActionβ β hβ).partFn_pos
+
+/-- **The temperature recognition** (G9): the log β-scaled partition
+function is the harmonic complexity plus the cumulant functional of
+the temperature-shift observable — the identity
+`⟨e^{(1−β)E}⟩ = Z(β)/Z` on the intrinsic carrier; summability is
+the standing scaled bundle's (`classSectorActionβ`). -/
+theorem log_classScaledPartFn_eq_cgf (β : ℝ) (hβ : 0 < β) :
+    Real.log (G.classScaledPartFn β)
+      = (G.classSectorAction).complexity
+        + (G.classSectorAction).cgf
+            (fun κ => (1 - β) * G.harmonicEnergy κ) := by
+  have hZ := (G.classSectorAction).partFn_pos
+  have hZβ := G.classScaledPartFn_pos β hβ
+  have hterm : ∀ κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
+      Real.exp ((1 - β) * G.harmonicEnergy κ)
+        * (G.classSectorAction).gibbsMass κ
+      = Real.exp (-(β * G.harmonicEnergy κ))
+        * ((G.classSectorAction).partFn)⁻¹ := by
+    intro κ
+    show Real.exp ((1 - β) * G.harmonicEnergy κ)
+        * (Real.exp (-G.harmonicEnergy κ)
+            / (G.classSectorAction).partFn) = _
+    rw [div_eq_mul_inv, ← mul_assoc, ← Real.exp_add,
+      show (1 - β) * G.harmonicEnergy κ + -G.harmonicEnergy κ
+        = -(β * G.harmonicEnergy κ) from by ring]
+  have hexp : (G.classSectorAction).gibbsExpect
+      (fun κ => Real.exp ((1 - β) * G.harmonicEnergy κ))
+      = G.classScaledPartFn β / (G.classSectorAction).partFn := by
+    show (∑' κ, Real.exp ((1 - β) * G.harmonicEnergy κ)
+        * (G.classSectorAction).gibbsMass κ) = _
+    rw [tsum_congr hterm, tsum_mul_right, ← div_eq_mul_inv]
+    rfl
+  show Real.log (G.classScaledPartFn β)
+    = Real.log (G.classSectorAction).partFn
+      + Real.log ((G.classSectorAction).gibbsExpect
+          fun κ => Real.exp ((1 - β) * G.harmonicEnergy κ))
+  rw [hexp, Real.log_div hZβ.ne' hZ.ne']
+  ring
+
 /-- The carrier's first β-scaled moment is the chart's. -/
 theorem classScaledMoment_eq (β : ℝ) :
     G.classScaledMoment β

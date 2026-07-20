@@ -67,6 +67,13 @@ noncomputable def gibbsExpect (f : A.Λ → ℝ) : ℝ := ∑' k, f k * A.gibbsM
 noncomputable def gibbsVariance (f : A.Λ → ℝ) : ℝ :=
   A.gibbsExpect (fun k => f k ^ 2) - A.gibbsExpect f ^ 2
 
+/-- **The cumulant functional** of the Gibbs law (G9): the log
+Gibbs-mean of the exponentiated observable, `log ⟨e^φ⟩` —
+unconditioned, like `partFn` and `gibbsExpect`; each law carries its
+own summability, and on a finite `Λ` it is automatic. -/
+noncomputable def cgf (φ : A.Λ → ℝ) : ℝ :=
+  Real.log (A.gibbsExpect fun k => Real.exp (φ k))
+
 /-! ## Foundational lemmas -/
 
 /-- The partition function is strictly positive: the zero-energy witness

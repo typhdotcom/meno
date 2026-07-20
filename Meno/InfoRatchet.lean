@@ -2,8 +2,6 @@ import Meno.Basic
 import Meno.SectorAction
 import Meno.UniformAction
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
-import Mathlib.Analysis.Convex.Jensen
-import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Set.Card
 import Mathlib.Data.ENNReal.Real
@@ -880,6 +878,42 @@ theorem FullSupport.uniformLiftMap [DecidableEq D] {P : FinDist X}
   show 0 < (P.map f).mass (f x) / m
   positivity
 
+/-- Total mass one forces a positive mass. -/
+theorem exists_mass_pos (P : FinDist X) : ∃ x, 0 < P.mass x := by
+  by_contra hall
+  push_neg at hall
+  have hzero : ∀ x, P.mass x = 0 := fun x =>
+    le_antisymm (hall x) (P.nonneg x)
+  have h1 := P.sum_one
+  rw [Finset.sum_congr rfl fun x _ => hzero x,
+    Finset.sum_const_zero] at h1
+  exact one_ne_zero h1.symm
+
+/-- The tilt normalizer is positive — no support hypothesis:
+`exists_mass_pos` supplies a positive term. -/
+theorem tilt_norm_pos (P : FinDist X) (φ : X → ℝ) :
+    0 < ∑ y, Real.exp (φ y) * P.mass y := by
+  obtain ⟨x, hx⟩ := P.exists_mass_pos
+  exact Finset.sum_pos'
+    (fun y _ => mul_nonneg (Real.exp_pos _).le (P.nonneg y))
+    ⟨x, Finset.mem_univ x, mul_pos (Real.exp_pos _) hx⟩
+
+/-- **The tilted distribution** (G9): reweight `P` by `exp (φ x)`
+and renormalize. Normalizable with no support hypothesis
+(`tilt_norm_pos`). -/
+noncomputable def tilt (P : FinDist X) (φ : X → ℝ) : FinDist X where
+  mass x := Real.exp (φ x) * P.mass x / ∑ y, Real.exp (φ y) * P.mass y
+  nonneg x := div_nonneg
+    (mul_nonneg (Real.exp_pos _).le (P.nonneg x))
+    (P.tilt_norm_pos φ).le
+  sum_one := by
+    rw [← Finset.sum_div, div_self (P.tilt_norm_pos φ).ne']
+
+/-- **Tilting preserves full support** (G9). -/
+theorem FullSupport.tilt {P : FinDist X} (hP : P.FullSupport)
+    (φ : X → ℝ) : (P.tilt φ).FullSupport := fun x =>
+  div_pos (mul_pos (Real.exp_pos _) (hP x)) (P.tilt_norm_pos φ)
+
 /-- **The relative entropy** of `P` against a fully supported
 reference `Q` — the support proof is part of the definition
 (review #18), so the expression cannot be formed against an invalid
@@ -1345,6 +1379,10 @@ noncomputable def gibbsDist (A : SectorAction.{u}) [Fintype A.Λ] :
 @[simp] theorem gibbsDist_mass (A : SectorAction.{u}) [Fintype A.Λ] :
     A.gibbsDist.mass = A.gibbsMass := rfl
 
+/-- The Gibbs distribution is fully supported (`gibbsMass_pos`). -/
+theorem gibbsDist_fullSupport (A : SectorAction.{u}) [Fintype A.Λ] :
+    A.gibbsDist.FullSupport := fun k => A.gibbsMass_pos k
+
 /-! ### Coarse-graining: fiber Boltzmann sums -/
 
 /-- **The unnormalized coarse weight** (review #13): the Boltzmann sum
@@ -1722,6 +1760,162 @@ theorem gibbsCov_double_sum (φ ψ : A.Λ → ℝ) :
   simp only [Pi.mul_apply]
   ring
 
+/-! #### The currency (G9): the cumulant functional's KL identity
+
+The exact law of the currency face: the gap between the cumulant
+functional and the Gibbs mean **is** a relative entropy — against
+the Gibbs law's own tilt — so every Jensen-type bound in the tree
+flows through the house engine (`relativeEntropy_nonneg`,
+`relativeEntropy_eq_zero_iff`), not through an external convexity
+lemma. -/
+
+/-- A pointwise-positive observable has positive Gibbs expectation
+on a finite sector type — every sector carries positive Gibbs
+mass. -/
+theorem gibbsExpect_pos_of_pos (φ : A.Λ → ℝ) (hφ : ∀ k, 0 < φ k) :
+    0 < A.gibbsExpect φ := by
+  rw [A.gibbsExpect_eq_sum]
+  obtain ⟨z, _⟩ := A.E_zero
+  exact Finset.sum_pos
+    (fun d _ => mul_pos (hφ d) (A.gibbsMass_pos d))
+    ⟨z, Finset.mem_univ z⟩
+
+/-- **THE KL IDENTITY** (G9, the exact law): the gap between the
+cumulant functional and the Gibbs mean is the relative entropy of
+the Gibbs law against its own tilt by the observable —
+`cgf φ − ⟨φ⟩ = D(gibbs ‖ tilt φ gibbs)`. -/
+theorem cgf_sub_gibbsExpect_eq_relativeEntropy (φ : A.Λ → ℝ) :
+    A.cgf φ - A.gibbsExpect φ
+      = A.gibbsDist.relativeEntropy (A.gibbsDist.tilt φ)
+          (A.gibbsDist_fullSupport.tilt φ) := by
+  have h1 : A.gibbsExpect (fun k => Real.exp (φ k))
+      = ∑ y, Real.exp (φ y) * A.gibbsMass y := by
+    rw [A.gibbsExpect_eq_sum]
+  have hZ : 0 < ∑ y, Real.exp (φ y) * A.gibbsMass y := by
+    rw [← h1]
+    exact A.gibbsExpect_pos_of_pos _ fun k => Real.exp_pos _
+  have hterm : ∀ x, A.gibbsMass x
+      * Real.log (A.gibbsMass x / (A.gibbsDist.tilt φ).mass x)
+      = A.gibbsMass x
+        * (Real.log (∑ y, Real.exp (φ y) * A.gibbsMass y) - φ x) := by
+    intro x
+    congr 1
+    show Real.log (A.gibbsMass x
+        / (Real.exp (φ x) * A.gibbsMass x
+            / ∑ y, Real.exp (φ y) * A.gibbsMass y)) = _
+    rw [div_div_eq_mul_div, mul_comm (A.gibbsMass x),
+      mul_div_mul_right _ _ (A.gibbsMass_pos x).ne',
+      Real.log_div hZ.ne' (Real.exp_pos _).ne', Real.log_exp]
+  show A.cgf φ - A.gibbsExpect φ
+    = ∑ x, A.gibbsMass x
+        * Real.log (A.gibbsMass x / (A.gibbsDist.tilt φ).mass x)
+  rw [Finset.sum_congr rfl fun x _ => hterm x,
+    Finset.sum_congr rfl fun x _ =>
+      mul_sub (A.gibbsMass x) _ (φ x),
+    Finset.sum_sub_distrib, ← Finset.sum_mul, A.sum_gibbsMass_eq_one,
+    one_mul]
+  show Real.log (A.gibbsExpect fun k => Real.exp (φ k))
+      - A.gibbsExpect φ = _
+  rw [h1, A.gibbsExpect_eq_sum φ,
+    Finset.sum_congr rfl fun x _ => mul_comm (A.gibbsMass x) (φ x)]
+
+/-- **The Gibbs–Jensen bound through the house engine** (G9): the
+mean never exceeds the cumulant functional — the KL identity plus
+the Gibbs inequality. -/
+theorem gibbsExpect_le_cgf (φ : A.Λ → ℝ) :
+    A.gibbsExpect φ ≤ A.cgf φ := by
+  have h := A.cgf_sub_gibbsExpect_eq_relativeEntropy φ
+  have hnn := FinDist.relativeEntropy_nonneg A.gibbsDist
+    (A.gibbsDist.tilt φ) (A.gibbsDist_fullSupport.tilt φ)
+  linarith
+
+/-- **The gap's boundary** (G9): the cumulant functional meets the
+mean exactly at constant observables — zero relative entropy
+characterizes the Gibbs law as its own tilt. -/
+theorem cgf_sub_gibbsExpect_eq_zero_iff (φ : A.Λ → ℝ) :
+    A.cgf φ - A.gibbsExpect φ = 0 ↔ ∀ k k', φ k = φ k' := by
+  rw [A.cgf_sub_gibbsExpect_eq_relativeEntropy φ,
+    FinDist.relativeEntropy_eq_zero_iff]
+  have hZ : 0 < ∑ y, Real.exp (φ y) * A.gibbsMass y :=
+    A.gibbsDist.tilt_norm_pos φ
+  constructor
+  · intro heq k k'
+    have hexp : ∀ j, Real.exp (φ j)
+        = ∑ y, Real.exp (φ y) * A.gibbsMass y := by
+      intro j
+      have h : A.gibbsMass j
+          = Real.exp (φ j) * A.gibbsMass j
+            / ∑ y, Real.exp (φ y) * A.gibbsMass y :=
+        congrFun (congrArg FinDist.mass heq) j
+      rw [eq_div_iff hZ.ne'] at h
+      have h2 : (∑ y, Real.exp (φ y) * A.gibbsMass y) * A.gibbsMass j
+          = Real.exp (φ j) * A.gibbsMass j := by
+        rw [← h]; ring
+      exact (mul_right_cancel₀ (A.gibbsMass_pos j).ne' h2).symm
+    exact Real.exp_injective ((hexp k).trans (hexp k').symm)
+  · intro hconst
+    refine (FinDist.ext ?_).symm
+    funext x
+    show Real.exp (φ x) * A.gibbsMass x
+        / ∑ y, Real.exp (φ y) * A.gibbsMass y = A.gibbsMass x
+    rw [show (∑ y, Real.exp (φ y) * A.gibbsMass y)
+        = Real.exp (φ x) from by
+      rw [Finset.sum_congr rfl fun y _ => by rw [hconst y x],
+        ← Finset.mul_sum, A.sum_gibbsMass_eq_one, mul_one],
+      mul_comm (Real.exp (φ x)), mul_div_assoc,
+      div_self (Real.exp_pos (φ x)).ne', mul_one]
+
+/-- **The bilinear boundary** (G9): the cumulant functional's
+additivity defect on a pair vanishes exactly at zero Gibbs
+covariance of the exponentiated observables — the gravity boundary's
+proof, generalized. -/
+theorem cgf_bilinear_eq_zero_iff (φ ψ : A.Λ → ℝ) :
+    A.cgf (φ + ψ) - A.cgf φ - A.cgf ψ = 0
+      ↔ A.gibbsCov (Real.exp ∘ φ) (Real.exp ∘ ψ) = 0 := by
+  have hm : 0 < A.gibbsExpect (fun k => Real.exp (φ k)) :=
+    A.gibbsExpect_pos_of_pos _ fun k => Real.exp_pos _
+  have hm' : 0 < A.gibbsExpect (fun k => Real.exp (ψ k)) :=
+    A.gibbsExpect_pos_of_pos _ fun k => Real.exp_pos _
+  have hmm : 0 < A.gibbsExpect
+      ((fun k => Real.exp (φ k)) * fun k => Real.exp (ψ k)) :=
+    A.gibbsExpect_pos_of_pos _ fun k =>
+      mul_pos (Real.exp_pos _) (Real.exp_pos _)
+  have hsum : A.cgf (φ + ψ)
+      = Real.log (A.gibbsExpect
+          ((fun k => Real.exp (φ k)) * fun k => Real.exp (ψ k))) := by
+    show Real.log (A.gibbsExpect fun k => Real.exp (φ k + ψ k)) = _
+    rw [show (fun k => Real.exp (φ k + ψ k))
+        = ((fun k => Real.exp (φ k)) * fun k => Real.exp (ψ k)) from
+      funext fun k => Real.exp_add (φ k) (ψ k)]
+  show A.cgf (φ + ψ) - A.cgf φ - A.cgf ψ = 0
+    ↔ A.gibbsExpect
+        ((fun k => Real.exp (φ k)) * fun k => Real.exp (ψ k))
+      - A.gibbsExpect (fun k => Real.exp (φ k))
+        * A.gibbsExpect (fun k => Real.exp (ψ k)) = 0
+  rw [hsum]
+  show Real.log (A.gibbsExpect _)
+      - Real.log (A.gibbsExpect fun k => Real.exp (φ k))
+      - Real.log (A.gibbsExpect fun k => Real.exp (ψ k)) = 0 ↔ _
+  constructor
+  · intro h0
+    have hlogeq : Real.log (A.gibbsExpect
+        ((fun k => Real.exp (φ k)) * fun k => Real.exp (ψ k)))
+        = Real.log (A.gibbsExpect (fun k => Real.exp (φ k))
+            * A.gibbsExpect fun k => Real.exp (ψ k)) := by
+      rw [Real.log_mul hm.ne' hm'.ne']
+      linarith
+    have heq := Real.log_injOn_pos (Set.mem_Ioi.mpr hmm)
+      (Set.mem_Ioi.mpr (mul_pos hm hm')) hlogeq
+    rw [heq]
+    ring
+  · intro hcov
+    rw [show A.gibbsExpect
+        ((fun k => Real.exp (φ k)) * fun k => Real.exp (ψ k))
+        = A.gibbsExpect (fun k => Real.exp (φ k))
+          * A.gibbsExpect fun k => Real.exp (ψ k) from
+      by linarith, Real.log_mul hm.ne' hm'.ne']
+    ring
+
 /-! #### The evaluations and the law -/
 
 /-- **The lift's partition function**: the base partition function
@@ -1800,39 +1994,65 @@ theorem gravity_defect [Fintype (SGD.Pullback f g)]
     lift_complexity A g hg]
   ring
 
+/-- **The gravity recognition** (G9): the defect is the cumulant
+functional's additivity defect at the two log-redundancies — a
+rewrite of `gravity_defect`, since `Real.exp` inverts `Real.log` on
+the positive redundancy profiles. -/
+theorem gravityDefect_eq_cgf [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g) :
+    A.gravityDefect f g hf hg
+      = A.cgf ((fun d => Real.log (fiberCount f d))
+            + fun d => Real.log (fiberCount g d))
+        - A.cgf (fun d => Real.log (fiberCount f d))
+        - A.cgf (fun d => Real.log (fiberCount g d)) := by
+  have hposf : ∀ d, 0 < fiberCount f d := fun d =>
+    lt_of_lt_of_le one_pos (one_le_fiberCount hf d)
+  have hposg : ∀ d, 0 < fiberCount g d := fun d =>
+    lt_of_lt_of_le one_pos (one_le_fiberCount hg d)
+  have h1 : A.cgf ((fun d => Real.log (fiberCount f d))
+        + fun d => Real.log (fiberCount g d))
+      = Real.log (A.gibbsExpect (fiberCount f * fiberCount g)) := by
+    show Real.log (A.gibbsExpect fun k =>
+      Real.exp (Real.log (fiberCount f k) + Real.log (fiberCount g k))) = _
+    rw [show (fun k =>
+        Real.exp (Real.log (fiberCount f k) + Real.log (fiberCount g k)))
+        = fiberCount f * fiberCount g from funext fun k => by
+      rw [Real.exp_add, Real.exp_log (hposf k), Real.exp_log (hposg k)]
+      rfl]
+  have h2 : A.cgf (fun d => Real.log (fiberCount f d))
+      = Real.log (A.gibbsExpect (fiberCount f)) := by
+    show Real.log (A.gibbsExpect fun k =>
+      Real.exp (Real.log (fiberCount f k))) = _
+    rw [show (fun k => Real.exp (Real.log (fiberCount f k)))
+        = fiberCount f from funext fun k => Real.exp_log (hposf k)]
+  have h3 : A.cgf (fun d => Real.log (fiberCount g d))
+      = Real.log (A.gibbsExpect (fiberCount g)) := by
+    show Real.log (A.gibbsExpect fun k =>
+      Real.exp (Real.log (fiberCount g k))) = _
+    rw [show (fun k => Real.exp (Real.log (fiberCount g k)))
+        = fiberCount g from funext fun k => Real.exp_log (hposg k)]
+  rw [A.gravity_defect f g hf hg, h1, h2, h3]
+
 /-- **The boundary** (G2): the defect vanishes exactly at zero
 covariance of the redundancy profiles — the constant-fiber gravity
 identity (`complexity_gravity`) is the zero-covariance chart, not a
-law of coupling. -/
+law of coupling. Demoted at G9 (rule 3): re-derived from the generic
+`cgf_bilinear_eq_zero_iff` through the gravity recognition
+(`gravityDefect_eq_cgf`); the direct log-injectivity route is
+retired. -/
 theorem gravity_defect_eq_zero_iff [Fintype (SGD.Pullback f g)]
     (hf : Function.Surjective f) (hg : Function.Surjective g) :
     A.gravityDefect f g hf hg = 0
       ↔ A.gibbsCov (fiberCount f) (fiberCount g) = 0 := by
-  have hm := A.gibbsExpect_fiberCount_pos f hf
-  have hm' := A.gibbsExpect_fiberCount_pos g hg
-  have hmm := A.gibbsExpect_fiberCount_mul_pos f g hf hg
-  rw [A.gravity_defect f g hf hg]
-  constructor
-  · intro h0
-    have hlogeq : Real.log (A.gibbsExpect (fiberCount f * fiberCount g))
-        = Real.log (A.gibbsExpect (fiberCount f)
-            * A.gibbsExpect (fiberCount g)) := by
-      rw [Real.log_mul hm.ne' hm'.ne']
-      linarith
-    have heq := Real.log_injOn_pos (Set.mem_Ioi.mpr hmm)
-      (Set.mem_Ioi.mpr (mul_pos hm hm')) hlogeq
-    show A.gibbsExpect (fiberCount f * fiberCount g)
-        - A.gibbsExpect (fiberCount f) * A.gibbsExpect (fiberCount g) = 0
-    rw [heq]
-    ring
-  · intro hcov
-    have heq : A.gibbsExpect (fiberCount f * fiberCount g)
-        - A.gibbsExpect (fiberCount f) * A.gibbsExpect (fiberCount g)
-        = 0 := hcov
-    rw [show A.gibbsExpect (fiberCount f * fiberCount g)
-        = A.gibbsExpect (fiberCount f) * A.gibbsExpect (fiberCount g) from
-      by linarith, Real.log_mul hm.ne' hm'.ne']
-    ring
+  have hposf : ∀ d, 0 < fiberCount f d := fun d =>
+    lt_of_lt_of_le one_pos (one_le_fiberCount hf d)
+  have hposg : ∀ d, 0 < fiberCount g d := fun d =>
+    lt_of_lt_of_le one_pos (one_le_fiberCount hg d)
+  rw [A.gravityDefect_eq_cgf f g hf hg, A.cgf_bilinear_eq_zero_iff,
+    show Real.exp ∘ (fun d => Real.log (fiberCount f d)) = fiberCount f
+      from funext fun d => Real.exp_log (hposf d),
+    show Real.exp ∘ (fun d => Real.log (fiberCount g d)) = fiberCount g
+      from funext fun d => Real.exp_log (hposg d)]
 
 /-- **The direction theorem** (G2): comonotone redundancy binds — if
 the two fiber-count profiles move together across every sector pair,
@@ -1886,72 +2106,54 @@ section TimeNonUniform
 variable (A : SectorAction.{u}) {X : Type u} [Fintype X]
   (f : X → A.Λ) [Fintype A.Λ]
 
+/-- **The time recognition** (G9): the priced increment of the lift
+is the cumulant functional of the log-redundancy — a rewrite of
+`lift_complexity`, since `Real.exp` inverts `Real.log` on the
+redundancy profile (`one_le_fiberCount`). -/
+theorem lift_complexity_eq_cgf (hf : Function.Surjective f) :
+    (A.lift f hf).complexity - A.complexity
+      = A.cgf (fun d => Real.log (fiberCount f d)) := by
+  rw [A.lift_complexity f hf, add_sub_cancel_left]
+  show _ = Real.log (A.gibbsExpect fun k =>
+    Real.exp (Real.log (fiberCount f k)))
+  rw [show (fun k => Real.exp (Real.log (fiberCount f k)))
+      = fiberCount f from funext fun k => Real.exp_log
+    (lt_of_lt_of_le one_pos (one_le_fiberCount hf k))]
+
 /-- **THE JENSEN RATCHET BOUND** (G5, the law with correction term):
 the Gibbs-mean log-redundancy is at most the priced increment of the
 lift — `⟨log ∘ fiberCount f⟩ ≤ K(lift f) − K`. The gap is the Jensen
-defect of the redundancy profile. -/
+defect of the redundancy profile. Demoted at G9 (rule 3): re-derived
+from the KL identity through the time recognition
+(`lift_complexity_eq_cgf`, `gibbsExpect_le_cgf`); the external
+`strictConcaveOn_log_Ioi` route is retired. -/
 theorem lift_complexity_ge_gibbs_log_rate (hf : Function.Surjective f) :
     A.gibbsExpect (fun d => Real.log (fiberCount f d))
       ≤ (A.lift f hf).complexity - A.complexity := by
-  rw [A.lift_complexity f hf, add_sub_cancel_left, A.gibbsExpect_eq_sum,
-    A.gibbsExpect_eq_sum (fiberCount f)]
-  have hjen := (strictConcaveOn_log_Ioi.concaveOn).le_map_sum
-    (t := Finset.univ) (w := A.gibbsMass) (p := fiberCount f)
-    (fun d _ => A.gibbsMass_nonneg d) A.sum_gibbsMass_eq_one
-    (fun d _ => Set.mem_Ioi.mpr
-      (lt_of_lt_of_le one_pos (one_le_fiberCount hf d)))
-  simp only [smul_eq_mul] at hjen
-  calc ∑ d, Real.log (fiberCount f d) * A.gibbsMass d
-      = ∑ d, A.gibbsMass d * Real.log (fiberCount f d) :=
-        Finset.sum_congr rfl fun d _ => mul_comm _ _
-    _ ≤ Real.log (∑ d, A.gibbsMass d * fiberCount f d) := hjen
-    _ = Real.log (∑ d, fiberCount f d * A.gibbsMass d) := by
-        rw [Finset.sum_congr rfl fun d _ =>
-          mul_comm (A.gibbsMass d) (fiberCount f d)]
+  rw [A.lift_complexity_eq_cgf f hf]
+  exact A.gibbsExpect_le_cgf _
 
 /-- **The boundary** (G5): the Jensen gap vanishes exactly at
 constant redundancy — every sector carries positive Gibbs mass, so
-full support makes the boundary exact. -/
+full support makes the boundary exact. Demoted at G9 (rule 3):
+re-derived from the KL identity's boundary
+(`cgf_sub_gibbsExpect_eq_zero_iff`) through the time recognition;
+the external `StrictConcaveOn` route is retired. -/
 theorem lift_complexity_sub_eq_iff_fiberCount_const
     (hf : Function.Surjective f) :
     (A.lift f hf).complexity - A.complexity
         = A.gibbsExpect (fun d => Real.log (fiberCount f d))
       ↔ ∀ d d', fiberCount f d = fiberCount f d' := by
+  have hpos : ∀ d, 0 < fiberCount f d := fun d =>
+    lt_of_lt_of_le one_pos (one_le_fiberCount hf d)
+  rw [A.lift_complexity_eq_cgf f hf, ← sub_eq_zero,
+    A.cgf_sub_gibbsExpect_eq_zero_iff]
   constructor
-  · intro heq
-    rw [A.lift_complexity f hf, add_sub_cancel_left] at heq
-    have hcell := StrictConcaveOn.eq_of_map_sum_eq strictConcaveOn_log_Ioi
-      (t := Finset.univ) (w := A.gibbsMass) (p := fiberCount f)
-      (fun d _ => A.gibbsMass_pos d) A.sum_gibbsMass_eq_one
-      (fun d _ => Set.mem_Ioi.mpr
-        (lt_of_lt_of_le one_pos (one_le_fiberCount hf d)))
-      (by
-        calc Real.log (∑ d, A.gibbsMass d • fiberCount f d)
-            = Real.log (A.gibbsExpect (fiberCount f)) := by
-              rw [A.gibbsExpect_eq_sum (fiberCount f)]
-              congr 1
-              exact Finset.sum_congr rfl fun d _ => by
-                rw [smul_eq_mul, mul_comm]
-          _ = A.gibbsExpect (fun d => Real.log (fiberCount f d)) := heq
-          _ = ∑ d, A.gibbsMass d • Real.log (fiberCount f d) := by
-              rw [A.gibbsExpect_eq_sum]
-              exact Finset.sum_congr rfl fun d _ => by
-                rw [smul_eq_mul, mul_comm]
-          _ ≤ ∑ d, A.gibbsMass d • Real.log (fiberCount f d) := le_refl _)
-    exact fun d d' => hcell (Finset.mem_univ d) (Finset.mem_univ d')
-  · intro hconst
-    obtain ⟨z, _⟩ := A.E_zero
-    have h1 : A.gibbsExpect (fiberCount f) = fiberCount f z := by
-      rw [show fiberCount f = fun _ : A.Λ => fiberCount f z from
-        funext fun d => hconst d z]
-      exact A.gibbsExpect_const _
-    have h2 : A.gibbsExpect (fun d => Real.log (fiberCount f d))
-        = Real.log (fiberCount f z) := by
-      rw [show (fun d => Real.log (fiberCount f d))
-          = fun _ : A.Λ => Real.log (fiberCount f z) from
-        funext fun d => by rw [hconst d z]]
-      exact A.gibbsExpect_const _
-    rw [A.lift_complexity f hf, add_sub_cancel_left, h1, h2]
+  · intro h d d'
+    have hlog := h d d'
+    rw [← Real.exp_log (hpos d), ← Real.exp_log (hpos d'), hlog]
+  · intro h k k'
+    rw [h k k']
 
 end TimeNonUniform
 
@@ -2556,5 +2758,50 @@ theorem twoSector_jensen_gap_pos :
       hconst false true
     rw [twoSectorMap_fiberCount_false, twoSectorMap_fiberCount_true] at h01
     norm_num at h01
+
+/-- **The strictness of the currency's Jensen gap** (G9): at the
+two-sector witness the cumulant functional strictly exceeds the
+Gibbs mean of the log-redundancy — through the time recognition and
+the standing witness (`twoSector_jensen_gap_pos`), single route. -/
+theorem twoSector_cgf_gap_pos :
+    0 < twoSectorAction.cgf
+          (fun d => Real.log (fiberCount twoSectorMap d))
+        - twoSectorAction.gibbsExpect
+          (fun d => Real.log (fiberCount twoSectorMap d)) := by
+  have h := twoSector_jensen_gap_pos
+  rw [twoSectorAction.lift_complexity_eq_cgf twoSectorMap
+    twoSectorMap_surjective] at h
+  linarith
+
+/-- **The strictness of the currency's additivity defect** (G9): at
+the two-sector witness the cumulant functional is strictly
+superadditive on the pair of log-redundancies — through the gravity
+recognition and the standing witness
+(`twoSector_gravityDefect_pos`), single route. -/
+theorem twoSector_cgf_bilinear_pos :
+    0 < twoSectorAction.cgf
+          ((fun d => Real.log (fiberCount twoSectorMap d))
+            + fun d => Real.log (fiberCount twoSectorMap d))
+        - twoSectorAction.cgf
+          (fun d => Real.log (fiberCount twoSectorMap d))
+        - twoSectorAction.cgf
+          (fun d => Real.log (fiberCount twoSectorMap d)) := by
+  have h := twoSector_gravityDefect_pos
+  rwa [twoSectorAction.gravityDefect_eq_cgf twoSectorMap twoSectorMap
+    twoSectorMap_surjective twoSectorMap_surjective] at h
+
+/-- **THE IMPOSSIBILITY** (G9): there is no linear currency — the
+cumulant functional is not additive in the observable, witnessed by
+the two-sector data through the strict additivity defect. -/
+theorem cgf_not_additive :
+    ∃ (A : SectorAction.{0}) (φ ψ : A.Λ → ℝ),
+      A.cgf (φ + ψ) ≠ A.cgf φ + A.cgf ψ := by
+  refine ⟨twoSectorAction,
+    fun d => Real.log (fiberCount twoSectorMap d),
+    fun d => Real.log (fiberCount twoSectorMap d),
+    sub_ne_zero.mp ?_⟩
+  have h := twoSector_cgf_bilinear_pos
+  rw [sub_sub] at h
+  exact h.ne'
 
 end Meno

@@ -493,6 +493,112 @@ enumerable budget exactly where there is nothing to describe.
 
 **Falsification:** none (the diagonal is unconditional).
 
+### G9 — The currency (one functional prices the corrections) — CLOSED (Meno/InfoRatchet.lean)
+
+Admitted by amendment at the R retrospective. Every correction term
+the program produced is a fluctuation quantity; G9 promotes the
+pattern to theorems: the cumulant functional of the Gibbs law, with
+gravity's defect, time's Jensen gap, and the tower's cross-ratio
+exhibited as its differences — on the two observables the model
+owns, redundancy and energy.
+
+**The definition.** At the home of the Gibbs moments
+(`Meno/SectorAction.lean`, beside `gibbsExpect`):
+
+```lean
+noncomputable def SectorAction.cgf (φ : A.Λ → ℝ) : ℝ :=
+  Real.log (A.gibbsExpect fun k => Real.exp (φ k))
+```
+
+unconditioned like `partFn` and `gibbsExpect` — each law carries its
+own summability; on a finite `Λ` it is automatic. No `tilt` action
+is defined: `E − φ` violates `E_zero`/`E_nonneg`, which is exactly
+why `lift` and `coarseGrain` normalize — the tilt lives at the
+distribution level instead.
+
+**The exact law (the KL identity).** At the `FinDist` home
+(`Meno/InfoRatchet.lean`): the tilted distribution
+`FinDist.tilt` with mass proportional to `exp (φ x) · P.mass x`
+(normalizable — total mass one forces a positive mass — and
+full-support-preserving), and, on `[Fintype A.Λ]`,
+
+```lean
+theorem cgf_sub_gibbsExpect_eq_relativeEntropy :
+    A.cgf φ - A.gibbsExpect φ
+      = (A.gibbsDist).relativeEntropy ((A.gibbsDist).tilt φ) h
+```
+
+with `h` from `gibbsMass_pos` — **the Jensen gap is a relative
+entropy against the tilted Gibbs law**. Corollaries through the
+standing engine (`relativeEntropy_nonneg`,
+`relativeEntropy_eq_zero_iff`): `gibbsExpect_le_cgf` and the
+boundary `cgf_sub_gibbsExpect_eq_zero_iff` (`φ` constant). This
+also closes a gap in the tree's own story: the README claims one
+definition is behind every such bound, but G5's Jensen route runs
+through Mathlib's `strictConcaveOn_log_Ioi`, not the house engine.
+
+**The recognitions.** Each a rewrite, not a new estimate:
+
+* time — `lift_complexity_eq_cgf`:
+  `(A.lift f hf).complexity − A.complexity = A.cgf (fun d => Real.log (fiberCount f d))`,
+  from `lift_complexity` and `Real.exp_log` on `one_le_fiberCount`;
+* gravity — `gravityDefect_eq_cgf`:
+  `gravityDefect = cgf (φ + ψ) − cgf φ − cgf ψ` at the two
+  log-redundancies, from `gravity_defect` (`Real.log` additive on
+  the positive profiles);
+* temperature — `log_classScaledPartFn_eq_cgf`
+  (`Meno/BasisIndependence.lean`): for `0 < β`,
+  `Real.log (classScaledPartFn β) = classComplexity + cgf (fun κ => (1 − β) * harmonicEnergy κ)`
+  on the intrinsic carrier — the identity `⟨e^{(1−β)E}⟩ = Z(β)/Z`,
+  summability from the standing scaled bundle
+  (`classSectorActionβ`);
+* the tower — `residue_gravity_crossRatio_cgf`
+  (`Meno/TowerGravity.lean`): substituting the temperature
+  recognition into the standing cross-ratio law, the four class
+  complexities cancel — the tower defect is the four-term `cgf`
+  combination of energy observables.
+
+**The boundary.** Generic `cgf_bilinear_eq_zero_iff`:
+`cgf (φ + ψ) − cgf φ − cgf ψ = 0 ↔ gibbsCov (exp ∘ φ) (exp ∘ ψ) = 0`
+— the proof of `gravity_defect_eq_zero_iff` generalized, that
+theorem then demoted to its instance.
+
+**The strictness**, in the face's own vocabulary (the G6 precedent:
+the witness must inhabit the face's statements):
+`twoSector_cgf_gap_pos` and `twoSector_cgf_bilinear_pos` at the
+standing two-sector data, each through the recognitions and the
+standing witnesses — single route.
+
+**The impossibility.** `cgf_not_additive`: there is no linear
+currency — `∃ A φ ψ, cgf (φ + ψ) ≠ cgf φ + cgf ψ` — witnessed by
+the two-sector data.
+
+**Demotions (rule 3 — names survive, independent routes die).**
+`lift_complexity_ge_gibbs_log_rate` and
+`lift_complexity_sub_eq_iff_fiberCount_const` re-derived through the
+KL identity (the `strictConcaveOn_log_Ioi` route retired);
+`gravity_defect_eq_zero_iff` re-derived from
+`cgf_bilinear_eq_zero_iff`. Explicitly not demoted:
+`lift_complexity` and `gravity_defect` keep their object-level
+routes (the recognitions consume them), and
+`gravityDefect_nonneg_of_comonotone` already lives at the right
+generality (`gibbsCov_double_sum`) — `cgf` adds nothing to its
+route.
+
+**The rule against a summit bundle.** No `currency` conjunction
+theorem. A conjunction of the recognitions would be the coverage
+bundle reborn; the face closes on the named equalities, and the
+README states the unification in prose backed by them — a "The
+currency (G9)" subsection after Uncertainty, plus one row in the
+faces index.
+
+**Falsification:** if the temperature recognition fails at some
+`0 < β`, the scaled bundle's Gibbs algebra is unsound —
+consequence: the face is excised and the corrections remain
+separate, unpriced by a common functional. None expected: every
+statement is an identity or is carried by the standing
+relative-entropy engine.
+
 ## Harvest
 
 The deletion ledger. Names listed here are scheduled excisions;
@@ -519,7 +625,7 @@ outside a `Harvest` entry cites a deleted name.
 
 ## Execution order
 
-G4 → G1 → G2 → G5 → G6 → G3 → G8 → G7 → R.
+G4 → G1 → G2 → G5 → G6 → G3 → G8 → G7 → R → G9.
 
 Rationale: G4 first — it builds the only new generic infrastructure
 (`IncidenceGraph.Auto`) and is the shortest path to the stake's
@@ -530,7 +636,10 @@ G1's inverse-Gram lemma. G3 needs G2's shape and carries the
 estimate work. G8 is independent and small. G7 assembles everything
 and executes the main Harvest. R is the README rewrite: the stake,
 the crown, the eight faces with their anchors, the dichotomy as the
-completion object — no coverage bundle, no review chronology.
+completion object — no coverage bundle, no review chronology. G9
+was admitted by amendment at the R retrospective — the sprint's
+emergent observation, that every correction term is a fluctuation
+quantity, promoted from pattern to theorem.
 
 ## Status Ledger
 
@@ -544,4 +653,5 @@ completion object — no coverage bundle, no review chronology.
 | G6 binding sign | closed form `ofCycles_interaction_fin_two` / `ofCycles_bindingEnergy_fin_two`; iff `binding_attractive_iff` on the intrinsic `bindingEnergyClass` (invariance via `bindingEnergyClass_chart`); strictness `theta_binding_attractive_class` (the criterion's own anchor), with `theta_interaction` / `theta_binding_attractive` demoted to closed-form instances; boundary `wedge_binding_zero` | **CLOSED** |
 | G7 dichotomy | `meno_dichotomy` — `0 < b₁` iff matter ∧ spectrum ∧ fluctuation ∧ deficit ∧ arrow; forward consumes `exists_matter`, `one_lt_classPartFn` (homed at G7, `Meno/Binding.lean`), `classSectorAction_gibbsVariance_energy_pos`, `residueDefect_pos`, `sectionCost_h1TowerMap`; reverse `MatterSector.b1_pos` (homed at G7, `Meno/Matter.lean`). Harvest executed: the coverage bundle and nine law packages deleted and deny-listed | **CLOSED** |
 | G8 self-reference | impossibility `no_self_enumeration` (every type, every universe, no finiteness); law `descriptionCost_split` (budget + log-ratio correction term); strictness — the cost corollary — `log_card_lt_descriptionCost` (correction positive at every nonempty finite carrier, via the diagonal's counting shadow); boundary `log_card_eq_descriptionCost_iff` (equality iff empty carrier) | **CLOSED** |
-| R README rewrite | — | **OPEN** |
+| G9 currency | definition `SectorAction.cgf` (`Meno/SectorAction.lean`, beside the moments); law `cgf_sub_gibbsExpect_eq_relativeEntropy` via `FinDist.tilt` (`tilt_norm_pos` from `exists_mass_pos`, `FullSupport.tilt`, `gibbsDist_fullSupport`), corollaries `gibbsExpect_le_cgf` and boundary `cgf_sub_gibbsExpect_eq_zero_iff`; recognitions `lift_complexity_eq_cgf`, `gravityDefect_eq_cgf`, `log_classScaledPartFn_eq_cgf` (with `classScaledPartFn_pos`, `Meno/BasisIndependence.lean`), `residue_gravity_crossRatio_cgf` (`Meno/TowerGravity.lean`); bilinear boundary `cgf_bilinear_eq_zero_iff`; strictness `twoSector_cgf_gap_pos`, `twoSector_cgf_bilinear_pos` (single route through the recognitions); impossibility `cgf_not_additive`. Demoted (rule 3): `lift_complexity_ge_gibbs_log_rate`, `lift_complexity_sub_eq_iff_fiberCount_const`, `gravity_defect_eq_zero_iff` — the `strictConcaveOn_log_Ioi` and log-injectivity routes retired, the Convex/Jensen imports dropped. No conjunction theorem | **CLOSED** |
+| R README rewrite | the stake leads and each denial maps to its theorem ("The stake, in theorems"); the eight faces indexed with their anchors; the dichotomy as the completion object; the crown pointed from the head; scope extended to the stake's denials; no coverage bundle, no review chronology | **CLOSED** |

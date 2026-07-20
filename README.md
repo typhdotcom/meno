@@ -2,25 +2,48 @@
 
 *Structural Geometrodynamics in Lean 4*
 
-Meno formalizes a speculative thesis:
+Meno formalizes a speculative thesis and the obstruction that
+sharpens it:
 
-> **A universe minimizes the cost of describing itself.**
-> Gravity, matter, time, and uncertainty are faces of that minimization.
+> **A universe minimizes the cost of describing itself** — gravity,
+> matter, time, and uncertainty are faces of that minimization.
+> **And no description of it closes**: there is no objective bit, no
+> self-enumerating code, no preferred coordinate system. Matter is a
+> constraint system that is locally consistent everywhere and
+> globally unsatisfiable — and the universe is interesting exactly
+> when it carries one.
+
+Each denial in the second sentence is a theorem of this tree
+([The stake, in theorems](#the-stake-in-theorems)), and the closing
+"exactly when" is the completion object, one biconditional at the
+top of the import graph ([The dichotomy](#the-dichotomy)).
 
 The carrier of the thesis is a **sector lattice with a
 positive-definite quadratic action**: the lattice enumerates the
 discrete sectors a system can occupy, the action prices them, the
 Boltzmann sum reads the partition function, and duality, minimization,
-and counting theorems connect the faces.
+and counting theorems connect the faces. The analytic crown — one
+Siegel–Poisson duality proved at full generality, through which
+every duality in the tree flows, down to Riemann's functional
+equation — is proved once and consumed everywhere
+([Duality](#duality)).
 
 Everything below is a checked theorem — zero sorry, zero axiom
 declarations, `lake build` green against Lean 4.26.0 and the pinned
-Mathlib. The program now underway — the Obstruction Program, with
-its four-anchor discipline — lives in [`PLAN.md`](PLAN.md); at its
-G7 close the first program's coverage bundle was deleted and
-replaced by the completion object, one dichotomy theorem whose
-forward direction requires a strict engine for each of its five
-phenomena ([The dichotomy](#the-dichotomy)).
+Mathlib. The Obstruction Program that shaped this tree is recorded
+in [`PLAN.md`](PLAN.md) — nine faces, all closed
+([The nine faces](#the-nine-faces)).
+
+---
+
+## The stake, in theorems
+
+| Denial | Theorem |
+| :--- | :--- |
+| **No objective bit** | `cycle_no_invariant_representative` (G4): at `1 < gcd n q` no rotation-invariant cochain represents the winding class — the content is symmetric (`cycleRot_h1Map_int`), yet every encoding of it breaks the symmetry; the choice of bit is physical |
+| **No self-enumerating code** | `no_self_enumeration` (G8): no type surjects onto its own `ZMod 2`-valued predicates — every type, every universe, no finiteness hypothesis; on a nonempty finite carrier the shortfall is priced (`log_card_lt_descriptionCost`) |
+| **No preferred coordinate system** | `exists_unimodular_relating`: any two lattice bases are unimodularly related, and everything the physics reads is chart-invariant — the partition function (`basisGramData_partFn`), mass (`MatterSector.mass_chart`), binding (`bindingEnergyClass_chart`) |
+| **Globally unsatisfiable, locally lawful** | `MatterSector.not_gradient` with `period_eq_zero_iff_exists_grad`: a matter sector is a constraint system that is locally consistent everywhere and globally unsatisfiable; `meno_dichotomy`: the five strict phenomena — matter, spectrum, fluctuation, deficit, arrow — occur exactly where such a system exists |
 
 ---
 
@@ -58,6 +81,40 @@ the arrow of time — derived as a coding theorem, not defined.
 **Fluctuation (uncertainty).** The Gibbs state's variance is the
 model's uncertainty, and its response to temperature is dissipation —
 tied together by the fluctuation–dissipation identity.
+
+**Symmetry (the physical bit).** Content can be symmetric while every
+description of it breaks the symmetry: on the cycle the winding class
+is rotation-invariant (`cycleRot_h1Map_int`), yet off coprimality no
+rotation-invariant cochain represents it. The choice of bit is
+physical.
+
+**Self-reference (the open boundary).** No description system
+enumerates its own binary predicates, and on a nonempty finite
+carrier the shortfall is priced: the enumerable budget never pays for
+the predicate space.
+
+---
+
+## The nine faces
+
+A face closes on four anchors — an impossibility, an exact law that
+carries its own correction term, a strictness witness where the
+correction is genuinely nonzero, and a boundary where it exactly
+vanishes. Eight faces close that way; G7 assembles five strict
+phenomena into the completion object. The full tables live in the
+linked sections; the anchors are the theorems themselves.
+
+| Face | The law | The anchors |
+| :--- | :--- | :--- |
+| **G1 — geometry** ([Geometry](#geometry)) | Pairing squared is bounded by harmonic energy times chain norm; mass bounds the systole | law `pairing_sq_le_energy_mul_normSq`, `MatterSector.mass_systole`; boundary `dualNorm_combination_eq_iff`, equality `cycle_systole_equality`; strictness `theta_mass_gt_systole`; impossibility `MatterSector.not_gradient` |
+| **G2 — gravity** ([Gravity](#gravity)) | The coupling defect is the log-correlation of the two redundancy profiles | law `gravity_defect`; boundary `gravity_defect_eq_zero_iff`; direction `gravityDefect_nonneg_of_comonotone`; strictness `twoSector_gravityDefect_pos`; impossibility `exists_gravity_defect_ne_zero` |
+| **G3 — the tower** ([The resolution tower](#the-resolution-tower)) | The four-resolution defect is a cross-ratio of scaled partition functions | law `residue_gravity_crossRatio`, CRT `h1ReductionCRT`; boundary `residue_gravity_dvd`; strictness `cycle3_crossRatio_neg` |
+| **G4 — symmetry** ([Symmetry](#symmetry)) | A symmetry-respecting description exists iff coprimality | law `cycle_equivariant_section_iff`; impossibility `cycle_no_invariant_representative`; strictness `cycle_four_two_no_equivariant_section`; boundary `cycle_three_two_equivariant_section` |
+| **G5 — time** ([Time and information](#time-and-information)) | The ratchet's priced increment dominates the Gibbs-mean log-redundancy | law `lift_complexity_ge_gibbs_log_rate`, `sectionCost_eq_sum_log_fiberCount`; boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; impossibility `sectionCostE_eq_zero_iff` |
+| **G6 — binding** ([Binding](#binding)) | Binding is attraction exactly when the cycles overlap with consistent orientation | law `binding_attractive_iff` on the intrinsic `bindingEnergyClass`; closed form `ofCycles_bindingEnergy_fin_two`; strictness `theta_binding_attractive_class`; boundary `wedge_binding_zero` |
+| **G7 — the dichotomy** ([The dichotomy](#the-dichotomy)) | Cycles iff the five strict phenomena | `meno_dichotomy` |
+| **G8 — self-reference** ([Self-reference](#self-reference)) | No self-enumeration, and the shortfall is priced | impossibility `no_self_enumeration`; law `descriptionCost_split`; strictness `log_card_lt_descriptionCost`; boundary `log_card_eq_descriptionCost_iff` |
+| **G9 — the currency** ([The currency](#the-currency-g9)) | The Jensen gap is a relative entropy against the tilted Gibbs law; gravity's, time's, temperature's, and the tower's corrections are its recognitions | law `cgf_sub_gibbsExpect_eq_relativeEntropy`; boundary `cgf_sub_gibbsExpect_eq_zero_iff`, `cgf_bilinear_eq_zero_iff`; strictness `twoSector_cgf_gap_pos`, `twoSector_cgf_bilinear_pos`; impossibility `cgf_not_additive` |
 
 ---
 
@@ -392,6 +449,39 @@ the carrier bundle (`Meno/Fluctuation.lean`, `Meno/LatticeAction.lean`).
 | `unitQuadAction`, `hasDerivAt_quadraticMeanEnergy_eq_neg_gibbsVariance`, `quadraticMeanEnergy_strictAntiOn`, `quadraticObj_gibbsVariance_pos` | The canonical scalar family is the rank-one chart of the same engine, its public theorems derived from it (`Meno/Duality.lean`) |
 | `M2_sq_lt_Z_mul_M4` | The Cauchy–Schwarz route retained as named corroboration |
 
+### The currency (G9)
+
+Every correction term the program produced is a fluctuation
+quantity; the currency face prices them all with one functional. The
+**cumulant functional** of the Gibbs law, `cgf φ = log ⟨e^φ⟩`
+(`Meno/SectorAction.lean`, beside the moments), carries the exact
+law: its gap over the mean **is** a relative entropy against the
+tilted Gibbs law, so the ratchet's Jensen bound and its boundary
+flow through the house relative-entropy engine — the engine
+section's "one definition is behind every such bound" is now exact,
+and no convexity import remains in the tree — and gravity's defect,
+time's Jensen gap, temperature's scaled complexity, and the tower's
+cross-ratio are each **recognized** as `cgf` combinations by
+rewrites, not new estimates. There is no
+conjunction theorem bundling the recognitions — that would be the
+coverage bundle reborn; the unification is stated here, backed by
+the named equalities.
+
+| Result | Statement |
+| :--- | :--- |
+| `SectorAction.cgf` | **The currency**: `cgf φ = log ⟨e^φ⟩` — unconditioned, like `partFn` and `gibbsExpect`; each law carries its own summability, automatic on a finite sector type |
+| `FinDist.tilt`, `tilt_norm_pos`, `FullSupport.tilt` | **The tilted distribution**: reweight by `exp (φ x)` — normalizable with no support hypothesis (total mass one forces a positive mass, `exists_mass_pos`), full-support-preserving |
+| `cgf_sub_gibbsExpect_eq_relativeEntropy` | **THE KL IDENTITY** (the exact law, `Meno/InfoRatchet.lean`): `cgf φ − ⟨φ⟩` is the relative entropy of the Gibbs law against its own tilt by the observable |
+| `gibbsExpect_le_cgf`, `cgf_sub_gibbsExpect_eq_zero_iff` | The Gibbs–Jensen bound and its boundary (the observable is constant), both through the standing engine (`relativeEntropy_nonneg`, `relativeEntropy_eq_zero_iff`) |
+| `cgf_bilinear_eq_zero_iff` | **The bilinear boundary**: the additivity defect on a pair vanishes iff the exponentiated observables are Gibbs-uncorrelated — the gravity boundary's proof, generalized |
+| `lift_complexity_eq_cgf` | **The time recognition**: the lift's priced increment is `cgf` of the log-redundancy — a rewrite of `lift_complexity` |
+| `gravityDefect_eq_cgf` | **The gravity recognition**: the defect is the additivity defect of `cgf` at the two log-redundancies — a rewrite of `gravity_defect` |
+| `log_classScaledPartFn_eq_cgf` | **The temperature recognition** (`Meno/BasisIndependence.lean`): the log β-scaled partition function is the harmonic complexity plus `cgf` of the temperature-shift observable — `⟨e^{(1−β)E}⟩ = Z(β)/Z` on the intrinsic carrier |
+| `residue_gravity_crossRatio_cgf` | **The tower recognition** (`Meno/TowerGravity.lean`): the four class complexities cancel — the tower defect is the four-term `cgf` combination of energy observables |
+| `twoSector_cgf_gap_pos`, `twoSector_cgf_bilinear_pos` | **The strictness** at the standing two-sector witness, each through its recognition and the standing witness — single route |
+| `cgf_not_additive` | **The impossibility**: there is no linear currency — the cumulant functional is not additive in the observable, witnessed by the two-sector data |
+| `lift_complexity_ge_gibbs_log_rate`, `lift_complexity_sub_eq_iff_fiberCount_const`, `gravity_defect_eq_zero_iff` | **The demotions** (rule 3): G5's Jensen pair and G2's boundary re-derived through the KL identity and the bilinear boundary — the external `strictConcaveOn_log_Ioi` route and the direct log-injectivity route retired; names and statements unchanged |
+
 ### Geometry
 
 The systole face (G1): for every finite graph, every class, and every
@@ -426,14 +516,15 @@ the systole inequality, through the walk-length bridge.
 
 ## The dichotomy
 
-The completion object (G7): the first program's statement-coverage
-bundle and its nine law packages are deleted (recorded in
-`scripts/deleted.txt`), replaced by **one biconditional at the top
-of the tree** (`Meno/Completion.lean`) whose forward direction
-requires a strict engine for each of its five phenomena — deleting
-any consumed engine, or anything load-bearing beneath it, breaks
-the file. **The universe of the model is interesting exactly when
-it is globally unsatisfiable.**
+The completion object (G7): **one biconditional at the top of the
+tree** (`Meno/Completion.lean`), whose forward direction requires a
+strict engine for each of its five phenomena — deleting any
+consumed engine, or anything load-bearing beneath it, breaks the
+file. **The universe of the model is interesting exactly when it is
+globally unsatisfiable**: the five phenomena all occur precisely
+where the graph carries a constraint system that is locally
+consistent everywhere and globally unsatisfiable — a nonzero class,
+`0 < b₁`.
 
 | Result | Statement |
 | :--- | :--- |
@@ -458,7 +549,7 @@ retention predicate). Audit chronology lives in the repository log.
 
 ```
 Meno/
-├── SectorAction.lean          Analytic primitive: sectors, Boltzmann weights, partFn, complexity
+├── SectorAction.lean          Analytic primitive: sectors, Boltzmann weights, partFn, complexity, the cumulant functional (G9)
 ├── QuadraticAction.lean       kᵀQk actions; scalar & diagonal Siegel–Poisson duality
 ├── SiegelPoisson.lean         Full-generality (non-diagonal) Siegel–Poisson via Poisson summation
 ├── Fluctuation.lean           Fluctuation–dissipation at every rank: β-scaling, d⟨E⟩/dβ = −Var(E), strict dissipation
@@ -483,7 +574,7 @@ Meno/
 ├── TowerGravity.lean          Arithmetic gravity on the tower (G3): CRT, the key lemma, the cross-ratio law, chain exactness, C₃ strictness
 ├── Basic.lean                 The pullback substrate: fibers, the shared-base pullback, sigma-fiber and marginal equivalences
 ├── UniformAction.lean         The uniform (zero-energy) sector action; pullback finiteness
-├── InfoRatchet.lean           Fiber information; the coding theorem; THE GRAVITY THEOREM and its counting corollary; finite distributions
+├── InfoRatchet.lean           Fiber information; the coding theorem; THE GRAVITY THEOREM and its counting corollary; finite distributions; the currency's KL identity (G9)
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
@@ -509,11 +600,14 @@ the identifications proved (`cyclePeriodData_energy_eq`,
 ## Scope of the physical vocabulary
 
 The words "gravity", "matter", "time", "uncertainty" name formal
-analogues inside a finite, discrete model: gravity is a
-priced complexity identity of coupling over a shared base, matter is nontrivial cohomology
+analogues inside a finite, discrete model: gravity is the covariance
+law of coupling over a shared base, matter is nontrivial cohomology
 with variational mass, time's arrow is the counted cost of reversing
 compression, and uncertainty is Gibbs fluctuation with its response
-identity. The project's claim is that these analogues are *theorems of
+identity. The stake's denials are internal in the same way: the
+unrepresentable bit, the non-enumerable predicate space, and the
+unprivileged basis are theorems of the model, not claims about
+physical law. The project's claim is that these analogues are *theorems of
 one structure* — the sector lattice with its action — not that the
 physical world has been derived. Where a desired statement failed,
 the counterexample is kept as a theorem

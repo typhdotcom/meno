@@ -169,6 +169,34 @@ theorem residue_gravity_crossRatio (q q' : ℕ) [NeZero q] [NeZero q'] :
     G.residueAction_complexity_eq (Nat.lcm q q')]
   ring
 
+/-- **The tower recognition** (G9): substituting the temperature
+recognition (`log_classScaledPartFn_eq_cgf`) into the cross-ratio
+law, the four class complexities cancel — the tower defect is the
+four-term cumulant combination of energy observables on the
+intrinsic carrier. -/
+theorem residue_gravity_crossRatio_cgf (q q' : ℕ) [NeZero q] [NeZero q'] :
+    ((G.residueAction (Nat.lcm q q')).complexity
+        + (G.residueAction (Nat.gcd q q')).complexity)
+      - ((G.residueAction q).complexity + (G.residueAction q').complexity)
+    = ((G.classSectorAction).cgf
+          (fun κ => (1 - ((q : ℝ)) ^ 2) * G.harmonicEnergy κ)
+        + (G.classSectorAction).cgf
+          (fun κ => (1 - ((q' : ℝ)) ^ 2) * G.harmonicEnergy κ))
+      - ((G.classSectorAction).cgf
+          (fun κ => (1 - ((Nat.gcd q q' : ℝ)) ^ 2) * G.harmonicEnergy κ)
+        + (G.classSectorAction).cgf
+          (fun κ => (1 - ((Nat.lcm q q' : ℝ)) ^ 2) * G.harmonicEnergy κ)) := by
+  have hpos : ∀ (m : ℕ) [NeZero m], (0 : ℝ) < (m : ℝ) ^ 2 := fun m _ =>
+    pow_pos (by exact_mod_cast Nat.pos_of_ne_zero (NeZero.ne m)) 2
+  rw [G.residue_gravity_crossRatio q q',
+    G.log_classScaledPartFn_eq_cgf ((q : ℝ) ^ 2) (hpos q),
+    G.log_classScaledPartFn_eq_cgf ((q' : ℝ) ^ 2) (hpos q'),
+    G.log_classScaledPartFn_eq_cgf ((Nat.gcd q q' : ℝ) ^ 2)
+      (hpos (Nat.gcd q q')),
+    G.log_classScaledPartFn_eq_cgf ((Nat.lcm q q' : ℝ) ^ 2)
+      (hpos (Nat.lcm q q'))]
+  ring
+
 /-- **The boundary** (G3): along a divisibility chain the defect
 vanishes identically — `{gcd, lcm} = {q, q'}` and the cross-ratio
 cancels. Gravity is exact along chains; the `C₃` witness
