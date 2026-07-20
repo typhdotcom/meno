@@ -19,18 +19,24 @@ The tower face of the obstruction program (PLAN, G3).
   injective on the free lattice, and the energy is quadratic
   (`harmonicEnergy_zsmul`).
 * **The exact law** (`residue_gravity_crossRatio`): via
-  `classPartFn_eq_residueWeight_mul`, the four-resolution gravity
-  defect is a cross-ratio of scaled partition functions.
+  `classComplexity_residue_split` and the key lemma
+  (`residueAction_complexity_eq`), the four-resolution gravity
+  defect is a cross-ratio of scaled partition functions;
+  `classPartFn_eq_residueWeight_mul` is the partition-function form
+  of the same split.
 * **The boundary** (`residue_gravity_dvd`): `q ∣ q'` collapses
   `{gcd, lcm}` to `{q, q'}` and the defect vanishes identically —
-  **gravity is exact on the tower exactly along chains**.
+  gravity is exact along chains; the `C₃` witness
+  (`cycle3_crossRatio_neg`) shows it can strictly fail off them.
 * **The strictness** (`cycle3_crossRatio_neg`): on `cycleGraph 3` at
   `(q, q') = (2, 3)`, `Z(1)·Z(36) > Z(4)·Z(9)` by explicit partial
   sums with geometric tail bounds — the defect is strictly negative:
-  **incomparable resolutions couple supermodularly**.
+  **at the witness, incomparable resolutions couple
+  supermodularly**.
 * **The impossibility** is the same theorem read as the face's
   negative: there is no resolution-independent gravity on the tower —
-  exactness selects the divisibility order. -/
+  exact along the divisibility order, strictly failing at an
+  incomparable pair. -/
 
 namespace Meno
 
@@ -144,10 +150,12 @@ theorem residueAction_complexity_eq (q : ℕ) [NeZero q] :
 
 /-- **THE CROSS-RATIO LAW** (G3, the exact law): the four-resolution
 gravity defect on the tower is a cross-ratio of scaled partition
-functions — via the factorization
-`classPartFn_eq_residueWeight_mul` and the key lemma, each residue
-complexity is the harmonic complexity minus a scaled log, and the
-base complexities cancel in the four-term combination. -/
+functions — via `classComplexity_residue_split` and the key lemma
+(`residueAction_complexity_eq`), each residue complexity is the
+harmonic complexity minus a scaled log, and the base complexities
+cancel in the four-term combination
+(`classPartFn_eq_residueWeight_mul` is the partition-function form
+of the same split). -/
 theorem residue_gravity_crossRatio (q q' : ℕ) [NeZero q] [NeZero q'] :
     ((G.residueAction (Nat.lcm q q')).complexity
         + (G.residueAction (Nat.gcd q q')).complexity)
@@ -163,7 +171,8 @@ theorem residue_gravity_crossRatio (q q' : ℕ) [NeZero q] [NeZero q'] :
 
 /-- **The boundary** (G3): along a divisibility chain the defect
 vanishes identically — `{gcd, lcm} = {q, q'}` and the cross-ratio
-cancels. **Gravity is exact on the tower exactly along chains.** -/
+cancels. Gravity is exact along chains; the `C₃` witness
+(`cycle3_crossRatio_neg`) shows it can strictly fail off them. -/
 theorem residue_gravity_dvd (q q' : ℕ) [NeZero q] [NeZero q']
     (hdvd : q ∣ q') :
     ((G.residueAction (Nat.lcm q q')).complexity
@@ -285,117 +294,22 @@ theorem card_h1Reduction_mul_gcd (q q' : ℕ) [NeZero q] [NeZero q'] :
 
 end IncidenceGraph
 
-/-! ## The strictness: incomparable resolutions couple supermodularly
+/-! ## The strictness: at the witness, incomparable resolutions couple supermodularly
 
 On `cycleGraph 3` the carrier is rank one with harmonic energy
 `k²/3`, so the scaled partition functions are the scalar theta values
-`Z(s/3)`. At `(q, q') = (2, 3)` the cross-ratio compares
-`Z(4/3)·Z(3)` against `Z(1/3)·Z(12)`, and explicit partial sums with
-geometric tail bounds give `Z(4/3)·Z(3) < Z(1/3)·Z(12)` — the defect
-is strictly negative. **The impossibility, read off the same
-theorem: there is no resolution-independent gravity on the tower —
-exactness selects the divisibility order.** -/
+`Z(s/3)` (through the estimates promoted to
+`Meno/QuadraticAction.lean`). At `(q, q') = (2, 3)` the cross-ratio
+compares `Z(4/3)·Z(3)` against `Z(1/3)·Z(12)`, and explicit partial
+sums with geometric tail bounds give `Z(4/3)·Z(3) < Z(1/3)·Z(12)` —
+the defect is strictly negative. **The impossibility, read off the
+same theorem: there is no resolution-independent gravity on the
+tower — exact along the divisibility order, strictly failing at an
+incomparable pair.** -/
 
 section ScalarEstimates
 
 open QuadraticAction
-
-/-- Per-mode geometric domination: `exp(−α(k+1)²) ≤ exp(−α)·exp(−α)^k`. -/
-private lemma exp_sq_shift_le_geo (α : ℝ) (hα : 0 < α) (k : ℕ) :
-    Real.exp (-α * ((k : ℝ) + 1) ^ 2) ≤ Real.exp (-α) * Real.exp (-α) ^ k := by
-  rw [show Real.exp (-α) * Real.exp (-α) ^ k = Real.exp (-α * ((k : ℝ) + 1)) from by
-    rw [← Real.exp_nat_mul, ← Real.exp_add]
-    ring_nf]
-  refine Real.exp_le_exp.mpr ?_
-  have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
-  nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ (k:ℝ) + 1) hk]
-
-private lemma summable_exp_sq_shift (α : ℝ) (hα : 0 < α) :
-    Summable (fun k : ℕ => Real.exp (-α * ((k : ℝ) + 1) ^ 2)) := by
-  have hlt : Real.exp (-α) < 1 := by
-    rw [← Real.exp_zero]
-    exact Real.exp_lt_exp.mpr (by linarith)
-  have hgeo : Summable (fun k : ℕ => Real.exp (-α) * Real.exp (-α) ^ k) :=
-    (summable_geometric_of_lt_one (Real.exp_pos _).le hlt).mul_left _
-  exact Summable.of_nonneg_of_le (fun k => (Real.exp_pos _).le)
-    (exp_sq_shift_le_geo α hα) hgeo
-
-/-- Symmetric split of the scalar theta value (the estimate
-discipline of `Meno/Zeta.lean`, restated for the tower face). -/
-private lemma scalarPartFn_sub_one_eq (α : ℝ) (hα : 0 < α) :
-    scalarPartFn α - 1 = 2 * ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2) := by
-  set S : ℝ := ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2) with hS_def
-  have hshift : Summable (fun k : ℕ => Real.exp (-α * ((k : ℝ) + 1) ^ 2)) :=
-    summable_exp_sq_shift α hα
-  have hSum_S : HasSum (fun k : ℕ => Real.exp (-α * ((k : ℝ) + 1) ^ 2)) S :=
-    hshift.hasSum
-  have hf₁ : HasSum
-      (fun n : ℕ => Real.exp (-α * ((((n : ℤ) + 1) : ℤ) : ℝ) ^ 2)) S := by
-    refine hSum_S.congr fun n => ?_
-    push_cast
-    rfl
-  have hf₂ : HasSum
-      (fun n : ℕ => Real.exp (-α * ((-((n : ℤ) + 1) : ℤ) : ℝ) ^ 2)) S := by
-    refine hSum_S.congr fun n => ?_
-    push_cast
-    ring_nf
-  have hZ : HasSum (fun k : ℤ => Real.exp (-α * ((k : ℤ) : ℝ) ^ 2))
-      (S + Real.exp (-α * (((0 : ℤ) : ℝ)) ^ 2) + S) :=
-    HasSum.of_add_one_of_neg_add_one hf₁ hf₂
-  have hZ_val : scalarPartFn α = S + 1 + S := by
-    have h := hZ.tsum_eq
-    have h0 : Real.exp (-α * (((0 : ℤ) : ℝ)) ^ 2) = 1 := by simp
-    rw [h0] at h
-    show ∑' k : ℤ, Real.exp (-α * (k : ℝ) ^ 2) = S + 1 + S
-    convert h using 1
-  rw [hZ_val]
-  ring
-
-/-- The scalar theta value dominates its vacuum term. -/
-private lemma one_le_scalarPartFn (α : ℝ) (hα : 0 < α) :
-    1 ≤ scalarPartFn α := by
-  have h := scalarPartFn_sub_one_eq α hα
-  have hS : (0 : ℝ) ≤ ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2) :=
-    tsum_nonneg fun k => (Real.exp_pos _).le
-  linarith
-
-/-- First-mode lower bound: `1 + 2·exp(−α) ≤ Z(α)`. -/
-private lemma scalarPartFn_ge (α : ℝ) (hα : 0 < α) :
-    1 + 2 * Real.exp (-α) ≤ scalarPartFn α := by
-  have h := scalarPartFn_sub_one_eq α hα
-  have hfirst : Real.exp (-α)
-      ≤ ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2) := by
-    have hle := (summable_exp_sq_shift α hα).sum_le_tsum {0}
-      (fun j _ => (Real.exp_pos _).le)
-    rw [Finset.sum_singleton] at hle
-    calc Real.exp (-α) = Real.exp (-α * (((0 : ℕ) : ℝ) + 1) ^ 2) := by
-          norm_num
-      _ ≤ _ := hle
-  linarith
-
-/-- Geometric tail upper bound: `Z(α) ≤ 1 + 2·exp(−α)/(1−exp(−α))`. -/
-private lemma scalarPartFn_le (α : ℝ) (hα : 0 < α) :
-    scalarPartFn α ≤ 1 + 2 * (Real.exp (-α) / (1 - Real.exp (-α))) := by
-  have h := scalarPartFn_sub_one_eq α hα
-  have hexp_pos : (0 : ℝ) < Real.exp (-α) := Real.exp_pos _
-  have hlt : Real.exp (-α) < 1 := by
-    rw [← Real.exp_zero]
-    exact Real.exp_lt_exp.mpr (by linarith)
-  have hgeo : Summable (fun k : ℕ => Real.exp (-α) ^ k) :=
-    summable_geometric_of_lt_one hexp_pos.le hlt
-  have hbound : ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2)
-      ≤ Real.exp (-α) / (1 - Real.exp (-α)) := by
-    calc ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2)
-        ≤ ∑' k : ℕ, Real.exp (-α) * Real.exp (-α) ^ k :=
-          (summable_exp_sq_shift α hα).tsum_le_tsum
-            (exp_sq_shift_le_geo α hα) (hgeo.mul_left _)
-      _ = Real.exp (-α) * ∑' k : ℕ, Real.exp (-α) ^ k :=
-          hgeo.tsum_mul_left (Real.exp (-α))
-      _ = Real.exp (-α) * (1 - Real.exp (-α))⁻¹ := by
-          rw [tsum_geometric_of_lt_one hexp_pos.le hlt]
-      _ = Real.exp (-α) / (1 - Real.exp (-α)) := by
-          rw [div_eq_mul_inv]
-  linarith
 
 /-- Bounds on `exp(1/3)` from the ninth-decimal bounds on `e`. -/
 private lemma exp_third_bounds :
@@ -491,12 +405,13 @@ private lemma scalarPartFn_crossRatio_lt :
     have hge := scalarPartFn_ge (1 / 3) (by norm_num)
     have : Real.exp (-(1 / 3)) = Real.exp (-(1 / 3)) := rfl
     nlinarith
-  have h12 : (1 : ℝ) ≤ scalarPartFn 12 := one_le_scalarPartFn 12 (by norm_num)
+  have h12 : (1 : ℝ) ≤ scalarPartFn 12 :=
+    (scalarPartFn_gt_one 12 (by norm_num)).le
   have h43_pos : (0 : ℝ) < scalarPartFn (4 / 3) := by
-    have := one_le_scalarPartFn (4 / 3) (by norm_num)
+    have := scalarPartFn_gt_one (4 / 3) (by norm_num)
     linarith
   have h3_pos : (0 : ℝ) < scalarPartFn 3 := by
-    have := one_le_scalarPartFn 3 (by norm_num)
+    have := scalarPartFn_gt_one 3 (by norm_num)
     linarith
   calc scalarPartFn (4 / 3) * scalarPartFn 3
       < (127 / 73) * (21 / 19) := by
@@ -558,10 +473,11 @@ theorem cycle3_classScaledPartFn (s : ℝ) :
 /-- **THE STRICTNESS** (G3): on `cycleGraph 3` at `(q, q') = (2, 3)`
 the four-resolution defect is strictly negative —
 `Z(1)·Z(36) > Z(4)·Z(9)` at the carrier scale, i.e.
-`Z(1/3)·Z(12) > Z(4/3)·Z(3)` in theta values. **Incomparable
-resolutions couple supermodularly. The impossibility, read off the
-same statement: there is no resolution-independent gravity on the
-tower — exactness selects the divisibility order.** -/
+`Z(1/3)·Z(12) > Z(4/3)·Z(3)` in theta values. **At the witness,
+incomparable resolutions couple supermodularly. The impossibility,
+read off the same statement: there is no resolution-independent
+gravity on the tower — exact along the divisibility order, strictly
+failing at an incomparable pair.** -/
 theorem cycle3_crossRatio_neg :
     (((cycleGraph 3 (by norm_num)).residueAction (Nat.lcm 2 3)).complexity
         + ((cycleGraph 3 (by norm_num)).residueAction
@@ -581,16 +497,16 @@ theorem cycle3_crossRatio_neg :
   rw [harg1, harg2, harg3, harg4]
   have hkey := scalarPartFn_crossRatio_lt
   have hp1 : (0 : ℝ) < QuadraticAction.scalarPartFn (4 / 3) := by
-    have := one_le_scalarPartFn (4 / 3) (by norm_num)
+    have := QuadraticAction.scalarPartFn_gt_one (4 / 3) (by norm_num)
     linarith
   have hp2 : (0 : ℝ) < QuadraticAction.scalarPartFn 3 := by
-    have := one_le_scalarPartFn 3 (by norm_num)
+    have := QuadraticAction.scalarPartFn_gt_one 3 (by norm_num)
     linarith
   have hp3 : (0 : ℝ) < QuadraticAction.scalarPartFn (1 / 3) := by
-    have := one_le_scalarPartFn (1 / 3) (by norm_num)
+    have := QuadraticAction.scalarPartFn_gt_one (1 / 3) (by norm_num)
     linarith
   have hp4 : (0 : ℝ) < QuadraticAction.scalarPartFn 12 := by
-    have := one_le_scalarPartFn 12 (by norm_num)
+    have := QuadraticAction.scalarPartFn_gt_one 12 (by norm_num)
     linarith
   have hlog := Real.log_lt_log (mul_pos hp1 hp2) hkey
   rw [Real.log_mul hp1.ne' hp2.ne', Real.log_mul hp3.ne' hp4.ne'] at hlog

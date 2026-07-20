@@ -417,6 +417,98 @@ theorem scalarPartFn_gt_one (α : ℝ) (hα : 0 < α) : 1 < scalarPartFn α := b
   simp at hle
   linarith [Real.exp_pos (-α)]
 
+/-- Shifted-mode summability: the positive modes of the scalar theta
+sum converge (promoted from `Meno/Zeta.lean`, G3 review — every
+estimate on the scalar theta value lives where the value lives). -/
+theorem summable_exp_sq_shift (α : ℝ) (hα : 0 < α) :
+    Summable (fun k : ℕ => Real.exp (-α * ((k : ℝ) + 1) ^ 2)) := by
+  have h := (summable_nat_add_iff 1).mpr (summable_scalarPartFn_nat α hα)
+  exact h.congr fun k => by push_cast; rfl
+
+/-- Symmetric split: the partition function minus its vacuum term
+equals twice the sum over positive modes. The ℤ-sum over `k²`
+collapses to the ℕ-sum over `(k+1)²` doubled (by evenness) plus the
+`k = 0` term (promoted from `Meno/Zeta.lean`, G3 review). -/
+theorem scalarPartFn_sub_one_eq (α : ℝ) (hα : 0 < α) :
+    scalarPartFn α - 1 = 2 * ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2) := by
+  set S : ℝ := ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2) with hS_def
+  have hshift : Summable (fun k : ℕ => Real.exp (-α * ((k : ℝ) + 1) ^ 2)) :=
+    summable_exp_sq_shift α hα
+  have hSum_S : HasSum (fun k : ℕ => Real.exp (-α * ((k : ℝ) + 1) ^ 2)) S :=
+    hshift.hasSum
+  have hf₁ : HasSum
+      (fun n : ℕ => Real.exp (-α * ((((n : ℤ) + 1) : ℤ) : ℝ) ^ 2)) S := by
+    refine hSum_S.congr fun n => ?_
+    push_cast
+    rfl
+  have hf₂ : HasSum
+      (fun n : ℕ => Real.exp (-α * ((-((n : ℤ) + 1) : ℤ) : ℝ) ^ 2)) S := by
+    refine hSum_S.congr fun n => ?_
+    push_cast
+    ring_nf
+  have hZ : HasSum (fun k : ℤ => Real.exp (-α * ((k : ℤ) : ℝ) ^ 2))
+      (S + Real.exp (-α * (((0 : ℤ) : ℝ)) ^ 2) + S) :=
+    HasSum.of_add_one_of_neg_add_one hf₁ hf₂
+  have hZ_val : scalarPartFn α = S + 1 + S := by
+    have h := hZ.tsum_eq
+    have h0 : Real.exp (-α * (((0 : ℤ) : ℝ)) ^ 2) = 1 := by simp
+    rw [h0] at h
+    show ∑' k : ℤ, Real.exp (-α * (k : ℝ) ^ 2) = S + 1 + S
+    convert h using 1
+  rw [hZ_val]
+  ring
+
+/-- Per-mode geometric domination:
+`exp(−α(k+1)²) ≤ exp(−α)·exp(−α)^k` (G3). -/
+theorem exp_sq_shift_le_geo (α : ℝ) (hα : 0 < α) (k : ℕ) :
+    Real.exp (-α * ((k : ℝ) + 1) ^ 2) ≤ Real.exp (-α) * Real.exp (-α) ^ k := by
+  rw [show Real.exp (-α) * Real.exp (-α) ^ k
+      = Real.exp (-α * ((k : ℝ) + 1)) from by
+    rw [← Real.exp_nat_mul, ← Real.exp_add]
+    ring_nf]
+  refine Real.exp_le_exp.mpr ?_
+  have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ (k : ℝ) + 1) hk]
+
+/-- First-mode lower bound: `1 + 2·exp(−α) ≤ Z(α)` (G3). -/
+theorem scalarPartFn_ge (α : ℝ) (hα : 0 < α) :
+    1 + 2 * Real.exp (-α) ≤ scalarPartFn α := by
+  have h := scalarPartFn_sub_one_eq α hα
+  have hfirst : Real.exp (-α)
+      ≤ ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2) := by
+    have hle := (summable_exp_sq_shift α hα).sum_le_tsum {0}
+      (fun j _ => (Real.exp_pos _).le)
+    rw [Finset.sum_singleton] at hle
+    calc Real.exp (-α) = Real.exp (-α * (((0 : ℕ) : ℝ) + 1) ^ 2) := by
+          norm_num
+      _ ≤ _ := hle
+  linarith
+
+/-- Geometric tail upper bound:
+`Z(α) ≤ 1 + 2·exp(−α)/(1−exp(−α))` (G3). -/
+theorem scalarPartFn_le (α : ℝ) (hα : 0 < α) :
+    scalarPartFn α ≤ 1 + 2 * (Real.exp (-α) / (1 - Real.exp (-α))) := by
+  have h := scalarPartFn_sub_one_eq α hα
+  have hexp_pos : (0 : ℝ) < Real.exp (-α) := Real.exp_pos _
+  have hlt : Real.exp (-α) < 1 := by
+    rw [← Real.exp_zero]
+    exact Real.exp_lt_exp.mpr (by linarith)
+  have hgeo : Summable (fun k : ℕ => Real.exp (-α) ^ k) :=
+    summable_geometric_of_lt_one hexp_pos.le hlt
+  have hbound : ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2)
+      ≤ Real.exp (-α) / (1 - Real.exp (-α)) := by
+    calc ∑' k : ℕ, Real.exp (-α * ((k : ℝ) + 1) ^ 2)
+        ≤ ∑' k : ℕ, Real.exp (-α) * Real.exp (-α) ^ k :=
+          (summable_exp_sq_shift α hα).tsum_le_tsum
+            (exp_sq_shift_le_geo α hα) (hgeo.mul_left _)
+      _ = Real.exp (-α) * ∑' k : ℕ, Real.exp (-α) ^ k :=
+          hgeo.tsum_mul_left (Real.exp (-α))
+      _ = Real.exp (-α) * (1 - Real.exp (-α))⁻¹ := by
+          rw [tsum_geometric_of_lt_one hexp_pos.le hlt]
+      _ = Real.exp (-α) / (1 - Real.exp (-α)) := by
+          rw [div_eq_mul_inv]
+  linarith
+
 /-- Real form of the scalar duality: `Z(π²/α) = (α/π)^(1/2) · Z(α)` with
 the real `rpow`. -/
 theorem scalarPartFn_duality_real (α : ℝ) (hα : 0 < α) :

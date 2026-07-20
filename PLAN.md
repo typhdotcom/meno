@@ -244,9 +244,11 @@ at `β = (q : ℝ)²` — the fiber of zero is `q · H¹`, multiplication by
 `q` is injective on the free lattice, and the energy is quadratic
 (`harmonicEnergy_zsmul : E(c • κ) = c² · E(κ)`).
 
-**The exact law.** Via `classPartFn_eq_residueWeight_mul`, the
-four-resolution gravity defect is a cross-ratio of scaled partition
-functions:
+**The exact law.** Via `classComplexity_residue_split` and the key
+lemma (`residueAction_complexity_eq`), the four-resolution gravity
+defect is a cross-ratio of scaled partition functions
+(`classPartFn_eq_residueWeight_mul` is the partition-function form
+of the same split):
 
 ```lean
 theorem residue_gravity_crossRatio (q q' : ℕ) [NeZero q] [NeZero q'] :
@@ -260,20 +262,22 @@ theorem residue_gravity_crossRatio (q q' : ℕ) [NeZero q] [NeZero q'] :
 ```
 
 **The boundary.** `q ∣ q'` makes `{gcd, lcm} = {q, q'}` and the
-defect vanish identically: **gravity is exact on the tower exactly
-along chains** (`residue_gravity_dvd`).
+defect vanish identically: gravity is exact along chains
+(`residue_gravity_dvd`); the `C₃` witness shows it can strictly
+fail off them.
 
 **The strictness.** On `cycleGraph 3` at `(q, q') = (2, 3)`:
 `Z(1/3)·Z(12) > Z(4/3)·Z(3)` in scalar theta values
 (`cycle3_classScaledPartFn`), by first-mode lower bounds against
 geometric tail bounds (the estimate discipline demonstrated in
 `Meno/Zeta.lean`, restated for the face), so the defect is strictly
-negative — **incomparable resolutions couple supermodularly**
-(`cycle3_crossRatio_neg`).
+negative — **at the witness, incomparable resolutions couple
+supermodularly** (`cycle3_crossRatio_neg`).
 
 **The impossibility.** Same theorem, read as the face's negative:
-there is no resolution-independent gravity on the tower — exactness
-selects the divisibility order.
+there is no resolution-independent gravity on the tower — exact
+along the divisibility order, strictly failing at an incomparable
+pair.
 
 **Falsification:** if the cross-ratio identity fails, the residue
 factorization is unsound — consequence: the residue-action layer's

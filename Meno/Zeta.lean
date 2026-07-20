@@ -115,51 +115,13 @@ private lemma integral_mellin_mode_sq_gen (k : ℕ) {s : ℝ} (hs : 0 < s) :
 noncomputable def menoSpectralIntegral : ℝ :=
   ∫ α in Ioi 0, (scalarPartFn α - 1) * Real.sqrt α
 
-/-! ## Symmetric split of the partition function -/
+/-! ## Symmetric split of the partition function
 
-private lemma summable_exp_sq_nat (α : ℝ) (hα : 0 < α) :
-    Summable (fun i : ℕ => Real.exp (-α * (i : ℝ) ^ 2)) := by
-  have hle : ∀ i : ℕ, (↑i : ℝ) ≤ (↑i : ℝ) ^ 2 := by
-    intro i; rcases i with _ | i
-    · simp
-    · nlinarith [sq_nonneg ((↑(i + 1) : ℝ) - 1),
-        show (1 : ℝ) ≤ ↑(i + 1) from by exact_mod_cast Nat.succ_pos i]
-  exact Real.summable_exp_nat_mul_of_ge (neg_neg_of_pos hα)
-    (f := fun i => (↑i : ℝ) ^ 2) hle
-
-private lemma summable_exp_sq_shift (α : ℝ) (hα : 0 < α) :
-    Summable (fun k : ℕ => Real.exp (-α * ((k:ℝ) + 1) ^ 2)) := by
-  have h := (summable_nat_add_iff 1).mpr (summable_exp_sq_nat α hα)
-  exact h.congr fun k => by push_cast; rfl
-
-/-- Symmetric split: the partition function minus its vacuum term equals
-    twice the sum over positive modes. The ℤ-sum over `k²` collapses to
-    the ℕ-sum over `(k+1)²` doubled (by evenness) plus the `k=0` term. -/
-private lemma scalarPartFn_sub_one_eq (α : ℝ) (hα : 0 < α) :
-    scalarPartFn α - 1 = 2 * ∑' k : ℕ, Real.exp (-α * ((k:ℝ) + 1) ^ 2) := by
-  set S : ℝ := ∑' k : ℕ, Real.exp (-α * ((k:ℝ) + 1) ^ 2) with hS_def
-  have hshift : Summable (fun k : ℕ => Real.exp (-α * ((k:ℝ) + 1) ^ 2)) :=
-    summable_exp_sq_shift α hα
-  have hSum_S : HasSum (fun k : ℕ => Real.exp (-α * ((k:ℝ) + 1) ^ 2)) S := hshift.hasSum
-  have hf₁ : HasSum
-      (fun n : ℕ => Real.exp (-α * ((((n:ℤ) + 1):ℤ):ℝ) ^ 2)) S := by
-    refine hSum_S.congr fun n => ?_
-    push_cast; rfl
-  have hf₂ : HasSum
-      (fun n : ℕ => Real.exp (-α * ((-(((n:ℤ) + 1)):ℤ):ℝ) ^ 2)) S := by
-    refine hSum_S.congr fun n => ?_
-    push_cast; ring_nf
-  have hZ : HasSum (fun k : ℤ => Real.exp (-α * ((k:ℤ):ℝ) ^ 2))
-      (S + Real.exp (-α * (((0:ℤ):ℝ)) ^ 2) + S) :=
-    HasSum.of_add_one_of_neg_add_one hf₁ hf₂
-  have hZ_val : scalarPartFn α = S + 1 + S := by
-    have h := hZ.tsum_eq
-    have h0 : Real.exp (-α * (((0:ℤ):ℝ)) ^ 2) = 1 := by simp
-    rw [h0] at h
-    show ∑' k : ℤ, Real.exp (-α * (k : ℝ) ^ 2) = S + 1 + S
-    convert h using 1
-  rw [hZ_val]
-  ring
+The split and the shifted-mode summability
+(`QuadraticAction.scalarPartFn_sub_one_eq`,
+`QuadraticAction.summable_exp_sq_shift`) live with the scalar theta
+value (`Meno/QuadraticAction.lean`, promoted at the G3 review); this
+file consumes them. -/
 
 /-- General per-mode integrand `2·exp(-α(k+1)²)·α^(s-1)` is integrable on `Ioi 0`. -/
 private lemma integrableOn_menoMode_gen (k : ℕ) {s : ℝ} (hs : 0 < s) :
