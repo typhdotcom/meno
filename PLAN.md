@@ -266,7 +266,7 @@ selects the divisibility order.
 factorization is unsound — consequence: the residue-action layer's
 priced claims are excised and the tower reverts to counting.
 
-### G4 — The symmetry no-go (no objective bit) — OPEN
+### G4 — The symmetry no-go (no objective bit) — CLOSED (Meno/Symmetry.lean)
 
 **Infrastructure** (new, generic, small): `IncidenceGraph.Auto` —
 vertex and edge equivalences commuting with `src` and `tgt`; the
