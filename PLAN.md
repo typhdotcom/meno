@@ -495,8 +495,8 @@ enumerable budget exactly where there is nothing to describe.
 
 ### G9 — The currency (one functional prices the corrections) — CLOSED (Meno/InfoRatchet.lean)
 
-Admitted by amendment at the R retrospective. Every correction term
-the program produced is a fluctuation quantity; G9 promotes the
+Admitted by amendment at the R retrospective. The gravity, time,
+and tower corrections are fluctuation quantities; G9 promotes the
 pattern to theorems: the cumulant functional of the Gibbs law, with
 gravity's defect, time's Jensen gap, and the tower's cross-ratio
 exhibited as its differences — on the two observables the model
@@ -533,9 +533,10 @@ entropy against the tilted Gibbs law**. Corollaries through the
 standing engine (`relativeEntropy_nonneg`,
 `relativeEntropy_eq_zero_iff`): `gibbsExpect_le_cgf` and the
 boundary `cgf_sub_gibbsExpect_eq_zero_iff` (`φ` constant). This
-also closes a gap in the tree's own story: the README claims one
-definition is behind every such bound, but G5's Jensen route runs
-through Mathlib's `strictConcaveOn_log_Ioi`, not the house engine.
+also closed a gap in the tree's own story: the README claimed one
+definition behind every such bound while G5's Jensen route ran
+through Mathlib's `strictConcaveOn_log_Ioi`; the demotion makes the
+claim exact.
 
 **The recognitions.** Each a rewrite, not a new estimate:
 
@@ -638,8 +639,8 @@ and executes the main Harvest. R is the README rewrite: the stake,
 the crown, the eight faces with their anchors, the dichotomy as the
 completion object — no coverage bundle, no review chronology. G9
 was admitted by amendment at the R retrospective — the sprint's
-emergent observation, that every correction term is a fluctuation
-quantity, promoted from pattern to theorem.
+emergent observation, that the gravity, time, and tower corrections
+are fluctuation quantities, promoted from pattern to theorem.
 
 ## Status Ledger
 

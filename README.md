@@ -451,36 +451,31 @@ the carrier bundle (`Meno/Fluctuation.lean`, `Meno/LatticeAction.lean`).
 
 ### The currency (G9)
 
-Every correction term the program produced is a fluctuation
-quantity; the currency face prices them all with one functional. The
-**cumulant functional** of the Gibbs law, `cgf φ = log ⟨e^φ⟩`
-(`Meno/SectorAction.lean`, beside the moments), carries the exact
-law: its gap over the mean **is** a relative entropy against the
-tilted Gibbs law, so the ratchet's Jensen bound and its boundary
-flow through the house relative-entropy engine — the engine
-section's "one definition is behind every such bound" is now exact,
-and no convexity import remains in the tree — and gravity's defect,
-time's Jensen gap, temperature's scaled complexity, and the tower's
-cross-ratio are each **recognized** as `cgf` combinations by
-rewrites, not new estimates. There is no
-conjunction theorem bundling the recognitions — that would be the
-coverage bundle reborn; the unification is stated here, backed by
-the named equalities.
+One functional prices the corrections. The cumulant functional of
+the Gibbs law, `cgf φ = log ⟨e^φ⟩` (`Meno/SectorAction.lean`,
+beside the moments), satisfies the exact law: its gap over the
+Gibbs mean is a relative entropy — of the Gibbs law against its own
+tilt by the observable — so the Jensen bound and its constancy
+boundary are corollaries of the relative-entropy engine. Gravity's
+coupling defect, time's Jensen gap, temperature's scaled
+complexity, and the tower's cross-ratio are each a difference of
+`cgf` evaluations, on the two observables the model owns:
+redundancy and energy.
 
 | Result | Statement |
 | :--- | :--- |
 | `SectorAction.cgf` | **The currency**: `cgf φ = log ⟨e^φ⟩` — unconditioned, like `partFn` and `gibbsExpect`; each law carries its own summability, automatic on a finite sector type |
 | `FinDist.tilt`, `tilt_norm_pos`, `FullSupport.tilt` | **The tilted distribution**: reweight by `exp (φ x)` — normalizable with no support hypothesis (total mass one forces a positive mass, `exists_mass_pos`), full-support-preserving |
 | `cgf_sub_gibbsExpect_eq_relativeEntropy` | **THE KL IDENTITY** (the exact law, `Meno/InfoRatchet.lean`): `cgf φ − ⟨φ⟩` is the relative entropy of the Gibbs law against its own tilt by the observable |
-| `gibbsExpect_le_cgf`, `cgf_sub_gibbsExpect_eq_zero_iff` | The Gibbs–Jensen bound and its boundary (the observable is constant), both through the standing engine (`relativeEntropy_nonneg`, `relativeEntropy_eq_zero_iff`) |
-| `cgf_bilinear_eq_zero_iff` | **The bilinear boundary**: the additivity defect on a pair vanishes iff the exponentiated observables are Gibbs-uncorrelated — the gravity boundary's proof, generalized |
-| `lift_complexity_eq_cgf` | **The time recognition**: the lift's priced increment is `cgf` of the log-redundancy — a rewrite of `lift_complexity` |
-| `gravityDefect_eq_cgf` | **The gravity recognition**: the defect is the additivity defect of `cgf` at the two log-redundancies — a rewrite of `gravity_defect` |
+| `gibbsExpect_le_cgf`, `cgf_sub_gibbsExpect_eq_zero_iff` | The Gibbs–Jensen bound and its boundary (the observable is constant), both corollaries of the relative-entropy engine (`relativeEntropy_nonneg`, `relativeEntropy_eq_zero_iff`) |
+| `cgf_bilinear_eq_zero_iff` | **The bilinear boundary**: the additivity defect on a pair vanishes iff the exponentiated observables are Gibbs-uncorrelated |
+| `lift_complexity_eq_cgf` | **The time recognition**: the lift's priced increment is `cgf` of the log-redundancy — `lift_complexity` in cumulant form |
+| `gravityDefect_eq_cgf` | **The gravity recognition**: the defect is the additivity defect of `cgf` at the two log-redundancies — `gravity_defect` in cumulant form |
 | `log_classScaledPartFn_eq_cgf` | **The temperature recognition** (`Meno/BasisIndependence.lean`): the log β-scaled partition function is the harmonic complexity plus `cgf` of the temperature-shift observable — `⟨e^{(1−β)E}⟩ = Z(β)/Z` on the intrinsic carrier |
 | `residue_gravity_crossRatio_cgf` | **The tower recognition** (`Meno/TowerGravity.lean`): the four class complexities cancel — the tower defect is the four-term `cgf` combination of energy observables |
-| `twoSector_cgf_gap_pos`, `twoSector_cgf_bilinear_pos` | **The strictness** at the standing two-sector witness, each through its recognition and the standing witness — single route |
+| `twoSector_cgf_gap_pos`, `twoSector_cgf_bilinear_pos` | **The strictness** at the two-sector witness: the Jensen gap and the additivity defect are strictly positive |
 | `cgf_not_additive` | **The impossibility**: there is no linear currency — the cumulant functional is not additive in the observable, witnessed by the two-sector data |
-| `lift_complexity_ge_gibbs_log_rate`, `lift_complexity_sub_eq_iff_fiberCount_const`, `gravity_defect_eq_zero_iff` | **The demotions** (rule 3): G5's Jensen pair and G2's boundary re-derived through the KL identity and the bilinear boundary — the external `strictConcaveOn_log_Ioi` route and the direct log-injectivity route retired; names and statements unchanged |
+| `lift_complexity_ge_gibbs_log_rate`, `lift_complexity_sub_eq_iff_fiberCount_const`, `gravity_defect_eq_zero_iff` | G5's Jensen bound with its boundary, and G2's boundary, are instances of the KL identity and the bilinear boundary |
 
 ### Geometry
 
