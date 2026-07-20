@@ -117,10 +117,13 @@ harmonic representative — which lies in the real cycle space, since
 the least-norm representative is the explicit combination
 `periodRep` with coefficients `(gramOf c)⁻¹ *ᵥ k`. Acceptance: for
 every real cycle combination `z ≠ 0`,
-`(pairingR z κ)² / ‖z‖² ≤ harmonicEnergy κ`, with equality iff `z`
-is parallel to the harmonic representative. Prerequisite lemma,
-proved in this phase: the priced Gram of a lattice basis is the
-inverse of its chain Gram —
+`(pairingR z κ)² / ‖z‖² ≤ harmonicEnergy κ`, with equality, for a
+nonzero class (`κ ≠ 0` — at the zero class equality holds at every
+`z` while no nonzero `z` is parallel to the zero representative),
+iff `z` is parallel to the harmonic representative. Prerequisite
+identity, standing (`basisGramData_gram`,
+`Meno/BasisIndependence.lean`, a `rfl`): the priced Gram of a
+lattice basis is the inverse of its chain Gram —
 `(G.basisGramData B).gram = (gramOf (G.cyclesR B))⁻¹`.
 
 **The systole corollary.** Matter's mass is bounded below by the
