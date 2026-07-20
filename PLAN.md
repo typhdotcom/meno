@@ -164,12 +164,13 @@ sound. **Falsification:** if the `cycleGraph` equality case fails,
 the walk-length bridge is false; consequence — the Groupoid layer
 loses its consumer and is harvested in the same phase.
 
-### G2 — Covariance gravity — OPEN
+### G2 — Covariance gravity — CLOSED (Meno/InfoRatchet.lean)
 
 **Constructions** (`Meno/InfoRatchet.lean`): the priced lift and
 coupling **without fiber hypotheses** — `SectorAction.lift`
-(pull back the energy of a finite-sector action along any map from a
-finite type, no constant-fiber assumption) and `SectorAction.couple`
+(pull back the energy of a finite-sector action along any surjective
+map from a finite type — surjectivity carries the zero-energy sector
+upstairs; no constant-fiber assumption) and `SectorAction.couple`
 (the pullback `SGD.Pullback f g` priced by the base), plus the
 covariance `SectorAction.gibbsCov φ ψ :=
 gibbsExpect (φ * ψ) − gibbsExpect φ * gibbsExpect ψ` (whose diagonal
@@ -177,12 +178,14 @@ is the existing `gibbsVariance`), and the fiber-count observable
 `fiberCount f : A.Λ → ℝ := fun d => Nat.card {x // f x = d}`.
 
 **The exact law.** For surjective `f`, `g` on finite types over a
-finite-sector base:
+finite-sector base, with the four-term defect named
+(`gravityDefect f g hf hg :=
+((couple).complexity + K) − ((lift f).complexity + (lift g).complexity)`):
 
 ```lean
-theorem gravity_defect (A : SectorAction) [Fintype A.Λ] … :
-    ((A.couple f g).complexity + A.complexity)
-      - ((A.lift f).complexity + (A.lift g).complexity)
+theorem gravity_defect (A : SectorAction) [Fintype A.Λ] …
+    (hf : Function.Surjective f) (hg : Function.Surjective g) :
+    A.gravityDefect f g hf hg
     = Real.log (A.gibbsExpect (fiberCount f * fiberCount g))
       - Real.log (A.gibbsExpect (fiberCount f))
       - Real.log (A.gibbsExpect (fiberCount g))
@@ -202,7 +205,9 @@ fiber instance (demotion, rule 3), as are its carrier instances.
 
 **The strictness.** A named two-sector witness: base `Bool` with
 energies `0` and `1`, fiber counts `(1, 2)` for both maps; the
-defect is `log(⟨m²⟩/⟨m⟩²) > 0` — computed in closed form.
+defect is `log⟨m²⟩ − 2 log⟨m⟩ > 0` — positive by strict Gibbs
+fluctuation of the non-constant profile (`gibbsVariance_pos`), the
+log split by strict monotonicity.
 
 **The direction theorem.** Comonotone redundancy binds:
 `0 ≤ defect` when
@@ -478,7 +483,7 @@ completion object — no coverage bundle, no review chronology.
 | Face | Anchors delivered | Status |
 |------|-------------------|--------|
 | G1 systole inequality | impossibility `MatterSector.not_gradient` (standing, restated); law `pairing_sq_le_energy_mul_normSq` + `MatterSector.mass_systole`; boundary `dualNorm_combination_le` / `dualNorm_combination_eq_iff` + equality `cycle_systole_equality` (with `geodesic_harmonic_duality` demoted to its instance); strictness `theta_pairing_normSq_ge_four`, `theta_mass_gt_systole`. Harvest enumerated: empty | **CLOSED** |
-| G2 covariance gravity | — | **OPEN** |
+| G2 covariance gravity | constructions `SectorAction.lift` / `SectorAction.couple` / `gibbsCov` / `fiberCount`; law `gravity_defect` (with `lift_complexity`, `couple_complexity`); boundary `gravity_defect_eq_zero_iff` (`complexity_gravity` demoted to the zero-covariance chart); strictness `twoSector_gravityDefect_pos`; direction `gravityDefect_nonneg_of_comonotone` (via `gibbsCov_double_sum`); impossibility `exists_gravity_defect_ne_zero` | **CLOSED** |
 | G3 arithmetic gravity | — | **OPEN** |
 | G4 symmetry no-go | impossibility `cycle_no_invariant_representative`; law `cycle_equivariant_section_iff`; strictness `cycle_four_two_no_equivariant_section`, `cycle_four_two_no_invariant_representative`; boundary `cycle_three_two_equivariant_section` | **CLOSED** |
 | G5 non-uniform time | — | **OPEN** |

@@ -235,25 +235,38 @@ breaks the symmetry — the choice of bit is physical.
 
 ### Gravity
 
-There is **one gravity theorem**: the priced identity
-`SectorAction.complexity_gravity` — coupling two descriptions over a
-shared base costs the two lifts minus the base, for any sector
-action. The identity is elementary given the constructions: the
-coupling prices the base once by definition — with uniform fibers it
-is energy-equivalent to `base ⊗ (free ⊗ free)` and the lift to
-`base ⊗ free`, so the additivity of complexity over independent
-products closes it; the identity also follows in two rewrites from
-the independently proved evaluations `coupling_complexity` and
-`uniformLift_complexity`, so the decomposition is the structure of
-the proof, not a dependency of the fact. What is established is that
-**one statement** has the counting, entropy, partition-function, and
-carrier identities as literal instances: **counting** is the
-zero-energy special case,
-**entropy** the Gibbs-split corollary, and on the graph carrier the
-identity holds priced by the action itself, with pricing and
-counting numerically bridged by the same deficit at all three
-levels, strict wherever there is anything to price, and the
-resolutions forming a tower whose losses are priced in one currency.
+There is **one gravity law** (G2): the four-term defect of coupling
+two descriptions over a shared base is exactly the log-correlation
+of their redundancy profiles (`gravity_defect`), and it vanishes
+precisely at zero Gibbs covariance
+(`gravity_defect_eq_zero_iff`). The priced identity
+`SectorAction.complexity_gravity` — coupling saves exactly the base
+— is its **zero-covariance chart**: constant redundancy profiles
+have zero covariance, and the theorem is re-derived as that instance
+(demotion, PLAN rule 3), its statement unchanged, its decomposition
+lemmas (`coupling_energyEquiv`, `uniformLift_energyEquiv`,
+`complexity_prod`) retained as structure. What is established is
+that **one statement** has the counting, entropy,
+partition-function, and carrier identities as literal instances:
+**counting** is the zero-energy special case, **entropy** the
+Gibbs-split corollary, and on the graph carrier the identity holds
+priced by the action itself, with pricing and counting numerically
+bridged by the same deficit at all three levels, strict wherever
+there is anything to price, and the resolutions forming a tower
+whose losses are priced in one currency.
+
+#### The covariance gravity law (G2)
+
+| Result | Statement |
+| :--- | :--- |
+| `SectorAction.lift`, `SectorAction.couple` | The unconditioned constructions: energy pulled back along any surjective map from a finite type — surjectivity carries the zero-energy sector — and the pullback `SGD.Pullback` priced by the base; no fiber hypotheses |
+| `fiberCount`, `SectorAction.gibbsCov`, `gibbsCov_self` | The redundancy profile of a description map, and the Gibbs covariance whose diagonal is the standing `gibbsVariance` |
+| `lift_complexity`, `couple_complexity` | The priced increments are log Gibbs-mean redundancies: `K(lift f) = K + log⟨fiberCount f⟩`, `K(couple) = K + log⟨fiberCount f · fiberCount g⟩` (pullback fibers are fiber products, `fiberCount_pullback_base`) |
+| `gravity_defect` | **THE COVARIANCE GRAVITY LAW**: `gravityDefect = log⟨m·m'⟩ − log⟨m⟩ − log⟨m'⟩` — sharing two descriptions over one base saves exactly the base, corrected by the log-correlation of their redundancy profiles; the correction is a fluctuation quantity |
+| `gravity_defect_eq_zero_iff` | **The boundary**: the defect vanishes iff `gibbsCov (fiberCount f) (fiberCount g) = 0` — the constant-fiber identity is the zero-covariance chart, not a law of coupling |
+| `gibbsCov_double_sum`, `gravityDefect_nonneg_of_comonotone` | **The direction theorem**: `Cov(φ,ψ) = ½ Σ_{d,d'} μ_d μ_{d'} (φ_d − φ_{d'})(ψ_d − ψ_{d'})`, so comonotone redundancy binds — `0 ≤ defect` |
+| `twoSectorAction`, `twoSectorMap`, `twoSector_gravityDefect_pos` | **The strictness witness**: base `Bool` with energies `0`/`1` and redundancy profile `(1, 2)` on both legs — the defect is `log⟨m²⟩ − 2 log⟨m⟩ > 0`, by strict Gibbs fluctuation of the non-constant profile |
+| `exists_gravity_defect_ne_zero` | **The impossibility**: there is no correlation-free general coupling — the defect is not identically zero |
 
 #### The gravity theorem and its corollaries
 

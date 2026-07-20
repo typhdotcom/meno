@@ -401,6 +401,50 @@ theorem sum_comp_card_fiber {X D : Type u} [Fintype X] [Fintype D]
     exact hfib d
   rw [hcard, nsmul_eq_mul]
 
+/-! ### The fiber-count observable (G2) -/
+
+/-- **The fiber-count observable** (G2): the number of states a
+description map places over each base point, as a real observable —
+the redundancy profile of the description. -/
+noncomputable def fiberCount {X D : Type u} (f : X → D) : D → ℝ :=
+  fun d => (Nat.card {x : X // f x = d} : ℝ)
+
+/-- Surjectivity from a finite type puts at least one state over
+every base point. -/
+theorem one_le_fiberCount {X D : Type u} [Finite X] {f : X → D}
+    (hf : Function.Surjective f) (d : D) : 1 ≤ fiberCount f d := by
+  obtain ⟨x, hx⟩ := hf d
+  have hpos : 0 < Nat.card {x : X // f x = d} :=
+    Nat.card_pos_iff.mpr ⟨⟨⟨x, hx⟩⟩, inferInstance⟩
+  show (1 : ℝ) ≤ (Nat.card {x : X // f x = d} : ℝ)
+  exact_mod_cast hpos
+
+/-- Summing a composite through a map groups by fibers — the general,
+non-uniform form of `sum_comp_card_fiber`. -/
+theorem sum_comp_fiberCount {X D : Type u} [Fintype X] [Fintype D]
+    [DecidableEq D] (f : X → D) (g : D → ℝ) :
+    ∑ x, g (f x) = ∑ d, fiberCount f d * g d := by
+  rw [← Finset.sum_fiberwise' Finset.univ f g]
+  refine Finset.sum_congr rfl fun d _ => ?_
+  rw [Finset.sum_const]
+  have hcard : (Finset.univ.filter fun x : X => f x = d).card
+      = Nat.card {x : X // f x = d} := by
+    rw [← Fintype.card_subtype, ← Nat.card_eq_fintype_card]
+  rw [hcard, nsmul_eq_mul]
+  rfl
+
+/-- **The pullback's base-fiber count is the product of the two fiber
+counts** — no constancy hypothesis (the counting engine of the
+unconditioned coupling, through `SGD.Pullback.baseFiberEquiv`). -/
+theorem fiberCount_pullback_base {X Y D : Type u} (f : X → D) (g : Y → D)
+    (d : D) :
+    fiberCount (fun p : SGD.Pullback f g => SGD.Pullback.base p) d
+      = fiberCount f d * fiberCount g d := by
+  show (Nat.card {p : SGD.Pullback f g // SGD.Pullback.base p = d} : ℝ) = _
+  rw [Nat.card_congr (SGD.Pullback.baseFiberEquiv f g d), Nat.card_prod]
+  push_cast
+  rfl
+
 /-- **The entropy chain rule for a uniform lift** (review #9): pulling
 a distribution back along a constant-fiber map, dividing each mass
 evenly across the fiber, adds exactly the log of the fiber size. -/
@@ -1508,6 +1552,297 @@ theorem coarseGrain_comp (A : SectorAction.{u}) {B C : Type u}
     Real.log_div (hpos'' c).ne' (hpos b₀).ne']
   ring
 
+/-! ### Covariance gravity: the priced lift and coupling, unconditioned (G2)
+
+The gravity face without fiber hypotheses. `lift` pulls the energy of
+a finite-sector action back along a surjective map from a finite type
+— surjectivity is exactly what carries the zero-energy sector
+upstairs; no constant-fiber assumption. `couple` prices the pullback
+by the base. The complexity increments are log Gibbs-mean
+redundancies (`lift_complexity`, `couple_complexity`), the four-term
+gravity defect is the log-correlation of the two redundancy profiles
+(`gravity_defect`), it vanishes exactly at zero covariance
+(`gravity_defect_eq_zero_iff`) — the constant-fiber
+`complexity_gravity` below is the zero-covariance chart — and
+comonotone redundancy binds (`gravityDefect_nonneg_of_comonotone`),
+through the double-sum covariance identity (`gibbsCov_double_sum`).
+The strictness witness and the face's negative
+(`twoSector_gravityDefect_pos`, `exists_gravity_defect_ne_zero`)
+close the file. -/
+
+section CovarianceGravity
+
+variable (A : SectorAction.{u}) {X Y : Type u} [Fintype X] [Fintype Y]
+  (f : X → A.Λ) (g : Y → A.Λ)
+
+/-- **The Gibbs covariance** of two observables (G2): the correlation
+of their profiles under the Gibbs law. Its diagonal is the standing
+`gibbsVariance` (`gibbsCov_self`). -/
+noncomputable def gibbsCov (φ ψ : A.Λ → ℝ) : ℝ :=
+  A.gibbsExpect (φ * ψ) - A.gibbsExpect φ * A.gibbsExpect ψ
+
+/-- The covariance diagonal is the variance. -/
+theorem gibbsCov_self (φ : A.Λ → ℝ) :
+    A.gibbsCov φ φ = A.gibbsVariance φ := by
+  show A.gibbsExpect (φ * φ) - A.gibbsExpect φ * A.gibbsExpect φ
+    = A.gibbsExpect (fun k => φ k ^ 2) - A.gibbsExpect φ ^ 2
+  rw [show φ * φ = fun k => φ k ^ 2 from
+      funext fun k => (pow_two (φ k)).symm,
+    ← pow_two (A.gibbsExpect φ)]
+
+/-- **The priced lift, unconditioned** (G2): pull the energy of a
+sector action back along a surjective map from a finite type —
+surjectivity carries the zero-energy sector upstairs; no
+constant-fiber assumption. -/
+noncomputable def lift (hf : Function.Surjective f) : SectorAction.{u} where
+  Λ := X
+  E x := A.E (f x)
+  E_zero := by
+    obtain ⟨z, hz⟩ := A.E_zero
+    obtain ⟨x, hx⟩ := hf z
+    exact ⟨x, by rw [hx, hz]⟩
+  E_nonneg x := A.E_nonneg (f x)
+  summable := (hasSum_fintype _).summable
+
+instance (hf : Function.Surjective f) : Fintype (A.lift f hf).Λ :=
+  inferInstanceAs (Fintype X)
+
+/-- **The priced coupling, unconditioned** (G2): the pullback
+`SGD.Pullback f g` priced by the base energy at the shared image. -/
+noncomputable def couple [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g) :
+    SectorAction.{u} where
+  Λ := SGD.Pullback f g
+  E p := A.E (SGD.Pullback.base p)
+  E_zero := by
+    obtain ⟨z, hz⟩ := A.E_zero
+    obtain ⟨x, hx⟩ := hf z
+    obtain ⟨y, hy⟩ := hg z
+    refine ⟨⟨(x, y), hx.trans hy.symm⟩, ?_⟩
+    show A.E (f x) = 0
+    rw [hx, hz]
+  E_nonneg p := A.E_nonneg _
+  summable := (hasSum_fintype _).summable
+
+/-- **The gravity defect** (G2): what coupling-then-base costs beyond
+the two lifts — the four-term combination whose vanishing is the
+constant-fiber gravity identity. -/
+noncomputable def gravityDefect [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g) : ℝ :=
+  ((A.couple f g hf hg).complexity + A.complexity)
+    - ((A.lift f hf).complexity + (A.lift g hg).complexity)
+
+/-! #### The finite-base expectation toolkit -/
+
+variable [Fintype A.Λ]
+
+/-- The Gibbs expectation over a finite sector type, as a finite
+sum. -/
+theorem gibbsExpect_eq_sum (φ : A.Λ → ℝ) :
+    A.gibbsExpect φ = ∑ d, φ d * A.gibbsMass d := by
+  show (∑' d, φ d * A.gibbsMass d) = ∑ d, φ d * A.gibbsMass d
+  rw [tsum_fintype]
+
+/-- The Gibbs masses over a finite sector type sum to one. -/
+theorem sum_gibbsMass_eq_one : ∑ d, A.gibbsMass d = 1 := by
+  have h := A.tsum_gibbsMass_eq_one
+  rw [tsum_fintype] at h
+  exact h
+
+/-- An observable pointwise at least one has Gibbs expectation at
+least one — the Gibbs law is a probability. -/
+theorem one_le_gibbsExpect (φ : A.Λ → ℝ) (hφ : ∀ d, 1 ≤ φ d) :
+    1 ≤ A.gibbsExpect φ := by
+  rw [gibbsExpect_eq_sum]
+  calc (1 : ℝ) = ∑ d, A.gibbsMass d := A.sum_gibbsMass_eq_one.symm
+    _ ≤ ∑ d, φ d * A.gibbsMass d :=
+      Finset.sum_le_sum fun d _ =>
+        le_mul_of_one_le_left (A.gibbsMass_nonneg d) (hφ d)
+
+/-- The Gibbs-mean redundancy of a surjection is positive. -/
+theorem gibbsExpect_fiberCount_pos (hf : Function.Surjective f) :
+    0 < A.gibbsExpect (fiberCount f) :=
+  lt_of_lt_of_le one_pos
+    (A.one_le_gibbsExpect (fiberCount f) (one_le_fiberCount hf))
+
+/-- The Gibbs-mean product redundancy of two surjections is
+positive. -/
+theorem gibbsExpect_fiberCount_mul_pos (hf : Function.Surjective f)
+    (hg : Function.Surjective g) :
+    0 < A.gibbsExpect (fiberCount f * fiberCount g) :=
+  lt_of_lt_of_le one_pos (A.one_le_gibbsExpect _ fun d => by
+    rw [Pi.mul_apply]
+    nlinarith [one_le_fiberCount hf d, one_le_fiberCount hg d])
+
+/-- **The double-sum covariance identity** (G2): the Gibbs covariance
+is half the doubly-indexed mean of coordinate products —
+`Cov(φ,ψ) = ½ Σ_{d,d'} μ_d μ_{d'} (φ_d − φ_{d'})(ψ_d − ψ_{d'})`. -/
+theorem gibbsCov_double_sum (φ ψ : A.Λ → ℝ) :
+    A.gibbsCov φ ψ
+      = (1 / 2) * ∑ d, ∑ d', A.gibbsMass d * A.gibbsMass d'
+          * ((φ d - φ d') * (ψ d - ψ d')) := by
+  have hkey : ∑ d, ∑ d', A.gibbsMass d * A.gibbsMass d'
+      * ((φ d - φ d') * (ψ d - ψ d'))
+      = ((∑ d, φ d * ψ d * A.gibbsMass d) * ∑ d, A.gibbsMass d)
+        + ((∑ d, A.gibbsMass d) * ∑ d, φ d * ψ d * A.gibbsMass d)
+        - ((∑ d, φ d * A.gibbsMass d) * ∑ d, ψ d * A.gibbsMass d)
+        - ((∑ d, ψ d * A.gibbsMass d) * ∑ d, φ d * A.gibbsMass d) := by
+    rw [Finset.sum_mul_sum, Finset.sum_mul_sum, Finset.sum_mul_sum,
+      Finset.sum_mul_sum,
+      ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib,
+      ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun d _ => ?_
+    rw [← Finset.sum_add_distrib, ← Finset.sum_sub_distrib,
+      ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun d' _ => ?_
+    ring
+  have h1 := A.sum_gibbsMass_eq_one
+  show A.gibbsExpect (φ * ψ) - A.gibbsExpect φ * A.gibbsExpect ψ = _
+  rw [hkey, h1, gibbsExpect_eq_sum, gibbsExpect_eq_sum, gibbsExpect_eq_sum]
+  simp only [Pi.mul_apply]
+  ring
+
+/-! #### The evaluations and the law -/
+
+/-- **The lift's partition function**: the base partition function
+times the Gibbs-mean redundancy. -/
+theorem lift_partFn (hf : Function.Surjective f) :
+    (A.lift f hf).partFn = A.partFn * A.gibbsExpect (fiberCount f) := by
+  classical
+  show (∑' x : X, Real.exp (-A.E (f x))) = _
+  rw [tsum_fintype, sum_comp_fiberCount f (fun d => Real.exp (-A.E d)),
+    gibbsExpect_eq_sum, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun d _ => ?_
+  show fiberCount f d * Real.exp (-A.E d)
+    = A.partFn * (fiberCount f d * (Real.exp (-A.E d) / A.partFn))
+  field_simp [A.partFn_pos.ne']
+
+/-- **The lift's complexity — the priced increment is the log
+Gibbs-mean redundancy** (G2; consumed by G5):
+`K(lift f) = K + log ⟨fiberCount f⟩`. -/
+theorem lift_complexity (hf : Function.Surjective f) :
+    (A.lift f hf).complexity
+      = A.complexity + Real.log (A.gibbsExpect (fiberCount f)) := by
+  show Real.log (A.lift f hf).partFn = _
+  rw [lift_partFn A f hf,
+    Real.log_mul A.partFn_pos.ne'
+      (A.gibbsExpect_fiberCount_pos f hf).ne']
+  rfl
+
+omit [Fintype X] [Fintype Y] in
+/-- **The coupling's partition function**: the base times the
+Gibbs-mean of the product redundancy — pullback fibers are fiber
+products. -/
+theorem couple_partFn [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g) :
+    (A.couple f g hf hg).partFn
+      = A.partFn * A.gibbsExpect (fiberCount f * fiberCount g) := by
+  classical
+  show (∑' p : SGD.Pullback f g, Real.exp (-A.E (SGD.Pullback.base p))) = _
+  rw [tsum_fintype,
+    sum_comp_fiberCount (fun p : SGD.Pullback f g => SGD.Pullback.base p)
+      (fun d => Real.exp (-A.E d)),
+    Finset.sum_congr rfl fun d _ => by rw [fiberCount_pullback_base f g d],
+    gibbsExpect_eq_sum, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun d _ => ?_
+  show fiberCount f d * fiberCount g d * Real.exp (-A.E d)
+    = A.partFn * ((fiberCount f * fiberCount g) d
+        * (Real.exp (-A.E d) / A.partFn))
+  rw [Pi.mul_apply]
+  field_simp [A.partFn_pos.ne']
+
+/-- **The coupling's complexity**: `K(couple) = K + log ⟨m·m'⟩`. -/
+theorem couple_complexity [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g) :
+    (A.couple f g hf hg).complexity
+      = A.complexity
+        + Real.log (A.gibbsExpect (fiberCount f * fiberCount g)) := by
+  show Real.log (A.couple f g hf hg).partFn = _
+  rw [couple_partFn A f g hf hg,
+    Real.log_mul A.partFn_pos.ne'
+      (A.gibbsExpect_fiberCount_mul_pos f g hf hg).ne']
+  rfl
+
+/-- **THE COVARIANCE GRAVITY LAW** (G2, the exact law): sharing two
+descriptions over one base saves exactly the base — corrected by the
+log-correlation of their redundancy profiles. The correction term is
+a fluctuation quantity: gravity's exactness is measured by the
+uncertainty face. -/
+theorem gravity_defect [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g) :
+    A.gravityDefect f g hf hg
+      = Real.log (A.gibbsExpect (fiberCount f * fiberCount g))
+        - Real.log (A.gibbsExpect (fiberCount f))
+        - Real.log (A.gibbsExpect (fiberCount g)) := by
+  show ((A.couple f g hf hg).complexity + A.complexity)
+      - ((A.lift f hf).complexity + (A.lift g hg).complexity) = _
+  rw [couple_complexity A f g hf hg, lift_complexity A f hf,
+    lift_complexity A g hg]
+  ring
+
+/-- **The boundary** (G2): the defect vanishes exactly at zero
+covariance of the redundancy profiles — the constant-fiber gravity
+identity (`complexity_gravity`) is the zero-covariance chart, not a
+law of coupling. -/
+theorem gravity_defect_eq_zero_iff [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g) :
+    A.gravityDefect f g hf hg = 0
+      ↔ A.gibbsCov (fiberCount f) (fiberCount g) = 0 := by
+  have hm := A.gibbsExpect_fiberCount_pos f hf
+  have hm' := A.gibbsExpect_fiberCount_pos g hg
+  have hmm := A.gibbsExpect_fiberCount_mul_pos f g hf hg
+  rw [A.gravity_defect f g hf hg]
+  constructor
+  · intro h0
+    have hlogeq : Real.log (A.gibbsExpect (fiberCount f * fiberCount g))
+        = Real.log (A.gibbsExpect (fiberCount f)
+            * A.gibbsExpect (fiberCount g)) := by
+      rw [Real.log_mul hm.ne' hm'.ne']
+      linarith
+    have heq := Real.log_injOn_pos (Set.mem_Ioi.mpr hmm)
+      (Set.mem_Ioi.mpr (mul_pos hm hm')) hlogeq
+    show A.gibbsExpect (fiberCount f * fiberCount g)
+        - A.gibbsExpect (fiberCount f) * A.gibbsExpect (fiberCount g) = 0
+    rw [heq]
+    ring
+  · intro hcov
+    have heq : A.gibbsExpect (fiberCount f * fiberCount g)
+        - A.gibbsExpect (fiberCount f) * A.gibbsExpect (fiberCount g)
+        = 0 := hcov
+    rw [show A.gibbsExpect (fiberCount f * fiberCount g)
+        = A.gibbsExpect (fiberCount f) * A.gibbsExpect (fiberCount g) from
+      by linarith, Real.log_mul hm.ne' hm'.ne']
+    ring
+
+/-- **The direction theorem** (G2): comonotone redundancy binds — if
+the two fiber-count profiles move together across every sector pair,
+the defect is nonnegative, by the double-sum covariance identity. -/
+theorem gravityDefect_nonneg_of_comonotone [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g)
+    (hmono : ∀ d d', 0 ≤ (fiberCount f d - fiberCount f d')
+        * (fiberCount g d - fiberCount g d')) :
+    0 ≤ A.gravityDefect f g hf hg := by
+  have hm := A.gibbsExpect_fiberCount_pos f hf
+  have hm' := A.gibbsExpect_fiberCount_pos g hg
+  have hcov : 0 ≤ A.gibbsCov (fiberCount f) (fiberCount g) := by
+    rw [A.gibbsCov_double_sum]
+    exact mul_nonneg (by norm_num) (Finset.sum_nonneg fun d _ =>
+      Finset.sum_nonneg fun d' _ => mul_nonneg
+        (mul_nonneg (A.gibbsMass_nonneg d) (A.gibbsMass_nonneg d'))
+        (hmono d d'))
+  have hcov' : A.gibbsExpect (fiberCount f * fiberCount g)
+      - A.gibbsExpect (fiberCount f) * A.gibbsExpect (fiberCount g)
+      = A.gibbsCov (fiberCount f) (fiberCount g) := rfl
+  have hlog : Real.log (A.gibbsExpect (fiberCount f)
+        * A.gibbsExpect (fiberCount g))
+      ≤ Real.log (A.gibbsExpect (fiberCount f * fiberCount g)) :=
+    Real.log_le_log (mul_pos hm hm') (by linarith)
+  rw [Real.log_mul hm.ne' hm'.ne'] at hlog
+  rw [A.gravity_defect f g hf hg]
+  linarith
+
+end CovarianceGravity
+
 /-! ### The priced uniform lift -/
 
 section UniformLift
@@ -1827,36 +2162,65 @@ theorem coupling_energyEquiv (W W' : Type u) [Fintype W] [Nonempty W]
   rw [add_zero, add_zero]
 
 omit [Fintype A.Λ] in
-/-- **THE GRAVITY THEOREM** (reviews #13, #21, #25, #28, #29):
+/-- **THE GRAVITY THEOREM — the zero-covariance chart** (reviews #13,
+#21, #25, #28, #29; demoted at G2, PLAN rule 3):
 `K(coupling) + K(base) = K(lift) + K(lift)` — merging two
 descriptions over a shared base saves exactly the base's
-complexity. The fiber hypotheses force the base finite; no
-Fintype instance is taken (review #29). The proof is
-structured through the decomposition lemmas — `coupling ≈ A ⊗
-(free ⊗ free)` (`coupling_energyEquiv`) and `lift ≈ A ⊗ free`
-(`uniformLift_energyEquiv`) — after which the identity is the
-additivity of complexity over independent products
-(`complexity_prod`). The identity does not depend on that route:
-`coupling_complexity` and `uniformLift_complexity` evaluate the
-same four terms independently and close it in two rewrites — the
-decomposition is the structure of the proof, not the sole carrier
-of the content (review #28). Counting gravity is the zero-energy
-corollary (`counting_gravity`, below); the entropy form is the
-Gibbs-split corollary (`entropy_gravity`). -/
+complexity. This is the **constant-fiber instance of the covariance
+gravity law** (`gravity_defect`): constant redundancy profiles have
+zero Gibbs covariance, so the defect vanishes and the four-term
+identity closes. The fiber hypotheses force the base finite; no
+Fintype instance is taken in the statement (review #29) — the proof
+constructs finiteness from surjectivity. The decomposition route
+(`coupling_energyEquiv`, `uniformLift_energyEquiv`,
+`complexity_prod`) remains standing as structure; the independent
+proof route through it is retired. Counting gravity is the
+zero-energy corollary (`counting_gravity`, below); the entropy form
+is the Gibbs-split corollary (`entropy_gravity`). -/
 theorem complexity_gravity :
     (A.coupling f g hm hm' hf hg).complexity + A.complexity
       = (A.uniformLift f hm hf).complexity
         + (A.uniformLift g hm' hg).complexity := by
-  haveI : Nonempty (ULift.{u} (Fin m)) := ⟨ULift.up ⟨0, hm⟩⟩
-  haveI : Nonempty (ULift.{u} (Fin m')) := ⟨ULift.up ⟨0, hm'⟩⟩
-  have hW : Fintype.card (ULift.{u} (Fin m)) = m := by simp
-  have hW' : Fintype.card (ULift.{u} (Fin m')) = m' := by simp
-  rw [SectorAction.complexity_congr
-      (coupling_energyEquiv A f g hm hm' hf hg _ _ hW hW'),
-    SectorAction.complexity_congr (uniformLift_energyEquiv A f hm hf _ hW),
-    SectorAction.complexity_congr (uniformLift_energyEquiv A g hm' hg _ hW')]
-  simp only [SectorAction.complexity_prod]
-  ring
+  classical
+  have hsf : Function.Surjective f := fun d => by
+    have hpos : 0 < Nat.card {x : X // f x = d} := by rw [hf d]; exact hm
+    obtain ⟨⟨x, hx⟩⟩ := (Nat.card_pos_iff.mp hpos).1
+    exact ⟨x, hx⟩
+  have hsg : Function.Surjective g := fun d => by
+    have hpos : 0 < Nat.card {y : Y // g y = d} := by rw [hg d]; exact hm'
+    obtain ⟨⟨y, hy⟩⟩ := (Nat.card_pos_iff.mp hpos).1
+    exact ⟨y, hy⟩
+  haveI : Finite A.Λ := Finite.of_surjective f hsf
+  haveI : Fintype A.Λ := Fintype.ofFinite _
+  have hm0 : (m : ℝ) ≠ 0 := by exact_mod_cast hm.ne'
+  have hm'0 : (m' : ℝ) ≠ 0 := by exact_mod_cast hm'.ne'
+  have hcf : fiberCount f = fun _ => (m : ℝ) := funext fun d => by
+    show (Nat.card {x : X // f x = d} : ℝ) = m
+    rw [hf d]
+  have hcg : fiberCount g = fun _ => (m' : ℝ) := funext fun d => by
+    show (Nat.card {y : Y // g y = d} : ℝ) = m'
+    rw [hg d]
+  have hconst : ∀ c : ℝ, A.gibbsExpect (fun _ => c) = c := fun c => by
+    rw [A.gibbsExpect_eq_sum]
+    show ∑ d, c * A.gibbsMass d = c
+    rw [← Finset.mul_sum, A.sum_gibbsMass_eq_one, mul_one]
+  have hd := A.gravity_defect f g hsf hsg
+  rw [hcf, hcg] at hd
+  rw [show ((fun _ : A.Λ => (m : ℝ)) * fun _ : A.Λ => (m' : ℝ))
+      = fun _ : A.Λ => (m : ℝ) * m' from rfl,
+    hconst, hconst, hconst, Real.log_mul hm0 hm'0] at hd
+  have hdef : A.gravityDefect f g hsf hsg
+      = ((A.couple f g hsf hsg).complexity + A.complexity)
+        - ((A.lift f hsf).complexity + (A.lift g hsg).complexity) := rfl
+  have hzero : ((A.coupling f g hm hm' hf hg).complexity + A.complexity)
+      - ((A.uniformLift f hm hf).complexity
+          + (A.uniformLift g hm' hg).complexity) = 0 := by
+    have h0 : ((A.couple f g hsf hsg).complexity + A.complexity)
+        - ((A.lift f hsf).complexity + (A.lift g hsg).complexity) = 0 := by
+      rw [← hdef]
+      linarith
+    exact h0
+  linarith
 
 omit [Fintype A.Λ] in
 /-- **The action-level partition-function gravity identity**
@@ -1939,5 +2303,112 @@ theorem counting_gravity {X Y D : Type u} [Fintype X] [Fintype Y]
     uniformAction_complexity, uniformAction_complexity,
     uniformAction_complexity, uniformAction_complexity] at key
   simpa [Nat.card_eq_fintype_card] using key
+
+/-! ## The two-sector witness: the defect is not identically zero (G2)
+
+The strictness anchor and the face's negative. Base `Bool` with
+energies `0` and `1`; one map with redundancy profile `(1, 2)` used
+on both legs. The defect is `log(⟨m²⟩/⟨m⟩²)`, strictly positive by
+strict Gibbs fluctuation of the non-constant profile — so **there is
+no correlation-free general coupling**: the constant-fiber identity
+is the zero-covariance chart, not a law of coupling. -/
+
+/-- **The two-sector base** (G2 strictness): sectors `Bool`, energies
+`0` and `1`. -/
+noncomputable def twoSectorAction : SectorAction.{0} where
+  Λ := Bool
+  E b := cond b 1 0
+  E_zero := ⟨false, rfl⟩
+  E_nonneg b := by cases b <;> norm_num
+  summable := (hasSum_fintype _).summable
+
+instance : Fintype twoSectorAction.Λ := inferInstanceAs (Fintype Bool)
+
+/-- The witness map: redundancy profile `(1, 2)` over
+`(false, true)`. -/
+def twoSectorMap : Fin 3 → Bool := ![false, true, true]
+
+instance : Fintype (@SGD.Pullback (Fin 3) (Fin 3) twoSectorAction.Λ
+    twoSectorMap twoSectorMap) :=
+  inferInstanceAs
+    (Fintype {p : Fin 3 × Fin 3 // twoSectorMap p.1 = twoSectorMap p.2})
+
+theorem twoSectorMap_surjective : Function.Surjective twoSectorMap := by
+  decide
+
+theorem twoSectorMap_fiberCount_false :
+    fiberCount twoSectorMap false = 1 := by
+  show (Nat.card {x : Fin 3 // twoSectorMap x = false} : ℝ) = 1
+  rw [Nat.card_eq_fintype_card,
+    show Fintype.card {x : Fin 3 // twoSectorMap x = false} = 1 from by
+      decide]
+  norm_num
+
+theorem twoSectorMap_fiberCount_true :
+    fiberCount twoSectorMap true = 2 := by
+  show (Nat.card {x : Fin 3 // twoSectorMap x = true} : ℝ) = 2
+  rw [Nat.card_eq_fintype_card,
+    show Fintype.card {x : Fin 3 // twoSectorMap x = true} = 2 from by
+      decide]
+  norm_num
+
+/-- **THE STRICTNESS WITNESS** (G2): at the two-sector base with the
+`(1, 2)` redundancy profile on both legs, the defect is
+`log⟨m²⟩ − 2 log⟨m⟩ > 0` — strict Gibbs fluctuation of a
+non-constant profile. -/
+theorem twoSector_gravityDefect_pos :
+    0 < twoSectorAction.gravityDefect twoSectorMap twoSectorMap
+        twoSectorMap_surjective twoSectorMap_surjective := by
+  have hs := twoSectorMap_surjective
+  have hvar : 0 < twoSectorAction.gibbsVariance (fiberCount twoSectorMap) := by
+    rcases eq_or_ne
+        (twoSectorAction.gibbsExpect (fiberCount twoSectorMap)) 1 with
+      he | hne
+    · refine twoSectorAction.gibbsVariance_pos _ (hasSum_fintype _).summable
+        (hasSum_fintype _).summable (k₀ := true) ?_
+      rw [twoSectorMap_fiberCount_true, he]
+      norm_num
+    · refine twoSectorAction.gibbsVariance_pos _ (hasSum_fintype _).summable
+        (hasSum_fintype _).summable (k₀ := false) ?_
+      rw [twoSectorMap_fiberCount_false]
+      exact Ne.symm hne
+  have hmpos : 0 < twoSectorAction.gibbsExpect (fiberCount twoSectorMap) :=
+    twoSectorAction.gibbsExpect_fiberCount_pos twoSectorMap hs
+  have hsq : twoSectorAction.gibbsExpect (fiberCount twoSectorMap) ^ 2
+      < twoSectorAction.gibbsExpect
+          (fiberCount twoSectorMap * fiberCount twoSectorMap) := by
+    have hcongr : twoSectorAction.gibbsExpect
+        (fiberCount twoSectorMap * fiberCount twoSectorMap)
+        = twoSectorAction.gibbsExpect
+            (fun k => fiberCount twoSectorMap k ^ 2) :=
+      congrArg _ (funext fun k => by
+        rw [Pi.mul_apply]
+        exact (pow_two _).symm)
+    have hvar' : twoSectorAction.gibbsVariance (fiberCount twoSectorMap)
+        = twoSectorAction.gibbsExpect
+            (fun k => fiberCount twoSectorMap k ^ 2)
+          - twoSectorAction.gibbsExpect (fiberCount twoSectorMap) ^ 2 := rfl
+    rw [hcongr]
+    linarith
+  rw [twoSectorAction.gravity_defect twoSectorMap twoSectorMap hs hs]
+  have hlog := Real.log_lt_log (by positivity) hsq
+  rw [Real.log_pow] at hlog
+  push_cast at hlog
+  linarith
+
+/-- **THE IMPOSSIBILITY** (G2): there is no correlation-free general
+coupling — the defect is not identically zero, so the uniform
+identity (`complexity_gravity`) is the zero-covariance chart, not a
+law of coupling. -/
+theorem exists_gravity_defect_ne_zero :
+    ∃ (A : SectorAction.{0}) (_ : Fintype A.Λ) (X Y : Type)
+      (_ : Fintype X) (_ : Fintype Y) (f : X → A.Λ) (g : Y → A.Λ)
+      (_ : Fintype (SGD.Pullback f g)) (hf : Function.Surjective f)
+      (hg : Function.Surjective g),
+      A.gravityDefect f g hf hg ≠ 0 :=
+  ⟨twoSectorAction, inferInstance, Fin 3, Fin 3, inferInstance,
+    inferInstance, twoSectorMap, twoSectorMap, inferInstance,
+    twoSectorMap_surjective, twoSectorMap_surjective,
+    ne_of_gt twoSector_gravityDefect_pos⟩
 
 end Meno
