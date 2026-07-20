@@ -317,28 +317,30 @@ every encoding breaks the symmetry — the choice of bit is physical.
 the descriptions reading of K1–K3 is withdrawn tree-wide and the
 counting layer reverts to cochain vocabulary.
 
-### G5 — Time, non-uniform — OPEN
+### G5 — Time, non-uniform — CLOSED (Meno/InfoRatchet.lean)
 
 **The exact laws** (consuming G2's `lift`): the priced increment is
-the log Gibbs-mean redundancy,
-`lift_complexity : K(lift f) − K(base) = log ⟨fiberCount f⟩_Gibbs`,
-and the counted cost stays exact and non-uniform,
-`sectionCost f = Σ_d log (fiberCount f d)`
+the log Gibbs-mean redundancy —
+`lift_complexity : K(lift f) = K(base) + log ⟨fiberCount f⟩_Gibbs`,
+delivered at G2 — and the counted cost stays exact and non-uniform,
+`sectionCost_eq_sum_log_fiberCount : sectionCost f = Σ_d log (fiberCount f d)`
 (from the standing `card_sections` and `sectionCost_eq_fiberInfoCost`).
 
 **The law with correction term.** Jensen:
 
 ```lean
-theorem lift_complexity_ge_gibbs_log_rate :
+theorem lift_complexity_ge_gibbs_log_rate (hf : Function.Surjective f) :
     A.gibbsExpect (fun d => Real.log (fiberCount f d))
-      ≤ (A.lift f).complexity - A.complexity
+      ≤ (A.lift f hf).complexity - A.complexity
 ```
 
 with the gap zero **iff** the redundancy is constant on the sectors
-(full support makes the boundary exact) — the ratchet's defect is
-the Jensen gap of redundancy, one more fluctuation quantity.
+(`lift_complexity_sub_eq_iff_fiberCount_const` — full Gibbs support
+makes the boundary exact) — the ratchet's defect is the Jensen gap
+of redundancy, one more fluctuation quantity.
 
-**The strictness.** G2's two-sector witness, reused.
+**The strictness.** G2's two-sector witness, reused
+(`twoSector_jensen_gap_pos`).
 
 **The boundary / demotion.** Constant fibers collapse both sides to
 `log m` and recover `SectorAction.sectionCost_uniformLift` as the
@@ -486,7 +488,7 @@ completion object — no coverage bundle, no review chronology.
 | G2 covariance gravity | constructions `SectorAction.lift` / `SectorAction.couple` / `gibbsCov` / `fiberCount`; law `gravity_defect` (with `lift_complexity`, `couple_complexity`); boundary `gravity_defect_eq_zero_iff` (`complexity_gravity` demoted to the zero-covariance chart); strictness `twoSector_gravityDefect_pos`; direction `gravityDefect_nonneg_of_comonotone` (via `gibbsCov_double_sum`); impossibility `exists_gravity_defect_ne_zero` | **CLOSED** |
 | G3 arithmetic gravity | — | **OPEN** |
 | G4 symmetry no-go | impossibility `cycle_no_invariant_representative`; law `cycle_equivariant_section_iff`; strictness `cycle_four_two_no_equivariant_section`, `cycle_four_two_no_invariant_representative`; boundary `cycle_three_two_equivariant_section` | **CLOSED** |
-| G5 non-uniform time | — | **OPEN** |
+| G5 non-uniform time | laws `lift_complexity` (G2) + `sectionCost_eq_sum_log_fiberCount`; Jensen `lift_complexity_ge_gibbs_log_rate` with boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; demotion `sectionCost_uniformLift` to the constant-redundancy chart; impossibility `sectionCostE_eq_zero_iff` (standing, restated) | **CLOSED** |
 | G6 binding sign | — | **OPEN** |
 | G7 dichotomy | — | **OPEN** |
 | G8 self-reference | — | **OPEN** |

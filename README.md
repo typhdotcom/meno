@@ -206,7 +206,11 @@ action, not only against counts (`Meno/InfoRatchet.lean`,
 | `residueMass`, `residueMass_chart`, `descriptionMass` | The carrier's intrinsic Gibbs distribution pushes forward to the residue — positive, normalized, computed by every basis chart — and lifts uniformly through the compression |
 | `descriptionEntropy_split` | Description entropy = residue entropy + the gauge log |
 | `sectionCost_carrierCompression_div`, `sectionCost_carrierCompression_action` | The per-sector gauge-fixing cost is exactly that conditional entropy — at the action level, exactly `K(descriptionAction) − K(residueAction)` |
-| `SectorAction.sectionCost_uniformLift` | The generic priced time law it specializes: `sectionCost f / \|Λ\| = K(uniformLift) − K(base)` |
+| `sectionCost_eq_sum_log_fiberCount` | **The counted cost, non-uniform** (G5): a surjection's reverse-description cost is `Σ_d log (fiberCount f d)` — the coding theorem read through the redundancy profile |
+| `lift_complexity_ge_gibbs_log_rate` | **The Jensen ratchet bound** (G5): `⟨log ∘ fiberCount f⟩ ≤ K(lift f) − K` — the priced increment dominates the Gibbs-mean log-redundancy |
+| `lift_complexity_sub_eq_iff_fiberCount_const` | **The boundary** (G5): the Jensen gap vanishes iff the redundancy is constant — full Gibbs support makes the boundary exact; the ratchet's defect is one more fluctuation quantity |
+| `twoSector_jensen_gap_pos` | **The strictness** (G5): at the two-sector witness the Jensen gap is strictly positive |
+| `SectorAction.sectionCost_uniformLift` | **The constant-redundancy chart** (demoted at G5, rule 3): `sectionCost f / \|Λ\| = K(uniformLift) − K(base)` — both sides collapse to `log m` at constant fibers |
 
 ### Symmetry
 

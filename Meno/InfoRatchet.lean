@@ -2,6 +2,8 @@ import Meno.Basic
 import Meno.SectorAction
 import Meno.UniformAction
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
+import Mathlib.Analysis.Convex.Jensen
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Set.Card
 import Mathlib.Data.ENNReal.Real
@@ -443,6 +445,17 @@ theorem fiberCount_pullback_base {X Y D : Type u} (f : X → D) (g : Y → D)
   show (Nat.card {p : SGD.Pullback f g // SGD.Pullback.base p = d} : ℝ) = _
   rw [Nat.card_congr (SGD.Pullback.baseFiberEquiv f g d), Nat.card_prod]
   push_cast
+  rfl
+
+/-- **The counted cost, exact and non-uniform** (G5): a surjection's
+reverse-description cost is the sum of the log fiber counts — the
+coding theorem (`sectionCost_eq_fiberInfoCost`) read through the
+redundancy profile. -/
+theorem sectionCost_eq_sum_log_fiberCount {X D : Type u} [Fintype X]
+    [Fintype D] [DecidableEq D] {f : X → D}
+    (hf : Function.Surjective f) :
+    sectionCost f = ∑ d, Real.log (fiberCount f d) := by
+  rw [sectionCost_eq_fiberInfoCost hf]
   rfl
 
 /-- **The entropy chain rule for a uniform lift** (review #9): pulling
@@ -1649,6 +1662,13 @@ theorem sum_gibbsMass_eq_one : ∑ d, A.gibbsMass d = 1 := by
   rw [tsum_fintype] at h
   exact h
 
+/-- Expectation of a constant is the constant — the Gibbs law is a
+probability. -/
+theorem gibbsExpect_const (c : ℝ) : A.gibbsExpect (fun _ => c) = c := by
+  rw [gibbsExpect_eq_sum]
+  show ∑ d, c * A.gibbsMass d = c
+  rw [← Finset.mul_sum, A.sum_gibbsMass_eq_one, mul_one]
+
 /-- An observable pointwise at least one has Gibbs expectation at
 least one — the Gibbs law is a probability. -/
 theorem one_le_gibbsExpect (φ : A.Λ → ℝ) (hφ : ∀ d, 1 ≤ φ d) :
@@ -1843,6 +1863,98 @@ theorem gravityDefect_nonneg_of_comonotone [Fintype (SGD.Pullback f g)]
 
 end CovarianceGravity
 
+/-! ### Time, non-uniform (G5)
+
+The ratchet, unconditioned. The priced increment of the lift is the
+log Gibbs-mean redundancy (`lift_complexity`, delivered at G2), the
+counted cost stays exact and non-uniform
+(`sectionCost_eq_sum_log_fiberCount`), and between them sits Jensen:
+the Gibbs-mean log-redundancy bounds the priced increment from below
+(`lift_complexity_ge_gibbs_log_rate`), with gap zero exactly at
+constant redundancy — full Gibbs support makes the boundary exact
+(`lift_complexity_sub_eq_iff_fiberCount_const`). The ratchet's
+defect is the Jensen gap of redundancy, one more fluctuation
+quantity. **The impossibility anchor is the standing
+`sectionCostE_eq_zero_iff`**: free reversal is impossible off
+bijections. The strictness witness is G2's two-sector pair
+(`twoSector_jensen_gap_pos`, at the file's tail); the
+constant-redundancy chart is the demoted `sectionCost_uniformLift`
+below. -/
+
+section TimeNonUniform
+
+variable (A : SectorAction.{u}) {X : Type u} [Fintype X]
+  (f : X → A.Λ) [Fintype A.Λ]
+
+/-- **THE JENSEN RATCHET BOUND** (G5, the law with correction term):
+the Gibbs-mean log-redundancy is at most the priced increment of the
+lift — `⟨log ∘ fiberCount f⟩ ≤ K(lift f) − K`. The gap is the Jensen
+defect of the redundancy profile. -/
+theorem lift_complexity_ge_gibbs_log_rate (hf : Function.Surjective f) :
+    A.gibbsExpect (fun d => Real.log (fiberCount f d))
+      ≤ (A.lift f hf).complexity - A.complexity := by
+  rw [A.lift_complexity f hf, add_sub_cancel_left, A.gibbsExpect_eq_sum,
+    A.gibbsExpect_eq_sum (fiberCount f)]
+  have hjen := (strictConcaveOn_log_Ioi.concaveOn).le_map_sum
+    (t := Finset.univ) (w := A.gibbsMass) (p := fiberCount f)
+    (fun d _ => A.gibbsMass_nonneg d) A.sum_gibbsMass_eq_one
+    (fun d _ => Set.mem_Ioi.mpr
+      (lt_of_lt_of_le one_pos (one_le_fiberCount hf d)))
+  simp only [smul_eq_mul] at hjen
+  calc ∑ d, Real.log (fiberCount f d) * A.gibbsMass d
+      = ∑ d, A.gibbsMass d * Real.log (fiberCount f d) :=
+        Finset.sum_congr rfl fun d _ => mul_comm _ _
+    _ ≤ Real.log (∑ d, A.gibbsMass d * fiberCount f d) := hjen
+    _ = Real.log (∑ d, fiberCount f d * A.gibbsMass d) := by
+        rw [Finset.sum_congr rfl fun d _ =>
+          mul_comm (A.gibbsMass d) (fiberCount f d)]
+
+/-- **The boundary** (G5): the Jensen gap vanishes exactly at
+constant redundancy — every sector carries positive Gibbs mass, so
+full support makes the boundary exact. -/
+theorem lift_complexity_sub_eq_iff_fiberCount_const
+    (hf : Function.Surjective f) :
+    (A.lift f hf).complexity - A.complexity
+        = A.gibbsExpect (fun d => Real.log (fiberCount f d))
+      ↔ ∀ d d', fiberCount f d = fiberCount f d' := by
+  constructor
+  · intro heq
+    rw [A.lift_complexity f hf, add_sub_cancel_left] at heq
+    have hcell := StrictConcaveOn.eq_of_map_sum_eq strictConcaveOn_log_Ioi
+      (t := Finset.univ) (w := A.gibbsMass) (p := fiberCount f)
+      (fun d _ => A.gibbsMass_pos d) A.sum_gibbsMass_eq_one
+      (fun d _ => Set.mem_Ioi.mpr
+        (lt_of_lt_of_le one_pos (one_le_fiberCount hf d)))
+      (by
+        calc Real.log (∑ d, A.gibbsMass d • fiberCount f d)
+            = Real.log (A.gibbsExpect (fiberCount f)) := by
+              rw [A.gibbsExpect_eq_sum (fiberCount f)]
+              congr 1
+              exact Finset.sum_congr rfl fun d _ => by
+                rw [smul_eq_mul, mul_comm]
+          _ = A.gibbsExpect (fun d => Real.log (fiberCount f d)) := heq
+          _ = ∑ d, A.gibbsMass d • Real.log (fiberCount f d) := by
+              rw [A.gibbsExpect_eq_sum]
+              exact Finset.sum_congr rfl fun d _ => by
+                rw [smul_eq_mul, mul_comm]
+          _ ≤ ∑ d, A.gibbsMass d • Real.log (fiberCount f d) := le_refl _)
+    exact fun d d' => hcell (Finset.mem_univ d) (Finset.mem_univ d')
+  · intro hconst
+    obtain ⟨z, _⟩ := A.E_zero
+    have h1 : A.gibbsExpect (fiberCount f) = fiberCount f z := by
+      rw [show fiberCount f = fun _ : A.Λ => fiberCount f z from
+        funext fun d => hconst d z]
+      exact A.gibbsExpect_const _
+    have h2 : A.gibbsExpect (fun d => Real.log (fiberCount f d))
+        = Real.log (fiberCount f z) := by
+      rw [show (fun d => Real.log (fiberCount f d))
+          = fun _ : A.Λ => Real.log (fiberCount f z) from
+        funext fun d => by rw [hconst d z]]
+      exact A.gibbsExpect_const _
+    rw [A.lift_complexity f hf, add_sub_cancel_left, h1, h2]
+
+end TimeNonUniform
+
 /-! ### The priced uniform lift -/
 
 section UniformLift
@@ -1970,12 +2082,19 @@ theorem uniformLift_energyEquiv (W : Type u) [Fintype W] [Nonempty W]
   show A.E (f x) + 0 = A.E (f x)
   rw [add_zero]
 
-/-- **TIME, GENERIC AND PRICED** (review #14): for a constant-fiber
-map into a finite sector action's sector type, the normalized section
+/-- **TIME, GENERIC AND PRICED — the constant-redundancy chart**
+(review #14; demoted at G5, PLAN rule 3): for a constant-fiber map
+into a finite sector action's sector type, the normalized section
 cost is exactly the complexity increment of the priced uniform lift —
-`sectionCost f / |Λ| = K(uniformLift) − K(base)`. The section count
-is the theorem (`sectionCost_eq_fiberInfoCost`); the increment is
-`log m` (`uniformLift_complexity`). -/
+`sectionCost f / |Λ| = K(uniformLift) − K(base)`. This is the
+**constant-redundancy instance of the non-uniform time laws**: the
+counted cost is `Σ_d log (fiberCount f d)`
+(`sectionCost_eq_sum_log_fiberCount`), the priced increment is
+`log ⟨fiberCount f⟩` (`lift_complexity`, with `uniformLift = lift`
+by proof irrelevance), and constant redundancy collapses both sides
+to `log m`. The independent route through
+`sectionCost_eq_fiberInfoCost` and `uniformLift_complexity` is
+retired. -/
 theorem sectionCost_uniformLift :
     sectionCost f / Fintype.card A.Λ
       = (A.uniformLift f hm hfib).complexity - A.complexity := by
@@ -1986,18 +2105,24 @@ theorem sectionCost_uniformLift :
       rw [hfib d]; exact hm
     obtain ⟨⟨x, hx⟩⟩ := (Nat.card_pos_iff.mp hpos).1
     exact ⟨x, hx⟩
+  have hcf : fiberCount f = fun _ : A.Λ => (m : ℝ) := funext fun d => by
+    show (Nat.card {x : X // f x = d} : ℝ) = m
+    rw [hfib d]
   have hcost : sectionCost f = Fintype.card A.Λ * Real.log m := by
-    rw [sectionCost_eq_fiberInfoCost hsurj]
-    unfold fiberInfoCost
-    rw [Finset.sum_congr rfl fun b _ => by
-      rw [show (Nat.card (f ⁻¹' {b}) : ℕ) = m from hfib b]]
+    rw [sectionCost_eq_sum_log_fiberCount hsurj, hcf]
+    show ∑ _d : A.Λ, Real.log (m : ℝ) = Fintype.card A.Λ * Real.log m
     rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+  have hlift : (A.uniformLift f hm hfib).complexity - A.complexity
+      = Real.log m := by
+    have h : (A.uniformLift f hm hfib).complexity
+        = A.complexity + Real.log (A.gibbsExpect (fiberCount f)) :=
+      A.lift_complexity f hsurj
+    rw [h, hcf, A.gibbsExpect_const]
+    ring
   have hcard : (0 : ℝ) < Fintype.card A.Λ := by
     have : Nonempty A.Λ := ⟨A.E_zero.choose⟩
     exact_mod_cast Fintype.card_pos
-  rw [hcost, uniformLift_complexity A f hm hfib,
-    mul_div_cancel_left₀ _ hcard.ne']
-  ring
+  rw [hcost, hlift, mul_div_cancel_left₀ _ hcard.ne']
 
 end UniformLift
 
@@ -2200,10 +2325,8 @@ theorem complexity_gravity :
   have hcg : fiberCount g = fun _ => (m' : ℝ) := funext fun d => by
     show (Nat.card {y : Y // g y = d} : ℝ) = m'
     rw [hg d]
-  have hconst : ∀ c : ℝ, A.gibbsExpect (fun _ => c) = c := fun c => by
-    rw [A.gibbsExpect_eq_sum]
-    show ∑ d, c * A.gibbsMass d = c
-    rw [← Finset.mul_sum, A.sum_gibbsMass_eq_one, mul_one]
+  have hconst : ∀ c : ℝ, A.gibbsExpect (fun _ => c) = c := fun c =>
+    A.gibbsExpect_const c
   have hd := A.gravity_defect f g hsf hsg
   rw [hcf, hcg] at hd
   rw [show ((fun _ : A.Λ => (m : ℝ)) * fun _ : A.Λ => (m' : ℝ))
@@ -2410,5 +2533,28 @@ theorem exists_gravity_defect_ne_zero :
     inferInstance, twoSectorMap, twoSectorMap, inferInstance,
     twoSectorMap_surjective, twoSectorMap_surjective,
     ne_of_gt twoSector_gravityDefect_pos⟩
+
+/-- **The strictness of the ratchet's Jensen gap** (G5): at the
+two-sector witness the Gibbs-mean log-redundancy is strictly below
+the priced increment — the ratchet's defect is a genuine fluctuation
+quantity. -/
+theorem twoSector_jensen_gap_pos :
+    twoSectorAction.gibbsExpect
+        (fun d => Real.log (fiberCount twoSectorMap d))
+      < (twoSectorAction.lift twoSectorMap
+          twoSectorMap_surjective).complexity
+        - twoSectorAction.complexity := by
+  have hle := twoSectorAction.lift_complexity_ge_gibbs_log_rate
+    twoSectorMap twoSectorMap_surjective
+  rcases lt_or_eq_of_le hle with hlt | heq
+  · exact hlt
+  · exfalso
+    have hconst :=
+      (twoSectorAction.lift_complexity_sub_eq_iff_fiberCount_const
+        twoSectorMap twoSectorMap_surjective).mp heq.symm
+    have h01 : fiberCount twoSectorMap false = fiberCount twoSectorMap true :=
+      hconst false true
+    rw [twoSectorMap_fiberCount_false, twoSectorMap_fiberCount_true] at h01
+    norm_num at h01
 
 end Meno
