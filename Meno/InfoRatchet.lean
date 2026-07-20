@@ -1964,8 +1964,8 @@ theorem coupling_gibbsVariance_E :
 omit [Fintype A.Λ] in
 /-- **The coupling decomposes as base ⊗ (free ⊗ free)** (review #21):
 the priced shared-base coupling is energy-equivalent to the
-independent product of the base with two free actions — exactly the
-shape `algebraic_gravity` consumes. -/
+independent product of the base with two free actions — the
+decomposition that carries the gravity theorem's sharing content. -/
 theorem coupling_energyEquiv (W W' : Type u) [Fintype W] [Nonempty W]
     [Fintype W'] [Nonempty W'] (hW : Fintype.card W = m)
     (hW' : Fintype.card W' = m') :
@@ -1983,14 +1983,17 @@ theorem coupling_energyEquiv (W W' : Type u) [Fintype W] [Nonempty W]
   rw [add_zero, add_zero]
 
 omit [Fintype A.Λ] in
-/-- **THE PRICED GRAVITY IDENTITY — the one engine, invoked**
-(reviews #13, #21): `K(coupling) + K(base) = K(lift) + K(lift)` —
-`SGD.AdditiveComplexityOn.algebraic_gravity` at the pricing instance
-(`instAdditiveComplexityOnSectorAction`), the decomposition lemmas
-supplying `coupling ≈ A ⊗ (free ⊗ free)` and `lift ≈ A ⊗ free`. Not
-a parallel computation: the same theorem that gives counting gravity
-(`SGD.gravity`) gives this — and the engine route needs no finiteness
-of the base. -/
+/-- **THE GRAVITY THEOREM** (reviews #13, #21, #25):
+`K(coupling) + K(base) = K(lift) + K(lift)` — merging two
+descriptions over a shared base saves exactly the base's
+complexity, with **no finiteness of the base**. The physical
+content is in the decomposition lemmas — `coupling ≈ A ⊗
+(free ⊗ free)` (`coupling_energyEquiv`) and `lift ≈ A ⊗ free`
+(`uniformLift_energyEquiv`) — after which the identity is the
+additivity of complexity over independent products
+(`complexity_prod`). Counting gravity is the zero-energy corollary
+(`counting_gravity`, below); the entropy form is the Gibbs-split
+corollary (`entropy_gravity`). -/
 theorem complexity_gravity :
     (A.coupling f g hm hm' hf hg).complexity + A.complexity
       = (A.uniformLift f hm hf).complexity
@@ -2003,8 +2006,8 @@ theorem complexity_gravity :
       (coupling_energyEquiv A f g hm hm' hf hg _ _ hW hW'),
     SectorAction.complexity_congr (uniformLift_energyEquiv A f hm hf _ hW),
     SectorAction.complexity_congr (uniformLift_energyEquiv A g hm' hg _ hW')]
-  exact SGD.AdditiveComplexityOn.algebraic_gravity A
-    (uniformAction (ULift (Fin m))) (uniformAction (ULift (Fin m')))
+  simp only [SectorAction.complexity_prod]
+  ring
 
 omit [Fintype A.Λ] in
 /-- **The action-level partition-function gravity identity**
@@ -2044,5 +2047,48 @@ theorem entropy_gravity :
 end Coupling
 
 end SectorAction
+
+/-! ## Counting gravity — the zero-energy corollary -/
+
+/-- **COUNTING GRAVITY** (review #25): for uniform-fiber maps into a
+shared finite nonempty base,
+`log |X ×_D Y| + log |D| = log |X| + log |Y|`. Not a parallel
+type-level theory: this is `SectorAction.complexity_gravity`
+instantiated at the zero-energy action `uniformAction D` — the
+uniform lift and coupling of a zero-energy action are themselves
+zero-energy actions on `X`, `Y`, and the pullback (identity
+equivalences suffice), and `uniformAction_complexity` evaluates the
+four complexities. Counting is the zero-energy special case of
+pricing. -/
+theorem counting_gravity {X Y D : Type u} [Fintype X] [Fintype Y]
+    [Fintype D] [Nonempty D] (f : X → D) (g : Y → D)
+    {m m' : ℕ} (hm : 0 < m) (hm' : 0 < m')
+    (hf : ∀ d, Nat.card {x : X // f x = d} = m)
+    (hg : ∀ d, Nat.card {y : Y // g y = d} = m') :
+    Real.log (Nat.card (SGD.Pullback f g)) + Real.log (Nat.card D)
+      = Real.log (Nat.card X) + Real.log (Nat.card Y) := by
+  haveI : DecidableEq D := Classical.decEq D
+  obtain ⟨d₀⟩ := ‹Nonempty D›
+  obtain ⟨⟨x₀, hx₀⟩⟩ :=
+    (Nat.card_pos_iff.mp (lt_of_lt_of_eq hm (hf d₀).symm)).1
+  obtain ⟨⟨y₀, hy₀⟩⟩ :=
+    (Nat.card_pos_iff.mp (lt_of_lt_of_eq hm' (hg d₀).symm)).1
+  haveI : Nonempty X := ⟨x₀⟩
+  haveI : Nonempty Y := ⟨y₀⟩
+  haveI : Nonempty (SGD.Pullback f g) := ⟨⟨(x₀, y₀), hx₀.trans hy₀.symm⟩⟩
+  have hcoup : ((uniformAction D).coupling f g hm hm' hf hg).EnergyEquiv
+      (uniformAction (SGD.Pullback f g)) := ⟨Equiv.refl _, fun _ => rfl⟩
+  have hliftf : ((uniformAction D).uniformLift f hm hf).EnergyEquiv
+      (uniformAction X) := ⟨Equiv.refl _, fun _ => rfl⟩
+  have hliftg : ((uniformAction D).uniformLift g hm' hg).EnergyEquiv
+      (uniformAction Y) := ⟨Equiv.refl _, fun _ => rfl⟩
+  have key :=
+    SectorAction.complexity_gravity (uniformAction D) f g hm hm' hf hg
+  rw [SectorAction.complexity_congr hcoup,
+    SectorAction.complexity_congr hliftf,
+    SectorAction.complexity_congr hliftg,
+    uniformAction_complexity, uniformAction_complexity,
+    uniformAction_complexity, uniformAction_complexity] at key
+  simpa [Nat.card_eq_fintype_card] using key
 
 end Meno

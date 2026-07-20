@@ -1191,7 +1191,7 @@ theorem triangle_contractibleInUnion (C₁ C₂ : Complex V) {a b c : V}
 contractibility from the union, the geodesic binding drop is strictly
 positive. Renamed from `simplicial_gravity` (review #3): this is
 binding positivity in the geodesic model, not an instance or analogue
-of the spine's `SGD.gravity` — no such identification is proved and
+of the spine's gravity theorem — no such identification is proved and
 none is claimed. -/
 theorem geodesicBindingDrop_pos (C₁ C₂ : Complex V) (c : Cycle C₁.toGraph v)
     (hmatter : ¬c.isContractible₂ C₁)

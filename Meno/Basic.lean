@@ -5,7 +5,24 @@ import Mathlib.Logic.Unique
 import Mathlib.Data.Set.Image
 import Mathlib.Tactic
 
-/-! # SGD — Abstract Framework -/
+/-! # SGD — The Pullback Substrate
+
+The shared-base structure the priced gravity calculus consumes:
+fibers, fiber products, the pullback with its base map, and the
+equivalences that decompose it — the sigma-fiber factorization and
+the base/marginal fiber identifications. The consumers are the
+priced coupling machinery (`Meno/InfoRatchet.lean`) and the carrier
+layers (`Meno/ResolutionCount.lean`, `Meno/ThetaHarmonic.lean`).
+
+The former abstract complexity hierarchy
+(`ComplexityMeasure`/`SigmaComplexity`/`AdditiveComplexity`), its
+`logCard` realization, the type-level `gravity` and refactoring
+bounds, and the `AdditiveComplexityOn` engine are **deleted**
+(review #25): consumer analysis found them certificate-only — a
+parallel construction, not a load-bearing layer. The one gravity
+theorem of the program is `SectorAction.complexity_gravity`
+(`Meno/InfoRatchet.lean`); counting gravity is its zero-energy
+corollary (`counting_gravity`, same file). -/
 
 namespace SGD
 
@@ -76,185 +93,6 @@ def Pullback.sndFiberEquiv {A B D : Type u} (f : A → D) (g : B → D)
     apply Subtype.ext
     exact Prod.ext rfl p.prop.symm
   right_inv x := rfl
-
-/-! ## Axiom 1: The Weighted Universe — Complexity Hierarchy -/
-
-/-- Level 1: Base complexity measure (subadditive).
-    Codomain M is typically ℝ≥0∞ or similar ordered additive monoid. -/
-class ComplexityMeasure (M : Type*) [AddCommMonoid M] [PartialOrder M] where
-  C : Type u → M
-  unique_zero : ∀ (A : Type u) [Unique A], C A = 0
-  congr : ∀ {A B : Type u}, A ≃ B → C A = C B
-  prod_le : ∀ (A B : Type u), C (A × B) ≤ C A + C B
-
-/-- Level 2: Sigma subadditivity.
-    C(Σ d, P d) ≤ C(D) + sup_d C(P d). This is a capacity bound. -/
-class SigmaComplexity (M : Type*) [AddCommMonoid M] [PartialOrder M] [SupSet M]
-    extends ComplexityMeasure (M := M) where
-  sigma_le : ∀ (D : Type u) (P : D → Type u),
-    C (Σ d, P d) ≤ C D + ⨆ (d : D), C (P d)
-
-/-- Level 3: Additive complexity (scarcity).
-    Products cost exactly the sum. Structural economy only emerges here. -/
-class AdditiveComplexity (M : Type*) [AddCommMonoid M] [PartialOrder M] [SupSet M]
-    extends SigmaComplexity (M := M) where
-  prod_eq : ∀ (A B : Type u), C (A × B) = C A + C B
-
-/-! ## The Refactoring Bound (THEOREM, not axiom) -/
-
-section RefactoringBound
-
-variable {M : Type*} [ConditionallyCompleteLattice M] [AddCommMonoid M] [IsOrderedAddMonoid M]
-variable [inst : SigmaComplexity M]
-variable {A B D : Type u} (f : A → D) (g : B → D)
-
-omit [IsOrderedAddMonoid M] in
-/-- Pullback complexity via sigma-fiber equivalence. -/
-lemma pullback_complexity_eq :
-    inst.C (Pullback f g) = inst.C (Σ d : D, FiberProd f g d) :=
-  inst.congr (Pullback.equivSigmaFiber f g)
-
-omit [IsOrderedAddMonoid M] in
-/-- Fiber products bounded by sum of fiber complexities. -/
-lemma fiberProd_le (d : D) :
-    inst.C (FiberProd f g d) ≤ inst.C (Fiber f d) + inst.C (Fiber g d) :=
-  inst.prod_le _ _
-
-/-- **Sharp refactoring bound**: pullback ≤ base + supremum of paired fiber costs.
-    C(A ×_D B) ≤ C(D) + sup_d (C(Fiber f d) + C(Fiber g d)). -/
-theorem refactoring_bound_fiberwise
-    (hfg : BddAbove (Set.range fun d => inst.C (Fiber f d) + inst.C (Fiber g d)))
-    (hne : Nonempty D) :
-    inst.C (Pullback f g) ≤
-      inst.C D + (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) := by
-  rw [pullback_complexity_eq]
-  have key : ⨆ d, inst.C (FiberProd f g d) ≤ ⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d)) := by
-    apply csSup_le (Set.range_nonempty _)
-    rintro _ ⟨d, rfl⟩
-    exact (fiberProd_le f g d).trans (le_csSup hfg (Set.mem_range_self d))
-  calc inst.C (Σ d, FiberProd f g d)
-      ≤ inst.C D + ⨆ d, inst.C (FiberProd f g d) := inst.sigma_le D _
-    _ ≤ inst.C D + (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) :=
-        add_le_add_right key _
-
-/-- Coarse refactoring bound obtained by decoupling the two fiber suprema. -/
-theorem refactoring_bound
-    (hf : BddAbove (Set.range fun d => inst.C (Fiber f d)))
-    (hg : BddAbove (Set.range fun d => inst.C (Fiber g d)))
-    (hne : Nonempty D) :
-    inst.C (Pullback f g) ≤
-      inst.C D + (⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)) := by
-  have hfg : BddAbove (Set.range fun d => inst.C (Fiber f d) + inst.C (Fiber g d)) := by
-    refine ⟨(⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)), ?_⟩
-    rintro _ ⟨d, rfl⟩
-    exact add_le_add (le_csSup hf (Set.mem_range_self d))
-      (le_csSup hg (Set.mem_range_self d))
-  have hsharp := refactoring_bound_fiberwise (f := f) (g := g) hfg hne
-  have hsplit : (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) ≤
-      (⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)) := by
-    apply csSup_le (Set.range_nonempty _)
-    rintro _ ⟨d, rfl⟩
-    exact add_le_add (le_csSup hf (Set.mem_range_self d))
-      (le_csSup hg (Set.mem_range_self d))
-  have hsplit' :
-      inst.C D + (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) ≤
-      inst.C D + ((⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d))) := by
-    simpa [add_assoc, add_comm, add_left_comm] using add_le_add_right hsplit (inst.C D)
-  calc inst.C (Pullback f g)
-      ≤ inst.C D + (⨆ d, (inst.C (Fiber f d) + inst.C (Fiber g d))) := hsharp
-    _ ≤ inst.C D + ((⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d))) :=
-        hsplit'
-    _ = inst.C D + (⨆ d, inst.C (Fiber f d)) + (⨆ d, inst.C (Fiber g d)) := by
-        rw [add_assoc]
-
-end RefactoringBound
-
-/-! ## Domain-Generic Additive Complexity — THE ONE GRAVITY ENGINE
-
-The algebraic core shared by all additive complexity measures: a
-unit, equivalence, product, and the laws that make C a monoid
-homomorphism into (M, +). **`algebraic_gravity` below is the one
-gravity theorem of the program** (review #21): the type-level
-`gravity` is its corollary at the counting instance
-(`instAdditiveComplexityOnType`), the priced
-`SectorAction.complexity_gravity` (`Meno/InfoRatchet.lean`) is its
-corollary at the pricing instance
-(`instAdditiveComplexityOnSectorAction`,
-`Meno/UniformAction.lean`), and the groupoid shared-component
-identity (`Meno/Groupoid.lean`) is its corollary at the groupoid
-instance. -/
-
-/-- Additive complexity on a domain D, valued in M.
-    Captures the algebraic fragment common to the type-level hierarchy
-    (AdditiveComplexity, which adds sigma bounds), the priced sector
-    calculus, and groupoid complexity. -/
-class AdditiveComplexityOn (D : Type*) (M : Type*) [AddCommMonoid M] where
-  C : D → M
-  unit : D
-  equiv : D → D → Prop
-  prod : D → D → D
-  unit_zero : C unit = 0
-  congr : {a b : D} → equiv a b → C a = C b
-  prod_add : (a b : D) → C (prod a b) = C a + C b
-
-/-- Any type-level `AdditiveComplexity` instance yields an `AdditiveComplexityOn` instance.
-    This extraction witnesses that the domain-generic axioms were always implicit
-    in the type-level hierarchy. -/
-noncomputable instance instAdditiveComplexityOnType
-    (M : Type*) [AddCommMonoid M] [PartialOrder M] [SupSet M]
-    [inst : AdditiveComplexity M] : AdditiveComplexityOn (Type u) M where
-  C := inst.C
-  unit := PUnit
-  equiv A B := Nonempty (A ≃ B)
-  prod A B := A × B
-  unit_zero := inst.unique_zero PUnit
-  congr h := inst.congr h.some
-  prod_add := inst.prod_eq
-
-/-- **ALGEBRAIC GRAVITY — the one gravity engine** (review #21):
-merging two structures sharing a component d saves exactly C(d).
-Every gravity identity of the program is this theorem at an
-instance: counting (`gravity`, at `instAdditiveComplexityOnType`),
-pricing (`SectorAction.complexity_gravity`), groupoid
-(`GroupoidObj.shared_component_identity`). -/
-theorem AdditiveComplexityOn.algebraic_gravity {D M : Type*}
-    [AddCommMonoid M] [inst : AdditiveComplexityOn D M] (d f g : D) :
-    inst.C (inst.prod d (inst.prod f g)) + inst.C d =
-    inst.C (inst.prod d f) + inst.C (inst.prod d g) := by
-  simp only [inst.prod_add]; abel
-
-/-! ## Gravity (Uniform Fiber Case) -/
-
-section Gravity
-
-variable {M : Type*} [AddCommMonoid M] [PartialOrder M]
-variable [SupSet M] [inst : AdditiveComplexity M]
-
-/-- **Gravity at the counting instance** (review #21): for any maps
-f : A → D, g : B → D with uniform fibers (all fibers of f isomorphic
-to F, all fibers of g isomorphic to G), the pullback saves exactly
-C(D). The sigma-fiber decompositions supply
-`Pullback f g ≃ D × (F × G)`, `A ≃ D × F`, `B ≃ D × G`; the identity
-itself is `algebraic_gravity` at `instAdditiveComplexityOnType` —
-**invoked, not reproved**. -/
-theorem gravity {A B D F G : Type u} (f : A → D) (g : B → D)
-    (ef : ∀ d, Fiber f d ≃ F) (eg : ∀ d, Fiber g d ≃ G) :
-    inst.C (Pullback f g) + inst.C D = inst.C A + inst.C B := by
-  have hA : inst.C A = inst.C (D × F) :=
-    inst.congr ((Equiv.sigmaFiberEquiv f).symm.trans
-      ((Equiv.sigmaCongrRight ef).trans (Equiv.sigmaEquivProd D F)))
-  have hB : inst.C B = inst.C (D × G) :=
-    inst.congr ((Equiv.sigmaFiberEquiv g).symm.trans
-      ((Equiv.sigmaCongrRight eg).trans (Equiv.sigmaEquivProd D G)))
-  have hP : inst.C (Pullback f g) = inst.C (D × (F × G)) :=
-    inst.congr ((Pullback.equivSigmaFiber f g).trans
-      ((Equiv.sigmaCongrRight (fun d => Equiv.prodCongr (ef d) (eg d))).trans
-        (Equiv.sigmaEquivProd D (F × G))))
-  rw [hA, hB, hP]
-  exact AdditiveComplexityOn.algebraic_gravity
-    (inst := instAdditiveComplexityOnType M) D F G
-
-end Gravity
 
 /-! ## The arrow of time — moved
 

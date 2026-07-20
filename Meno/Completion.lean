@@ -24,9 +24,10 @@ C1–C10 appears as a field in exactly one law package —
 * `ResolutionCodingLaws` (C8–C9 on the graph; review #21 split):
   K1–K3, gauge counting, compression sections/costs, recovery;
 * `CodingGravityLaws` (C8–C9 generic, graph-free; review #21 split):
-  section counting, the coding theorem with its `ℝ≥0∞` boundary, the
-  `logCard` realization, and the gravity/time laws — the one engine
-  `algebraic_gravity` at its counting and pricing instances;
+  section counting, the coding theorem with its `ℝ≥0∞` boundary, and
+  the gravity/time laws — the gravity theorem
+  `SectorAction.complexity_gravity` with counting gravity as its
+  zero-energy corollary (review #25);
 * `ThermalDualityLaws`, `InformationLaws`, `ResolutionTowerLaws`
   (C9/C12 analytic, information, and resolution spines — defined
   with their subjects);
@@ -349,10 +350,10 @@ theorem resolutionCodingLaws (G : IncidenceGraph.{u, v}) :
 /-- **The coding-gravity laws** (C8's generic coding theorems and
 C9's generic gravity/time laws; graph-free after review #21's split
 — no vacuous graph quantifier): section counting, the coding theorem
-with its honest `ℝ≥0∞` boundary, the uniform action, the `logCard`
-bridge, gravity and the refactoring bound at the counting instance,
-and the priced gravity and time identities of sector actions — the
-one engine `algebraic_gravity` at its two physical instances. -/
+with its honest `ℝ≥0∞` boundary, the uniform action, the priced
+gravity and time identities of sector actions, and counting gravity
+as the zero-energy corollary of the gravity theorem
+`SectorAction.complexity_gravity` (review #25). -/
 structure CodingGravityLaws : Prop where
   sections_count : ∀ {A B : Type u} [Finite A] [Fintype B]
     (f : A → B),
@@ -371,17 +372,13 @@ structure CodingGravityLaws : Prop where
     (uniformAction A).partFn = Fintype.card A
   uniform_complexity : ∀ (A : Type u) [Fintype A] [Nonempty A],
     (uniformAction A).complexity = Real.log (Fintype.card A)
-  logCard_bridge : ∀ (A : Type u) [Fintype A] [Nonempty A],
-    SGD.logCard A = ENNReal.ofReal (uniformAction A).complexity
-  type_gravity : ∀ {A B D W₁ W₂ : Type u} (f : A → D) (g : B → D),
-    (∀ d, SGD.Fiber f d ≃ W₁) → (∀ d, SGD.Fiber g d ≃ W₂) →
-    SGD.logCard (SGD.Pullback f g) + SGD.logCard D
-      = SGD.logCard A + SGD.logCard B
-  refactoring : ∀ {A B D : Type u} (f : A → D) (g : B → D),
-    Nonempty D →
-    SGD.logCard (SGD.Pullback f g)
-      ≤ SGD.logCard D + (⨆ d, SGD.logCard (SGD.Fiber f d))
-        + ⨆ d, SGD.logCard (SGD.Fiber g d)
+  counting_gravity : ∀ {X Y D : Type u} [Fintype X] [Fintype Y]
+    [Fintype D] [Nonempty D] (f : X → D) (g : Y → D)
+    {m m' : ℕ}, 0 < m → 0 < m' →
+    (∀ d, Nat.card {x : X // f x = d} = m) →
+    (∀ d, Nat.card {y : Y // g y = d} = m') →
+    Real.log (Nat.card (SGD.Pullback f g)) + Real.log (Nat.card D)
+      = Real.log (Nat.card X) + Real.log (Nat.card Y)
   priced_gravity_partFn : ∀ (A : SectorAction.{u})
     {X Y : Type u} [Fintype X] [Fintype Y]
     (f : X → A.Λ) (g : Y → A.Λ) [Fintype (SGD.Pullback f g)]
@@ -425,9 +422,7 @@ theorem codingGravityLaws : CodingGravityLaws.{u} where
   forward_cost := descriptionCost_eq
   uniform_partFn := uniformAction_partFn
   uniform_complexity := uniformAction_complexity
-  logCard_bridge := logCard_eq_uniformComplexity
-  type_gravity := gravity_logCard
-  refactoring := refactoring_bound_logCard
+  counting_gravity := Meno.counting_gravity
   priced_gravity_partFn := SectorAction.partFn_gravity
   priced_gravity_complexity := SectorAction.complexity_gravity
   priced_gravity_entropy := SectorAction.entropy_gravity

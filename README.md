@@ -37,10 +37,12 @@ positivity and summability are derived, `Meno/LatticeAction.lean`).
 basis-coordinate quadratic action is a form-preserving chart of it
 (`chartAction_h1Basis`).
 
-**Sharing (gravity).** When two structures contain a common component,
-encoding it once is cheaper, and the savings equal exactly the shared
-component's complexity. Gravity is that identity — proved once, on any
-domain with a unit, an equivalence, and an additive product.
+**Sharing (gravity).** When two descriptions couple over a shared
+base, encoding the base once is cheaper, and the savings equal
+exactly the base's complexity. Gravity is that identity — one priced
+theorem, its sharing content carried by the decomposition of
+coupling and lift over the base; counting is its zero-energy special
+case.
 
 **Obstruction (matter).** A nonzero cohomology class is locally
 consistent and globally unsatisfiable — no potential realizes it. The
@@ -185,31 +187,30 @@ action, not only against counts (`Meno/InfoRatchet.lean`,
 
 ### Gravity
 
-There is **one gravity theorem**: merging two structures that share a
-component saves exactly the shared component's complexity. It is
-stated once, on any domain with a unit, an equivalence, and an
-additive product, and every gravity identity in the program is that
-theorem at an instance — **counting** (finite types under
-log-cardinality), **pricing** (sector actions under complexity), and
-the **groupoid**. On the graph carrier the identity holds priced by
-the action itself, its entropy form is a corollary of the priced
-calculus, pricing and counting are numerically bridged with the same
-deficit at all three levels, the decomposition is strict wherever
-there is anything to price, and the resolutions form a tower whose
-losses are priced in one currency.
+There is **one gravity theorem**: the priced identity
+`SectorAction.complexity_gravity` — coupling two descriptions over a
+shared base costs the two lifts minus the base, for any sector
+action, with no finiteness of the base. Its physical content —
+merging, sharing, saving — is carried by the decomposition theorems:
+the coupling is energy-equivalent to `base ⊗ (free ⊗ free)`, the
+lift to `base ⊗ free`, and the identity follows from the additivity
+of complexity over independent products. Every other face of gravity
+is a corollary: **counting** is the zero-energy special case,
+**entropy** the Gibbs-split corollary, and on the graph carrier the
+identity holds priced by the action itself, with pricing and
+counting numerically bridged by the same deficit at all three
+levels, strict wherever there is anything to price, and the
+resolutions forming a tower whose losses are priced in one currency.
 
-#### The engine and its instances
+#### The gravity theorem and its corollaries
 
 | Result | Statement |
 | :--- | :--- |
-| `SGD.AdditiveComplexityOn.algebraic_gravity` | **The one engine**: `C(d⊗(f⊗g)) + C(d) = C(d⊗f) + C(d⊗g)` on any domain with a unit, an equivalence, and an additive product (`Meno/Basic.lean`) |
-| `SGD.gravity` | The engine at the type-level `logCard` instance; the sigma-fiber decompositions supply `A ×_D B ≃ D × (F × G)`, `A ≃ D × F`, `B ≃ D × G` |
-| `uniformAction`, `logCard_eq_uniformComplexity` | A finite type is a sector lattice with zero energy — `Z = \|A\|`, `K = log \|A\|` — bridging counting into the priced world (`Meno/UniformAction.lean`) |
-| `gravity_logCard`, `refactoring_bound_logCard` | The counting corollaries, invoking the abstract theorems |
-| `SectorAction.complexity_gravity` | **Pricing**: `K(coupling) + K(base) = K(lift) + K(lift)` — the engine at the sector-action instance `instAdditiveComplexityOnSectorAction` (complexity, energy-preserving equivalence, independent product; `Meno/InfoRatchet.lean`) |
-| `coupling_energyEquiv`, `uniformLift_energyEquiv` | The decompositions supplying the shapes: `coupling ≈ base ⊗ (free ⊗ free)`, `lift ≈ base ⊗ free` |
+| `SectorAction.complexity_gravity` | **The gravity theorem**: `K(coupling) + K(base) = K(lift) + K(lift)` — no finiteness of the base (`Meno/InfoRatchet.lean`) |
+| `coupling_energyEquiv`, `uniformLift_energyEquiv` | The decompositions carrying the sharing content: `coupling ≈ base ⊗ (free ⊗ free)`, `lift ≈ base ⊗ free` — read through `SectorAction.EnergyEquiv` and `complexity_congr`, closed by `complexity_prod` |
 | `partFn_gravity` | The partition-function form — the exponential of the complexity form |
-| `GroupoidObj.shared_component_identity` | The same engine at the groupoid instance (`Meno/Groupoid.lean`) |
+| `counting_gravity` | **Counting is the zero-energy corollary**: `log \|X ×_D Y\| + log \|D\| = log \|X\| + log \|Y\|` for uniform-fiber maps into a finite shared base — the gravity theorem instantiated at `uniformAction D` |
+| `uniformAction` | A finite type as a sector lattice with zero energy — `Z = \|A\|`, `K = log \|A\|` (`uniformAction_partFn`, `uniformAction_complexity`, `Meno/UniformAction.lean`) |
 
 #### Gravity priced on the carrier
 
@@ -329,7 +330,7 @@ consumers.
 | `HarmonicCarrierLaws` — `∀ G` | C3–C4: rank well-definedness, unimodular transport, the basis-free partition function, the variational identity, positive energy | `harmonicCarrierLaws` |
 | `MatterBindingLaws` — `∀ G` | C6–C7: the intrinsic matter facts and the generic binding theorems on 2-complexes | `matterBindingLaws` |
 | `ResolutionCodingLaws` — `∀ G` | C8–C9, graph-dependent: K1–K3 at every modulus, gauge counting, compression sections and costs, per-class recovery | `resolutionCodingLaws` |
-| `CodingGravityLaws` — graph-free | C8–C9, generic: section counting, the coding theorem with its `ℝ≥0∞` boundary, the `logCard` bridge, gravity and the refactoring bound at the counting instance, the priced gravity and time identities | `codingGravityLaws` |
+| `CodingGravityLaws` — graph-free | C8–C9, generic: section counting, the coding theorem with its `ℝ≥0∞` boundary, the priced gravity and time identities, and counting gravity as the zero-energy corollary | `codingGravityLaws` |
 | `ThermalDualityLaws` — `∀ Q` | The scale algebra, the dual involution, temperature inversion, and the partition, mean-energy, and variance functional equations with the self-dual fixed point | `thermalDualityLaws` |
 | `InformationLaws` — `∀ P` | Pushforward functoriality, the unconditional entropy chain rule, the support-aware Gibbs inequality, data processing | `informationLaws` |
 | `ResolutionTowerLaws` — `∀ G` | The tower category, pushforwards, additive prices and costs, telescoping monotone deficits, strict pricing of genuine refinements | `resolutionTowerLaws` |
@@ -372,10 +373,9 @@ Meno/
 ├── Matter.lean                MatterSector = nonzero H¹ class; mass, positivity, trapped paradox
 ├── Binding.lean               2-complexes; the induced map; binding kills matter; exact spectral decomposition
 ├── ThetaBinding.lean          Binding at the theta graph: kill, rank drop `2 → 1`, removed weight
-├── Basic.lean                 Abstract complexity hierarchy; THE ONE GRAVITY ENGINE (algebraic_gravity); gravity at the counting instance
-├── Instances.lean             Log-cardinality instance of the abstract hierarchy
-├── UniformAction.lean         The uniform sector action; the pricing instance of the gravity engine; the logCard bridge
-├── InfoRatchet.lean           Fiber information; the coding theorem; finite distributions and entropy gravity
+├── Basic.lean                 The pullback substrate: fibers, the shared-base pullback, sigma-fiber and marginal equivalences
+├── UniformAction.lean         The uniform (zero-energy) sector action; pullback finiteness
+├── InfoRatchet.lean           Fiber information; the coding theorem; THE GRAVITY THEOREM and its counting corollary; finite distributions
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; groupoid complexity
@@ -399,7 +399,7 @@ the identifications proved (`cyclePeriodData_energy_eq`,
 
 The words "gravity", "matter", "time", "uncertainty" name formal
 analogues inside a finite, discrete model: gravity is a
-shared-component complexity identity, matter is nontrivial cohomology
+priced complexity identity of coupling over a shared base, matter is nontrivial cohomology
 with variational mass, time's arrow is the counted cost of reversing
 compression, and uncertainty is Gibbs fluctuation with its response
 identity. The project's claim is that these analogues are *theorems of

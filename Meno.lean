@@ -26,9 +26,8 @@ import Meno.BasisIndependence
 import Meno.Matter
 import Meno.Binding
 
--- Abstract complexity interface and its realizations
+-- The pullback substrate and the uniform (zero-energy) action
 import Meno.Basic
-import Meno.Instances
 import Meno.UniformAction
 
 -- Information: the coding theorem, resolution counting on the carrier

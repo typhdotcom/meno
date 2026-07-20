@@ -14,7 +14,8 @@ import Mathlib.Analysis.SpecialFunctions.Log.Basic
 
 The simplicial model builds a groupoid from any 2-complex with symmetric edges:
 objects = vertices, morphisms = homotopy classes of walks. The partition function
-over automorphisms defines complexity C(G) = log Z, satisfying the hierarchy axioms. -/
+over automorphisms defines complexity C(G) = log Z, with the trivial/congruence/
+product laws proved directly on it. -/
 
 namespace Simplicial
 
@@ -109,68 +110,20 @@ theorem groupoidPartitionFn_pos
     0 < groupoidPartitionFn x K hsum := by
   exact hsum.tsum_pos (fun g => le_of_lt (Real.exp_pos _)) (𝟙 x) (Real.exp_pos _)
 
-/-! ## Hierarchy Axioms
+/-! ## Complexity laws of the groupoid measure
 
-These mirror `SGD.ComplexityMeasure` (Basic.lean) for the groupoid setting:
+Groupoid complexity is `C(x) = log Z` over automorphism Boltzmann
+sums; its additivity under a factoring of `Z` is proved directly on
+the partition function (`groupoidComplexity_prod`, feeding
+`GroupoidObj.prod_complexity`, consumed in `Meno/Duality.lean`).
+The domain is groupoid objects with energy functions (`End x → ℝ`),
+not bare types: this captures topology that Axiom K hides from any
+type-level measure. (Review #25: the former hierarchy-axioms table
+mirrored the deleted type-level classes; the trivial and congruence
+laws lost their last consumer with the deleted engine instance and
+went with it.) -/
 
-| Basic.lean axiom | Groupoid analogue | Status |
-| :--- | :--- | :--- |
-| `unique_zero` | `groupoidComplexity_trivial` | Done |
-| `congr` | `groupoidComplexity_congr` | Done |
-| `prod_eq` | `groupoidComplexity_prod` | Done |
-| `sigma_le` | `GroupoidObj.sigmaComplexity_le_logCard_max` | Finite-index analogue (log-sum-exp bound) |
-
-The domain shifts from bare types (`Type u → M`) to groupoid objects with energy
-functions (`End x → ℝ`). This captures topology that Axiom K hides from the
-type-level measure. -/
-
-/-- **unique_zero**: Trivial groupoid (single automorphism) with K(id) = 0 has C = 0. -/
-theorem groupoidComplexity_trivial
-    {C : Type*} [Groupoid C] (x : C)
-    (K : End x → ℝ)
-    (hsum : Summable (fun g => Real.exp (-K g)))
-    [Unique (End x)]
-    (hK : K default = 0) :
-    groupoidComplexity x K hsum = 0 := by
-  unfold groupoidComplexity groupoidPartitionFn
-  have : ∑' g : End x, Real.exp (-K g) = 1 := by
-    rw [(hasSum_unique _).tsum_eq]
-    have : (Unique.instInhabited (α := End x)).default = default := Subsingleton.elim _ _
-    rw [this, hK, neg_zero, Real.exp_zero]
-  rw [this, Real.log_one]
-
-/-- **congr**: Equivalent endomorphism groups with matching energies
-    have equal partition functions. -/
-theorem groupoidPartitionFn_congr
-    {C D : Type*} [Groupoid C] [Groupoid D]
-    (x : C) (y : D)
-    (K_C : End x → ℝ) (K_D : End y → ℝ)
-    (e : End x ≃ End y)
-    (hK : ∀ g, K_D (e g) = K_C g)
-    (hsum_C : Summable (fun g => Real.exp (-K_C g)))
-    (hsum_D : Summable (fun g => Real.exp (-K_D g))) :
-    groupoidPartitionFn x K_C hsum_C = groupoidPartitionFn y K_D hsum_D := by
-  unfold groupoidPartitionFn
-  conv_lhs =>
-    rw [show (fun g => Real.exp (-K_C g)) = (fun g => Real.exp (-K_D (e g))) from by
-      ext g; rw [hK]]
-  exact e.tsum_eq (fun h => Real.exp (-K_D h))
-
-/-- **congr**: Equivalent endomorphism groups with matching energies
-    have equal complexity. -/
-theorem groupoidComplexity_congr
-    {C D : Type*} [Groupoid C] [Groupoid D]
-    (x : C) (y : D)
-    (K_C : End x → ℝ) (K_D : End y → ℝ)
-    (e : End x ≃ End y)
-    (hK : ∀ g, K_D (e g) = K_C g)
-    (hsum_C : Summable (fun g => Real.exp (-K_C g)))
-    (hsum_D : Summable (fun g => Real.exp (-K_D g))) :
-    groupoidComplexity x K_C hsum_C = groupoidComplexity y K_D hsum_D := by
-  unfold groupoidComplexity
-  rw [groupoidPartitionFn_congr x y K_C K_D e hK hsum_C hsum_D]
-
-/-- **prod_eq**: When the partition function factors, complexity is additive. -/
+/-- When the partition function factors, complexity is additive. -/
 theorem groupoidComplexity_prod
     {C : Type*} [Groupoid C] (x : C)
     (K : End x → ℝ) (hsum : Summable (fun g => Real.exp (-K g)))
@@ -298,11 +251,13 @@ theorem cycleGroupoid_partitionFn_eq_base_canonical_energy (n : ℕ) (hn : n ≥
   simpa [cycleBaseObj] using
     (cycleGroupoid_partitionFn_eq_canonical_energy n hn (cycleBaseObj n hn))
 
-/-! ## Bridge to Abstract Hierarchy
+/-! ## Groupoid objects
 
-Groupoid complexity instantiates `SGD.AdditiveComplexityOn` from Basic.lean,
-the domain-generic additive complexity class. The algebraic gravity theorem
-and unit laws from Basic.lean apply to groupoid objects via this instance. -/
+The bundled domain of groupoid complexity: a groupoid with a chosen
+base object and a summable energy on its endomorphisms. The product
+law (`GroupoidObj.prod_complexity`) and the energy-preserving
+equivalence (`GroupoidObj.Equiv`) are consumed by the duality
+wrappers in `Meno/Duality.lean`. -/
 
 section Bridge
 
@@ -553,37 +508,9 @@ theorem GroupoidObj.sigmaComplexity_pullback_le_logCard_maxFiber
             (D := D) (P := SGD.FiberProd f g)
             (E := fun s => E ((SGD.Pullback.equivSigmaFiber f g).symm s))
 
-/-- The trivial groupoid object: one object, one morphism, zero energy. -/
-noncomputable def GroupoidObj.trivial : GroupoidObj where
-  G := SingleObj PUnit
-  base := SingleObj.star PUnit
-  energy := fun _ => 0
-  summable := by
-    have : (fun g : End (SingleObj.star PUnit) => Real.exp (-0 : ℝ)) = fun _ => 1 := by
-      ext; simp
-    rw [this]
-    haveI : Fintype PUnit := inferInstance
-    exact (hasSum_fintype (fun _ : PUnit => (1 : ℝ))).summable
-
-private noncomputable instance trivialEndUnique :
-    Unique (End (SingleObj.star PUnit)) := by
-  change Unique PUnit; exact inferInstance
-
-theorem GroupoidObj.trivial_complexity : GroupoidObj.trivial.complexity = 0 := by
-  have : trivial.base = SingleObj.star PUnit := rfl
-  haveI : Unique (End trivial.base) := by
-    rw [this]; exact trivialEndUnique
-  exact groupoidComplexity_trivial _ _ _ rfl
-
 /-- Equivalence of groupoid objects: endomorphism equivalence preserving energy. -/
 def GroupoidObj.Equiv (E₁ E₂ : GroupoidObj) : Prop :=
   ∃ (e : End E₁.base ≃* End E₂.base), ∀ g, E₂.energy (e g) = E₁.energy g
-
-theorem GroupoidObj.congr_complexity {E₁ E₂ : GroupoidObj}
-    (h : GroupoidObj.Equiv E₁ E₂) :
-    E₁.complexity = E₂.complexity := by
-  obtain ⟨e, hK⟩ := h
-  exact groupoidComplexity_congr _ _ _ _ e.toEquiv hK _ _
 
 set_option maxHeartbeats 400000 in
 private lemma prod_summable (E₁ E₂ : GroupoidObj) :
@@ -680,33 +607,6 @@ theorem GroupoidObj.sigmaComplexity_prod_family_le_logCard_max_split
           Finset.univ.sup' hne (fun d : D => (P d).complexity) +
           Finset.univ.sup' hne (fun d : D => (Q d).complexity) := by
         rw [add_assoc]
-
-/-- Groupoid complexity is an instance of the domain-generic additive
-    complexity class from Basic.lean — the one gravity engine's third
-    instance (counting, pricing, groupoid). The algebraic gravity
-    theorem is applied through this instance:
-    `GroupoidObj.shared_component_identity`, below (review #21). -/
-noncomputable instance instAdditiveComplexityOnGroupoidObj :
-    SGD.AdditiveComplexityOn GroupoidObj ℝ where
-  C := GroupoidObj.complexity
-  unit := GroupoidObj.trivial
-  equiv := GroupoidObj.Equiv
-  prod := GroupoidObj.prod
-  unit_zero := GroupoidObj.trivial_complexity
-  congr := GroupoidObj.congr_complexity
-  prod_add := GroupoidObj.prod_complexity
-
-/-- **The groupoid shared-component identity** (review #21): merging
-two products sharing the component `P` saves exactly `C(P)` —
-`SGD.AdditiveComplexityOn.algebraic_gravity` **invoked** at the
-groupoid instance. The corroborating model consumes the same gravity
-engine as the spine. -/
-theorem GroupoidObj.shared_component_identity
-    (P Q R : GroupoidObj.{0, u}) :
-    (P.prod (Q.prod R)).complexity + P.complexity
-      = (P.prod Q).complexity + (P.prod R).complexity :=
-  SGD.AdditiveComplexityOn.algebraic_gravity
-    (inst := instAdditiveComplexityOnGroupoidObj) P Q R
 
 /-- Lower bound on sigma complexity: at least the maximum fiber complexity.
     Complement to `sigmaComplexity_le_logCard_max` (upper bound).

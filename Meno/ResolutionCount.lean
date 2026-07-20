@@ -850,8 +850,9 @@ Here the **intrinsic Gibbs distribution** of `classSectorAction`
   (`SectorAction.entropy_gravity` at the residue action), with the
   uniform complexity identity the priced identity plus the common
   deficit (`carrier_gravity_complexity` — proved **once**, here;
-  review #21 deleted the parallel SGD-bridge proof, both routes now
-  flowing through the one engine `algebraic_gravity`). Both live at
+  review #21 deleted the parallel SGD-bridge proof, everything now
+  flowing through the gravity theorem
+  `SectorAction.complexity_gravity`). Both live at
   the end of the priced section.
 * `sectionCost_carrierCompression_div` — the time face: the
   per-sector gauge-fixing cost is the conditional entropy
@@ -1935,11 +1936,12 @@ theorem carrier_gravity_entropy :
 descriptions representing the **same finite sector of the intrinsic
 carrier** — sharing the sector is worth exactly one copy of its
 complexity. Proved **once**: the uniform identity is the priced
-entropy gravity identity (`carrier_gravity_entropy`, itself the one
-engine `algebraic_gravity` at the pricing instance) plus the common
+entropy gravity identity (`carrier_gravity_entropy`, itself a
+corollary of the gravity theorem `SectorAction.complexity_gravity`)
+plus the common
 deficit `Δ` on every term — counting is pricing plus one deficit, on
 both sides. Review #21 deleted the parallel SGD-bridge proof of this
-statement: with both instances flowing through one engine, there is
+statement: with one gravity theorem, there is
 nothing left to corroborate. -/
 theorem carrier_gravity_complexity :
     (uniformAction (SGD.Pullback (G.carrierCompression q)

@@ -238,8 +238,9 @@ theorem complexity_prod (A : SectorAction.{u}) (B : SectorAction.{v}) :
 
 /-- **Energy-preserving equivalence of sector actions** (review #21):
 a relabeling of sectors under which every sector keeps its energy.
-The congruence law of the pricing instance
-(`instAdditiveComplexityOnSectorAction`, `Meno/UniformAction.lean`). -/
+The congruence the gravity theorem's decomposition lemmas are read
+through (`complexity_congr`; `SectorAction.complexity_gravity`,
+`Meno/InfoRatchet.lean`). -/
 def EnergyEquiv (A B : SectorAction.{u}) : Prop :=
   ∃ e : A.Λ ≃ B.Λ, ∀ x, B.E (e x) = A.E x
 
