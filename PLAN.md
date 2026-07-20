@@ -901,7 +901,7 @@ from the program with prejudice (recorded in the Disposition table).
 `LoopKernel.lean` is retained -- it has consumers (`SectorPresentation`,
 `Groupoid`).
 
-### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21 receipt, RECLOSED Phases 54, 57)
+### C12 -- Architecture and public claims — CLOSED (Phase 37; REOPENED at reviews #18, #21, #23 receipt, RECLOSED Phases 54, 57, 59)
 
 Three standing requirements, all met:
 
@@ -960,7 +960,10 @@ constraints are **repository invariants** outside the kernel.
 **Closure means**: the semantic certificate compiles, *and* the
 import DAG matches this Part, *and* the deletions hold, *and*
 `lake build Meno` is green with zero `sorry`/`axiom`/warnings, *and*
-substantive review finds the derivation routes direct.
+substantive review finds the derivation routes direct **and the
+public claims accurate** (rule-3 amendment, review #23: the fifth
+leg includes C12.3 — the README reviewed *as a document*, not only
+its citations resolved).
 
 **`Basic.lean`'s position** (rule-3 amendment, revised review #21):
 it is not *moved* downstream — it is the upstream home of **the one
@@ -1024,9 +1027,19 @@ the Phase 37–40 sequence of inversions found and repaired, and the
 Phase-52 relayering of `Fluctuation` — lives in Part II's phase
 addenda.
 
-**README** rewritten (Phase 37) and kept current: the architecture
-section lists the actual source files (34 as of Phase 54) and every
-physical claim cites its theorem by name.
+**README form (rule-3 amendments, review #23).** The README
+describes the standing state only, on the tabular form (restored
+Phase 59): a "why" section before the inventory; one `###` per face,
+each carrying a short prose statement (~150 words, no chronology)
+and a `| Result | Statement |` table with that face's theorems; the
+nine law packages as a `| Package | Covers | Derivation |` table.
+A new theorem enters the README as a **table row** in its face's
+inventory, never as a clause appended to an existing sentence. The
+README carries **no review-cycle state** — review numbers,
+reopen/reclose narration, "awaits" claims, and bump-stale figures
+(build-job counts) live in Part II — and every physical claim cites
+the theorem that proves it. The architecture section lists the
+actual source files (34 as of Phase 54).
 
 ## Execution Order
 
@@ -5058,3 +5071,51 @@ Meno` green (3350 jobs, 34 source files), zero `sorry`, zero
 `axiom`, zero warnings. The substantive-review leg pends
 resubmission. Cumulative: twenty-two reviews, ninety-three findings,
 ninety-three confirmed and repaired.
+
+## Phase 59 addendum: twenty-third external review — an acceptance retracted; four findings, four confirmed, four repaired; THE DOCUMENT ITSELF (2026-07-19)
+
+Review #23 first returned **ACCEPT** after verifying the
+mathematical routes and the claim-to-theorem resolution (its
+citation test: every backticked README identifier resolves to a
+real declaration) — then **retracted the acceptance** when the user
+challenged the README's condition. The reviewer's own diagnosis: it
+had discharged the closure conjunction's fifth leg without ever
+reviewing the README **as a document**, though C12.3 is a standing
+requirement and explicitly in its brief. Corrected verdict:
+**REJECT**, findings 6–9 — all against the README, none touching a
+proof; the mathematics and the one-engine rewire remain accepted on
+the merits. All four verified against source before repair; all
+four CONFIRMED. The ledger:
+
+| # | Finding | Verdict | Repair |
+|---|---------|---------|--------|
+| 6 | **The README did not describe the architecture Phase 57 built**: README:49–51 enumerated **eight** law packages; `Meno/Completion.lean` defines nine and `MenoSemanticCompletion` has nine fields — the missing one, `ResolutionCodingLaws`, is the package Phase 57 created in direct response to finding 4. The document was not updated for the repair it purports to describe | **CONFIRMED** — `ResolutionCodingLaws` at Completion.lean:287, derivation at :335, field `resolution_coding` at :624; the README listed eight | All nine packages now in a `\| Package \| Covers \| Derivation \|` table, with the split's point stated in the surrounding prose: graph-dependent packages quantified over every `G`, thermal over every `Q`, information over every `P`, `CodingGravityLaws` graph-free with no vacuous quantifier, `FlagshipLaws` pinning the concrete consumers |
+| 7 | **The README encoded review-cycle state, stale on arrival**: the closure paragraph (:58–63) narrated "discharged at review #20 and reopened by review #21 … the substantive-review leg awaits re-review", with further review numbers at :137 (#18), :257 (#21), :316 (#21) — PLAN content in the public document (a repository reader has no access to the reviews), self-invalidating the moment a review returns | **CONFIRMED** — all five spots verbatim | Every review-number reference and the reopen/reclose narration **stricken**; the closure paragraph states the standing condition only — what closure means (certificate + import DAG + deletions + clean build + substantive review), that the four machine legs are re-checked by every build, and that the fifth is a standing discipline. Every stricken fact already lives in Part II (the Phase 53–58 addenda) — nothing left the repository's record |
+| 8 | **Stale build figure**: README:42 said "~3300 build jobs green"; the recorded figure is 3350 (constant across Phases 54–58) | **CONFIRMED** | Job count **dropped** (the review's own alternative): it goes stale on every Mathlib bump and proves nothing a green build doesn't; the build-status sentence keeps zero-`sorry`, zero-`axiom`, build green against the pinned toolchain |
+| 9 | (revised) **The README's structural markup was dissolved, and the dissolution drives the accretion**: 527 lines / 3763 words against the pre-PLAN document's 259 / 2644, while losing 13 of 18 headers and all 106 tabulated inventory rows; with no table to add a row to, each review cycle appended its theorem as another clause to an already-long sentence — "Gravity" a single 147-line paragraph. The formatting loss and the accretion are one mechanism, not two complaints | **CONFIRMED** — every structural count verified exactly (current: 527/3763, 5 flat `##` headers, 0 table rows; old `qlzvrpqprttl`: 259 lines, 18 headers, 106 rows; Gravity 147 lines / ~1081 words, Duality ~601). One cited example corrected for the record: "Geometry is 543 words" matches no section — Geometry measures ~32 words; the transcript-length sections are Gravity (~1081), Duality (~601), Time and information (~374), Uncertainty (~302) | **Rebuilt on the old form with current content** (the prescribed single path): header hierarchy restored — 21 headers, one `###` per face (Duality; Topology, intrinsically; Basis independence; Matter; Binding; Time and information; Gravity; Uncertainty; Geometry) with `####` sub-inventories under Gravity; every face carries 2–5 sentences of prose plus a `\| Result \| Statement \|` table (12 tables, ~123 rows); the certificate is the nine-row package table — fixing finding 6 structurally, since an omitted package is now a visibly missing row; prose budget met (~1257 words total, no `###` section's prose over ~120); a restored "why" section (`## Why these pieces`) introduces complexity, the carrier, sharing, obstruction, compression, and fluctuation before any theorem is named. Old *content* not restored — the old tables cite deleted or falsified declarations. **Mechanical checks**: every identifier-shaped citation of the prior README survives (247 by this ledger's tokenizer, superset verified empty-diff; the review's tokenizer counted 250), 262 now present (the additions are the nine package names/derivations); every cited identifier resolves in the source tree; zero `review #` references; zero build-job figures |
+
+**Rule-3 amendments.** (1) **The fifth leg reads the document**: the
+closure conjunction's substantive-review leg is review of the whole
+claim surface — the derivation routes *and* the public claims
+(C12.3); a review that discharges it must have read the README as a
+reader, not only resolved its citations. (Stated by the reviewer
+against its own process failure; adopted into Part I's closure
+definition.) (2) **Tables are the growth surface**: a new theorem
+enters the README as a row in its face's inventory table, never as a
+clause appended to an existing sentence; face prose is capped
+(~150 words) and carries no chronology. (3) **No cycle state in
+public documents**: review numbers, reopen/reclose narration,
+"awaits" claims, and bump-stale figures live in Part II only.
+(Amendments 2 and 3 are codified in Part I's C12 README-form
+paragraph.)
+
+**Discipline check.** C12 REOPENED at review #23 receipt (findings
+6–9 are C12.3 defects, and the fifth leg's discharge was retracted
+with the acceptance), RECLOSED this phase by the README rebuild. No
+proof touched; no theorem statement changed; no Lean file modified.
+The four machine-checked legs hold unchanged: certificate as derived
+at Phase 58, import DAG unchanged, deletions recorded, `lake build
+Meno` green (3350 jobs, 34 source files), zero `sorry`, zero
+`axiom`, zero warnings. The substantive-review leg pends
+resubmission. Cumulative: twenty-three reviews, ninety-seven
+findings, ninety-seven confirmed and repaired.
