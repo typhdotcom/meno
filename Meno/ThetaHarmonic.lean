@@ -2,6 +2,7 @@ import Meno.GraphInstances
 import Meno.Matter
 import Meno.ResolutionCount
 import Meno.Systole
+import Meno.BindingSign
 
 /-! # The Theta Graph: the First Non-Diagonal Harmonic Gram Form
 
@@ -243,12 +244,31 @@ What stays here is theta's concrete numbers and the parametric
 shared-cycle oracle. -/
 
 /-- The theta interaction of the two unit sectors is the off-diagonal
-`−1/6`. -/
+`−1/6` — **the closed-form instance** (G6 demotion, PLAN rule 3):
+`−⟨c₁,c₂⟩/det = −2/12` through `ofCycles_interaction_fin_two`
+(`Meno/BindingSign.lean`), transported to the literal data along the
+derived-Gram identification (`basisGramData_theta_gram`). The
+independent literal-matrix arithmetic is retired. -/
 theorem theta_interaction :
     thetaHarmonicGramData.interaction ![1, 0] ![0, 1] = -(1/6) := by
+  have h : (thetaGraph.basisGramData thetaLatticeBasis).interaction
+      ![1, 0] ![0, 1]
+      = -(thetaGraph.cyclesR thetaLatticeBasis 0
+          ⬝ᵥ thetaGraph.cyclesR thetaLatticeBasis 1)
+        / (gramOf (thetaGraph.cyclesR thetaLatticeBasis)).det :=
+    ofCycles_interaction_fin_two _ _
+  have hval : -(thetaGraph.cyclesR thetaLatticeBasis 0
+        ⬝ᵥ thetaGraph.cyclesR thetaLatticeBasis 1)
+      / (gramOf (thetaGraph.cyclesR thetaLatticeBasis)).det = -(1/6) := by
+    rw [cyclesR_thetaLatticeBasis,
+      show thetaCycles 0 ⬝ᵥ thetaCycles 1 = gramOf thetaCycles 0 1 from rfl,
+      gramOf_thetaCycles]
+    norm_num [Matrix.det_fin_two_of]
+  have hd := h.trans hval
   show ∑ i, ∑ j, (!![1/3, -(1/6); -(1/6), 1/3] : Matrix (Fin 2) (Fin 2) ℝ) i j
       * ((![1, 0] : Fin 2 → ℤ) i : ℝ) * ((![0, 1] : Fin 2 → ℤ) j : ℝ) = -(1/6)
-  norm_num [Fin.sum_univ_two]
+  rw [← basisGramData_theta_gram]
+  exact hd
 
 /-- **Theta sectors bind with energy `1/3`** — positive: the sectors
 attract. Confirms the exact shared-cycle formula `2k/(n₁n₂ − k²)` at
@@ -259,7 +279,9 @@ theorem theta_bindingEnergy :
   norm_num
 
 /-- Attraction, stated as an inequality: the joint sector is strictly
-cheaper than its parts. -/
+cheaper than its parts — **the sign criterion's strictness instance**
+(G6 demotion, transitively through `theta_interaction`): the theta
+cycles overlap with `⟨c₁,c₂⟩ = 2 > 0`, so binding is attraction. -/
 theorem theta_binding_attractive :
     thetaHarmonicGramData.energy (![1, 0] + ![0, 1])
       < thetaHarmonicGramData.energy ![1, 0]

@@ -353,16 +353,21 @@ bijections), restated as such.
 **Falsification:** none expected; if the Jensen gap were identically
 zero the lift construction is degenerate — consequence as in G2.
 
-### G6 — The binding sign criterion — OPEN
+### G6 — The binding sign criterion — CLOSED (Meno/BindingSign.lean)
 
 **The exact law.** At `b₁ = 2` with basis cycles `c₁, c₂`, the
-priced Gram is the inverse chain Gram (G1's lemma), so
-`Matrix.inv_fin_two` gives the closed form: interaction
-`= −⟨c₁,c₂⟩ / det`, binding energy `= 2⟨c₁,c₂⟩ / det`, `det > 0`.
+priced Gram is the inverse chain Gram (the standing
+`basisGramData_gram`), so the two-by-two inverse
+(`Matrix.inv_def` with `Matrix.adjugate_fin_two`) gives the closed
+form: interaction `= −⟨c₁,c₂⟩ / det`
+(`ofCycles_interaction_fin_two`), binding energy
+`= 2⟨c₁,c₂⟩ / det` (`ofCycles_bindingEnergy_fin_two`), `det > 0`.
 
-**The iff.** `binding_attractive_iff : bindingEnergy > 0 ↔
-0 < ⟨c₁, c₂⟩` — **binding is attraction exactly when the cycles
-overlap with consistent orientation.**
+**The iff.** `binding_attractive_iff :
+0 < bindingEnergyClass (h1Basis B 0) (h1Basis B 1) ↔ 0 < ⟨c₁, c₂⟩`
+— **binding is attraction exactly when the cycles overlap with
+consistent orientation**, with the left side the intrinsic binding
+energy of the classes.
 
 **The strictness witness.** Theta: `⟨c₁,c₂⟩ = 2`, `det = 12` —
 `theta_interaction` and `theta_binding_attractive` re-derived as
@@ -374,8 +379,10 @@ stated as `wedge_binding_zero`.
 
 **The impossibility.** With positive overlap there is no
 non-attractive joint sector: the sign is forced by topology, not by
-choice of basis (invariance under the unimodular action stated as
-part of the theorem).
+choice of basis — invariance under the unimodular action is part of
+the statement, since `bindingEnergyClass` is defined through the
+basis-free `harmonicEnergy` and every basis chart computes it
+(`bindingEnergyClass_chart`).
 
 **Falsification:** if theta refuses the closed form, the derived
 Gram is unsound — consequence: `Meno/ThetaHarmonic.lean`'s derived
@@ -489,7 +496,7 @@ completion object — no coverage bundle, no review chronology.
 | G3 arithmetic gravity | — | **OPEN** |
 | G4 symmetry no-go | impossibility `cycle_no_invariant_representative`; law `cycle_equivariant_section_iff`; strictness `cycle_four_two_no_equivariant_section`, `cycle_four_two_no_invariant_representative`; boundary `cycle_three_two_equivariant_section` | **CLOSED** |
 | G5 non-uniform time | laws `lift_complexity` (G2) + `sectionCost_eq_sum_log_fiberCount`; Jensen `lift_complexity_ge_gibbs_log_rate` with boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; demotion `sectionCost_uniformLift` to the constant-redundancy chart; impossibility `sectionCostE_eq_zero_iff` (standing, restated) | **CLOSED** |
-| G6 binding sign | — | **OPEN** |
+| G6 binding sign | closed form `ofCycles_interaction_fin_two` / `ofCycles_bindingEnergy_fin_two`; iff `binding_attractive_iff` on the intrinsic `bindingEnergyClass` (invariance via `bindingEnergyClass_chart`); strictness `theta_interaction` / `theta_binding_attractive` demoted to instances; boundary `wedge_binding_zero` | **CLOSED** |
 | G7 dichotomy | — | **OPEN** |
 | G8 self-reference | — | **OPEN** |
 | R README rewrite | — | **OPEN** |

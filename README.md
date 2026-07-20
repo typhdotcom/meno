@@ -172,7 +172,11 @@ releases an *energy* equal to a rest mass is algebraic annihilation.
 | `attach_partFn_add_le`, `attach_partFn_lt` | The partition function strictly drops — by at least the killed sector's entire Boltzmann weight |
 | `TwoComplex.partFn_add_killed` | The spectrum *partitions exactly* into survivors and casualties |
 | `theta_binding_kills`, `theta_removed_weight` | Concretely: filling the theta graph's first cycle kills its `1/3`-mass sector and costs the spectrum at least `exp(−1/3)` (`Meno/ThetaBinding.lean`) |
-| `HarmonicGramData.bindingEnergy_eq`, `theta_interaction`, `theta_bindingEnergy`, `theta_binding_attractive` | Binding energy is `−2·interaction` — the gravitational content of the Gram level is its off-diagonal; at theta the interaction is `−1/6`, the binding energy `1/3`, and the joint sector strictly cheaper than its parts: **attraction** |
+| `ofCycles_interaction_fin_two`, `ofCycles_bindingEnergy_fin_two` | **The closed form at `b₁ = 2`** (G6, `Meno/BindingSign.lean`): the priced Gram is the inverse chain Gram (`basisGramData_gram`), so the unit sectors' interaction is `−⟨c₁,c₂⟩/det` and their binding energy `2⟨c₁,c₂⟩/det`, with the chain determinant positive |
+| `bindingEnergyClass`, `bindingEnergyClass_chart` | **The intrinsic binding energy** of two `H¹` classes, through `harmonicEnergy` — invariant under the unimodular action by construction, computed by every basis chart |
+| `binding_attractive_iff` | **THE BINDING SIGN CRITERION** (G6): binding is attraction **exactly when the cycles overlap with consistent orientation** — `0 < bindingEnergyClass ↔ 0 < ⟨c₁,c₂⟩`; with positive overlap there is no non-attractive joint sector in any chart — the sign is forced by topology, not by choice of basis |
+| `wedge_binding_zero` | **The boundary** (G6): the wedge's basis cycles share no edge, the overlap is zero — disjoint matter does not bind |
+| `HarmonicGramData.bindingEnergy_eq`, `theta_interaction`, `theta_bindingEnergy`, `theta_binding_attractive` | Binding energy is `−2·interaction`; at theta the interaction is `−1/6` — **the closed-form instance** `−2/12` (demoted at G6, rule 3: `⟨c₁,c₂⟩ = 2`, `det = 12`) — the binding energy `1/3`, and the joint sector strictly cheaper than its parts: **attraction**, exactly as the sign criterion demands |
 
 ### Time and information
 
@@ -465,6 +469,7 @@ Meno/
 ├── Binding.lean               2-complexes; the induced map; binding kills matter; exact spectral decomposition
 ├── ThetaBinding.lean          Binding at the theta graph: kill, rank drop `2 → 1`, removed weight
 ├── Systole.lean               The systole inequality (G1): Cauchy–Schwarz law, dual-norm attainment, mass–systole, C_n equality
+├── BindingSign.lean           The binding sign criterion (G6): rank-two closed form, intrinsic binding energy, attraction iff overlap
 ├── Basic.lean                 The pullback substrate: fibers, the shared-base pullback, sigma-fiber and marginal equivalences
 ├── UniformAction.lean         The uniform (zero-energy) sector action; pullback finiteness
 ├── InfoRatchet.lean           Fiber information; the coding theorem; THE GRAVITY THEOREM and its counting corollary; finite distributions
