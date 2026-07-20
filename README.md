@@ -398,14 +398,15 @@ the identifications proved (`cyclePeriodData_energy_eq`,
 ## Reading the thesis honestly
 
 The words "gravity", "matter", "time", "uncertainty" name formal
-analogues inside a finite, discrete model: gravity is a pullback
-complexity identity, matter is nontrivial cohomology with variational
-mass, time's arrow is the counted cost of reversing compression, and
-uncertainty is Gibbs fluctuation with its response identity. The project's claim is that
-these analogues are *theorems of one structure* — the sector lattice
-with its action — not that the physical world has been derived. Where
-a desired statement failed, the failure is recorded in `PLAN.md`
-(falsified designs are kept as falsified, with proofs).
+analogues inside a finite, discrete model: gravity is a
+shared-component complexity identity, matter is nontrivial cohomology
+with variational mass, time's arrow is the counted cost of reversing
+compression, and uncertainty is Gibbs fluctuation with its response
+identity. The project's claim is that these analogues are *theorems of
+one structure* — the sector lattice with its action — not that the
+physical world has been derived. Where a desired statement failed,
+the failure is recorded in `PLAN.md` (falsified designs are kept as
+falsified, with proofs).
 
 ---
 

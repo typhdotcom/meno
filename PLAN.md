@@ -1038,8 +1038,10 @@ inventory, never as a clause appended to an existing sentence. The
 README carries **no review-cycle state** — review numbers,
 reopen/reclose narration, "awaits" claims, and bump-stale figures
 (build-job counts) live in Part II — and every physical claim cites
-the theorem that proves it. The architecture section lists the
-actual source files (34 as of Phase 54).
+the theorem that proves it. The architecture section lists the actual
+source files of `Meno/`, verified against the tree at review — a
+count is not pinned here, for the same reason one is not pinned in
+the README.
 
 ## Execution Order
 
@@ -5119,3 +5121,44 @@ Meno` green (3350 jobs, 34 source files), zero `sorry`, zero
 `axiom`, zero warnings. The substantive-review leg pends
 resubmission. Cumulative: twenty-three reviews, ninety-seven
 findings, ninety-seven confirmed and repaired.
+
+## Phase 60 addendum: twenty-fourth external review (the gatekeeper) — ACCEPTED; the fifth leg discharged (2026-07-19)
+
+Review #24 verified the Phase-59 README rebuild at source and
+returned **ACCEPT** — the first acceptance since the fifth leg was
+widened to cover public claims. Per rule 1 (Phase 56) its positive
+claims are ledgered like findings:
+
+| Claim | Verification |
+|-------|--------------|
+| F6 repaired, beyond prescription | **VERIFIED** — all nine packages tabulated `Package \| Covers \| Derivation`, each row carrying its quantification (`∀ G`, `∀ Q`, `∀ P`, graph-free), so the Phase-57 split is visible in the document and the prose-list omission is structurally hard to reproduce |
+| F7 repaired | **VERIFIED** — zero review numbers, zero reopen/reclose narration; the self-invalidating "awaits re-review" replaced by the standing formulation "the four machine legs are re-checked by every build; the fifth is a standing discipline, not a one-time event" |
+| F8 repaired | **VERIFIED** — the bump-stale job count removed entirely; `lake build` green against the pinned toolchain is what remains |
+| F9 repaired | **VERIFIED** — 21 headers (was 5), 147 table rows (was 0), blockquote and rules restored, `## Why these pieces` restored ahead of any theorem name; prose 1551 words against the Phase-37 benchmark of 1150, per-face prose 101/65/10/28/31/79/178/34/22 — the remaining 2663 words are table inventory |
+| Citation integrity | **VERIFIED** — all 249 backticked identifiers resolve to real declarations (a first pass flagged ten; all ten confirmed present, the pattern was at fault) |
+| Architecture block | **VERIFIED** — 33 entries, matching `Meno/` exactly, no drift in either direction |
+| Gravity tables | **VERIFIED at source** — the engine and its three instances as audited in reviews #21–22; `SectorAction.entropy_gravity` attributed to the priced calculus at the residue action, with no residue of the deleted distribution-level theorem |
+
+**The reviewer's own corrections, applied this phase.** The review
+carried two non-blocking notes and addressed both itself rather than
+deferring them: (1) `Reading the thesis honestly` glossed gravity as
+"a pullback complexity identity" — exact before Phase 57, but since
+the one-engine rewire that is the shape of the two physical
+instances, not of the theorem; corrected in place to
+**"shared-component complexity identity"**. (2) The fifth leg's
+widening to public claims was already carried into Part I's closure
+definition by Phase 59 — verified present, no further action.
+
+**The closure conjunction is discharged.** All five legs hold
+simultaneously against this state: certificate compiles, import DAG
+matches Part I, deletions hold, `lake build Meno` green with zero
+`sorry`/`axiom`/warnings, and substantive review finds the derivation
+routes direct **and the public claims accurate** — the widened fifth
+leg, discharged for the first time under its widened form.
+
+**Discipline check.** C12 RECLOSED at Phase 59 and now review-verified;
+no goal reopens; nothing to repair beyond the one gloss the reviewer
+applied. The standing Phase-56 rule governs: any future change to a
+Part-I file reopens the conjunction. Cumulative: twenty-four reviews,
+ninety-seven findings, ninety-seven confirmed and repaired; two
+acceptances (Phases 56, 60).
