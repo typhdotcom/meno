@@ -39,6 +39,9 @@ import Meno.ResolutionCount
 -- Symmetry: automorphisms, the no-go for symmetric descriptions (G4)
 import Meno.Symmetry
 
+-- Arithmetic gravity on the resolution tower (G3)
+import Meno.TowerGravity
+
 -- Concrete consumers of the whole stack
 import Meno.WedgePresentation
 import Meno.ThetaHarmonic

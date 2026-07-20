@@ -335,6 +335,11 @@ and pairs are actions too (`Meno/InfoRatchet.lean`,
 | `FinDist.condEntropy_comp`, `residue_tower_condEntropy_trans` | Conditional entropies add along the tower by the unconditional chain rule: `H(q″\|q) = H(q″\|q′) + H(q′\|q)` |
 | `sectionCost_h1TowerMap_trans`, `residue_tower_price_trans` | Section costs add; the deficit increments telescope |
 | `theta_tower_price_triangle` | The full triangle consumed on theta: `H(8\|2) = H(8\|4) + H(4\|2) = 2·log 4 − (Δ(8) − Δ(2))` |
+| `h1ReductionCRT`, `card_h1Reduction_mul_gcd` | **CRT on the tower** (G3, `Meno/TowerGravity.lean`): the `lcm` reduction **is** the fiber product of the two reductions over their common coarsening — the finer resolution is the coupling of the coarser ones; the counting identity is `Nat.gcd_mul_lcm` raised to `b₁` |
+| `residueWeight_zero_eq_classScaledPartFn`, `harmonicEnergy_zsmul` | **The key lemma** (G3): the modal coset weight is the scaled partition function — `residueWeight q 0 = classScaledPartFn (q²)`; the fiber of zero is `q·H¹`, enumerated from the carrier by multiplication by `q`, with quadratic energy |
+| `residue_gravity_crossRatio` | **THE CROSS-RATIO LAW** (G3): the four-resolution gravity defect on the tower is `(log Z(q²) + log Z(q'²)) − (log Z(gcd²) + log Z(lcm²))` — a cross-ratio of scaled partition functions |
+| `residue_gravity_dvd` | **The boundary** (G3): along a divisibility chain the defect vanishes identically — gravity is exact on the tower exactly along chains |
+| `cycle3_classScaledPartFn`, `cycle3_crossRatio_neg` | **The strictness** (G3): on `C₃` at `(2, 3)` the defect is strictly negative — `Z(1/3)·Z(12) > Z(4/3)·Z(3)` by first-mode lower bounds against geometric tails — **incomparable resolutions couple supermodularly**; read as the face's negative: there is no resolution-independent gravity on the tower — exactness selects the divisibility order |
 | `residue_tower_price_id`, `sectionCost_h1TowerMap_id` | The identity step has zero price and zero cost |
 
 #### The relative-entropy engine
@@ -470,6 +475,7 @@ Meno/
 ├── ThetaBinding.lean          Binding at the theta graph: kill, rank drop `2 → 1`, removed weight
 ├── Systole.lean               The systole inequality (G1): Cauchy–Schwarz law, dual-norm attainment, mass–systole, C_n equality
 ├── BindingSign.lean           The binding sign criterion (G6): rank-two closed form, intrinsic binding energy, attraction iff overlap
+├── TowerGravity.lean          Arithmetic gravity on the tower (G3): CRT, the key lemma, the cross-ratio law, chain exactness, C₃ strictness
 ├── Basic.lean                 The pullback substrate: fibers, the shared-base pullback, sigma-fiber and marginal equivalences
 ├── UniformAction.lean         The uniform (zero-energy) sector action; pullback finiteness
 ├── InfoRatchet.lean           Fiber information; the coding theorem; THE GRAVITY THEOREM and its counting corollary; finite distributions

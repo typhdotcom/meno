@@ -226,33 +226,37 @@ were provably identically zero the constructions are degenerate —
 consequence: the face is excised and gravity reverts to the
 constant-fiber statement, labeled as such.
 
-### G3 — Arithmetic gravity on the tower — OPEN
+### G3 — Arithmetic gravity on the tower — CLOSED (Meno/TowerGravity.lean)
 
-**CRT.** For `q, q' ≥ 1`, the finer reduction is the fiber product
-of the coarser ones over their common coarsening:
-`H1Reduction G (lcm q q') ≃ SGD.Pullback (h1TowerMap q _) (h1TowerMap q' _)`
-— componentwise Chinese remainder through the keystone coordinates;
-the counting identity is `Nat.gcd_mul_lcm` raised to `b₁`.
+**CRT** (`h1ReductionCRT`). For `q, q'` with `[NeZero]`, the finer
+reduction is the fiber product of the coarser ones over their common
+coarsening:
+`H1Reduction G (lcm q q') ≃ SGD.Pullback (h1TowerMap gcd q _) (h1TowerMap gcd q' _)`
+— componentwise Chinese remainder through the keystone coordinates
+(injectivity is `lcm`-divisibility of coordinates, surjectivity the
+fiber count); the counting identity is `Nat.gcd_mul_lcm` raised to
+`b₁` (`card_h1Reduction_mul_gcd`).
 
 **The key lemma.** The modal coset weight is the scaled partition
-function: `residueWeight q 0 = classScaledPartFn (q²)` — the fiber
-of zero is `q · H¹` (`ker_h1Res`), multiplication by `q` is
-injective on the free lattice, and the energy is quadratic
-(`E(q • κ) = q² · E(κ)`).
+function: `residueWeight q 0 = classScaledPartFn (q²)` — with
+`classScaledPartFn` the standing β-scaled carrier partition function
+at `β = (q : ℝ)²` — the fiber of zero is `q · H¹`, multiplication by
+`q` is injective on the free lattice, and the energy is quadratic
+(`harmonicEnergy_zsmul : E(c • κ) = c² · E(κ)`).
 
 **The exact law.** Via `classPartFn_eq_residueWeight_mul`, the
 four-resolution gravity defect is a cross-ratio of scaled partition
 functions:
 
 ```lean
-theorem residue_gravity_crossRatio (hq : 1 ≤ q) (hq' : 1 ≤ q') :
+theorem residue_gravity_crossRatio (q q' : ℕ) [NeZero q] [NeZero q'] :
     ((G.residueAction (Nat.lcm q q')).complexity
         + (G.residueAction (Nat.gcd q q')).complexity)
       - ((G.residueAction q).complexity + (G.residueAction q').complexity)
-    = (Real.log (G.classScaledPartFn (q^2))
-        + Real.log (G.classScaledPartFn (q'^2)))
-      - (Real.log (G.classScaledPartFn ((Nat.gcd q q')^2))
-        + Real.log (G.classScaledPartFn ((Nat.lcm q q')^2)))
+    = (Real.log (G.classScaledPartFn ((q : ℝ)^2))
+        + Real.log (G.classScaledPartFn ((q' : ℝ)^2)))
+      - (Real.log (G.classScaledPartFn ((Nat.gcd q q' : ℝ)^2))
+        + Real.log (G.classScaledPartFn ((Nat.lcm q q' : ℝ)^2)))
 ```
 
 **The boundary.** `q ∣ q'` makes `{gcd, lcm} = {q, q'}` and the
@@ -260,10 +264,11 @@ defect vanish identically: **gravity is exact on the tower exactly
 along chains** (`residue_gravity_dvd`).
 
 **The strictness.** On `cycleGraph 3` at `(q, q') = (2, 3)`:
-`Z(1)·Z(36) > Z(4)·Z(9)` by explicit partial sums with Gaussian
-tail bounds (the estimate discipline demonstrated in
-`Meno/Zeta.lean`), so the defect is strictly negative —
-**incomparable resolutions couple supermodularly**
+`Z(1/3)·Z(12) > Z(4/3)·Z(3)` in scalar theta values
+(`cycle3_classScaledPartFn`), by first-mode lower bounds against
+geometric tail bounds (the estimate discipline demonstrated in
+`Meno/Zeta.lean`, restated for the face), so the defect is strictly
+negative — **incomparable resolutions couple supermodularly**
 (`cycle3_crossRatio_neg`).
 
 **The impossibility.** Same theorem, read as the face's negative:
@@ -496,7 +501,7 @@ completion object — no coverage bundle, no review chronology.
 |------|-------------------|--------|
 | G1 systole inequality | impossibility `MatterSector.not_gradient` (standing, restated); law `pairing_sq_le_energy_mul_normSq` + `MatterSector.mass_systole`; boundary `dualNorm_combination_le` / `dualNorm_combination_eq_iff` + equality `cycle_systole_equality` (with `geodesic_harmonic_duality` demoted to its instance); strictness `theta_pairing_normSq_ge_four`, `theta_mass_gt_systole`. Harvest enumerated: empty | **CLOSED** |
 | G2 covariance gravity | constructions `SectorAction.lift` / `SectorAction.couple` / `gibbsCov` / `fiberCount`; law `gravity_defect` (with `lift_complexity`, `couple_complexity`); boundary `gravity_defect_eq_zero_iff` (`complexity_gravity` demoted to the zero-covariance chart); strictness `twoSector_gravityDefect_pos`; direction `gravityDefect_nonneg_of_comonotone` (via `gibbsCov_double_sum`); impossibility `exists_gravity_defect_ne_zero` | **CLOSED** |
-| G3 arithmetic gravity | — | **OPEN** |
+| G3 arithmetic gravity | CRT `h1ReductionCRT` + counting `card_h1Reduction_mul_gcd`; key lemma `residueWeight_zero_eq_classScaledPartFn` (via `harmonicEnergy_zsmul`); law `residue_gravity_crossRatio`; boundary `residue_gravity_dvd`; strictness/impossibility `cycle3_crossRatio_neg` (via `cycle3_classScaledPartFn`) | **CLOSED** |
 | G4 symmetry no-go | impossibility `cycle_no_invariant_representative`; law `cycle_equivariant_section_iff`; strictness `cycle_four_two_no_equivariant_section`, `cycle_four_two_no_invariant_representative`; boundary `cycle_three_two_equivariant_section` | **CLOSED** |
 | G5 non-uniform time | laws `lift_complexity` (G2) + `sectionCost_eq_sum_log_fiberCount`; Jensen `lift_complexity_ge_gibbs_log_rate` with boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; demotion `sectionCost_uniformLift` to the constant-redundancy chart; impossibility `sectionCostE_eq_zero_iff` (standing, restated) | **CLOSED** |
 | G6 binding sign | closed form `ofCycles_interaction_fin_two` / `ofCycles_bindingEnergy_fin_two`; iff `binding_attractive_iff` on the intrinsic `bindingEnergyClass` (invariance via `bindingEnergyClass_chart`); strictness `theta_binding_attractive_class` (the criterion's own anchor), with `theta_interaction` / `theta_binding_attractive` demoted to closed-form instances; boundary `wedge_binding_zero` | **CLOSED** |
