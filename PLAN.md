@@ -92,7 +92,7 @@ what G1 consumes.
 
 ## The faces
 
-### G1 — The systole inequality (geometry ⋈ matter) — OPEN
+### G1 — The systole inequality (geometry ⋈ matter) — CLOSED (Meno/Systole.lean)
 
 **The exact law.** For every finite graph, every class, and every
 integral cycle, pairing squared is bounded by energy times chain
@@ -474,7 +474,7 @@ completion object — no coverage bundle, no review chronology.
 
 | Face | Anchors delivered | Status |
 |------|-------------------|--------|
-| G1 systole inequality | — | **OPEN** |
+| G1 systole inequality | impossibility `MatterSector.not_gradient` (standing, restated); law `pairing_sq_le_energy_mul_normSq` + `MatterSector.mass_systole`; boundary `dualNorm_combination_le` / `dualNorm_combination_eq_iff` + equality `cycle_systole_equality` (with `geodesic_harmonic_duality` demoted to its instance); strictness `theta_pairing_normSq_ge_four`, `theta_mass_gt_systole`. Harvest enumerated: empty | **CLOSED** |
 | G2 covariance gravity | — | **OPEN** |
 | G3 arithmetic gravity | — | **OPEN** |
 | G4 symmetry no-go | impossibility `cycle_no_invariant_representative`; law `cycle_equivariant_section_iff`; strictness `cycle_four_two_no_equivariant_section`, `cycle_four_two_no_invariant_representative`; boundary `cycle_three_two_equivariant_section` | **CLOSED** |

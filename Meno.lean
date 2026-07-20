@@ -25,6 +25,7 @@ import Meno.BasisIndependence
 -- Matter and binding
 import Meno.Matter
 import Meno.Binding
+import Meno.Systole
 
 -- The pullback substrate and the uniform (zero-energy) action
 import Meno.Basic

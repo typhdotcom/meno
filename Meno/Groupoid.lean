@@ -2,6 +2,7 @@ import Meno.Simplicial
 import Meno.Geodesic
 import Meno.SectorPresentation
 import Meno.CycleHarmonic
+import Meno.Systole
 import Mathlib.CategoryTheory.Groupoid
 import Mathlib.CategoryTheory.Endomorphism
 import Mathlib.CategoryTheory.Products.Basic
@@ -471,22 +472,36 @@ theorem cycleGeodesic_canonical (n : ℕ) (hn : n ≥ 3) :
   show ((geodesicLength (CycleGraph n hn) (cycleWalk n hn) : ℕ) : ℝ) = n
   rw [cycleGraph_geodesic_eq_n]
 
-/-- **The geodesic/harmonic duality**: combinatorial mass times
-harmonic mass is one — `n · (1/n) = 1`. The winding-1 sector's two
-independent invariants, meeting. -/
+/-- **The geodesic/harmonic duality — the systole equality instance**
+(G1 demotion, PLAN rule 3): combinatorial mass times harmonic mass is
+one because the systole inequality is *equality* on `C_n` — the
+geodesic length of the canonical loop is the chain norm of the full
+cycle (the walk-length bridge, `cycleGeodesic_canonical` with
+`cycleFullCycle_normSq`), the walk-layer energy is the intrinsic mass
+(`cycleMatter_mass`), and the winding-one pairing is `1`
+(`cycle_systole_equality`, `Meno/Systole.lean`). The independent
+arithmetic route is retired. -/
 theorem geodesic_harmonic_duality (n : ℕ) (hn : n ≥ 3) :
     Geodesic.length (canonicalLoop n hn)
       * (Meno.cyclePeriodData n (by omega)).energy ![1] = 1 := by
-  rw [cycleGeodesic_canonical]
-  have henergy : (Meno.cyclePeriodData n (by omega)).energy ![1] = 1 / n := by
+  have hpos : 0 < n := by omega
+  have hbridge : Geodesic.length (canonicalLoop n hn)
+      = (fun e => (((cycleLatticeBasis n hpos 0
+          : ↥(cycleGraph n hpos).cycleLattice) : Fin n → ℤ) e : ℝ))
+        ⬝ᵥ (fun e => (((cycleLatticeBasis n hpos 0
+            : ↥(cycleGraph n hpos).cycleLattice) : Fin n → ℤ) e : ℝ)) := by
+    rw [cycleGeodesic_canonical]
+    exact (cycleFullCycle_normSq n hpos).symm
+  have hmass : (Meno.cyclePeriodData n (by omega)).energy ![1]
+      = (cycleMatter n hpos).mass := by
+    rw [cycleMatter_mass]
     show ∑ i, ∑ j, (Meno.cyclePeriodData n (by omega)).gram i j
         * ((![1] : Fin 1 → ℤ) i : ℝ) * ((![1] : Fin 1 → ℤ) j : ℝ) = 1 / n
     rw [Meno.cyclePeriodData_gram]
     simp
-  rw [henergy]
-  have hn0 : (n : ℝ) ≠ 0 := by
-    exact_mod_cast (show n ≠ 0 by omega)
-  field_simp
+  rw [hbridge, hmass, mul_comm, ← cycle_systole_equality n hpos,
+    cycleMatter_pairing]
+  norm_num
 
 end GeodesicInstance
 

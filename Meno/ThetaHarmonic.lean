@@ -1,6 +1,7 @@
 import Meno.GraphInstances
 import Meno.Matter
 import Meno.ResolutionCount
+import Meno.Systole
 
 /-! # The Theta Graph: the First Non-Diagonal Harmonic Gram Form
 
@@ -598,5 +599,86 @@ theorem theta_gibbsVariance_T_dual (β : ℝ) (hβ : 0 < β) :
   rw [h, div_eq_div_iff (by positivity) (by positivity)]
   ring
 
+/-! ## The systole at the theta graph (G1 strictness)
+
+Every integral cycle pairing nontrivially with `thetaMatter` has
+chain norm at least `4`: in the theta basis's coordinates `(a, b)`
+the chain norm is `4(a² + ab + b²)` (the chain Gram is
+`!![4, 2; 2, 4]`), and the integer form `a² + ab + b²` is at least
+`1` off the origin. The systole bound therefore reads `1/4 ≤ mass`,
+and the mass is `1/3` — **strict**: the harmonic representative of
+the theta class is supported on no single cycle, and no integral
+cycle attains the dual norm. -/
+
+/-- Nonzero integer pairs give `1 ≤ a² + ab + b²` — integer
+positivity of the theta chain form. -/
+private lemma one_le_theta_intForm {a b : ℤ} (h : ¬(a = 0 ∧ b = 0)) :
+    1 ≤ a ^ 2 + a * b + b ^ 2 := by
+  rcases eq_or_ne b 0 with hb | hb
+  · subst hb
+    have ha : a ≠ 0 := fun ha => h ⟨ha, rfl⟩
+    have h4 : 0 < a ^ 2 :=
+      lt_of_le_of_ne (sq_nonneg a) (Ne.symm (pow_ne_zero 2 ha))
+    have h5 := Int.add_one_le_iff.mpr h4
+    nlinarith
+  · have hb2 : 1 ≤ b ^ 2 := by
+      have h4 : 0 < b ^ 2 :=
+        lt_of_le_of_ne (sq_nonneg b) (Ne.symm (pow_ne_zero 2 hb))
+      have h5 := Int.add_one_le_iff.mpr h4
+      linarith
+    have key : 3 ≤ 4 * (a ^ 2 + a * b + b ^ 2) := by
+      nlinarith [sq_nonneg (2 * a + b)]
+    set f := a ^ 2 + a * b + b ^ 2
+    omega
+
+/-- **The theta systole**: every integral cycle pairing nontrivially
+with the theta matter has chain norm at least `4` — the chain-Gram
+form `4(a² + ab + b²)` at nonzero integer coordinates. -/
+theorem theta_pairing_normSq_ge_four (c : ↥thetaGraph.cycleLattice)
+    (h : thetaGraph.cyclePairing c thetaMatter.val ≠ 0) :
+    (4 : ℝ) ≤ (fun e => ((c : thetaGraph.E → ℤ) e : ℝ))
+      ⬝ᵥ (fun e => ((c : thetaGraph.E → ℤ) e : ℝ)) := by
+  have hc : c ≠ 0 := by
+    intro h0
+    apply h
+    rw [h0, map_zero]
+    rfl
+  have hab : ¬(thetaLatticeBasis.repr c 0 = 0
+      ∧ thetaLatticeBasis.repr c 1 = 0) := by
+    rintro ⟨ha0, hb0⟩
+    apply hc
+    have hrepr : thetaLatticeBasis.repr c = 0 := by
+      ext j
+      fin_cases j
+      · simpa using ha0
+      · simpa using hb0
+    rw [← thetaLatticeBasis.repr.symm_apply_apply c, hrepr, map_zero]
+  have hquad :=
+    thetaGraph.castCycle_normSq_eq_repr_quadForm thetaLatticeBasis c
+  rw [cyclesR_thetaLatticeBasis, gramOf_thetaCycles] at hquad
+  rw [hquad]
+  have hexpand : (fun i => ((thetaLatticeBasis.repr c i : ℤ) : ℝ))
+      ⬝ᵥ ((!![4, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℝ)
+          *ᵥ fun i => ((thetaLatticeBasis.repr c i : ℤ) : ℝ))
+      = 4 * (((thetaLatticeBasis.repr c 0 : ℤ) : ℝ) ^ 2
+          + ((thetaLatticeBasis.repr c 0 : ℤ) : ℝ)
+            * ((thetaLatticeBasis.repr c 1 : ℤ) : ℝ)
+          + ((thetaLatticeBasis.repr c 1 : ℤ) : ℝ) ^ 2) := by
+    norm_num [Matrix.mulVec, dotProduct, Fin.sum_univ_two]
+    ring
+  rw [hexpand]
+  have h1R : (1 : ℝ) ≤ ((thetaLatticeBasis.repr c 0 : ℤ) : ℝ) ^ 2
+      + ((thetaLatticeBasis.repr c 0 : ℤ) : ℝ)
+        * ((thetaLatticeBasis.repr c 1 : ℤ) : ℝ)
+      + ((thetaLatticeBasis.repr c 1 : ℤ) : ℝ) ^ 2 := by
+    exact_mod_cast one_le_theta_intForm hab
+  linarith
+
+/-- **THE STRICTNESS** (G1): the theta systole bound `1/4` is
+strictly below the mass `1/3` — the systole inequality is strict on
+the theta graph. -/
+theorem theta_mass_gt_systole : (1 : ℝ) / 4 < thetaMatter.mass := by
+  rw [thetaMatter_mass]
+  norm_num
 
 end Meno

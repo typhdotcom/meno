@@ -352,16 +352,27 @@ the carrier bundle (`Meno/Fluctuation.lean`, `Meno/LatticeAction.lean`).
 
 ### Geometry
 
+The systole face (G1): for every finite graph, every class, and every
+integral cycle, **pairing squared is bounded by harmonic energy times
+chain norm** — and the bound is the dual-norm characterization of the
+harmonic representative, sharp exactly on its scalar multiples. The
+impossibility anchor is the standing `MatterSector.not_gradient`: the
+class whose mass the inequality bounds admits no global potential.
 Every symmetric simplicial complex's fundamental groupoid carries a
 Lawvere-subadditive geodesic length, and on the `n`-cycle the
-combinatorial and harmonic masses meet. The walk model's groupoid
-objects are spine objects: the bridge is pure repackaging, and the
-identifications are proved.
+combinatorial and harmonic masses meet — now as the equality case of
+the systole inequality, through the walk-length bridge.
 
 | Result | Statement |
 | :--- | :--- |
+| `pairing_sq_le_energy_mul_normSq` | **The systole inequality** (`Meno/Systole.lean`): `⟨c, κ⟩² ≤ E(κ) · ‖c‖²` for every graph, class, and integral cycle — the attained realizer (`realizer_dotProduct_castCycle`) meets Cauchy–Schwarz |
+| `MatterSector.mass_systole` | **The mass–systole bound**: `1/‖c‖² ≤ mass` for every cycle pairing nontrivially with matter — the integer pairing squared is at least one |
+| `dualNorm_combination_le`, `dualNorm_combination_eq_iff` | **Dual-norm attainment**: `⟨z, κ⟩²/‖z‖² ≤ E(κ)` for every real cycle combination `z ≠ 0`, with equality iff `z` is parallel to the harmonic representative `periodRep` — whose coefficients are `(gramOf c)⁻¹ *ᵥ k` (`basisGramData_gram`, `harmonicEnergy_eq_periodRep_normSq`) |
+| `theta_pairing_normSq_ge_four`, `theta_mass_gt_systole` | **The strictness** at the theta graph: every cycle pairing nontrivially with `thetaMatter` has chain norm at least `4` (chain Gram `!![4, 2; 2, 4]`, coordinates via `castCycle_normSq_eq_repr_quadForm`), so the systole bound `1/4` is strictly below the mass `1/3` |
+| `cycleMatter`, `cycleMatter_mass`, `cycleMatter_pairing`, `cycleFullCycle_normSq` | Matter on `C_n`: the winding-one class — mass `1/n`, pairing `1` on the full cycle, chain norm `n` |
+| `cycle_systole_equality` | **The equality case**: on `C_n` with the full cycle the systole inequality is equality — `1 = (1/n) · n` |
 | `simplicialGeodesic` | The geodesic length instance (`Meno/Groupoid.lean`) |
-| `geodesic_harmonic_duality` | `n · (1/n) = 1` |
+| `geodesic_harmonic_duality` | `n · (1/n) = 1` — **the systole equality instance** (demoted, PLAN rule 3): geodesic length is the chain norm of the full cycle (`cycleGeodesic_canonical`), the walk-layer energy is the intrinsic mass, and `cycle_systole_equality` closes the circle |
 | `cycleCanonicalObj`, `cycleCanonicalObj_partFn_eq_partitionFn` | The canonical cycle groupoid object — winding classes of the fundamental groupoid — with partition function recovering the walk model's `partitionFn`, no extra hypotheses |
 | `GroupoidObj.toLoopKernelObj`, `cycleLoopKernel` | Every grounded groupoid object **is** a spine loop kernel — all five data fields transfer verbatim; the cycle instance |
 | `cycleSectorPresentation`, `cycleLoopKernel_partFn_eq_partitionFn` | Winding coordinates present the cycle kernel as the rank-one quadratic action `!![1/n]`; its partition function transits the spine to `partitionFn n` — every step a spine theorem |
@@ -436,6 +447,7 @@ Meno/
 ├── Matter.lean                MatterSector = nonzero H¹ class; mass, positivity, trapped paradox
 ├── Binding.lean               2-complexes; the induced map; binding kills matter; exact spectral decomposition
 ├── ThetaBinding.lean          Binding at the theta graph: kill, rank drop `2 → 1`, removed weight
+├── Systole.lean               The systole inequality (G1): Cauchy–Schwarz law, dual-norm attainment, mass–systole, C_n equality
 ├── Basic.lean                 The pullback substrate: fibers, the shared-base pullback, sigma-fiber and marginal equivalences
 ├── UniformAction.lean         The uniform (zero-energy) sector action; pullback finiteness
 ├── InfoRatchet.lean           Fiber information; the coding theorem; THE GRAVITY THEOREM and its counting corollary; finite distributions
