@@ -9,7 +9,8 @@ statement-coverage bundle and its nine law packages — an
 acceptance-signature checklist, one field per claim — lived in this
 file; the Obstruction Program (PLAN, G7) deletes them (recorded in
 `scripts/deleted.txt`) and installs their successor: one statement
-whose forward direction requires every face's strictness.
+whose forward direction requires a strict engine for each of its
+five phenomena.
 
 `meno_dichotomy`: a finite multigraph has cycles **iff** the five
 strict phenomena all occur —
@@ -32,9 +33,14 @@ sector already forces cycles (`MatterSector.b1_pos`, the converse
 of `exists_matter`).
 
 **The universe of the model is interesting exactly when it is
-globally unsatisfiable.** A hollow face cannot deliver its strict
-conjunct, and deleting any face's strictness theorem breaks this
-file. -/
+globally unsatisfiable.** Each conjunct is consumed by name —
+`exists_matter`, `one_lt_classPartFn`,
+`classSectorAction_gibbsVariance_energy_pos`, `residueDefect_pos`,
+`sectionCost_h1TowerMap`, and `MatterSector.b1_pos` for the
+reverse — and each engine sits at the top of its layer's stack:
+deleting any consumed engine, or anything load-bearing beneath it,
+breaks this file. The faces sharpen these phenomena at their
+corners; the dichotomy consumes the spine. -/
 
 namespace Meno
 
@@ -44,8 +50,8 @@ universe u v
 multigraph has cycles **iff** matter exists, the spectrum strictly
 exceeds the vacuum, the energy fluctuates, every resolution carries
 a strict information deficit, and every genuine refinement of the
-tower is strictly priced. Forward: the faces' strictness theorems,
-consumed by name. Reverse: a matter sector forces cycles
+tower is strictly priced. Forward: the five phenomena's strict
+engines, consumed by name. Reverse: a matter sector forces cycles
 (`MatterSector.b1_pos`). -/
 theorem meno_dichotomy (G : IncidenceGraph.{u, v}) :
     0 < G.b1 ↔

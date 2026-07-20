@@ -19,8 +19,8 @@ Mathlib. The program now underway — the Obstruction Program, with
 its four-anchor discipline — lives in [`PLAN.md`](PLAN.md); at its
 G7 close the first program's coverage bundle was deleted and
 replaced by the completion object, one dichotomy theorem whose
-forward direction requires every face's strictness ([The
-dichotomy](#the-dichotomy)).
+forward direction requires a strict engine for each of its five
+phenomena ([The dichotomy](#the-dichotomy)).
 
 ---
 
@@ -430,8 +430,8 @@ The completion object (G7): the first program's statement-coverage
 bundle and its nine law packages are deleted (recorded in
 `scripts/deleted.txt`), replaced by **one biconditional at the top
 of the tree** (`Meno/Completion.lean`) whose forward direction
-requires every face's strictness — a hollow face cannot deliver its
-strict conjunct, and deleting any face's strictness theorem breaks
+requires a strict engine for each of its five phenomena — deleting
+any consumed engine, or anything load-bearing beneath it, breaks
 the file. **The universe of the model is interesting exactly when
 it is globally unsatisfiable.**
 
@@ -441,8 +441,8 @@ it is globally unsatisfiable.**
 | `exists_matter` | **The matter conjunct**: `0 < b₁` forces a nonzero `H¹` class |
 | `one_lt_classPartFn` | **The spectrum conjunct** (`Meno/Binding.lean`): with cycles, `1 < classPartFn` — the vacuum contributes `exp(−0) = 1` and a matter sector adds its own Boltzmann weight to the same convergent sum (`summable_classWeight`) |
 | `classSectorAction_gibbsVariance_energy_pos` | **The fluctuation conjunct**: the intrinsic carrier's energy variance is strictly positive on any graph with cycles |
-| `residueDefect_pos` | **The deficit conjunct**: at every resolution `1 < q` the Gibbs residue law sits strictly below maximal ignorance |
-| `sectionCost_h1TowerMap` | **The arrow conjunct's engine**: reversing one resolution step costs `b₁·log c` per coarse sector — strictly positive at any genuine refinement |
+| `residueDefect_pos` | **The deficit conjunct**: with cycles, at every resolution `1 < q` the Gibbs residue law sits strictly below maximal ignorance |
+| `sectionCost_h1TowerMap` | **The arrow conjunct's engine**: reversing one resolution step costs `b₁·log c` per coarse sector — with cycles, strictly positive at any genuine refinement |
 | `MatterSector.b1_pos` | **The reverse direction** (`Meno/Matter.lean`, the converse of `exists_matter`): a matter sector exists only where the graph has cycles — at `b₁ = 0` the keystone coordinates land in `Fin 0 → ℤ` and every class is zero |
 
 The repository invariants remain machine-assisted by

@@ -439,11 +439,14 @@ delivered smaller than planned: the matter conjunct alone forces
 coordinates land in `Fin 0 → ℤ` and every class is zero); the
 planned every-conjunct collapse was not needed and was not built.
 
-**This is the completion object.** It cannot compile if any face is
-hollow — a hollow face cannot deliver its strict conjunct — and it
-breaks if any strictness theorem is deleted. Review of the program
-is reading this one statement. **The universe of the model is
-interesting exactly when it is globally unsatisfiable.**
+**This is the completion object.** It cannot compile if any of the
+five phenomena lacks its strict engine — the six engines are
+consumed by name, and deleting any of them, or anything
+load-bearing beneath them, breaks the file. The faces sharpen these
+phenomena at their corners; the dichotomy consumes the spine.
+Review of the program is reading this one statement. **The universe
+of the model is interesting exactly when it is globally
+unsatisfiable.**
 
 At close, the Harvest executed: the coverage bundle and the law
 packages deleted and deny-listed (`scripts/deleted.txt`);
@@ -451,8 +454,8 @@ packages deleted and deny-listed (`scripts/deleted.txt`);
 README's bundle section replaced by the dichotomy.
 
 **Falsification:** not falsifiable as a whole; each conjunct's
-failure is its face's falsification with the consequence prescribed
-at that face.
+failure falsifies its engine's layer; the consequence is prescribed
+where the engine lives.
 
 ### G8 — Self-reference (the diagonal corner) — CLOSED (Meno/Diagonal.lean)
 
