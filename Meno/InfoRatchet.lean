@@ -2661,8 +2661,8 @@ theorem counting_gravity {X Y D : Type u} [Fintype X] [Fintype Y]
 
 /-! ## The two-sector witness: the defect takes both signs
 
-The strictness anchor, the face's negative, and the direction
-boundary. Base `Bool` with energies `0` and `1`; one map with
+The strictness anchor, the face's negative, and the repulsion
+witness. Base `Bool` with energies `0` and `1`; one map with
 redundancy profile `(1, 2)` used on both legs. The defect is
 `log(⟨m²⟩/⟨m⟩²)`, strictly positive by strict Gibbs fluctuation of
 the non-constant profile — so **there is no correlation-free
@@ -2801,7 +2801,7 @@ theorem twoSectorMapFlip_fiberCount_true :
       decide]
   norm_num
 
-/-- **THE DIRECTION BOUNDARY — coupling can repel**: at the
+/-- **THE REPULSION WITNESS — coupling can repel**: at the
 two-sector base with profile `(1, 2)` against the flipped `(2, 1)`,
 the defect is strictly negative. Through the sign law
 (`gravityDefect_neg_iff`) and the double-sum identity, the
