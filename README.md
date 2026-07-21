@@ -15,8 +15,8 @@ sharpens it:
 
 Each denial in the second sentence is a theorem of this tree
 ([The stake, in theorems](#the-stake-in-theorems)), and the closing
-"exactly when" is the completion object, one biconditional at the
-top of the import graph ([The dichotomy](#the-dichotomy)).
+"exactly when" is the completion object, a six-way equivalence at
+the top of the import graph ([The dichotomy](#the-dichotomy)).
 
 The carrier of the thesis is a **sector lattice with a
 positive-definite quadratic action**: the lattice enumerates the
@@ -41,7 +41,7 @@ Mathlib. The tree is organized into nine faces, indexed below
 | **No objective bit** | `cycle_no_invariant_representative` (G4): at `1 < gcd n q` no rotation-invariant cochain represents the winding class — the content is symmetric (`cycleRot_h1Map_int`), yet every encoding of it breaks the symmetry; the choice of bit is physical |
 | **No self-enumerating code** | `no_self_enumeration` (G8): no type surjects onto its own `ZMod 2`-valued predicates — every type, every universe, no finiteness hypothesis; on a nonempty finite carrier the shortfall is priced (`log_card_lt_descriptionCost`) |
 | **No preferred coordinate system** | `exists_unimodular_relating`: any two lattice bases are unimodularly related, and everything the physics reads is chart-invariant — the partition function (`basisGramData_partFn`), mass (`MatterSector.mass_chart`), binding (`bindingEnergyClass_chart`) |
-| **Globally unsatisfiable, locally lawful** | `MatterSector.not_gradient` with `period_eq_zero_iff_exists_grad`: a matter sector is a constraint system that is locally consistent everywhere and globally unsatisfiable; `meno_dichotomy`: the five strict phenomena — matter, spectrum, fluctuation, deficit, arrow — occur exactly where such a system exists |
+| **Globally unsatisfiable, locally lawful** | `MatterSector.not_gradient` with `period_eq_zero_iff_exists_grad`: a matter sector is a constraint system that is locally consistent everywhere and globally unsatisfiable; `meno_tfae`: the five strict phenomena — matter, spectrum, fluctuation, deficit, arrow — are pairwise equivalent to cycles and to each other; any one certifies the rest, and `meno_dichotomy` is the conjunction chart |
 
 ---
 
@@ -109,7 +109,7 @@ linked sections; the anchors are the theorems themselves.
 | **G4 — symmetry** ([Symmetry](#symmetry)) | A symmetry-respecting description exists iff coprimality | law `cycle_equivariant_section_iff`; impossibility `cycle_no_invariant_representative`; strictness `cycle_four_two_no_equivariant_section`; boundary `cycle_three_two_equivariant_section` |
 | **G5 — time** ([Time and information](#time-and-information)) | The ratchet's priced increment dominates the Gibbs-mean log-redundancy | law `lift_complexity_ge_gibbs_log_rate`, `sectionCost_eq_sum_log_fiberCount`; boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; impossibility `sectionCostE_eq_zero_iff` |
 | **G6 — binding** ([Binding](#binding)) | At `b₁ = 2`, the two basis sectors attract exactly when their cycles overlap with consistent orientation | law `binding_attractive_iff` on the intrinsic `bindingEnergyClass`; closed form `ofCycles_bindingEnergy_fin_two`; strictness `theta_binding_attractive_class`; boundary `wedge_binding_zero`; impossibility `exists_overlap_pos_binding_neg` |
-| **G7 — the dichotomy** ([The dichotomy](#the-dichotomy)) | Cycles iff the five strict phenomena | `meno_dichotomy` |
+| **G7 — the dichotomy** ([The dichotomy](#the-dichotomy)) | Cycles, matter, spectrum, fluctuation, deficit, arrow — pairwise equivalent | `meno_tfae`; conjunction chart `meno_dichotomy` |
 | **G8 — self-reference** ([Self-reference](#self-reference)) | No self-enumeration, and the shortfall is priced | impossibility `no_self_enumeration`; law `descriptionCost_split`; strictness `log_card_lt_descriptionCost`; boundary `log_card_eq_descriptionCost_iff` |
 | **G9 — the currency** ([The currency](#the-currency-g9)) | The Jensen gap is a relative entropy against the tilted Gibbs law; gravity's, time's, temperature's, and the tower's corrections are its recognitions | law `cgf_sub_gibbsExpect_eq_relativeEntropy`; boundary `cgf_sub_gibbsExpect_eq_zero_iff`, `cgf_bilinear_eq_zero_iff`; strictness `twoSector_cgf_gap_pos`, `twoSector_cgf_bilinear_pos`; impossibility `cgf_not_additive` |
 
@@ -508,25 +508,30 @@ the systole inequality, through the walk-length bridge.
 
 ## The dichotomy
 
-The completion object (G7): **one biconditional at the top of the
-tree** (`Meno/Completion.lean`), whose forward direction requires a
-strict engine for each of its five phenomena — deleting any
-consumed engine, or anything load-bearing beneath it, breaks the
-file. **The universe of the model is interesting exactly when it is
-globally unsatisfiable**: the five phenomena all occur precisely
-where the graph carries a constraint system that is locally
-consistent everywhere and globally unsatisfiable — a nonzero class,
-`0 < b₁`.
+The completion object (G7): **one six-way equivalence at the top
+of the tree** (`Meno/Completion.lean`) — cycles, matter, spectrum,
+fluctuation, deficit, and the arrow, pairwise equivalent, so **any
+one phenomenon certifies all the others**. The forward directions
+require a strict engine for each of the five phenomena; the
+reverse directions are matter's converse and four vacuum collapses
+at `b₁ = 0` — deleting any consumed engine, or anything
+load-bearing beneath it, breaks the file. **The universe of the
+model is interesting exactly when it is globally unsatisfiable**:
+each of the five phenomena occurs precisely where the graph
+carries a constraint system that is locally consistent everywhere
+and globally unsatisfiable — a nonzero class, `0 < b₁`.
 
 | Result | Statement |
 | :--- | :--- |
-| `meno_dichotomy` | **The dichotomy** (G7): `0 < b₁` **iff** matter exists **and** the spectrum strictly exceeds the vacuum **and** the harmonic energy genuinely fluctuates **and** every resolution `1 < q` carries a strict information deficit **and** every genuine refinement step of the tower has strictly positive section cost |
+| `meno_tfae` | **The completion** (G7): six statements, pairwise equivalent — `0 < b₁`, matter exists, the spectrum strictly exceeds the vacuum, the harmonic energy genuinely fluctuates, every resolution `1 < q` carries a strict information deficit, every genuine refinement step of the tower has strictly positive section cost. Any single phenomenon certifies the rest: observe fluctuation alone, and matter must exist |
+| `meno_dichotomy` | **The dichotomy** (the conjunction chart of `meno_tfae`): `0 < b₁` **iff** the five phenomena's conjunction |
 | `exists_matter` | **The matter conjunct**: `0 < b₁` forces a nonzero `H¹` class |
 | `one_lt_classPartFn` | **The spectrum conjunct** (`Meno/Binding.lean`): with cycles, `1 < classPartFn` — the vacuum contributes `exp(−0) = 1` and a matter sector adds its own Boltzmann weight to the same convergent sum (`summable_classWeight`) |
 | `classSectorAction_gibbsVariance_energy_pos` | **The fluctuation conjunct**: the intrinsic carrier's energy variance is strictly positive on any graph with cycles |
 | `residueDefect_pos` | **The deficit conjunct**: with cycles, at every resolution `1 < q` the Gibbs residue law sits strictly below maximal ignorance |
 | `sectionCost_h1TowerMap` | **The arrow conjunct's engine**: reversing one resolution step costs `b₁·log c` per coarse sector — with cycles, strictly positive at any genuine refinement |
-| `MatterSector.b1_pos` | **The reverse direction** (`Meno/Matter.lean`, the converse of `exists_matter`): a matter sector exists only where the graph has cycles — at `b₁ = 0` the keystone coordinates land in `Fin 0 → ℤ` and every class is zero |
+| `classPartFn_eq_one_of_b1_eq_zero`, `classSectorAction_gibbsVariance_energy_eq_zero_of_b1_eq_zero`, `residueDefect_eq_zero_of_b1_eq_zero`, `sectionCost_h1TowerMap_eq_zero_of_b1_eq_zero` | **The vacuum collapses** (the reverse engines): at `b₁ = 0` the spectrum is exactly the vacuum (`Z = 1`), the energy variance is exactly zero, every resolution's deficit is exactly zero, and every tower step is exactly free — each through the vacuum keystone `h1Class_eq_zero_of_b1_eq_zero` (every class vanishes) |
+| `MatterSector.b1_pos` | **Matter's converse** (`Meno/Matter.lean`, the converse of `exists_matter`): a matter sector exists only where the graph has cycles — at `b₁ = 0` the keystone coordinates land in `Fin 0 → ℤ` and every class is zero; the engine beneath the vacuum keystone |
 
 The repository invariants remain machine-assisted by
 `scripts/audit.py` (README citations resolve; recorded deletions
@@ -577,7 +582,7 @@ Meno/
 ├── Hodge.lean                 Graph partition functions (identified with the spine)
 ├── Duality.lean               The scalar quadratic family and Gibbs wrappers (identified with the spine)
 ├── Zeta.lean                  Riemann functional equation through the spine's theta identification
-└── Completion.lean            The completion object (G7): the dichotomy — cycles iff matter, spectrum, fluctuation, deficit, and the strict arrow
+└── Completion.lean            The completion object (G7): the six-way equivalence — cycles, matter, spectrum, fluctuation, deficit, arrow — with the dichotomy as its conjunction chart
 ```
 
 The legacy layer (`Meno/Simplicial.lean`–`Meno/Zeta.lean`) is
