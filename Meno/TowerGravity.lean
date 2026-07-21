@@ -24,19 +24,19 @@ The tower face of the obstruction program.
   defect is a cross-ratio of scaled partition functions;
   `classPartFn_eq_residueWeight_mul` is the partition-function form
   of the same split.
-* **The boundary** (`residue_gravity_dvd`): `q ∣ q'` collapses
-  `{gcd, lcm}` to `{q, q'}` and the defect vanishes identically —
-  gravity is exact along chains; the `C₃` witness
-  (`cycle3_crossRatio_neg`) shows it can strictly fail off them.
+* **The boundary** (`residue_gravity_dvd`): comparability — either
+  divisibility order — collapses `{gcd, lcm}` to `{q, q'}` and the
+  defect vanishes identically: gravity is exact along chains.
 * **The strictness** (`cycle3_crossRatio_neg`): on `cycleGraph 3` at
   `(q, q') = (2, 3)`, `Z(1)·Z(36) > Z(4)·Z(9)` by explicit partial
   sums with geometric tail bounds — the defect is strictly negative:
   **at the witness, incomparable resolutions couple
   supermodularly**.
-* **The impossibility** is the same theorem read as the face's
-  negative: there is no resolution-independent gravity on the tower —
-  exact along the divisibility order, strictly failing at an
-  incomparable pair. -/
+* **The impossibility — there is no resolution-independent gravity
+  on the tower** (`exists_incomparable_residue_gravity_neg`): an
+  incomparable pair of resolutions — neither dividing the other —
+  where the four-resolution defect is strictly negative. Exactness
+  is a fact about the divisibility order, not about coupling. -/
 
 namespace Meno
 
@@ -197,19 +197,24 @@ theorem residue_gravity_crossRatio_cgf (q q' : ℕ) [NeZero q] [NeZero q'] :
       (hpos (Nat.lcm q q'))]
   ring
 
-/-- **The boundary**: along a divisibility chain the defect
-vanishes identically — `{gcd, lcm} = {q, q'}` and the cross-ratio
-cancels. Gravity is exact along chains; the `C₃` witness
-(`cycle3_crossRatio_neg`) shows it can strictly fail off them. -/
+/-- **The boundary**: along a divisibility chain — either order of
+comparability — the defect vanishes identically: `{gcd, lcm}`
+collapses to `{q, q'}` and the cross-ratio cancels. Gravity is
+exact along chains; the `C₃` witness (`cycle3_crossRatio_neg`)
+shows it can strictly fail off them. -/
 theorem residue_gravity_dvd (q q' : ℕ) [NeZero q] [NeZero q']
-    (hdvd : q ∣ q') :
+    (hdvd : q ∣ q' ∨ q' ∣ q) :
     ((G.residueAction (Nat.lcm q q')).complexity
         + (G.residueAction (Nat.gcd q q')).complexity)
       - ((G.residueAction q).complexity + (G.residueAction q').complexity)
     = 0 := by
-  rw [G.residue_gravity_crossRatio q q', Nat.gcd_eq_left hdvd,
-    Nat.dvd_antisymm (Nat.lcm_dvd hdvd dvd_rfl) (Nat.dvd_lcm_right q q')]
-  ring
+  rcases hdvd with hdvd | hdvd
+  · rw [G.residue_gravity_crossRatio q q', Nat.gcd_eq_left hdvd,
+      Nat.dvd_antisymm (Nat.lcm_dvd hdvd dvd_rfl) (Nat.dvd_lcm_right q q')]
+    ring
+  · rw [G.residue_gravity_crossRatio q q', Nat.gcd_eq_right hdvd,
+      Nat.dvd_antisymm (Nat.lcm_dvd dvd_rfl hdvd) (Nat.dvd_lcm_left q q')]
+    ring
 
 /-! ## Chinese remainder on the tower -/
 
@@ -502,10 +507,9 @@ theorem cycle3_classScaledPartFn (s : ℝ) :
 the four-resolution defect is strictly negative —
 `Z(1)·Z(36) > Z(4)·Z(9)` at the carrier scale, i.e.
 `Z(1/3)·Z(12) > Z(4/3)·Z(3)` in theta values. **At the witness,
-incomparable resolutions couple supermodularly. The impossibility,
-read off the same statement: there is no resolution-independent
-gravity on the tower — exact along the divisibility order, strictly
-failing at an incomparable pair.** -/
+incomparable resolutions couple supermodularly** — packaged as the
+face's impossibility anchor in
+`exists_incomparable_residue_gravity_neg`. -/
 theorem cycle3_crossRatio_neg :
     (((cycleGraph 3 (by norm_num)).residueAction (Nat.lcm 2 3)).complexity
         + ((cycleGraph 3 (by norm_num)).residueAction
@@ -539,5 +543,24 @@ theorem cycle3_crossRatio_neg :
   have hlog := Real.log_lt_log (mul_pos hp1 hp2) hkey
   rw [Real.log_mul hp1.ne' hp2.ne', Real.log_mul hp3.ne' hp4.ne'] at hlog
   linarith
+
+/-- **THE IMPOSSIBILITY**: there is no resolution-independent
+gravity on the tower. At an incomparable pair of resolutions —
+neither dividing the other — the four-resolution defect is strictly
+negative — at the witness the coupling is supermodular, the
+opposite sign from the comonotone direction of the base gravity
+face (`gravityDefect_nonneg_of_comonotone`). Exactness
+(`residue_gravity_dvd`) is a fact about the divisibility order, not
+about coupling. Witness: `C₃` at `(q, q') = (2, 3)`
+(`cycle3_crossRatio_neg`). -/
+theorem exists_incomparable_residue_gravity_neg :
+    ∃ (G : IncidenceGraph.{0, 0}) (q q' : ℕ) (_ : NeZero q) (_ : NeZero q'),
+      ¬ q ∣ q' ∧ ¬ q' ∣ q ∧
+        ((G.residueAction (Nat.lcm q q')).complexity
+            + (G.residueAction (Nat.gcd q q')).complexity)
+          - ((G.residueAction q).complexity + (G.residueAction q').complexity)
+          < 0 :=
+  ⟨cycleGraph 3 (by norm_num), 2, 3, ⟨by norm_num⟩, ⟨by norm_num⟩,
+    by decide, by decide, cycle3_crossRatio_neg⟩
 
 end Meno
