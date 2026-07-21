@@ -58,5 +58,5 @@ import Meno.Hodge
 import Meno.Duality
 import Meno.Zeta
 
--- The completion object: the dichotomy
+-- The completion object: the six-way equivalence
 import Meno.Completion
