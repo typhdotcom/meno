@@ -13,12 +13,13 @@ is positive (`ofCycles_interaction_fin_two`,
 * **The exact law / the iff** (`binding_attractive_iff`): binding is
   attraction **exactly when the cycles overlap with consistent
   orientation** — `0 < bindingEnergyClass ↔ 0 < ⟨c₁, c₂⟩`.
-* **The impossibility**: with positive overlap there is no
-  non-attractive joint sector — the sign is forced by topology, not
-  by choice of basis. Invariance under the unimodular action is part
-  of the statement: `bindingEnergyClass` is defined on the intrinsic
-  classes through `harmonicEnergy`, and **every** basis chart
-  computes it (`bindingEnergyClass_chart`).
+* **The law is intrinsic**: at rank two, with positive overlap no
+  chart makes the joint sector non-attractive — the sign is forced by
+  topology, not by choice of basis. Invariance under the unimodular
+  action is part of the `binding_attractive_iff` statement:
+  `bindingEnergyClass` is defined on the intrinsic classes through
+  `harmonicEnergy`, and **every** basis chart computes it
+  (`bindingEnergyClass_chart`).
 * **The strictness witness** (`theta_binding_attractive_class`,
   `Meno/ThetaHarmonic.lean`): the intrinsic binding of the theta
   classes is positive — `⟨c₁,c₂⟩ = 2 > 0` forces attraction through
@@ -26,7 +27,7 @@ is positive (`ofCycles_interaction_fin_two`,
 * **The boundary witness** (`wedge_binding_zero`): the wedge's basis
   cycles share no edge, the overlap is zero — disjoint matter does
   not bind.
-* **The rank boundary — the impossibility beyond rank two**
+* **The impossibility — beyond rank two the overlap does not decide**
   (`exists_overlap_pos_binding_neg`): the criterion is genuinely a
   rank-two law. At `b₁ = 3` the doubled triangle's first two basis
   cycles overlap positively (`⟨c₀,c₁⟩ = 1`) yet their sectors bind
