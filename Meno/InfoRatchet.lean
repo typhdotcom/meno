@@ -1607,12 +1607,14 @@ redundancies (`lift_complexity`, `couple_complexity`), the four-term
 gravity defect is the log-correlation of the two redundancy profiles
 (`gravity_defect`), it vanishes exactly at zero covariance
 (`gravity_defect_eq_zero_iff`) — the constant-fiber
-`complexity_gravity` below is the zero-covariance chart — and
-comonotone redundancy binds (`gravityDefect_nonneg_of_comonotone`),
-through the double-sum covariance identity (`gibbsCov_double_sum`).
-The strictness witness and the face's negative
-(`twoSector_gravityDefect_pos`, `exists_gravity_defect_ne_zero`)
-close the file. -/
+`complexity_gravity` below is the zero-covariance chart — its sign
+is exactly the covariance's sign (`gravityDefect_pos_iff`,
+`gravityDefect_neg_iff`), and comonotone redundancy binds
+(`gravityDefect_nonneg_of_comonotone`), through the double-sum
+covariance identity (`gibbsCov_double_sum`). The strictness
+witness, the face's negative, and the repulsion witness
+(`twoSector_gravityDefect_pos`, `exists_gravity_defect_ne_zero`,
+`exists_gravity_defect_neg`) close the file. -/
 
 section CovarianceGravity
 
@@ -2043,6 +2045,57 @@ theorem gravity_defect_eq_zero_iff [Fintype (SGD.Pullback f g)]
       from funext fun d => Real.exp_log (hposf d),
     show Real.exp ∘ (fun d => Real.log (fiberCount g d)) = fiberCount g
       from funext fun d => Real.exp_log (hposg d)]
+
+/-- **The sign law, positive side**: the defect is strictly
+positive exactly at strictly positive Gibbs covariance of the two
+redundancy profiles. With the boundary
+(`gravity_defect_eq_zero_iff`) and the negative side
+(`gravityDefect_neg_iff`), the trichotomy is complete: the sign of
+gravity's correction **is** the sign of the correlation. -/
+theorem gravityDefect_pos_iff [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g) :
+    0 < A.gravityDefect f g hf hg
+      ↔ 0 < A.gibbsCov (fiberCount f) (fiberCount g) := by
+  have hm := A.gibbsExpect_fiberCount_pos f hf
+  have hm' := A.gibbsExpect_fiberCount_pos g hg
+  have hmm := A.gibbsExpect_fiberCount_mul_pos f g hf hg
+  have key : A.gravityDefect f g hf hg
+      = Real.log (A.gibbsExpect (fiberCount f * fiberCount g))
+        - Real.log (A.gibbsExpect (fiberCount f)
+            * A.gibbsExpect (fiberCount g)) := by
+    rw [A.gravity_defect f g hf hg, Real.log_mul hm.ne' hm'.ne']
+    ring
+  rw [key, sub_pos, Real.log_lt_log_iff (mul_pos hm hm') hmm,
+    show A.gibbsCov (fiberCount f) (fiberCount g)
+      = A.gibbsExpect (fiberCount f * fiberCount g)
+        - A.gibbsExpect (fiberCount f) * A.gibbsExpect (fiberCount g)
+      from rfl,
+    sub_pos]
+
+/-- **The sign law, negative side**: the defect is strictly
+negative exactly at strictly negative Gibbs covariance —
+anti-correlated redundancy makes the coupled description strictly
+cheaper than the shared-base account. Inhabited:
+`twoSector_gravityDefect_neg`. -/
+theorem gravityDefect_neg_iff [Fintype (SGD.Pullback f g)]
+    (hf : Function.Surjective f) (hg : Function.Surjective g) :
+    A.gravityDefect f g hf hg < 0
+      ↔ A.gibbsCov (fiberCount f) (fiberCount g) < 0 := by
+  have hm := A.gibbsExpect_fiberCount_pos f hf
+  have hm' := A.gibbsExpect_fiberCount_pos g hg
+  have hmm := A.gibbsExpect_fiberCount_mul_pos f g hf hg
+  have key : A.gravityDefect f g hf hg
+      = Real.log (A.gibbsExpect (fiberCount f * fiberCount g))
+        - Real.log (A.gibbsExpect (fiberCount f)
+            * A.gibbsExpect (fiberCount g)) := by
+    rw [A.gravity_defect f g hf hg, Real.log_mul hm.ne' hm'.ne']
+    ring
+  rw [key, sub_neg, Real.log_lt_log_iff hmm (mul_pos hm hm'),
+    show A.gibbsCov (fiberCount f) (fiberCount g)
+      = A.gibbsExpect (fiberCount f * fiberCount g)
+        - A.gibbsExpect (fiberCount f) * A.gibbsExpect (fiberCount g)
+      from rfl,
+    sub_neg]
 
 /-- **The direction theorem**: comonotone redundancy binds — if
 the two fiber-count profiles move together across every sector pair,
@@ -2606,14 +2659,19 @@ theorem counting_gravity {X Y D : Type u} [Fintype X] [Fintype Y]
     uniformAction_complexity, uniformAction_complexity] at key
   simpa [Nat.card_eq_fintype_card] using key
 
-/-! ## The two-sector witness: the defect is not identically zero
+/-! ## The two-sector witness: the defect takes both signs
 
-The strictness anchor and the face's negative. Base `Bool` with
-energies `0` and `1`; one map with redundancy profile `(1, 2)` used
-on both legs. The defect is `log(⟨m²⟩/⟨m⟩²)`, strictly positive by
-strict Gibbs fluctuation of the non-constant profile — so **there is
-no correlation-free general coupling**: the constant-fiber identity
-is the zero-covariance chart, not a law of coupling. -/
+The strictness anchor, the face's negative, and the direction
+boundary. Base `Bool` with energies `0` and `1`; one map with
+redundancy profile `(1, 2)` used on both legs. The defect is
+`log(⟨m²⟩/⟨m⟩²)`, strictly positive by strict Gibbs fluctuation of
+the non-constant profile — so **there is no correlation-free
+general coupling**: the constant-fiber identity is the
+zero-covariance chart, not a law of coupling. Flipping one leg
+(`twoSectorMapFlip`, profile `(2, 1)`) anti-aligns the profiles and
+the defect turns strictly negative (`twoSector_gravityDefect_neg`,
+`exists_gravity_defect_neg`): coupling can repel, and the sign is
+the correlation's. -/
 
 /-- **The two-sector base**: sectors `Bool`, energies
 `0` and `1`. -/
@@ -2712,6 +2770,78 @@ theorem exists_gravity_defect_ne_zero :
     inferInstance, twoSectorMap, twoSectorMap, inferInstance,
     twoSectorMap_surjective, twoSectorMap_surjective,
     ne_of_gt twoSector_gravityDefect_pos⟩
+
+/-- **The flipped leg**: the same three-point description with the
+redundancy profile reversed — `(2, 1)` over `(false, true)`,
+anti-aligned with `twoSectorMap`'s `(1, 2)`. -/
+def twoSectorMapFlip : Fin 3 → Bool := ![true, false, false]
+
+instance : Fintype (@SGD.Pullback (Fin 3) (Fin 3) twoSectorAction.Λ
+    twoSectorMap twoSectorMapFlip) :=
+  inferInstanceAs
+    (Fintype {p : Fin 3 × Fin 3 // twoSectorMap p.1 = twoSectorMapFlip p.2})
+
+theorem twoSectorMapFlip_surjective :
+    Function.Surjective twoSectorMapFlip := by
+  decide
+
+theorem twoSectorMapFlip_fiberCount_false :
+    fiberCount twoSectorMapFlip false = 2 := by
+  show (Nat.card {x : Fin 3 // twoSectorMapFlip x = false} : ℝ) = 2
+  rw [Nat.card_eq_fintype_card,
+    show Fintype.card {x : Fin 3 // twoSectorMapFlip x = false} = 2 from by
+      decide]
+  norm_num
+
+theorem twoSectorMapFlip_fiberCount_true :
+    fiberCount twoSectorMapFlip true = 1 := by
+  show (Nat.card {x : Fin 3 // twoSectorMapFlip x = true} : ℝ) = 1
+  rw [Nat.card_eq_fintype_card,
+    show Fintype.card {x : Fin 3 // twoSectorMapFlip x = true} = 1 from by
+      decide]
+  norm_num
+
+/-- **THE DIRECTION BOUNDARY — coupling can repel**: at the
+two-sector base with profile `(1, 2)` against the flipped `(2, 1)`,
+the defect is strictly negative. Through the sign law
+(`gravityDefect_neg_iff`) and the double-sum identity, the
+covariance collapses to `−μ_f·μ_t < 0` — the profiles are
+anti-aligned, and the coupled description is strictly cheaper than
+the shared-base account. The comonotone hypothesis of
+`gravityDefect_nonneg_of_comonotone` is essential. -/
+theorem twoSector_gravityDefect_neg :
+    twoSectorAction.gravityDefect twoSectorMap twoSectorMapFlip
+        twoSectorMap_surjective twoSectorMapFlip_surjective < 0 := by
+  rw [twoSectorAction.gravityDefect_neg_iff twoSectorMap twoSectorMapFlip
+      twoSectorMap_surjective twoSectorMapFlip_surjective,
+    twoSectorAction.gibbsCov_double_sum]
+  show 1 / 2 * ∑ d : Bool, ∑ d' : Bool,
+      twoSectorAction.gibbsMass d * twoSectorAction.gibbsMass d'
+        * ((fiberCount twoSectorMap d - fiberCount twoSectorMap d')
+          * (fiberCount twoSectorMapFlip d - fiberCount twoSectorMapFlip d'))
+      < 0
+  rw [Fintype.sum_bool, Fintype.sum_bool, Fintype.sum_bool]
+  rw [twoSectorMap_fiberCount_true, twoSectorMap_fiberCount_false,
+    twoSectorMapFlip_fiberCount_true, twoSectorMapFlip_fiberCount_false]
+  have hμt := twoSectorAction.gibbsMass_pos true
+  have hμf := twoSectorAction.gibbsMass_pos false
+  nlinarith [mul_pos hμt hμf]
+
+/-- **The defect takes both signs**: there is a coupling whose
+defect is strictly negative — anti-aligned redundancy repels, so
+"sharing always costs at least the correlation-free account" is
+false, and the direction theorem's comonotone hypothesis is
+essential. -/
+theorem exists_gravity_defect_neg :
+    ∃ (A : SectorAction.{0}) (_ : Fintype A.Λ) (X Y : Type)
+      (_ : Fintype X) (_ : Fintype Y) (f : X → A.Λ) (g : Y → A.Λ)
+      (_ : Fintype (SGD.Pullback f g)) (hf : Function.Surjective f)
+      (hg : Function.Surjective g),
+      A.gravityDefect f g hf hg < 0 :=
+  ⟨twoSectorAction, inferInstance, Fin 3, Fin 3, inferInstance,
+    inferInstance, twoSectorMap, twoSectorMapFlip, inferInstance,
+    twoSectorMap_surjective, twoSectorMapFlip_surjective,
+    twoSector_gravityDefect_neg⟩
 
 /-- **The strictness of the ratchet's Jensen gap**: at the
 two-sector witness the Gibbs-mean log-redundancy is strictly below

@@ -104,7 +104,7 @@ linked sections; the anchors are the theorems themselves.
 | Face | The law | The anchors |
 | :--- | :--- | :--- |
 | **G1 — geometry** ([Geometry](#geometry)) | Pairing squared is bounded by harmonic energy times chain norm; mass bounds the systole | law `pairing_sq_le_energy_mul_normSq`, `MatterSector.mass_systole`; boundary `dualNorm_combination_eq_iff`, equality `cycle_systole_equality`; strictness `theta_mass_gt_systole`; impossibility `MatterSector.not_gradient` |
-| **G2 — gravity** ([Gravity](#gravity)) | The coupling defect is the log-correlation of the two redundancy profiles | law `gravity_defect`; boundary `gravity_defect_eq_zero_iff`; direction `gravityDefect_nonneg_of_comonotone`; strictness `twoSector_gravityDefect_pos`; impossibility `exists_gravity_defect_ne_zero` |
+| **G2 — gravity** ([Gravity](#gravity)) | The coupling defect is the log-correlation of the two redundancy profiles | law `gravity_defect`; boundary `gravity_defect_eq_zero_iff`; sign law `gravityDefect_pos_iff`, `gravityDefect_neg_iff`; direction `gravityDefect_nonneg_of_comonotone` with its boundary `exists_gravity_defect_neg`; strictness `twoSector_gravityDefect_pos`; impossibility `exists_gravity_defect_ne_zero` |
 | **G3 — the tower** ([The resolution tower](#the-resolution-tower)) | The four-resolution defect is a cross-ratio of scaled partition functions | law `residue_gravity_crossRatio`, CRT `h1ReductionCRT`; boundary `residue_gravity_dvd`; strictness `cycle3_crossRatio_neg`; impossibility `exists_incomparable_residue_gravity_neg` |
 | **G4 — symmetry** ([Symmetry](#symmetry)) | A symmetry-respecting description exists iff coprimality | law `cycle_equivariant_section_iff`; impossibility `cycle_no_invariant_representative`; strictness `cycle_four_two_no_equivariant_section`; boundary `cycle_three_two_equivariant_section` |
 | **G5 — time** ([Time and information](#time-and-information)) | The ratchet's priced increment dominates the Gibbs-mean log-redundancy | law `lift_complexity_ge_gibbs_log_rate`, `sectionCost_eq_sum_log_fiberCount`; boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; impossibility `sectionCostE_eq_zero_iff` |
@@ -316,9 +316,10 @@ breaks the symmetry — the choice of bit is physical.
 
 There is **one gravity law** (G2): the four-term defect of coupling
 two descriptions over a shared base is exactly the log-correlation
-of their redundancy profiles (`gravity_defect`), and it vanishes
-precisely at zero Gibbs covariance
-(`gravity_defect_eq_zero_iff`). The priced identity
+of their redundancy profiles (`gravity_defect`), its sign is
+exactly the covariance's (`gravityDefect_pos_iff`,
+`gravityDefect_neg_iff`), and it vanishes precisely at zero Gibbs
+covariance (`gravity_defect_eq_zero_iff`). The priced identity
 `SectorAction.complexity_gravity` — coupling saves exactly the base
 — is its **zero-covariance chart**: constant redundancy profiles
 have zero covariance, and the identity is that instance of the
@@ -341,7 +342,9 @@ whose losses are priced in one currency.
 | `gravity_defect` | **The covariance gravity law**: `gravityDefect = log⟨m·m'⟩ − log⟨m⟩ − log⟨m'⟩` — sharing two descriptions over one base saves exactly the base, corrected by the log-correlation of their redundancy profiles; the correction is a fluctuation quantity |
 | `gravity_defect_eq_zero_iff` | **The boundary**: the defect vanishes iff `gibbsCov (fiberCount f) (fiberCount g) = 0` — the constant-fiber identity is the zero-covariance chart, not a law of coupling |
 | `gibbsCov_double_sum`, `gravityDefect_nonneg_of_comonotone` | **The direction theorem**: `Cov(φ,ψ) = ½ Σ_{d,d'} μ_d μ_{d'} (φ_d − φ_{d'})(ψ_d − ψ_{d'})`, so comonotone redundancy binds — `0 ≤ defect` |
+| `gravityDefect_pos_iff`, `gravityDefect_neg_iff` | **The sign law**: with the boundary, the trichotomy is complete — the defect is strictly positive exactly at strictly positive Gibbs covariance of the redundancy profiles, strictly negative exactly at strictly negative; the sign of gravity's correction **is** the sign of the correlation |
 | `twoSectorAction`, `twoSectorMap`, `twoSector_gravityDefect_pos` | **The strictness witness**: base `Bool` with energies `0`/`1` and redundancy profile `(1, 2)` on both legs — the defect is `log⟨m²⟩ − 2 log⟨m⟩ > 0`, by strict Gibbs fluctuation of the non-constant profile |
+| `twoSectorMapFlip`, `twoSector_gravityDefect_neg`, `exists_gravity_defect_neg` | **The direction boundary — coupling can repel**: flip one leg's profile (`(2, 1)` against `(1, 2)`) and the covariance collapses to `−μ_f·μ_t < 0` — the defect is strictly negative, anti-aligned redundancy makes the coupled description strictly cheaper than the shared-base account, and the comonotone hypothesis is essential |
 | `exists_gravity_defect_ne_zero` | **The impossibility**: there is no correlation-free general coupling — the defect is not identically zero |
 
 #### The gravity theorem and its corollaries
