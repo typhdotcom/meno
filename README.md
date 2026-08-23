@@ -32,7 +32,7 @@ declarations, `lake build` green against Lean 4.26.0 and the pinned
 Mathlib. The tree is organized into nine faces, indexed below
 ([The nine faces](#the-nine-faces)).
 
----
+______________________________________________________________________
 
 ## The stake, in theorems
 
@@ -43,7 +43,7 @@ Mathlib. The tree is organized into nine faces, indexed below
 | **No preferred coordinate system** | `exists_unimodular_relating`: any two lattice bases are unimodularly related, and everything the physics reads is chart-invariant — the partition function (`basisGramData_partFn`), mass (`MatterSector.mass_chart`), binding (`bindingEnergyClass_chart`) |
 | **Globally unsatisfiable, locally lawful** | `MatterSector.not_gradient` with `period_eq_zero_iff_exists_grad`: a matter sector is a constraint system that is locally consistent everywhere and globally unsatisfiable; `meno_tfae`: the five strict phenomena — matter, spectrum, fluctuation, deficit, arrow — are pairwise equivalent to cycles and to each other; any one certifies the rest, and `meno_dichotomy` is the conjunction chart |
 
----
+______________________________________________________________________
 
 ## Why these pieces
 
@@ -90,7 +90,7 @@ enumerates its own binary predicates, and on a nonempty finite
 carrier the shortfall is priced: the enumerable budget never pays for
 the predicate space.
 
----
+______________________________________________________________________
 
 ## The nine faces
 
@@ -113,7 +113,7 @@ linked sections; the anchors are the theorems themselves.
 | **G8 — self-reference** ([Self-reference](#self-reference)) | No self-enumeration, and the shortfall is priced | impossibility `no_self_enumeration`; law `descriptionCost_split`; strictness `log_card_lt_descriptionCost`; boundary `log_card_eq_descriptionCost_iff` |
 | **G9 — the currency** ([The currency](#the-currency-g9)) | The Jensen gap is a relative entropy against the tilted Gibbs law; gravity's, time's, temperature's, and the tower's corrections are its recognitions | law `cgf_sub_gibbsExpect_eq_relativeEntropy`; boundary `cgf_sub_gibbsExpect_eq_zero_iff`, `cgf_bilinear_eq_zero_iff`; strictness `twoSector_cgf_gap_pos`, `twoSector_cgf_bilinear_pos`; impossibility `cgf_not_additive` |
 
----
+______________________________________________________________________
 
 ## What is proved
 
@@ -507,7 +507,7 @@ the systole inequality, through the walk-length bridge.
 | `cycleCanonicalObj_T_duality` | Cycle groupoid T-duality as a corollary of `partitionFn_T_duality_via_spine` — no winding hypothesis, no dual-object construction |
 | `cycleLoopKernel_dualVia_partFn` | The categorical dual consumed concretely: `Z(dualVia) = √((1/n)/π)·Z(C_n)` |
 
----
+______________________________________________________________________
 
 ## The dichotomy
 
@@ -543,7 +543,7 @@ architecture listing matches the tree; every declaration is
 reachable from the publicly claimed results or enumerated with its
 retention predicate). Audit chronology lives in the repository log.
 
----
+______________________________________________________________________
 
 ## Architecture
 
@@ -594,7 +594,7 @@ the identifications proved (`cyclePeriodData_energy_eq`,
 `quadraticPartFn_eq_scalarPartFn`, `graphPartitionFn_eq_spine`,
 `GroupoidObj.gibbsMass_eq_sector`, …). Two derivations, one object.
 
----
+______________________________________________________________________
 
 ## Scope of the physical vocabulary
 
@@ -613,7 +613,7 @@ the counterexample is kept as a theorem
 (`exists_dualityFlow_eq_zero_not_selfDual`), and every excised
 design is recorded in `scripts/deleted.txt`.
 
----
+______________________________________________________________________
 
 ## Build
 

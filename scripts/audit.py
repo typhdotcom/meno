@@ -48,12 +48,29 @@ MENO = REPO / "Meno"
 README = REPO / "README.md"
 CERT = "Completion.lean"
 
-DECL_KEYWORDS = ("theorem", "lemma", "def", "abbrev", "structure",
-                 "class", "inductive", "instance", "opaque")
-MODIFIERS = ("private", "protected", "noncomputable", "scoped",
-             "unsafe", "partial", "nonrec")
+DECL_KEYWORDS = (
+    "theorem",
+    "lemma",
+    "def",
+    "abbrev",
+    "structure",
+    "class",
+    "inductive",
+    "instance",
+    "opaque",
+)
+MODIFIERS = (
+    "private",
+    "protected",
+    "noncomputable",
+    "scoped",
+    "unsafe",
+    "partial",
+    "nonrec",
+)
 
 # ---------------------------------------------------------------- strip
+
 
 def split_comments(text):
     code, comm, i, n, depth = [], [], 0, len(text), 0
@@ -65,9 +82,13 @@ def split_comments(text):
             i = j
             continue
         if text.startswith("/-", i):
-            depth += 1; i += 2; continue
+            depth += 1
+            i += 2
+            continue
         if depth > 0 and text.startswith("-/", i):
-            depth -= 1; i += 2; continue
+            depth -= 1
+            i += 2
+            continue
         c = text[i]
         if depth == 0:
             code.append(c)
@@ -78,24 +99,29 @@ def split_comments(text):
         i += 1
     return "".join(code), "".join(comm)
 
+
 def strip_comments(text):
     return split_comments(text)[0]
+
 
 # ---------------------------------------------------------------- parse
 
 NAME_RE = r"[A-Za-z_À-ʯͰ-Ͽ℀-⅏][A-Za-z0-9_'₀-₉À-ʯͰ-Ͽ℀-⅏!?\.]*"
 decl_line_re = re.compile(
     r"^\s*(?:@\[[^\]]*\]\s*)*(?:(?:" + "|".join(MODIFIERS) + r")\s+)*"
-    r"(" + "|".join(DECL_KEYWORDS) + r")\b(?:\s+(" + NAME_RE + r"))?")
+    r"(" + "|".join(DECL_KEYWORDS) + r")\b(?:\s+(" + NAME_RE + r"))?"
+)
 ns_re = re.compile(r"^\s*namespace\s+(" + NAME_RE + r")\s*$")
 sec_re = re.compile(r"^\s*section(?:\s+(" + NAME_RE + r"))?\s*$")
 end_re = re.compile(r"^\s*end(?:\s+(" + NAME_RE + r"))?\s*$")
 token_re = re.compile(NAME_RE)
 
+
 class Decl:
     def __init__(self, kind, full, file, line):
         self.kind, self.full, self.file, self.line = kind, full, file, line
         self.span, self.attrs = [], ""
+
 
 def parse_file(path):
     lines = strip_comments(path.read_text()).split("\n")
@@ -108,8 +134,9 @@ def parse_file(path):
             stack.append(("sec", sec_re.match(line).group(1)))
         elif end_re.match(line):
             label = end_re.match(line).group(1)
-            for _ in (label.split(".") if label else [None]):
-                if stack: stack.pop()
+            for _ in label.split(".") if label else [None]:
+                if stack:
+                    stack.pop()
         else:
             m = decl_line_re.match(line)
             if m:
@@ -128,10 +155,13 @@ def parse_file(path):
             current.span.append(line)
     return decls
 
+
 # ---------------------------------------------------------------- match
+
 
 def variable_like(s):
     return len(s) <= 2 or s[0].islower()
+
 
 def build_index(decls):
     by_last, by_full = defaultdict(list), {}
@@ -141,9 +171,14 @@ def build_index(decls):
             by_last[d.full.split(".")[-1]].append(d)
     return by_full, by_last
 
+
 def suffix_hits(token, by_last):
-    return {d for d in by_last.get(token.split(".")[-1], [])
-            if d.full == token or d.full.endswith("." + token)}
+    return {
+        d
+        for d in by_last.get(token.split(".")[-1], [])
+        if d.full == token or d.full.endswith("." + token)
+    }
+
 
 def resolve(token, by_full, by_last):
     token = token.rstrip(".")
@@ -167,7 +202,9 @@ def resolve(token, by_full, by_last):
     hits.update(by_last.get(token, []))
     return hits
 
+
 # ---------------------------------------------------------------- legs
+
 
 def main():
     ok = True
@@ -182,9 +219,12 @@ def main():
 
     # -- 1. citations
     cited = sorted(set(re.findall(r"`([A-Za-z][A-Za-z0-9_.'₀-₉]*)`", readme)))
-    bad = [c for c in cited
-           if not resolve(c, cert_by_full, cert_by_last)
-           and not re.search(r"\b" + re.escape(c.split(".")[-1]) + r"\b", raw_tree)]
+    bad = [
+        c
+        for c in cited
+        if not resolve(c, cert_by_full, cert_by_last)
+        and not re.search(r"\b" + re.escape(c.split(".")[-1]) + r"\b", raw_tree)
+    ]
     print(f"[citations]    {len(cited)} identifiers cited; unresolved: {len(bad)}")
     for c in bad:
         print(f"  UNRESOLVED: {c}")
@@ -197,8 +237,14 @@ def main():
         line = line.strip()
         if line and not line.startswith("#"):
             deny.add(line)
-    redecl = [d.full for d in all_decls if d.full and (
-        d.full in deny or any(d.full.endswith("." + n) or n == d.full for n in deny))]
+    redecl = [
+        d.full
+        for d in all_decls
+        if d.full
+        and (
+            d.full in deny or any(d.full.endswith("." + n) or n == d.full for n in deny)
+        )
+    ]
     print(f"[deletions]    {len(deny)} recorded names; re-declared: {len(redecl)}")
     for n in redecl:
         print(f"  RE-DECLARED: {n}")
@@ -206,15 +252,15 @@ def main():
 
     # -- 3. ghosts — deny-list names cited in living text (review #29)
     comment_text = "\n".join(
-        split_comments(f.read_text())[1] for f in sorted(MENO.glob("*.lean")))
+        split_comments(f.read_text())[1] for f in sorted(MENO.glob("*.lean"))
+    )
     cite_re = re.compile(r"`([A-Za-z][A-Za-z0-9_.'₀-₉]*)`")
     ghosts = []
-    for label, text in (("README.md", readme),
-                        ("Meno/ comments", comment_text)):
+    for label, text in (("README.md", readme), ("Meno/ comments", comment_text)):
         for c in sorted(set(cite_re.findall(text))):
-            hit = (c in deny
-                   or any(n.endswith("." + c) or c.endswith("." + n)
-                          for n in deny))
+            hit = c in deny or any(
+                n.endswith("." + c) or c.endswith("." + n) for n in deny
+            )
             if hit and not resolve(c, cert_by_full, cert_by_last):
                 ghosts.append(f"{label}: {c}")
     print(f"[ghosts]       deny-list names cited in living text: {len(ghosts)}")
@@ -224,21 +270,34 @@ def main():
 
     # -- 4. architecture
     tree_files = sorted(p.name for p in MENO.glob("*.lean"))
-    arch_files = sorted(set(re.findall(r"([A-Za-z][A-Za-z0-9]*\.lean)",
-                       readme[readme.find("## Architecture"):readme.find("## Reading")])))
-    imports = sorted(set(re.findall(r"^import Meno\.([A-Za-z0-9]+)$",
-                       (REPO / "Meno.lean").read_text(), re.M)))
+    arch_files = sorted(
+        set(
+            re.findall(
+                r"([A-Za-z][A-Za-z0-9]*\.lean)",
+                readme[readme.find("## Architecture") : readme.find("## Reading")],
+            )
+        )
+    )
+    imports = sorted(
+        set(
+            re.findall(
+                r"^import Meno\.([A-Za-z0-9]+)$", (REPO / "Meno.lean").read_text(), re.M
+            )
+        )
+    )
     import_files = sorted(i + ".lean" for i in imports)
     d1 = set(tree_files) ^ set(arch_files)
     d2 = set(tree_files) ^ set(import_files)
-    print(f"[architecture] tree {len(tree_files)} files; README-block mismatch: {sorted(d1)}; import mismatch: {sorted(d2)}")
+    print(
+        f"[architecture] tree {len(tree_files)} files; README-block mismatch: {sorted(d1)}; import mismatch: {sorted(d2)}"
+    )
     ok &= not d1 and not d2
 
     # -- 5. reachability
     roots = set()
     for c in cited:
         roots |= resolve(c, by_full, by_last)
-    roots |= {d for d in model if d.full is None}      # anonymous instances
+    roots |= {d for d in model if d.full is None}  # anonymous instances
     edges = defaultdict(set)
     for d in model:
         text = "\n".join(d.span)
@@ -249,17 +308,23 @@ def main():
     live, queue = set(), deque(roots)
     while queue:
         d = queue.popleft()
-        if d in live: continue
+        if d in live:
+            continue
         live.add(d)
         queue.extend(t for t in edges[d] if t not in live)
-    attr = {d for d in model if re.search(
-        r"@\[[^\]]*\b(simp|ext|fun_prop|norm_cast|push_cast)\b", d.attrs)}
+    attr = {
+        d
+        for d in model
+        if re.search(r"@\[[^\]]*\b(simp|ext|fun_prop|norm_cast|push_cast)\b", d.attrs)
+    }
     named = [d for d in model if d.full]
     dead = [d for d in named if d not in live]
     dead_hard = [d for d in dead if d.kind != "instance" and d not in attr]
     dead_elab = [d for d in dead if d not in dead_hard]
-    print(f"[reachability] {len(named)} named decls; live {len([d for d in named if d in live])}; "
-          f"elaboration-retained {len(dead_elab)}; UNREACHABLE {len(dead_hard)}")
+    print(
+        f"[reachability] {len(named)} named decls; live {len([d for d in named if d in live])}; "
+        f"elaboration-retained {len(dead_elab)}; UNREACHABLE {len(dead_hard)}"
+    )
     for d in sorted(dead_hard, key=lambda d: (d.file, d.line)):
         print(f"  UNREACHABLE: {d.file}:{d.line} {d.full}")
     ok &= not dead_hard
@@ -279,6 +344,7 @@ def main():
 
     print("AUDIT " + ("PASS" if ok else "FAIL"))
     sys.exit(0 if ok else 1)
+
 
 if __name__ == "__main__":
     main()

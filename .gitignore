@@ -1,9 +1,30 @@
+# build artifacts
+/.direnv/
+/result
+/result-*
+/target/
+.lake/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# other agents' local state
 .mcp.json
 /.codex
-/.claude
-/.direnv/
 /.gemini
-/.lake
 /.repair/
-/.venv/
-CLAUDE.md
+
+# claude code runtime state
+/.claude/settings.local.json
+/.claude/scheduled_tasks.json
+/.claude/scheduled_tasks.lock
+/.claude/routines/.state/
+/.claude/worktrees/
+/.claude/checkpoints/
+/.claude/mailbox/
+/.claude/agent-registry.json
+/.claude/agent-memory-local/
+/.claude/first-run
+/.claude/assistant-daemon-state.json
