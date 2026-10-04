@@ -58,5 +58,8 @@ import Meno.Hodge
 import Meno.Duality
 import Meno.Zeta
 
+-- The lattice zeta: functional equation from the scaled duality
+import Meno.LatticeZeta
+
 -- The completion object: the six-way equivalence
 import Meno.Completion

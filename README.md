@@ -159,6 +159,26 @@ bundled lattice action.
 | `meno_zeta_functional_equation_real` | Riemann's reflection `π^{−s}·2Γ(s)ζ(2s) = π^{−(1/2−s)}·M(1/2−s)` — the functional equation of `ζ`, derived through the spine's T-duality residual |
 | `menoSpectralIntegral`, `riemannZeta_three_eq_meno_spectral_integral` | `ζ(3) = (1/√π)·∫_{α>0} (Z(α)−1)·√α` — Apéry's constant is a spectral integral of the spine |
 
+### The lattice zeta
+
+Every bundled lattice action carries a zeta function, and its
+functional equation is the scaled Siegel–Poisson duality read as an
+inversion law (`Meno/LatticeZeta.lean`). The pair `(Z_Q, Z_{Q∨})` is a
+functional-equation pair in Mathlib's sense (`WeakFEPair`): the
+completed zeta, its continuation, and the reflection come from that one
+hypothesis. For a graph the dual is the priced cycle lattice, so the
+reflection exchanges cohomology and homology.
+
+| Result | Statement |
+| :--- | :--- |
+| `QuadLatticeAction.exists_energy_gap`, `QuadLatticeAction.scaledPartFn_sub_one_le` | Every nonzero lattice point has energy at least some `c > 0` (coercivity at integer coordinates), so `Z(β) − 1 ≤ C·e^{−cβ}` past `β = 1` |
+| `QuadLatticeAction.scaledPartFn_one_div` | **The inversion law**: `Z_Q(1/x) = √(π^rank/disc)·x^{rank/2}·Z_{Q∨}(x)` — `scaled_duality` at the dual bundle, the double dual transported back |
+| `QuadLatticeAction.fePair`, `QuadLatticeAction.completedZeta` | The FE-pair `(Z_Q, Z_{Q∨})` of weight `rank/2`, root number `√(π^rank/disc)`, vacuum constant terms; the completed lattice zeta `Λ_Q` |
+| `QuadLatticeAction.completedZeta_functional_equation` | **The functional equation**: `Λ_Q(rank/2 − s) = √(π^rank/disc)·Λ_{Q∨}(s)` for every complex `s` |
+| `QuadLatticeAction.summable_energy_rpow`, `QuadLatticeAction.hasSum_completedZeta` | **The Dirichlet expansion**: `∑_{a≠0} E(a)^{−σ}` converges for `σ > rank/2`, and there `Λ_Q(s) = Γ(s)·∑_{a≠0} E(a)^{−s}` — Riemann's Mellin step at every lattice |
+| `QuadLatticeAction.Equiv.completedZeta_eq` | The zeta is an invariant of the bundle: equivalent actions have the same completed zeta |
+| `IncidenceGraph.completedZeta`, `IncidenceGraph.completedZeta_functional_equation` | **The topological functional equation**: the zeta of harmonic `H¹(G;ℤ)` at `b₁/2 − s` is the zeta of priced `H₁(G;ℤ)` at `s`, times `√(π^{b₁}/disc)` |
+
 ### Topology, intrinsically
 
 Every finite multigraph (`IncidenceGraph`) carries an intrinsic
@@ -585,6 +605,7 @@ Meno/
 ├── Hodge.lean                 Graph partition functions (identified with the spine)
 ├── Duality.lean               The scalar quadratic family and Gibbs wrappers (identified with the spine)
 ├── Zeta.lean                  Riemann functional equation through the spine's theta identification
+├── LatticeZeta.lean           The lattice zeta: scaled Siegel–Poisson as an FE pair, the completed zeta, its Dirichlet expansion, the graph zeta's H¹ ↔ H₁ functional equation
 └── Completion.lean            The completion object (G7): the six-way equivalence — cycles, matter, spectrum, fluctuation, deficit, arrow — with the dichotomy as its conjunction chart
 ```
 
