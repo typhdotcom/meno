@@ -318,8 +318,8 @@ theorem wedgeMatter₁_coords (n₁ n₂ : ℕ) (h₁ : n₁ ≥ 3) (h₂ : n₂
         (wedgeLatticeBasis n₁ n₂ (by omega) (by omega))
         (wedgeMatter₁ n₁ n₂ h₁ h₂).val
       = ![1, 0] := by
-  haveI : NeZero n₁ := ⟨by omega⟩
-  haveI : NeZero n₂ := ⟨by omega⟩
+  have : NeZero n₁ := ⟨by omega⟩
+  have : NeZero n₂ := ⟨by omega⟩
   funext j
   show (Sum.elim (fun e => if e = 0 then (1 : ℤ) else 0) (fun _ => 0))
       ⬝ᵥ (wedgeGraph n₁ n₂ (by omega) (by omega)).cyclesZ

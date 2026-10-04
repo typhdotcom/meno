@@ -421,7 +421,7 @@ theorem closedWalkSum_eq_zero {R : Type*} [CommRing R] (ω : G.E → R)
   have hcoe : ∑ i, B.repr ⟨c.chain ℤ, hmem⟩ i • G.cyclesZ B i
       = c.chain ℤ := by
     have hval := congrArg Subtype.val hexp
-    rw [AddSubmonoidClass.coe_finset_sum] at hval
+    rw [AddSubmonoidClass.coe_finsetSum] at hval
     exact hval
   have hcast : ∀ e, c.chain R e
       = ∑ i, ((B.repr ⟨c.chain ℤ, hmem⟩ i : ℤ) : R)
@@ -558,7 +558,7 @@ theorem exists_int_combination {x : G.E → ℤ} (hx : x ∈ G.cycleLattice) :
   refine ⟨fun i => B.repr ⟨x, hx⟩ i, ?_⟩
   have hval := congrArg Subtype.val hexp
   have hxval : ((⟨x, hx⟩ : G.cycleLattice) : G.E → ℤ) = x := rfl
-  rw [AddSubmonoidClass.coe_finset_sum, hxval] at hval
+  rw [AddSubmonoidClass.coe_finsetSum, hxval] at hval
   funext e
   rw [← congrFun hval e, Finset.sum_apply]
   rfl
@@ -980,7 +980,7 @@ theorem spanning_of_card_eq_b1 {r : ℕ} (hr : r = G.b1)
       ((∑ i, g i • c' i : LinearMap.ker (G.boundaryLin ℝ)) : G.E → ℝ)
         = fun e => ∑ i, g i * c i e := by
     intro g
-    rw [AddSubmonoidClass.coe_finset_sum]
+    rw [AddSubmonoidClass.coe_finsetSum]
     funext e
     rw [Finset.sum_apply]
     rfl
@@ -1029,7 +1029,7 @@ noncomputable def basisOfCycles {r : ℕ} (c : Fin r → G.E → ℤ)
     rw [Fintype.linearIndependent_iff]
     intro g hg
     have hval := congrArg Subtype.val hg
-    rw [AddSubmonoidClass.coe_finset_sum] at hval
+    rw [AddSubmonoidClass.coe_finsetSum] at hval
     have hcast : (fun e => ∑ i, ((g i : ℝ)) * ((c i e : ℤ) : ℝ)) = 0 := by
       funext e
       have he := congrFun hval e
@@ -1050,7 +1050,7 @@ noncomputable def basisOfCycles {r : ℕ} (c : Fin r → G.E → ℤ)
     rw [Submodule.mem_span_range_iff_exists_fun]
     refine ⟨a, ?_⟩
     apply Subtype.ext
-    rw [AddSubmonoidClass.coe_finset_sum]
+    rw [AddSubmonoidClass.coe_finsetSum]
     funext e
     rw [Finset.sum_apply]
     exact (congrFun ha e).symm

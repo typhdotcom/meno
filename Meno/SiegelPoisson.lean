@@ -261,7 +261,7 @@ a continuous surjection compact → Hausdorff is a quotient map. -/
 theorem continuous_torusPeriodization {M : Matrix (Fin d) (Fin d) ℝ}
     (hM : M.PosDef) : Continuous (torusPeriodization M) := by
   have hIcc : IsCompact (Set.Icc (0 : Fin d → ℝ) 1) := isCompact_Icc
-  haveI : CompactSpace (Set.Icc (0 : Fin d → ℝ) 1) :=
+  have : CompactSpace (Set.Icc (0 : Fin d → ℝ) 1) :=
     isCompact_iff_compactSpace.mp hIcc
   set q : Set.Icc (0 : Fin d → ℝ) 1 → UnitAddTorus (Fin d) :=
     (fun p => torusMk p.val) with hq
@@ -690,7 +690,7 @@ theorem integral_charGauss_eq (hM : M.PosDef) (m : Fin d → ℤ) :
   have hcontU : Continuous (fun y : Fin d → ℝ => U.mulVec y) := by
     refine continuous_pi (fun i => ?_)
     show Continuous fun y : Fin d → ℝ => ∑ j, U i j * y j
-    exact continuous_finset_sum _ (fun j _ => continuous_const.mul (continuous_apply j))
+    exact continuous_finsetSum _ (fun j _ => continuous_const.mul (continuous_apply j))
   have hmapU : Measure.map (fun y : Fin d → ℝ => U.mulVec y)
       (volume : Measure (Fin d → ℝ)) = volume := by
     have h := Real.map_matrix_volume_pi_eq_smul_volume_pi (M := U) hdetU_ne

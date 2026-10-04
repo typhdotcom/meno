@@ -104,16 +104,16 @@ single class, every distribution on it is uniform, and the
 information deficit is exactly zero — at every resolution. -/
 theorem residueDefect_eq_zero_of_b1_eq_zero (G : IncidenceGraph.{u, v})
     (q : ℕ) [NeZero q] (hb : G.b1 = 0) : G.residueDefect q = 0 := by
-  haveI hsub : Subsingleton ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :=
+  have hsub : Subsingleton ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :=
     ⟨fun a b => (h1Class_eq_zero_of_b1_eq_zero G hb a).trans
       (h1Class_eq_zero_of_b1_eq_zero G hb b).symm⟩
-  haveI : Subsingleton (IncidenceGraph.H1Reduction G q) := by
+  have : Subsingleton (IncidenceGraph.H1Reduction G q) := by
     constructor
     intro a b
     obtain ⟨x, rfl⟩ := Submodule.Quotient.mk_surjective _ a
     obtain ⟨y, rfl⟩ := Submodule.Quotient.mk_surjective _ b
     rw [Subsingleton.elim x y]
-  haveI : Unique (IncidenceGraph.H1Reduction G q) := uniqueOfSubsingleton 0
+  have : Unique (IncidenceGraph.H1Reduction G q) := uniqueOfSubsingleton 0
   have hmass : (G.residueDist q).mass 0 = 1 := by
     have h := (G.residueDist q).sum_one
     rwa [Fintype.sum_subsingleton _ (0 : IncidenceGraph.H1Reduction G q)] at h
@@ -176,7 +176,7 @@ theorem meno_tfae (G : IncidenceGraph.{u, v}) :
   tfae_have 5 → 1 := by
     intro h5
     by_contra hb
-    haveI : NeZero (2 : ℕ) := ⟨by norm_num⟩
+    have : NeZero (2 : ℕ) := ⟨by norm_num⟩
     have h0 := residueDefect_eq_zero_of_b1_eq_zero G 2 (by omega)
     have hpos := h5 2 one_lt_two
     rw [h0] at hpos
@@ -193,8 +193,8 @@ theorem meno_tfae (G : IncidenceGraph.{u, v}) :
   tfae_have 6 → 1 := by
     intro h6
     by_contra hb
-    haveI : NeZero (1 : ℕ) := ⟨one_ne_zero⟩
-    haveI : NeZero (2 : ℕ) := ⟨by norm_num⟩
+    have : NeZero (1 : ℕ) := ⟨one_ne_zero⟩
+    have : NeZero (2 : ℕ) := ⟨by norm_num⟩
     have h0 := sectionCost_h1TowerMap_eq_zero_of_b1_eq_zero G 1 2 (by omega)
     have hpos := h6 1 2 one_lt_two
     rw [h0] at hpos

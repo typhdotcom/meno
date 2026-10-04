@@ -36,6 +36,8 @@ open Matrix
 
 universe u v
 
+-- vertex and edge universes are independent; used with explicit universe parameters
+set_option linter.checkUnivs false in
 /-- A finite directed multigraph: finite vertex and edge types with
 source and target maps. The one graph substrate. -/
 structure IncidenceGraph where
@@ -403,9 +405,9 @@ component. -/
 theorem componentCard_eq_one (hne : Nonempty G.V)
     (h : ∀ u v : G.V, G.Reaches u v) : G.componentCard = 1 := by
   obtain ⟨v⟩ := hne
-  haveI hsub : Subsingleton G.Components :=
+  have hsub : Subsingleton G.Components :=
     ⟨fun a b => Quotient.inductionOn₂ a b fun u w => Quotient.sound (h u w)⟩
-  haveI : Unique G.Components :=
+  have : Unique G.Components :=
     ⟨⟨Quotient.mk G.compSetoid v⟩, fun _ => Subsingleton.elim _ _⟩
   show Nat.card G.Components = 1
   exact Nat.card_unique

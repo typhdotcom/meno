@@ -444,7 +444,7 @@ theorem disc_eq {n : ℕ} (b : Module.Basis (Fin n) ℤ Q.Λ) :
   have hdetP : P.det = ((b₀'.toMatrix ⇑b).det : ℝ) :=
     ((Int.castRingHom ℝ).map_det (b₀'.toMatrix ⇑b)).symm
   have hunit : IsUnit (b₀'.toMatrix ⇑b).det := by
-    letI := b₀'.invertibleToMatrix b
+    let := b₀'.invertibleToMatrix b
     exact Matrix.isUnit_det_of_invertible _
   have hsq : P.det * P.det = 1 := by
     rcases Int.isUnit_iff.mp hunit with h1 | h1 <;>

@@ -208,7 +208,7 @@ theorem log_card_sections [Fintype A] [Fintype B] [DecidableEq B]
   have hne : ∀ b : B, ((Nat.card (f ⁻¹' {b}) : ℕ) : ℝ) ≠ 0 := by
     intro b
     obtain ⟨a, ha⟩ := hf b
-    haveI : Nonempty ↥(f ⁻¹' {b}) := ⟨⟨a, ha⟩⟩
+    have : Nonempty ↥(f ⁻¹' {b}) := ⟨⟨a, ha⟩⟩
     exact_mod_cast (Finite.card_pos).ne'
   unfold sectionCost fiberInfoCost
   rw [card_sections f, Nat.cast_prod, Real.log_prod (fun b _ => hne b)]
@@ -227,9 +227,9 @@ bijections (`sectionCostE_eq_zero_iff`). -/
 theorem sectionCost_eq_zero_of_injective [Finite A] [Finite B]
     {f : A → B} (hf : Function.Injective f) :
     sectionCost f = 0 := by
-  haveI : Subsingleton {s : B → A // ∀ b, f (s b) = b} :=
+  have : Subsingleton {s : B → A // ∀ b, f (s b) = b} :=
     ⟨fun s t => Subtype.ext (funext fun b => hf ((s.2 b).trans (t.2 b).symm))⟩
-  haveI : Finite {s : B → A // ∀ b, f (s b) = b} := Finite.of_subsingleton
+  have : Finite {s : B → A // ∀ b, f (s b) = b} := Finite.of_subsingleton
   unfold sectionCost
   have hle : Nat.card {s : B → A // ∀ b, f (s b) = b} ≤ 1 :=
     Finite.card_le_one_iff_subsingleton.mpr inferInstance
@@ -875,7 +875,7 @@ theorem FullSupport.uniformLiftMap [DecidableEq D] {P : FinDist X}
 /-- Total mass one forces a positive mass. -/
 theorem exists_mass_pos (P : FinDist X) : ∃ x, 0 < P.mass x := by
   by_contra hall
-  push_neg at hall
+  push Not at hall
   have hzero : ∀ x, P.mass x = 0 := fun x =>
     le_antisymm (hall x) (P.nonneg x)
   have h1 := P.sum_one
@@ -957,7 +957,7 @@ theorem relativeEntropy_pos (P Q : FinDist X) (hQ : Q.FullSupport)
     0 < P.relativeEntropy Q hQ := by
   have hx : ∃ x, P.mass x ≠ Q.mass x := by
     by_contra hall
-    push_neg at hall
+    push Not at hall
     exact hne (FinDist.ext (funext hall))
   obtain ⟨x₀, hx₀⟩ := hx
   have hstrict : P.mass x₀ - Q.mass x₀
@@ -2547,8 +2547,8 @@ theorem complexity_gravity :
     have hpos : 0 < Nat.card {y : Y // g y = d} := by rw [hg d]; exact hm'
     obtain ⟨⟨y, hy⟩⟩ := (Nat.card_pos_iff.mp hpos).1
     exact ⟨y, hy⟩
-  haveI : Finite A.Λ := Finite.of_surjective f hsf
-  haveI : Fintype A.Λ := Fintype.ofFinite _
+  have : Finite A.Λ := Finite.of_surjective f hsf
+  have : Fintype A.Λ := Fintype.ofFinite _
   have hm0 : (m : ℝ) ≠ 0 := by exact_mod_cast hm.ne'
   have hm'0 : (m' : ℝ) ≠ 0 := by exact_mod_cast hm'.ne'
   have hcf : fiberCount f = fun _ => (m : ℝ) := funext fun d => by
@@ -2635,16 +2635,16 @@ theorem counting_gravity {X Y D : Type u} [Fintype X] [Fintype Y]
     (hg : ∀ d, Nat.card {y : Y // g y = d} = m') :
     Real.log (Nat.card (SGD.Pullback f g)) + Real.log (Nat.card D)
       = Real.log (Nat.card X) + Real.log (Nat.card Y) := by
-  haveI : DecidableEq D := Classical.decEq D
+  have : DecidableEq D := Classical.decEq D
   obtain ⟨d₀⟩ := ‹Nonempty D›
   obtain ⟨⟨x₀, hx₀⟩⟩ :=
     (Nat.card_pos_iff.mp (lt_of_lt_of_eq hm (hf d₀).symm)).1
   obtain ⟨⟨y₀, hy₀⟩⟩ :=
     (Nat.card_pos_iff.mp (lt_of_lt_of_eq hm' (hg d₀).symm)).1
-  haveI : Nonempty X := ⟨x₀⟩
-  haveI : Nonempty Y := ⟨y₀⟩
-  haveI : Nonempty (SGD.Pullback f g) := ⟨⟨(x₀, y₀), hx₀.trans hy₀.symm⟩⟩
-  haveI : Fintype (@SGD.Pullback X Y (uniformAction D).Λ f g) :=
+  have : Nonempty X := ⟨x₀⟩
+  have : Nonempty Y := ⟨y₀⟩
+  have : Nonempty (SGD.Pullback f g) := ⟨⟨(x₀, y₀), hx₀.trans hy₀.symm⟩⟩
+  have : Fintype (@SGD.Pullback X Y (uniformAction D).Λ f g) :=
     pullbackFintype (D := D)
   have hcoup : ((uniformAction D).coupling f g hm hm' hf hg).EnergyEquiv
       (uniformAction (SGD.Pullback f g)) := ⟨Equiv.refl _, fun _ => rfl⟩

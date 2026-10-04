@@ -21,6 +21,8 @@ open CategoryTheory
 
 universe u v w
 
+-- object and morphism universes are independent; used with explicit universe parameters
+set_option linter.checkUnivs false in
 /-- A loop kernel: a (small) category, a basepoint, and a sector action on
 the endomorphism monoid of the basepoint. -/
 structure LoopKernelObj where

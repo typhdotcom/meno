@@ -317,9 +317,9 @@ theorem card_compression_sections :
         ∀ x, (Submodule.Quotient.mk (s x) :
           (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) = x}
       = Nat.card (LinearMap.range (G.gradLin (ZMod q))) ^ (q ^ n) := by
-  haveI : Finite ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
+  have : Finite ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
     Finite.of_surjective _ (Submodule.Quotient.mk_surjective _)
-  haveI := Fintype.ofFinite
+  have := Fintype.ofFinite
     ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
   have hfib : ∀ x, Nat.card ((fun y : G.E → ZMod q =>
         (Submodule.Quotient.mk y :
@@ -359,11 +359,11 @@ theorem sectionCost_compression :
           (G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))))
       = (q : ℝ) ^ n
         * Real.log (Nat.card (LinearMap.range (G.gradLin (ZMod q)))) := by
-  haveI : Finite ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
+  have : Finite ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
     Finite.of_surjective _ (Submodule.Quotient.mk_surjective _)
-  haveI := Fintype.ofFinite
+  have := Fintype.ofFinite
     ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q)))
-  haveI : DecidableEq ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
+  have : DecidableEq ((G.E → ZMod q) ⧸ LinearMap.range (G.gradLin (ZMod q))) :=
     Classical.decEq _
   have hsurj : Function.Surjective (fun y : G.E → ZMod q =>
       (Submodule.Quotient.mk y :
@@ -1013,7 +1013,7 @@ theorem residueMass_lt_residueMass_zero {ξ : H1Reduction G q}
   -- a nonzero class has a representative coordinate `q` does not divide
   have hcoord : ∃ i, ¬ ((q : ℤ) ∣ k₀ i) := by
     by_contra hall
-    push_neg at hall
+    push Not at hall
     apply hξ
     choose f hf using fun i => hall i
     have hk : k₀ = (q : ℤ) • f := funext fun i => by
@@ -1082,7 +1082,7 @@ theorem residueDist_ne_uniform (hb : 0 < G.b1) (hq : 1 < q) :
   have hcard : 1 < Nat.card (H1Reduction G q) := by
     rw [G.card_H1Reduction q]
     exact Nat.one_lt_pow hb.ne' hq
-  haveI : Nontrivial (H1Reduction G q) :=
+  have : Nontrivial (H1Reduction G q) :=
     Finite.one_lt_card_iff_nontrivial.mp hcard
   obtain ⟨ξ, hξ⟩ := exists_ne (0 : H1Reduction G q)
   have hlt := G.residueMass_lt_residueMass_zero q hξ
@@ -1491,7 +1491,7 @@ theorem residueMass_zero_lt_one (hb : 0 < G.b1) (hq : 1 < q) :
   have hcard : 1 < Nat.card (H1Reduction G q) := by
     rw [G.card_H1Reduction q]
     exact Nat.one_lt_pow hb.ne' hq
-  haveI : Nontrivial (H1Reduction G q) :=
+  have : Nontrivial (H1Reduction G q) :=
     Finite.one_lt_card_iff_nontrivial.mp hcard
   obtain ⟨ξ, hξ⟩ := exists_ne (0 : H1Reduction G q)
   have hsub : G.residueMass q 0 + G.residueMass q ξ
@@ -1522,7 +1522,7 @@ theorem residueAction_gibbsExpect_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
   have hcard : 1 < Nat.card (H1Reduction G q) := by
     rw [G.card_H1Reduction q]
     exact Nat.one_lt_pow hb.ne' hq
-  haveI : Nontrivial (H1Reduction G q) :=
+  have : Nontrivial (H1Reduction G q) :=
     Finite.one_lt_card_iff_nontrivial.mp hcard
   obtain ⟨ξ, hξ⟩ := exists_ne (0 : H1Reduction G q)
   show 0 < ∑' η : H1Reduction G q,
@@ -1897,7 +1897,7 @@ theorem residueAction_gibbsVariance_E_pos (hb : 0 < G.b1) (hq : 1 < q) :
   have hcard : 1 < Nat.card (H1Reduction G q) := by
     rw [G.card_H1Reduction q]
     exact Nat.one_lt_pow hb.ne' hq
-  haveI : Nontrivial (H1Reduction G q) :=
+  have : Nontrivial (H1Reduction G q) :=
     Finite.one_lt_card_iff_nontrivial.mp hcard
   obtain ⟨ξ, hξ⟩ := exists_ne (0 : H1Reduction G q)
   refine SectorAction.gibbsVariance_pos_of_ne (G.residueAction q)
@@ -2384,7 +2384,7 @@ theorem residue_tower_price_strict (hb : 0 < G.b1) (hc : 1 < c)
       G.h1TowerMap q q' hdvd η = (0 : H1Reduction G q)} := by
     rw [G.card_h1TowerMap_fiber q q' c hdvd hq' 0]
     exact Nat.one_lt_pow hb.ne' hc
-  haveI : Nontrivial {η : H1Reduction G q' //
+  have : Nontrivial {η : H1Reduction G q' //
       G.h1TowerMap q q' hdvd η = (0 : H1Reduction G q)} :=
     Finite.one_lt_card_iff_nontrivial.mp hcard
   have h0mem : G.h1TowerMap q q' hdvd (0 : H1Reduction G q') = 0 :=

@@ -609,7 +609,7 @@ theorem Walk.normalizeCycle_noBacktrack {n : ℕ} {hn : n ≥ 3}
               simpa [hnorm] using ih
             simpa [hz] using Walk.NoBacktrack.cons_cons h h₂ tail₂ (by simpa using hz) ih'
 
-private def noBacktrack_dir_mul
+private theorem noBacktrack_dir_mul
     {n : ℕ} {hn : n ≥ 3}
     {a b d : Fin n}
     {h : (CycleGraph n hn).edge a b}
@@ -1028,7 +1028,7 @@ noncomputable def harmonicEnergy_k (n : ℕ) (hn : n ≥ 3) (k : ℤ) : ℝ :=
     Lower bound: Hodge decomposition (`energy_ge_winding_sq`) gives energy ≥ w²/n. -/
 theorem cycleGraph_harmonicEnergy_k (n : ℕ) (hn : n ≥ 3) (k : ℤ) :
     harmonicEnergy_k n hn k = (k : ℝ) ^ 2 / n := by
-  haveI : Nonempty { σ : C1 (Fin n) // winding n hn σ = (k : ℝ) } :=
+  have : Nonempty { σ : C1 (Fin n) // winding n hn σ = (k : ℝ) } :=
     ⟨⟨cycleHarmonicForm_k n hn k, cycleHarmonicForm_k_winding n hn k⟩⟩
   apply le_antisymm
   · have hbdd : BddBelow (Set.range (fun σ : { σ : C1 (Fin n) // winding n hn σ = (k : ℝ) } =>

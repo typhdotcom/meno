@@ -53,7 +53,7 @@ theorem thetaChainGram_posDef :
     rw [hcomp]
     have h01 : x 0 ≠ 0 ∨ x 1 ≠ 0 := by
       by_contra hc
-      push_neg at hc
+      push Not at hc
       exact hx (funext fun i => by fin_cases i <;> simp [hc.1, hc.2])
     rcases h01 with h0 | h1
     · nlinarith [sq_nonneg (x 0 + x 1), sq_nonneg (x 1),

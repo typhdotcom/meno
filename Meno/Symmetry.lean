@@ -177,7 +177,7 @@ classes, by the ℤ-form keystone — are fixed. -/
 theorem cycleRot_h1Map_int (n : ℕ) (hn : 0 < n)
     (κ : (Fin n → ℤ) ⧸ LinearMap.range ((cycleGraph n hn).gradLin ℤ)) :
     (cycleRot n hn).h1Map ℤ κ = κ := by
-  haveI : NeZero n := ⟨hn.ne'⟩
+  have : NeZero n := ⟨hn.ne'⟩
   obtain ⟨τ, rfl⟩ := Submodule.Quotient.mk_surjective _ κ
   rw [IncidenceGraph.Auto.h1Map_mk]
   apply ((cycleGraph n hn).latticeQuotEquiv (cycleLatticeBasis n hn)).injective
@@ -239,7 +239,7 @@ theorem cycle_no_invariant_representative (n q : ℕ) (hn : 0 < n)
     ¬ ∃ ω : Fin n → ZMod q,
       (cycleRot n hn).cochainMap (ZMod q) ω = ω ∧
       (cycleGraph n hn).h1ResClass q ω = windingOneClass n hn q := by
-  haveI : NeZero n := ⟨hn.ne'⟩
+  have : NeZero n := ⟨hn.ne'⟩
   rintro ⟨ω, hinv, hclass⟩
   have hconst := cycleRot_invariant_eq_const n hn ω hinv
   have hclass' : (Submodule.Quotient.mk ω :
@@ -280,7 +280,7 @@ theorem cycle_equivariant_section_iff (n q : ℕ) (hn : 0 < n) [NeZero q] :
       (∀ ξ, (cycleRot n hn).cochainMap (ZMod q) (s ξ)
         = s ((cycleRot n hn).h1ReductionMap q ξ)))
       ↔ Nat.gcd n q = 1 := by
-  haveI : NeZero n := ⟨hn.ne'⟩
+  have : NeZero n := ⟨hn.ne'⟩
   constructor
   · rintro ⟨s, hsec, hequi⟩
     by_contra hne

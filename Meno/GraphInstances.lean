@@ -69,7 +69,7 @@ def cycleCyclesZ (n : ℕ) : Fin 1 → Fin n → ℤ := fun _ _ => 1
 /-- The all-ones cochain is an integral cycle. -/
 theorem cycleCyclesZ_mem (n : ℕ) (hn : 0 < n) (i : Fin 1) :
     cycleCyclesZ n i ∈ (cycleGraph n hn).cycleLattice := by
-  haveI : NeZero n := ⟨hn.ne'⟩
+  have : NeZero n := ⟨hn.ne'⟩
   rw [IncidenceGraph.mem_cycleLattice]
   intro v
   rw [cycleGraph_boundary_eq]
@@ -132,7 +132,7 @@ integer multiple of the all-ones cycle. -/
 theorem cycle_integral_spanning (n : ℕ) (hn : 0 < n) (x : Fin n → ℤ)
     (hx : x ∈ (cycleGraph n hn).cycleLattice) :
     ∃ a : Fin 1 → ℤ, x = fun e => ∑ i, a i * cycleCyclesZ n i e := by
-  haveI : NeZero n := ⟨hn.ne'⟩
+  have : NeZero n := ⟨hn.ne'⟩
   have hclosed : ∀ v,
       (cycleGraph n hn).boundary (fun e => ((x e : ℤ) : ℝ)) v = 0 := by
     intro v
@@ -265,8 +265,8 @@ theorem wedgeGraph_card_E (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) 
 basepoint along its own cycle. -/
 theorem wedgeGraph_preconnected (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂) :
     ∀ u v, (wedgeGraph n₁ n₂ h₁ h₂).Reaches u v := by
-  haveI : NeZero n₁ := ⟨h₁.ne'⟩
-  haveI : NeZero n₂ := ⟨h₂.ne'⟩
+  have : NeZero n₁ := ⟨h₁.ne'⟩
+  have : NeZero n₂ := ⟨h₂.ne'⟩
   have hb₁ : ∀ (m : ℕ) (hm : m < n₁),
       (wedgeGraph n₁ n₂ h₁ h₂).Reaches none
         ((wedgeRoute n₁ ⟨m, hm⟩).map Sum.inl) := by
@@ -355,8 +355,8 @@ an indicator telescopes by the shift reindexing `j ↦ j + 1`. -/
 theorem wedgeCyclesZ_mem (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂)
     (i : Fin 2) :
     wedgeCyclesZ n₁ n₂ i ∈ (wedgeGraph n₁ n₂ h₁ h₂).cycleLattice := by
-  haveI : NeZero n₁ := ⟨h₁.ne'⟩
-  haveI : NeZero n₂ := ⟨h₂.ne'⟩
+  have : NeZero n₁ := ⟨h₁.ne'⟩
+  have : NeZero n₂ := ⟨h₂.ne'⟩
   rw [IncidenceGraph.mem_cycleLattice]
   intro v
   fin_cases i
@@ -430,8 +430,8 @@ theorem wedge_periods_onto (n₁ n₂ : ℕ) (h₁ : 0 < n₁) (h₂ : 0 < n₂)
     (k : Fin 2 → ℤ) :
     ∃ τ : Fin n₁ ⊕ Fin n₂ → ℤ,
       ∀ j, τ ⬝ᵥ wedgeCyclesZ n₁ n₂ j = k j := by
-  haveI : NeZero n₁ := ⟨h₁.ne'⟩
-  haveI : NeZero n₂ := ⟨h₂.ne'⟩
+  have : NeZero n₁ := ⟨h₁.ne'⟩
+  have : NeZero n₂ := ⟨h₂.ne'⟩
   refine ⟨Sum.elim (fun e => if e = 0 then k 0 else 0)
     (fun e => if e = 0 then k 1 else 0), fun j => ?_⟩
   fin_cases j

@@ -374,7 +374,7 @@ winding one. -/
 theorem cycleMatter_coords :
     (cycleGraph n hn).latticeQuotEquiv (cycleLatticeBasis n hn)
       (cycleMatter n hn).val = ![1] := by
-  haveI : NeZero n := ⟨hn.ne'⟩
+  have : NeZero n := ⟨hn.ne'⟩
   funext j
   show Pi.single (0 : Fin n) (1 : ℤ)
     ⬝ᵥ (cycleGraph n hn).cyclesZ (cycleLatticeBasis n hn) j = ![1] j
@@ -401,7 +401,7 @@ the full cycle. -/
 theorem cycleMatter_pairing :
     (cycleGraph n hn).cyclePairing (cycleLatticeBasis n hn 0)
       (cycleMatter n hn).val = 1 := by
-  haveI : NeZero n := ⟨hn.ne'⟩
+  have : NeZero n := ⟨hn.ne'⟩
   rw [show (cycleMatter n hn).val
       = Submodule.Quotient.mk (Pi.single 0 1) from rfl,
     (cycleGraph n hn).cyclePairing_mk,

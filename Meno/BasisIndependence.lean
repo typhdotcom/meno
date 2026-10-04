@@ -48,12 +48,12 @@ theorem exists_unimodular_relating {n : ℕ}
     (B B' : Module.Basis (Fin n) ℤ G.cycleLattice) :
     ∃ U : Matrix (Fin n) (Fin n) ℤ, IsUnit U.det ∧
       ∀ j, G.cyclesZ B' j = fun e => ∑ i, U i j * G.cyclesZ B i e := by
-  letI := B.invertibleToMatrix B'
+  let := B.invertibleToMatrix B'
   refine ⟨B.toMatrix ⇑B', Matrix.isUnit_det_of_invertible _, fun j => ?_⟩
   have h : ∑ i, B.toMatrix ⇑B' i j • B i = B' j :=
     B.sum_toMatrix_smul_self ⇑B' j
   have hval := congrArg Subtype.val h
-  rw [AddSubmonoidClass.coe_finset_sum] at hval
+  rw [AddSubmonoidClass.coe_finsetSum] at hval
   funext e
   have he := congrFun hval e
   rw [Finset.sum_apply] at he

@@ -27,8 +27,8 @@ Exit code 0 = every check passes.
 
 import re
 import sys
-from pathlib import Path
 from collections import defaultdict, deque
+from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 MENO = REPO / "Meno"
@@ -230,7 +230,9 @@ def main():
     imports = sorted(
         set(
             re.findall(
-                r"^import Meno\.([A-Za-z0-9]+)$", (REPO / "Meno.lean").read_text(), re.M
+                r"^import Meno\.([A-Za-z0-9]+)$",
+                (REPO / "Meno.lean").read_text(),
+                re.MULTILINE,
             )
         )
     )

@@ -338,15 +338,15 @@ theorem finrank_attach_h1Homology (hτ : c ⬝ᵥ τ = 1) :
     Module.finrank ℤ
         (G.attach c hc : TwoComplex.{u, v, w} G).h1Homology
       = G.b1 - 1 := by
-  haveI hkfree : Module.Free ℤ
+  have hkfree : Module.Free ℤ
       ↥(LinearMap.ker (latticePairing (G := G) τ)) :=
     Module.Free.of_basis (attachH1Basis (G := G) τ).2
-  haveI hkfin : Module.Finite ℤ
+  have hkfin : Module.Finite ℤ
       ↥(LinearMap.ker (latticePairing (G := G) τ)) :=
     Module.Finite.of_basis (attachH1Basis (G := G) τ).2
-  haveI hsfree : Module.Free ℤ ↥(ℤ ∙ (⟨c, hc⟩ : G.cycleLattice)) :=
+  have hsfree : Module.Free ℤ ↥(ℤ ∙ (⟨c, hc⟩ : G.cycleLattice)) :=
     Module.Free.of_equiv (spanLineEquiv c hc τ hτ)
-  haveI hsfin : Module.Finite ℤ ↥(ℤ ∙ (⟨c, hc⟩ : G.cycleLattice)) :=
+  have hsfin : Module.Finite ℤ ↥(ℤ ∙ (⟨c, hc⟩ : G.cycleLattice)) :=
     Module.Finite.equiv (spanLineEquiv c hc τ hτ)
   -- span ⊕ ker fills the lattice: ranks add to b₁
   have hprod :=

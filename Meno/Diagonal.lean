@@ -59,7 +59,7 @@ private theorem card_lt_card_predicates (A : Type u) [Finite A] :
   cases nonempty_fintype A
   rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
   by_contra hle
-  push_neg at hle
+  push Not at hle
   obtain ⟨emb⟩ := Function.Embedding.nonempty_of_card_le hle
   obtain ⟨r, hr⟩ := emb.injective.hasLeftInverse
   exact no_self_enumeration A ⟨r, hr.surjective⟩
@@ -101,7 +101,7 @@ theorem log_card_eq_descriptionCost_iff (f : A → ZMod 2) :
   constructor
   · intro h
     by_contra hne
-    haveI : Nonempty A := not_isEmpty_iff.mp hne
+    have : Nonempty A := not_isEmpty_iff.mp hne
     exact absurd h (ne_of_lt (log_card_lt_descriptionCost f))
   · intro h
     simp [descriptionCost, Nat.card_eq_fintype_card, Fintype.card_eq_zero]
