@@ -353,7 +353,7 @@ theorem sectionCostE_eq_sum_recoveryCostE [Fintype A] [Fintype B]
         exact hb (by obtain ⟨a, ha⟩ := hmem; exact ⟨a, ha⟩))
     have htop : (∑ b : B, recoveryCostE f b) = ⊤ :=
       eq_top_iff.mpr (le_trans (le_of_eq hbtop.symm)
-        (Finset.single_le_sum (fun c _ => zero_le _) (Finset.mem_univ b)))
+        (Finset.single_le_sum (fun c _ => zero_le) (Finset.mem_univ b)))
     rw [(sectionCostE_eq_top_iff f).mpr hf, htop]
 
 /-- **Forward description cost**: `|A| · log |B|` — the information
@@ -1444,10 +1444,10 @@ theorem coarseGrain_weight (b : B) :
 theorem coarseGrain_partFn :
     (A.coarseGrain p b₀ hpos hmax).partFn
       = A.partFn / A.coarseWeight p b₀ := by
-  show (∑' b : B, (A.coarseGrain p b₀ hpos hmax).weight b) = _
-  rw [tsum_fintype,
-    Finset.sum_congr rfl fun b _ => coarseGrain_weight A p b₀ hpos hmax b,
-    ← Finset.sum_div, A.sum_coarseWeight p]
+  show (∑' b : (A.coarseGrain p b₀ hpos hmax).Λ,
+      (A.coarseGrain p b₀ hpos hmax).weight b) = _
+  rw [tsum_fintype, ← A.sum_coarseWeight p, Finset.sum_div]
+  exact Finset.sum_congr rfl fun b _ => coarseGrain_weight A p b₀ hpos hmax b
 
 /-- **The partition function factorizes through a coarse-graining**:
 `Z = W b₀ · Z_coarse`. -/
@@ -2644,6 +2644,8 @@ theorem counting_gravity {X Y D : Type u} [Fintype X] [Fintype Y]
   haveI : Nonempty X := ⟨x₀⟩
   haveI : Nonempty Y := ⟨y₀⟩
   haveI : Nonempty (SGD.Pullback f g) := ⟨⟨(x₀, y₀), hx₀.trans hy₀.symm⟩⟩
+  haveI : Fintype (@SGD.Pullback X Y (uniformAction D).Λ f g) :=
+    pullbackFintype (D := D)
   have hcoup : ((uniformAction D).coupling f g hm hm' hf hg).EnergyEquiv
       (uniformAction (SGD.Pullback f g)) := ⟨Equiv.refl _, fun _ => rfl⟩
   have hliftf : ((uniformAction D).uniformLift f hm hf).EnergyEquiv
@@ -2675,7 +2677,7 @@ the correlation's. -/
 
 /-- **The two-sector base**: sectors `Bool`, energies
 `0` and `1`. -/
-noncomputable def twoSectorAction : SectorAction.{0} where
+@[reducible] noncomputable def twoSectorAction : SectorAction.{0} where
   Λ := Bool
   E b := cond b 1 0
   E_zero := ⟨false, rfl⟩

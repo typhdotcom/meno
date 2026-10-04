@@ -172,6 +172,7 @@ theorem thetaMatter_mass : thetaMatter.mass = 1/3 := by
   rw [cyclesR_thetaLatticeBasis, gramOf_thetaCycles, thetaChainGram_inv]
   norm_num [Fin.sum_univ_two]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **The first non-diagonal consumer of the general Siegel–Poisson
 duality — now through the topology**: the theta duality
 is `cycle_harmonic_duality` at the theta graph, read in the
@@ -267,6 +268,7 @@ theorem theta_interaction :
   rw [← basisGramData_theta_gram]
   exact hd
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **Theta sectors bind with energy `1/3`** — positive: the sectors
 attract. Confirms the exact shared-cycle formula `2k/(n₁n₂ − k²)` at
 `(4, 4, 2)`. -/
@@ -275,6 +277,7 @@ theorem theta_bindingEnergy :
   rw [HarmonicGramData.bindingEnergy_eq, theta_interaction]
   norm_num
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Attraction, stated as an inequality: the joint sector is strictly
 cheaper than its parts — **the closed form's instance at the
 Gram-data level** (transitively through

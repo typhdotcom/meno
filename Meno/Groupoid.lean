@@ -52,7 +52,7 @@ private def homotopyClassInv (C : Complex V) (hsym : C.toGraph.Symmetric) (u v :
     (fun _ _ h => Quot.sound (Homotopic₂.reverse hsym h))
 
 /-- The fundamental groupoid of a symmetric 2-complex. -/
-noncomputable instance simplicialGroupoid (C : Complex V) (hsym : C.toGraph.Symmetric) :
+@[instance_reducible] noncomputable def simplicialGroupoid (C : Complex V) (hsym : C.toGraph.Symmetric) :
     Groupoid (SimplicialGroupoid C) where
   Hom x y := HomotopyClass₂ C x.as y.as
   id x := Quot.mk _ (Walk.nil x.as)
@@ -209,8 +209,7 @@ theorem cycleGroupoid_partitionFn_eq_canonical_energy (n : ℕ) (hn : n ≥ 3)
   refine cycleGroupoid_partitionFn_eq n hn x (cycleCanonicalEnergy n hn x)
     (summable_cycleCanonicalEnergy n hn x) wind ?_
   intro g
-  simpa [cycleCanonicalEnergy, wind] using
-    (cycleLoopClassHodgeEnergy_eq_winding_sq n hn x.as g)
+  exact cycleLoopClassHodgeEnergy_eq_winding_sq n hn x.as g
 
 /-- Basepoint-specialized canonical bridge theorem. -/
 def cycleBaseObj (n : ℕ) (hn : n ≥ 3) : SimplicialGroupoid (CycleGraph n hn) where
@@ -418,7 +417,7 @@ noncomputable def homotopyClassLength (C : Complex V) {u v : V} :
 fundamental groupoid of a symmetric complex carries the
 minimal-representative walk length; subadditivity holds because the
 append of minimal representatives represents the composite class. -/
-noncomputable def simplicialGeodesic (C : Complex V)
+@[instance_reducible] noncomputable def simplicialGeodesic (C : Complex V)
     (hsym : C.toGraph.Symmetric) :
     letI := simplicialGroupoid C hsym
     Geodesic (SimplicialGroupoid C) :=

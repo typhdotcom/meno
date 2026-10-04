@@ -1385,6 +1385,7 @@ theorem residueAction_weight (ξ : H1Reduction G q) :
     Real.exp_log (G.residueMass_pos q ξ),
     Real.exp_log (G.residueMass_pos q 0)]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The residue action's partition function is the reciprocal modal
 mass. -/
 theorem residueAction_partFn :
@@ -1419,7 +1420,7 @@ theorem residueAction_entropy_split :
       = (G.residueAction q).complexity
         + (G.residueAction q).gibbsExpect (G.residueAction q).E := by
   have h := @SectorAction.entropy_gibbs (G.residueAction q)
-    (inferInstanceAs (Fintype (H1Reduction G q)))
+    (inferInstance : Fintype (H1Reduction G q))
   rw [G.residueAction_gibbsMass q] at h
   exact h
 
@@ -1600,6 +1601,11 @@ noncomputable def descriptionAction : SectorAction.{v} :=
 
 noncomputable instance : Fintype (G.descriptionAction q).Λ :=
   inferInstanceAs (Fintype (G.E → ZMod q))
+
+noncomputable instance residuePullbackFintype :
+    Fintype (@SGD.Pullback _ _ (G.residueAction q).Λ
+      (G.carrierCompression q) (G.carrierCompression q)) :=
+  G.carrierPullbackFintype q
 
 /-- **The pair action**: the priced shared-base coupling
 of two description lifts over the residue action. -/

@@ -71,7 +71,7 @@ private lemma integrable_mellin_mode_gen {r s : ℝ} (hr : 0 < r) (hs : 0 < s) :
     IntegrableOn (fun α => Real.exp (-(r * α)) * α ^ (s - 1)) (Ioi 0) := by
   have h : IntegrableOn (fun x : ℝ => x ^ (s - 1) * Real.exp (-r * x ^ (1:ℝ))) (Ioi 0) :=
     integrableOn_rpow_mul_exp_neg_mul_rpow (by linarith : -1 < s - 1)
-      (le_refl 1) hr
+      one_pos hr
   refine h.congr_fun (fun x hx => ?_) measurableSet_Ioi
   have hxp : (0:ℝ) < x := hx
   show x ^ (s - 1) * Real.exp (-r * x ^ (1:ℝ)) = Real.exp (-(r * x)) * x ^ (s - 1)

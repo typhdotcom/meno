@@ -185,8 +185,6 @@ section Torus
 
 open UnitAddTorus Topology
 
-attribute [local instance] Real.fact_zero_lt_one
-
 /-- The coordinatewise quotient map from `ℝ^d` to the unit torus. -/
 def torusMk (x : Fin d → ℝ) : UnitAddTorus (Fin d) :=
   fun i => (x i : UnitAddCircle)

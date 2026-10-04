@@ -418,6 +418,7 @@ theorem gram_congr {n : ℕ} (b b' : Module.Basis (Fin n) ℤ Q.Λ) :
   refine Finset.sum_congr rfl fun l _ => ?_
   ring
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **The discriminant is basis-independent**: any two
 finite bases are related by a unimodular integral matrix, whose
 squared determinant is `1`. -/
@@ -652,6 +653,7 @@ theorem gram_dual {n : ℕ} (b : Module.Basis (Fin n) ℤ Q.Λ) :
   rw [Matrix.smul_apply, smul_eq_mul]
   exact Q.dualForm_dualBasis b i j
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **Every dual basis charts the dual as the coordinate dual**:
 the chart of `Q.dual` at `b.dualBasis` **is**
 `QuadraticAction.dual` of the chart of `Q` at `b`. -/
@@ -679,6 +681,7 @@ theorem duality :
   rw [h1, h2, (Q.chartAction (Module.finBasis ℤ Q.Λ)).duality]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **The double dual is the original**: along the
 canonical reflexivity equivalence, the double-dual form is the
 original form — `π² · (π² · B⁻¹)⁻¹ = B`, verified at the double-dual
@@ -970,6 +973,7 @@ noncomputable def ofQuadraticAction {r : ℕ} (A : QuadraticAction r) :
     rw [hmat]
     exact A.Q_posDef
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The chart of the embedding at the standard basis is the original
 coordinate action. -/
 theorem ofQuadraticAction_chartAction {r : ℕ} (A : QuadraticAction r) :
@@ -994,6 +998,7 @@ theorem ofQuadraticAction_rank {r : ℕ} (A : QuadraticAction r) :
     (ofQuadraticAction A).rank = r :=
   ((ofQuadraticAction A).card_eq_rank (Pi.basisFun ℤ (Fin r))).symm
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The embedding's discriminant is the Gram determinant. -/
 theorem ofQuadraticAction_disc {r : ℕ} (A : QuadraticAction r) :
     (ofQuadraticAction A).disc = A.Q.det := by
@@ -1005,6 +1010,7 @@ theorem ofQuadraticAction_disc {r : ℕ} (A : QuadraticAction r) :
     * ((Pi.basisFun ℤ (Fin r) j) l : ℝ)) = A.Q i j
   simp [Pi.basisFun_apply, Pi.single_apply]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **The dual-chart identity**: the dual of the
 embedding charts at the standard dual basis as the coordinate dual. -/
 theorem ofQuadraticAction_dual_chartAction {r : ℕ} (A : QuadraticAction r) :
@@ -1093,6 +1099,7 @@ theorem scale_scale (β β' : ℝ) (hβ : 0 < β) (hβ' : 0 < β') :
       show β' * (β * form x y) = β' * β * form x y
       ring)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **Equivalence transport**: a form-preserving
 equivalence preserves every scaling. -/
 def Equiv.scale {Q Q' : QuadLatticeAction.{u}} (e : Q.Equiv Q')
@@ -1103,6 +1110,7 @@ def Equiv.scale {Q Q' : QuadLatticeAction.{u}} (e : Q.Equiv Q')
       = β * Q.form a b
     rw [e.form_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **Chart compatibility**: the chart of the scaled
 bundle is the scaled chart — the Gram matrix scales. -/
 theorem scale_chartAction {n : ℕ} (b : Module.Basis (Fin n) ℤ Q.Λ)
@@ -1430,6 +1438,7 @@ theorem duality_real :
   push_cast
   ring
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma formExt_scale (β : ℝ) (hβ : 0 < β) (x y : ℝ ⊗[ℤ] Q.Λ) :
     (Q.scale β hβ).formExt x y = β * Q.formExt x y := by
   show bilinBaseChange (fun a b => β * Q.form a b) _ _ x y
@@ -1443,6 +1452,7 @@ private lemma formExt_scale (β : ℝ) (hβ : 0 < β) (x y : ℝ ⊗[ℤ] Q.Λ) 
   refine Finset.sum_congr rfl fun j _ => ?_
   ring
 
+set_option backward.isDefEq.respectTransparency false in
 private lemma dualForm_scale (β : ℝ) (hβ : 0 < β)
     (φ ψ : Module.Dual ℤ Q.Λ) :
     (Q.scale β hβ).dualForm φ ψ = β⁻¹ * Q.dualForm φ ψ := by

@@ -160,6 +160,7 @@ theorem mem_survivors
   unfold survivors
   simp only [Submodule.mem_iInf, LinearMap.mem_ker]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **The image of the restriction** (the other half of
 `attach_dual_image`): exactly the classes that annihilate the
 attached cycles. `H¹(X) ↪ H¹(G)` with image `{φ | φ(c) = 0}`. -/

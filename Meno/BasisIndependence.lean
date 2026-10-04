@@ -138,6 +138,7 @@ theorem classForm_comm (κ κ') : G.classForm κ κ' = G.classForm κ' κ := by
       _ = (G.basisGramData G.cycleBasis).gram i j := by rw [h]]
   ring
 
+set_option backward.isDefEq.respectTransparency false in
 theorem classForm_add_left (κ₁ κ₂ κ') :
     G.classForm (κ₁ + κ₂) κ' = G.classForm κ₁ κ' + G.classForm κ₂ κ' := by
   unfold classForm HarmonicGramData.interaction
@@ -150,6 +151,7 @@ theorem classForm_add_left (κ₁ κ₂ κ') :
   ring
 
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **Basis charts preserve the form**: the Gram
 interaction of any basis at the keystone coordinates is the intrinsic
 polarized form — via polarization from the chart identity for
@@ -244,6 +246,7 @@ theorem classQuadAction_rank : (G.classQuadAction).rank = G.b1 := by
   rw [G.h1QuotEquiv.finrank_eq, Module.finrank_fintype_fun_eq_card,
     Fintype.card_fin]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **Every basis charts the carrier bundle**: the chart
 of `classQuadAction` at the induced `H¹` basis is precisely the
 basis's coordinate quadratic action. -/
@@ -267,6 +270,7 @@ theorem classQuadAction_duality :
   have h := (G.classQuadAction).duality
   rwa [G.classQuadAction_rank] at h
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **Every chart's coordinate action receives the Siegel–Poisson
 duality — as a corollary of the intrinsic duality**: chart
 the carrier and its dual at `B` (`chartAction_h1Basis`,
@@ -301,6 +305,7 @@ theorem basisGramData_duality {n : ℕ}
   exact (G.classQuadAction).duality
 
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **Every basis action is a chart of the carrier** (energy half):
 the keystone equivalence carries the basis-coordinate energy to the
 intrinsic harmonic energy. -/

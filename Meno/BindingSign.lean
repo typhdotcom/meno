@@ -73,6 +73,7 @@ theorem ofCycles_interaction_fin_two (c : Fin 2 → ι → ℝ)
   rw [show gramOf c 0 1 = c 0 ⬝ᵥ c 1 from rfl]
   ring
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **The binding closed form at rank two**: the unit sectors bind
 with energy `2⟨c₁,c₂⟩ / det`. -/
 theorem ofCycles_bindingEnergy_fin_two (c : Fin 2 → ι → ℝ)
@@ -339,6 +340,7 @@ theorem screened_overlap_pos :
     gramOf_screenedCycles]
   norm_num
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **The intrinsic binding of the overlapping sectors is `−1/4`**:
 repulsion at positive overlap — the third cycle screens. -/
 theorem screened_binding_repulsive :

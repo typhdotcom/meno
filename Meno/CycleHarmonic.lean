@@ -69,6 +69,7 @@ noncomputable def cycleHarmonicGramData (n : ℕ) (hn : n ≥ 3) :
       exact mul_pos hα hsq
 
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **Spine partition function = scalar partition function** at α = 1/n.
 A consequence of Q-matrix equality. -/
 theorem cycleHarmonicGramData_partFn_eq_scalar (n : ℕ) (hn : n ≥ 3) :
@@ -99,6 +100,7 @@ theorem cycleHarmonicGramData_partFn_eq_partitionFn (n : ℕ) (hn : n ≥ 3) :
   rw [cycleHarmonicGramData_partFn_eq_scalar,
       scalarPartFn_one_div_n_eq_partitionFn]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- **THE FLAGSHIP**: the cycle-graph T-duality
 
   `Z(π² · n) = √((1/n) / π) · partitionFn n hn`

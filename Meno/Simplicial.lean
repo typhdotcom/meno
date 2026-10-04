@@ -470,6 +470,9 @@ def Walk.castEnd {G : Graph V} {a b c : V} (h : b = c) (p : Walk G a b) : Walk G
 def Walk.castStart {G : Graph V} {a b c : V} (h : a = b) (p : Walk G a c) : Walk G b c :=
   h ▸ p
 
+@[simp] lemma Walk.castStart_rfl {G : Graph V} {a c : V} (p : Walk G a c) :
+    p.castStart rfl = p := rfl
+
 @[simp] lemma Walk.castEnd_length {G : Graph V} {a b c : V} (h : b = c) (p : Walk G a b) :
     (p.castEnd h).length = p.length := by subst h; rfl
 
@@ -1389,6 +1392,9 @@ noncomputable def cycleLoopClassEquivInt
     simpa [cycleLoopWindingClass] using
       (Classical.choose_spec (cycleLoopWinding_surjective_at n hn s k))
 
+@[simp] theorem cycleLoopClassEquivInt_apply (n : ℕ) (hn : n ≥ 3) (s : Fin n)
+    (g : HomotopyClass₂ (CycleGraph n hn) s s) :
+    cycleLoopClassEquivInt n hn s g = cycleLoopWindingClass n hn s g := rfl
 
 /-- Any bidirectional edge makes the quotient map non-injective:
     the backtrack v→w→v is homotopic to nil, but they're distinct walks. -/

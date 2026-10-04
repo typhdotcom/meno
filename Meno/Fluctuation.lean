@@ -182,9 +182,7 @@ theorem hasDerivAt_scaledPartFn {β : ℝ} (hβ : 0 < β) :
       have hlin : HasDerivAt (fun γ : ℝ => -(γ * A.energy k))
           (-(1 * A.energy k)) y :=
         ((hasDerivAt_id y).mul_const _).neg
-      have hexp := hlin.exp
-      convert hexp using 1
-      ring)
+      exact hlin.exp.congr_deriv (by ring))
     (fun k y (hy : β / 2 < y) => by
       show |-(A.energy k * Real.exp (-(y * A.energy k)))|
         ≤ A.energy k * Real.exp (-(β / 2 * A.energy k))
@@ -228,9 +226,7 @@ theorem hasDerivAt_scaledMoment {β : ℝ} (hβ : 0 < β) :
       have hlin : HasDerivAt (fun γ : ℝ => -(γ * A.energy k))
           (-(1 * A.energy k)) y :=
         ((hasDerivAt_id y).mul_const _).neg
-      have hexp := (hlin.exp).const_mul (A.energy k)
-      convert hexp using 1
-      ring)
+      exact (hlin.exp.const_mul (A.energy k)).congr_deriv (by ring))
     (fun k y (hy : β / 2 < y) => by
       show |-(A.energy k ^ 2 * Real.exp (-(y * A.energy k)))|
         ≤ A.energy k ^ 2 * Real.exp (-(β / 2 * A.energy k))
@@ -252,11 +248,11 @@ theorem hasDerivAt_meanEnergy {β : ℝ} (hβ : 0 < β) :
   have hZne := (A.scaledPartFn_pos hβ).ne'
   have h := (A.hasDerivAt_scaledMoment hβ).div
     (A.hasDerivAt_scaledPartFn hβ) hZne
-  convert h using 1
-  show -(A.scaledMoment2 β / A.scaledPartFn β
-      - (A.scaledMoment β / A.scaledPartFn β) ^ 2)
-    = (-A.scaledMoment2 β * A.scaledPartFn β
+  refine HasDerivAt.congr_deriv (f := A.meanEnergy) h ?_
+  show (-A.scaledMoment2 β * A.scaledPartFn β
         - A.scaledMoment β * -A.scaledMoment β) / A.scaledPartFn β ^ 2
+    = -(A.scaledMoment2 β / A.scaledPartFn β
+      - (A.scaledMoment β / A.scaledPartFn β) ^ 2)
   field_simp
   ring
 

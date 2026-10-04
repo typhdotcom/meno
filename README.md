@@ -28,7 +28,7 @@ everywhere: every duality in the tree flows through it, down to
 Riemann's functional equation ([Duality](#duality)).
 
 Everything below is a checked theorem — zero sorry, zero axiom
-declarations, `lake build` green against Lean 4.26.0 and the pinned
+declarations, `lake build` green against Lean 4.33.0-rc2 and the pinned
 Mathlib. The tree is organized into nine faces, indexed below
 ([The nine faces](#the-nine-faces)).
 
