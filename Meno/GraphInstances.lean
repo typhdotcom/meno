@@ -27,8 +27,6 @@ namespace Meno
 
 open scoped BigOperators
 
-universe u v
-
 /-! ## The cycle graph -/
 
 

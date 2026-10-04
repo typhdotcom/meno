@@ -217,7 +217,7 @@ end ScalarExtension
 
 namespace IncidenceGraph
 
-variable (G : IncidenceGraph.{u, v})
+variable (G : IncidenceGraph.{u})
 
 /-! ## Freeness of the cochain quotient, the splitting, the retraction
 

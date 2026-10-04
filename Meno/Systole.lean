@@ -42,7 +42,7 @@ namespace Meno
 open scoped BigOperators
 open Matrix
 
-universe u v
+universe u
 
 /-! ## Cauchy–Schwarz for the edge dot product, with its equality case -/
 
@@ -127,7 +127,7 @@ end PeriodRepPairing
 
 namespace IncidenceGraph
 
-variable (G : IncidenceGraph.{u, v})
+variable (G : IncidenceGraph.{u})
 
 /-! ## Stokes against cast lattice cycles, and the realizer pairing -/
 
@@ -294,7 +294,7 @@ end IncidenceGraph
 
 namespace MatterSector
 
-variable {G : IncidenceGraph.{u, v}}
+variable {G : IncidenceGraph.{u}}
 
 /-- **THE MASS–SYSTOLE BOUND**: matter's mass is
 bounded below by the reciprocal chain norm of every integral cycle it

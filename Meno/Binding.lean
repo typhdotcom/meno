@@ -48,9 +48,9 @@ namespace Meno
 open scoped BigOperators
 open Matrix
 
-universe u v w
+universe u
 
-variable {G : IncidenceGraph.{u, v}}
+variable {G : IncidenceGraph.{u}}
 
 /-! ## Pairing classes with cycles -/
 
@@ -70,7 +70,7 @@ theorem grad_dotProduct_cycle_eq_zero (g : G.V → ℤ) {c : G.E → ℤ}
 
 /-- **Pairing an `H¹` class with an integral cycle**: well-defined by
 Stokes — gradients are invisible to cycles. -/
-noncomputable def IncidenceGraph.classPairing (G : IncidenceGraph.{u, v})
+noncomputable def IncidenceGraph.classPairing (G : IncidenceGraph.{u})
     (c : G.E → ℤ) (hc : c ∈ G.cycleLattice) :
     ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) →ₗ[ℤ] ℤ :=
   Submodule.liftQ _ (dotPairing c) (by
@@ -84,9 +84,9 @@ theorem IncidenceGraph.classPairing_mk (c : G.E → ℤ) (hc : c ∈ G.cycleLatt
 /-! ## Two-complexes -/
 
 /-- A 2-complex over `G`: faces attached along integral cycles. -/
-structure TwoComplex (G : IncidenceGraph.{u, v}) where
+structure TwoComplex (G : IncidenceGraph.{u}) where
   /-- The face index. -/
-  Faces : Type w
+  Faces : Type u
   /-- The attaching cycle of each face. -/
   face : Faces → G.E → ℤ
   /-- Attaching maps are cycles. -/
@@ -94,7 +94,7 @@ structure TwoComplex (G : IncidenceGraph.{u, v}) where
 
 namespace TwoComplex
 
-variable (X : TwoComplex.{u, v, w} G)
+variable (X : TwoComplex.{u} G)
 
 /-- The cocycles of the complex: integer cochains with vanishing
 periods around every attached face. -/
@@ -113,7 +113,7 @@ theorem mem_cocycles {ω : G.E → ℤ} :
 
 /-- `H¹` of the complex: face-annihilating cochains modulo
 gradients. -/
-noncomputable def h1 : Type v :=
+noncomputable def h1 : Type u :=
   ↥X.cocycles ⧸
     (LinearMap.range (G.gradLin ℤ)).comap X.cocycles.subtype
 
@@ -204,25 +204,25 @@ end TwoComplex
 /-! ## Attaching a single face -/
 
 /-- The complex obtained by attaching one face along the cycle `c`. -/
-noncomputable def IncidenceGraph.attach (G : IncidenceGraph.{u, v})
-    (c : G.E → ℤ) (hc : c ∈ G.cycleLattice) : TwoComplex.{u, v, w} G :=
+noncomputable def IncidenceGraph.attach (G : IncidenceGraph.{u})
+    (c : G.E → ℤ) (hc : c ∈ G.cycleLattice) : TwoComplex.{u} G :=
   ⟨PUnit, fun _ => c, fun _ => hc⟩
 
 /-! ## Homology: `H₁(X) = H₁(G) ⧸ ⟨c⟩`, free of rank `b₁ − 1` -/
 
 /-- `H₁` of the complex: the cycle lattice modulo the attached
 faces. -/
-noncomputable def TwoComplex.h1Homology (X : TwoComplex.{u, v, w} G) :
-    Type v :=
+noncomputable def TwoComplex.h1Homology (X : TwoComplex.{u} G) :
+    Type u :=
   ↥G.cycleLattice ⧸ Submodule.span ℤ
     (Set.range fun i => (⟨X.face i, X.face_mem i⟩ : G.cycleLattice))
 
-noncomputable instance (X : TwoComplex.{u, v, w} G) :
+noncomputable instance (X : TwoComplex.{u} G) :
     AddCommGroup X.h1Homology :=
   inferInstanceAs (AddCommGroup (↥G.cycleLattice ⧸ Submodule.span ℤ
     (Set.range fun i => (⟨X.face i, X.face_mem i⟩ : G.cycleLattice))))
 
-noncomputable instance (X : TwoComplex.{u, v, w} G) :
+noncomputable instance (X : TwoComplex.{u} G) :
     Module ℤ X.h1Homology :=
   inferInstanceAs (Module ℤ (↥G.cycleLattice ⧸ Submodule.span ℤ
     (Set.range fun i => (⟨X.face i, X.face_mem i⟩ : G.cycleLattice))))
@@ -234,7 +234,7 @@ variable (c : G.E → ℤ) (hc : c ∈ G.cycleLattice)
 /-- **`attach_h1`**: attaching one face along `c`
 presents the quotient `H₁(G;ℤ) ⧸ ⟨c⟩`. -/
 noncomputable def attach_h1 :
-    (G.attach c hc : TwoComplex.{u, v, w} G).h1Homology ≃ₗ[ℤ]
+    (G.attach c hc : TwoComplex.{u} G).h1Homology ≃ₗ[ℤ]
       (↥G.cycleLattice ⧸ (ℤ ∙ (⟨c, hc⟩ : G.cycleLattice))) :=
   Submodule.quotEquivOfEq _ _ (by
     congr 1
@@ -289,7 +289,7 @@ theorem isCompl_span_ker (hτ : c ⬝ᵥ τ = 1) :
 /-- `H₁` of the attached complex, split off: the kernel of the
 primitive functional. -/
 noncomputable def attachH1EquivKer (hτ : c ⬝ᵥ τ = 1) :
-    (G.attach c hc : TwoComplex.{u, v, w} G).h1Homology ≃ₗ[ℤ]
+    (G.attach c hc : TwoComplex.{u} G).h1Homology ≃ₗ[ℤ]
       LinearMap.ker (latticePairing (G := G) τ) :=
   (attach_h1 c hc).trans
     (Submodule.quotientEquivOfIsCompl _ _ (isCompl_span_ker c hc τ hτ))
@@ -336,7 +336,7 @@ complex obtained by filling a primitive cycle has rank `b₁ − 1`. One
 face, one sector — the count is exact. -/
 theorem finrank_attach_h1Homology (hτ : c ⬝ᵥ τ = 1) :
     Module.finrank ℤ
-        (G.attach c hc : TwoComplex.{u, v, w} G).h1Homology
+        (G.attach c hc : TwoComplex.{u} G).h1Homology
       = G.b1 - 1 := by
   have hkfree : Module.Free ℤ
       ↥(LinearMap.ker (latticePairing (G := G) τ)) :=
@@ -365,7 +365,7 @@ end Splitting
 /-! ## The spectrum: survivors keep their mass, the killed weight is removed -/
 
 /-- The partition function read directly over `H¹(G;ℤ)`. -/
-noncomputable def IncidenceGraph.classPartFn (G : IncidenceGraph.{u, v}) : ℝ :=
+noncomputable def IncidenceGraph.classPartFn (G : IncidenceGraph.{u}) : ℝ :=
   ∑' κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
     Real.exp (-G.harmonicEnergy κ)
 
@@ -374,7 +374,7 @@ the class partition function is strictly more than the vacuum's unit
 weight — the zero class contributes `exp(−0) = 1` and a matter sector
 (`exists_matter`) adds its own Boltzmann weight `exp(−mass) > 0` to
 the same convergent sum (`summable_classWeight`). -/
-theorem IncidenceGraph.one_lt_classPartFn (G : IncidenceGraph.{u, v})
+theorem IncidenceGraph.one_lt_classPartFn (G : IncidenceGraph.{u})
     (hb : 0 < G.b1) : 1 < G.classPartFn := by
   classical
   obtain ⟨m⟩ := exists_matter G hb
@@ -390,7 +390,7 @@ theorem IncidenceGraph.one_lt_classPartFn (G : IncidenceGraph.{u, v})
 
 namespace TwoComplex
 
-variable (X : TwoComplex.{u, v, w} G)
+variable (X : TwoComplex.{u} G)
 
 /-- The partition function of the complex: Boltzmann sum over its own
 `H¹`, with each class weighed by the harmonic energy of its

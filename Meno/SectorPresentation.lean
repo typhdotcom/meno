@@ -32,11 +32,11 @@ namespace Meno
 open scoped BigOperators
 open CategoryTheory
 
-universe u v
+universe u
 
 /-- A presentation of a loop kernel's sector action as a quadratic action
 of rank `r`. -/
-structure SectorPresentation (L : LoopKernelObj.{u, v}) (r : ℕ) where
+structure SectorPresentation (L : LoopKernelObj.{u}) (r : ℕ) where
   /-- Re-indexing of `End L.base` as the lattice `Fin r → ℤ`. -/
   coord : End L.base ≃ (Fin r → ℤ)
   /-- Identity maps to zero. -/
@@ -53,7 +53,7 @@ structure SectorPresentation (L : LoopKernelObj.{u, v}) (r : ℕ) where
 
 namespace SectorPresentation
 
-variable {L : LoopKernelObj.{u, v}} {r : ℕ} (P : SectorPresentation L r)
+variable {L : LoopKernelObj.{u}} {r : ℕ} (P : SectorPresentation L r)
 
 /-- Symmetry of the presentation's Gram form — a theorem of
 positive-definiteness over ℝ. -/
@@ -98,7 +98,7 @@ duality re-derived through the canonical embedding into
 /-- The dual loop kernel through a presentation: energy is the dual
 quadratic action's energy in the presentation's coordinates. -/
 noncomputable def _root_.Meno.LoopKernelObj.dualVia
-    (P : SectorPresentation L r) : LoopKernelObj.{u, v} where
+    (P : SectorPresentation L r) : LoopKernelObj.{u} where
   C := L.C
   cat := L.cat
   base := L.base

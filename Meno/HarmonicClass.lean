@@ -35,11 +35,11 @@ namespace Meno
 open scoped BigOperators
 open Matrix
 
-universe u v
+universe u
 
 namespace IncidenceGraph
 
-variable (G : IncidenceGraph.{u, v})
+variable (G : IncidenceGraph.{u})
 variable {n : ℕ} (B : Module.Basis (Fin n) ℤ G.cycleLattice)
 
 /-- **The priced Gram data of a lattice basis**: the inverse of the

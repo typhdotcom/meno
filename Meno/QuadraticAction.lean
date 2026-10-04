@@ -31,8 +31,6 @@ namespace Meno
 open scoped BigOperators
 open UpperHalfPlane Complex Matrix
 
-universe u
-
 /-! ## The summability engine, upstream of the structure
 
 Scalar Gaussian sums, the product factorization over `ℤ^r`, coercivity

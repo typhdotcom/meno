@@ -373,9 +373,9 @@ end QuadLatticeAction
 
 namespace IncidenceGraph
 
-universe v w
+universe v
 
-variable (G : IncidenceGraph.{v, w})
+variable (G : IncidenceGraph.{v})
 
 /-- The priced cycle lattice has rank `b₁`. -/
 theorem cycleAction_rank : (G.cycleAction).rank = G.b1 :=

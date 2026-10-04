@@ -43,7 +43,7 @@ namespace Meno
 open scoped BigOperators
 open Matrix
 
-universe u v
+universe u
 
 /-! ## `gcd`/`lcm` positivity instances -/
 
@@ -77,7 +77,7 @@ theorem HarmonicGramData.energy_zsmul {V : Type u} (H : HarmonicGramData V)
 
 namespace IncidenceGraph
 
-variable (G : IncidenceGraph.{u, v})
+variable (G : IncidenceGraph.{u})
 
 /-- **The harmonic energy is quadratic**:
 `E(c • κ) = c² · E(κ)`. -/
@@ -554,7 +554,7 @@ face (`gravityDefect_nonneg_of_comonotone`). Exactness
 about coupling. Witness: `C₃` at `(q, q') = (2, 3)`
 (`cycle3_crossRatio_neg`). -/
 theorem exists_incomparable_residue_gravity_neg :
-    ∃ (G : IncidenceGraph.{0, 0}) (q q' : ℕ) (_ : NeZero q) (_ : NeZero q'),
+    ∃ (G : IncidenceGraph.{0}) (q q' : ℕ) (_ : NeZero q) (_ : NeZero q'),
       ¬ q ∣ q' ∧ ¬ q' ∣ q ∧
         ((G.residueAction (Nat.lcm q q')).complexity
             + (G.residueAction (Nat.gcd q q')).complexity)

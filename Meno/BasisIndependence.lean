@@ -34,11 +34,11 @@ namespace Meno
 open scoped BigOperators
 open Matrix
 
-universe u v
+universe u
 
 namespace IncidenceGraph
 
-variable (G : IncidenceGraph.{u, v})
+variable (G : IncidenceGraph.{u})
 
 /-- Any two lattice bases of the same graph are
 related by a unimodular change of basis — the change-of-basis matrix
@@ -215,7 +215,7 @@ of the fundamental basis (`bilinBaseChange_posDef_of_gram`), and
 integral positivity and summability are theorems of the bundle. Every
 basis chart is a form-preserving linear equivalence
 (`classForm_chart`, `chartAction_h1Basis`). -/
-noncomputable def classQuadAction : QuadLatticeAction.{v} where
+noncomputable def classQuadAction : QuadLatticeAction.{u} where
   Λ := (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)
   form := G.classForm
   form_comm := G.classForm_comm
@@ -235,7 +235,7 @@ noncomputable def classQuadAction : QuadLatticeAction.{v} where
 projection of the intrinsic quadratic-lattice action —
 the sector lattice `H¹(G;ℤ)` with the harmonic energy
 `E κ = classForm κ κ`, as a `SectorAction`. -/
-noncomputable def classSectorAction : SectorAction.{v} :=
+noncomputable def classSectorAction : SectorAction.{u} :=
   (G.classQuadAction).toSectorAction
 
 
@@ -489,13 +489,13 @@ any graph with cycles (`classMeanEnergy_strictAntiOn`). -/
 **direct specialization** of the bundle
 operation `QuadLatticeAction.scale`. -/
 noncomputable def classQuadActionβ (β : ℝ) (hβ : 0 < β) :
-    QuadLatticeAction.{v} :=
+    QuadLatticeAction.{u} :=
   (G.classQuadAction).scale β hβ
 
 
 /-- The β-scaled carrier as a sector action: `E = β·harmonicEnergy`. -/
 noncomputable def classSectorActionβ (β : ℝ) (hβ : 0 < β) :
-    SectorAction.{v} :=
+    SectorAction.{u} :=
   (G.classQuadActionβ β hβ).toSectorAction
 
 
@@ -772,7 +772,7 @@ private lemma cast_dot_cycles (i j : Fin G.b1) :
 unit-edge chain pairing — the topological carrier of the intrinsic
 dual. Real positivity discharges from the chain Gram of
 the fundamental cycles. -/
-noncomputable def cycleAction : QuadLatticeAction.{v} where
+noncomputable def cycleAction : QuadLatticeAction.{u} where
   Λ := ↥G.cycleLattice
   form := fun c c' =>
     Real.pi ^ 2 * (((c : G.E → ℤ) ⬝ᵥ (c' : G.E → ℤ) : ℤ) : ℝ)

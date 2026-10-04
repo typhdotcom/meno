@@ -53,14 +53,14 @@ the spine. -/
 
 namespace Meno
 
-universe u v
+universe u
 
 /-! ## The vacuum: every phenomenon collapses at `b₁ = 0` -/
 
 /-- **The vacuum keystone**: at `b₁ = 0` every integral cohomology
 class is zero — the contrapositive of `MatterSector.b1_pos`, which
 packages the keystone-coordinate argument. -/
-theorem h1Class_eq_zero_of_b1_eq_zero (G : IncidenceGraph.{u, v})
+theorem h1Class_eq_zero_of_b1_eq_zero (G : IncidenceGraph.{u})
     (hb : G.b1 = 0)
     (κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) : κ = 0 := by
   by_contra hκ
@@ -69,7 +69,7 @@ theorem h1Class_eq_zero_of_b1_eq_zero (G : IncidenceGraph.{u, v})
 /-- **The spectrum vacuum**: at `b₁ = 0` the class partition
 function is exactly the vacuum's unit weight — the sum has one
 term, `exp(−0) = 1`. -/
-theorem classPartFn_eq_one_of_b1_eq_zero (G : IncidenceGraph.{u, v})
+theorem classPartFn_eq_one_of_b1_eq_zero (G : IncidenceGraph.{u})
     (hb : G.b1 = 0) : G.classPartFn = 1 := by
   unfold IncidenceGraph.classPartFn
   rw [tsum_eq_single 0
@@ -80,7 +80,7 @@ theorem classPartFn_eq_one_of_b1_eq_zero (G : IncidenceGraph.{u, v})
 energy variance is exactly zero — the harmonic energy is the zero
 observable on a one-class lattice. -/
 theorem classSectorAction_gibbsVariance_energy_eq_zero_of_b1_eq_zero
-    (G : IncidenceGraph.{u, v}) (hb : G.b1 = 0) :
+    (G : IncidenceGraph.{u}) (hb : G.b1 = 0) :
     (G.classSectorAction).gibbsVariance G.harmonicEnergy = 0 := by
   have hE : ∀ κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ),
       G.harmonicEnergy κ = 0 := fun κ => by
@@ -102,7 +102,7 @@ theorem classSectorAction_gibbsVariance_energy_eq_zero_of_b1_eq_zero
 /-- **The deficit vacuum**: at `b₁ = 0` the finite reduction is a
 single class, every distribution on it is uniform, and the
 information deficit is exactly zero — at every resolution. -/
-theorem residueDefect_eq_zero_of_b1_eq_zero (G : IncidenceGraph.{u, v})
+theorem residueDefect_eq_zero_of_b1_eq_zero (G : IncidenceGraph.{u})
     (q : ℕ) [NeZero q] (hb : G.b1 = 0) : G.residueDefect q = 0 := by
   have hsub : Subsingleton ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ)) :=
     ⟨fun a b => (h1Class_eq_zero_of_b1_eq_zero G hb a).trans
@@ -126,7 +126,7 @@ theorem residueDefect_eq_zero_of_b1_eq_zero (G : IncidenceGraph.{u, v})
 /-- **The arrow vacuum**: at `b₁ = 0` every tower step is free —
 the fibers are singletons and the section cost is `0 · log c`. -/
 theorem sectionCost_h1TowerMap_eq_zero_of_b1_eq_zero
-    (G : IncidenceGraph.{u, v}) (q c : ℕ) [NeZero q] [NeZero c]
+    (G : IncidenceGraph.{u}) (q c : ℕ) [NeZero q] [NeZero c]
     (hb : G.b1 = 0) :
     sectionCost (⇑(G.h1TowerMap q (c * q) (dvd_mul_left q c))) = 0 := by
   have hcard : (0 : ℝ) < Nat.card (IncidenceGraph.H1Reduction G q) := by
@@ -146,7 +146,7 @@ priced. **Any one phenomenon certifies all the others**: observe
 fluctuation alone, and matter must exist. Forward: the five strict
 engines, consumed by name. Reverse: matter's converse
 (`MatterSector.b1_pos`) and the four vacuum collapses. -/
-theorem meno_tfae (G : IncidenceGraph.{u, v}) :
+theorem meno_tfae (G : IncidenceGraph.{u}) :
     [0 < G.b1,
       Nonempty (MatterSector G),
       1 < G.classPartFn,
@@ -206,7 +206,7 @@ finite multigraph has cycles **iff** matter exists, the spectrum
 strictly exceeds the vacuum, the energy fluctuates, every
 resolution carries a strict information deficit, and every genuine
 refinement of the tower is strictly priced. -/
-theorem meno_dichotomy (G : IncidenceGraph.{u, v}) :
+theorem meno_dichotomy (G : IncidenceGraph.{u}) :
     0 < G.b1 ↔
       Nonempty (MatterSector G)
       ∧ 1 < G.classPartFn

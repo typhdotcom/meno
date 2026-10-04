@@ -38,7 +38,7 @@ namespace Meno
 open scoped BigOperators
 open Matrix
 
-universe u v
+universe u
 
 /-! ## The closed form at rank two -/
 
@@ -102,7 +102,7 @@ end ClosedForm
 
 namespace IncidenceGraph
 
-variable (G : IncidenceGraph.{u, v})
+variable (G : IncidenceGraph.{u})
 
 /-- **The intrinsic binding energy** of two `H¹` classes: what joint
 minimization releases, defined through the basis-free
@@ -374,7 +374,7 @@ whose first two cycles overlap with consistent orientation while
 their sectors bind repulsively. The sign criterion
 (`binding_attractive_iff`) is genuinely a rank-two law. -/
 theorem exists_overlap_pos_binding_neg :
-    ∃ (G : IncidenceGraph.{0, 0})
+    ∃ (G : IncidenceGraph.{0})
       (B : Module.Basis (Fin 3) ℤ G.cycleLattice),
       0 < G.cyclesR B 0 ⬝ᵥ G.cyclesR B 1 ∧
         G.bindingEnergyClass (G.h1Basis B 0) (G.h1Basis B 1) < 0 :=

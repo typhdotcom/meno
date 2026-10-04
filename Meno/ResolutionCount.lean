@@ -38,7 +38,7 @@ namespace Meno
 open scoped BigOperators
 open Matrix
 
-universe u v
+universe u
 
 /-- **The one fiber-to-kernel equivalence**: the fiber of a
 linear map over any attained value is a coset of its kernel — shift by
@@ -61,7 +61,7 @@ def fiberEquivKer {R : Type*} {M : Type*} {N : Type*} [Ring R]
 
 namespace IncidenceGraph
 
-variable (G : IncidenceGraph.{u, v})
+variable (G : IncidenceGraph.{u})
 variable {n : ℕ} (B : Module.Basis (Fin n) ℤ G.cycleLattice)
 variable (q : ℕ) [NeZero q]
 
@@ -664,7 +664,7 @@ consume the one carrier. -/
 
 /-- **The finite reduction of the intrinsic carrier, named**:
 `H¹(G;ℤ) ⧸ q·H¹(G;ℤ)`. -/
-abbrev H1Reduction (q : ℕ) [NeZero q] : Type v :=
+abbrev H1Reduction (q : ℕ) [NeZero q] : Type u :=
   ((G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ))
     ⧸ LinearMap.range ((q : ℤ) •
       (LinearMap.id :
@@ -1321,7 +1321,7 @@ the generic `SectorAction.coarseGrain`, with the zero class as the
 modal ground state. Its energy is the coset free-energy difference,
 its partition function divides the harmonic one, and its Gibbs mass
 is the residue distribution. -/
-noncomputable def residueAction : SectorAction.{v} :=
+noncomputable def residueAction : SectorAction.{u} :=
   (G.classSectorAction).coarseGrain
     (fun κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) =>
       (Submodule.Quotient.mk κ : H1Reduction G q)) 0
@@ -1595,7 +1595,7 @@ bridge extends to descriptions and pairs
 /-- **The description action**: the priced uniform lift
 of the residue action through the carrier compression — each
 description prices as its finite sector, the gauge choice is free. -/
-noncomputable def descriptionAction : SectorAction.{v} :=
+noncomputable def descriptionAction : SectorAction.{u} :=
   (G.residueAction q).uniformLift (G.carrierCompression q)
     Nat.card_pos (G.card_carrierCompression_fiber q)
 
@@ -1609,7 +1609,7 @@ noncomputable instance residuePullbackFintype :
 
 /-- **The pair action**: the priced shared-base coupling
 of two description lifts over the residue action. -/
-noncomputable def pairAction : SectorAction.{v} :=
+noncomputable def pairAction : SectorAction.{u} :=
   (G.residueAction q).coupling (G.carrierCompression q)
     (G.carrierCompression q) Nat.card_pos Nat.card_pos
     (G.card_carrierCompression_fiber q) (G.card_carrierCompression_fiber q)

@@ -24,7 +24,7 @@ theorem thetaCycle₁_mem :
   thetaCyclesZ_mem 0
 
 /-- **The theta graph with its first cycle filled.** -/
-noncomputable def thetaFilled : TwoComplex.{0, 0, 0} thetaGraph :=
+noncomputable def thetaFilled : TwoComplex.{0} thetaGraph :=
   thetaGraph.attach ![1, 1, 0, 0, -1, -1] thetaCycle₁_mem
 
 /-- The theta matter wraps the filled cycle once. -/

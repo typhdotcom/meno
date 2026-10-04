@@ -30,13 +30,13 @@ namespace Meno
 
 open scoped BigOperators
 
-universe u v
+universe u
 
-variable {G : IncidenceGraph.{u, v}}
+variable {G : IncidenceGraph.{u}}
 
 /-- A matter sector of the graph `G`: a nonzero integer cohomology
 class. -/
-def MatterSector (G : IncidenceGraph.{u, v}) :=
+def MatterSector (G : IncidenceGraph.{u}) :=
   {κ : (G.E → ℤ) ⧸ LinearMap.range (G.gradLin ℤ) // κ ≠ 0}
 
 namespace MatterSector
@@ -116,7 +116,7 @@ end MatterSector
 
 /-- **Matter exists** wherever the graph has nontrivial topology:
 `0 < b₁` forces a nonzero class. -/
-theorem exists_matter (G : IncidenceGraph.{u, v}) (hb : 0 < G.b1) :
+theorem exists_matter (G : IncidenceGraph.{u}) (hb : 0 < G.b1) :
     Nonempty (MatterSector G) := by
   refine ⟨⟨G.h1QuotEquiv.symm (Pi.single ⟨0, hb⟩ 1), ?_⟩⟩
   intro h0

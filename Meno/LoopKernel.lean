@@ -19,15 +19,13 @@ namespace Meno
 
 open CategoryTheory
 
-universe u v w
+universe u
 
--- object and morphism universes are independent; used with explicit universe parameters
-set_option linter.checkUnivs false in
 /-- A loop kernel: a (small) category, a basepoint, and a sector action on
 the endomorphism monoid of the basepoint. -/
 structure LoopKernelObj where
   C : Type u
-  [cat : Category.{v} C]
+  [cat : SmallCategory C]
   base : C
   energy : End base → ℝ
   energy_id : energy (𝟙 base) = 0
@@ -38,11 +36,11 @@ attribute [instance] LoopKernelObj.cat
 
 namespace LoopKernelObj
 
-variable (L : LoopKernelObj.{u, v})
+variable (L : LoopKernelObj.{u})
 
 /-- Forgetful projection to a `SectorAction`: discard the categorical
 structure, keep only the analytic content `(End base, energy)`. -/
-noncomputable def toSectorAction : SectorAction.{v} where
+noncomputable def toSectorAction : SectorAction.{u} where
   Λ := End L.base
   E := L.energy
   E_zero := ⟨𝟙 L.base, L.energy_id⟩

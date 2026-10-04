@@ -40,11 +40,11 @@ namespace Meno
 
 open scoped BigOperators
 
-universe u v
+universe u
 
 namespace IncidenceGraph
 
-variable (G : IncidenceGraph.{u, v})
+variable (G : IncidenceGraph.{u})
 
 /-! ## Graph automorphisms and their actions -/
 
@@ -69,7 +69,7 @@ def h1ResClass (q : ℕ) :
 
 namespace Auto
 
-variable {G : IncidenceGraph.{u, v}} (φ : G.Auto)
+variable {G : IncidenceGraph.{u}} (φ : G.Auto)
 
 /-- **The pullback action on `R`-cochains**: precomposition with the
 edge equivalence, linear over any commutative ring. -/
