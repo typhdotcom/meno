@@ -350,21 +350,24 @@ theorem hasSum_completedZeta (hr : 0 < Q.rank) {s : ℂ} (hs : (Q.rank : ℝ) / 
 
 /-! ## Invariance and the graph zeta -/
 
+/-- Form-preserving equivalence preserves rank. -/
+theorem Equiv.rank_eq {Q Q' : QuadLatticeAction.{u}} (e : Q.Equiv Q') : Q'.rank = Q.rank :=
+  (LinearEquiv.finrank_eq e.toLinearEquiv).symm
+
 /-- **The zeta is an invariant of the bundle**: equivalent lattice actions
 have the same completed zeta. -/
 theorem Equiv.completedZeta_eq {Q Q' : QuadLatticeAction.{u}} (e : Q.Equiv Q')
     (hr : 0 < Q.rank) (hr' : 0 < Q'.rank) : Q'.completedZeta hr' = Q.completedZeta hr := by
-  have hrk : Q'.rank = Q.rank := (LinearEquiv.finrank_eq e.toLinearEquiv).symm
   have hf : (Q'.fePair hr').f = (Q.fePair hr).f := by
     funext x
     show ((Q'.scaledPartFn x : ℝ) : ℂ) = ((Q.scaledPartFn x : ℝ) : ℂ)
     rw [e.scaledPartFn_eq x]
   have hk : (Q'.fePair hr').k = (Q.fePair hr).k := by
     show (Q'.rank : ℝ) / 2 = (Q.rank : ℝ) / 2
-    rw [hrk]
+    rw [e.rank_eq]
   have hε : (Q'.fePair hr').ε = (Q.fePair hr).ε := by
     show (Q'.rootNumber : ℂ) = (Q.rootNumber : ℂ)
-    rw [rootNumber, rootNumber, hrk, e.disc_eq]
+    rw [rootNumber, rootNumber, e.rank_eq, e.disc_eq]
   funext s
   simp only [completedZeta, WeakFEPair.Λ, WeakFEPair.Λ₀, WeakFEPair.f_modif, hf, hk, hε]
   rfl
@@ -378,9 +381,8 @@ universe v
 variable (G : IncidenceGraph.{v})
 
 /-- The priced cycle lattice has rank `b₁`. -/
-theorem cycleAction_rank : (G.cycleAction).rank = G.b1 :=
-  (LinearEquiv.finrank_eq (G.cycleActionEquivDual).toLinearEquiv).trans
-    ((G.classQuadAction).dual_rank.trans G.classQuadAction_rank)
+theorem cycleAction_rank : (G.cycleAction).rank = G.b1 := by
+  rw [← (G.cycleActionEquivDual).rank_eq, QuadLatticeAction.dual_rank, G.classQuadAction_rank]
 
 /-- **The zeta of a graph**: the completed lattice zeta of its harmonic
 carrier `H¹(G;ℤ)`, on any graph with cycles. -/
