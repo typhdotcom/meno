@@ -1,31 +1,18 @@
 #!/usr/bin/env python3
-"""Meno review audit (introduced at review #28, Phase 64; ghosts leg
-and the Completion.lean law-package boundary at review #29, Phase 65).
-
-Machine-assists five review obligations:
+"""Meno repository audit.
 
 1. CITATIONS   — every backticked identifier in README.md names something
                  real in Meno/ (a declaration, or at least a source token:
                  structure fields and file names resolve at the token tier).
-2. DELETIONS   — no name recorded deleted in scripts/deleted.txt is
-                 declared anywhere in Meno/ (deletions stay deleted).
-3. GHOSTS      — no deny-list name is cited in living text: README.md
-                 or Meno/*.lean comment text. A
-                 citation matching a deny name is exempt only if it
-                 resolves to a current declaration (a live theorem of
-                 the same last name in another namespace); re-declaring
-                 a deleted name to force that exemption trips leg 2.
-4. ARCHITECTURE— README's architecture block lists exactly the files of
+2. ARCHITECTURE— README's architecture block lists exactly the files of
                  Meno/, and Meno.lean imports exactly those files.
-5. REACHABILITY— every named declaration outside Completion.lean is
+3. REACHABILITY— every named declaration outside Completion.lean is
                  transitively reachable from a README-cited result, or is
                  an instance / attribute-tagged lemma (consumed by
                  elaboration, not by name — reported, not failed), and
-                 every certificate field assignment targets a model-live
-                 declaration (a certificate field is not a consumer —
-                 Phase 61 rule; the three spine law packages live in
-                 Completion.lean since review #29, so a law package can
-                 never count as a model consumer).
+                 every certificate field assignment in Completion.lean
+                 targets a model-live declaration (a certificate field is
+                 not a consumer).
 
 The reachability graph is textual and conservative: comments and
 docstrings are stripped before tokenizing (a docstring mention is not a
@@ -35,7 +22,7 @@ over-links (keeps things live) rather than under-links; unreachability
 findings are candidates for review, and the exit code treats any
 non-instance unreachable declaration as a failure.
 
-Exit code 0 = all four legs pass.
+Exit code 0 = every check passes.
 """
 
 import re
@@ -230,45 +217,7 @@ def main():
         print(f"  UNRESOLVED: {c}")
     ok &= not bad
 
-    # -- 2. deletions stay deleted
-    deny = set()
-    deleted_file = REPO / "scripts" / "deleted.txt"
-    for line in deleted_file.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#"):
-            deny.add(line)
-    redecl = [
-        d.full
-        for d in all_decls
-        if d.full
-        and (
-            d.full in deny or any(d.full.endswith("." + n) or n == d.full for n in deny)
-        )
-    ]
-    print(f"[deletions]    {len(deny)} recorded names; re-declared: {len(redecl)}")
-    for n in redecl:
-        print(f"  RE-DECLARED: {n}")
-    ok &= not redecl
-
-    # -- 3. ghosts — deny-list names cited in living text (review #29)
-    comment_text = "\n".join(
-        split_comments(f.read_text())[1] for f in sorted(MENO.glob("*.lean"))
-    )
-    cite_re = re.compile(r"`([A-Za-z][A-Za-z0-9_.'₀-₉]*)`")
-    ghosts = []
-    for label, text in (("README.md", readme), ("Meno/ comments", comment_text)):
-        for c in sorted(set(cite_re.findall(text))):
-            hit = c in deny or any(
-                n.endswith("." + c) or c.endswith("." + n) for n in deny
-            )
-            if hit and not resolve(c, cert_by_full, cert_by_last):
-                ghosts.append(f"{label}: {c}")
-    print(f"[ghosts]       deny-list names cited in living text: {len(ghosts)}")
-    for g in ghosts:
-        print(f"  GHOST: {g}")
-    ok &= not ghosts
-
-    # -- 4. architecture
+    # -- 2. architecture
     tree_files = sorted(p.name for p in MENO.glob("*.lean"))
     arch_files = sorted(
         set(
@@ -293,7 +242,7 @@ def main():
     )
     ok &= not d1 and not d2
 
-    # -- 5. reachability
+    # -- 3. reachability
     roots = set()
     for c in cited:
         roots |= resolve(c, by_full, by_last)

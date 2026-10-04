@@ -557,8 +557,7 @@ and globally unsatisfiable — a nonzero class, `0 < b₁`.
 | `MatterSector.b1_pos` | **Matter's converse** (`Meno/Matter.lean`, the converse of `exists_matter`): a matter sector exists only where the graph has cycles — at `b₁ = 0` the keystone coordinates land in `Fin 0 → ℤ` and every class is zero; the engine beneath the vacuum keystone |
 
 The repository invariants remain machine-assisted by
-`scripts/audit.py` (README citations resolve; recorded deletions
-stay deleted; deleted names are cited nowhere in living text; the
+`scripts/audit.py` (README citations resolve; the
 architecture listing matches the tree; every declaration is
 reachable from the publicly claimed results or enumerated with its
 retention predicate). Audit chronology lives in the repository log.
@@ -631,8 +630,7 @@ physical law. The project's claim is that these analogues are *theorems of
 one structure* — the sector lattice with its action — not that the
 physical world has been derived. Where a desired statement failed,
 the counterexample is kept as a theorem
-(`exists_dualityFlow_eq_zero_not_selfDual`), and every excised
-design is recorded in `scripts/deleted.txt`.
+(`exists_dualityFlow_eq_zero_not_selfDual`).
 
 ______________________________________________________________________
 

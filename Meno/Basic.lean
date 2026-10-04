@@ -14,13 +14,7 @@ the base/marginal fiber identifications. The consumers are the
 priced coupling machinery (`Meno/InfoRatchet.lean`) and the carrier
 layers (`Meno/ResolutionCount.lean`, `Meno/ThetaHarmonic.lean`).
 
-The former abstract complexity hierarchy — the measure classes,
-their log-cardinality realization, the type-level gravity and
-refactoring bounds, and the additivity engine — is **deleted**
-(the name-by-name record is `scripts/deleted.txt`):
-consumer analysis found it certificate-only — a
-parallel construction, not a load-bearing layer. The one gravity
-theorem of the program is `SectorAction.complexity_gravity`
+The one gravity theorem of the program is `SectorAction.complexity_gravity`
 (`Meno/InfoRatchet.lean`); counting gravity is its zero-energy
 corollary (`counting_gravity`, same file). -/
 
