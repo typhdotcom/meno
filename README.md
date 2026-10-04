@@ -179,6 +179,31 @@ reflection exchanges cohomology and homology.
 | `QuadLatticeAction.Equiv.completedZeta_eq` | The zeta is an invariant of the bundle: equivalent actions have the same completed zeta |
 | `IncidenceGraph.completedZeta`, `IncidenceGraph.completedZeta_functional_equation` | **The topological functional equation**: the zeta of harmonic `H¹(G;ℤ)` at `b₁/2 − s` is the zeta of priced `H₁(G;ℤ)` at `s`, times `√(π^{b₁}/disc)` |
 
+### A graph zeta vanishing where an Euler product cannot
+
+The theta graph `θ(1,1,2)` has cycle Gram `!![2, −1; −1, 3]`, so its
+harmonic carrier is the non-principal form `F = 3x² − 2xy + 2y²` of
+discriminant `−20`, scaled by `1/5`, and its zeta is `Γ(s)·5^s·Z_F(s)`
+past `Re s = 1`. `Z_F` has a Davenport–Heilbronn zero near
+`1.993941 + 23.019605i`, in the half-plane of absolute convergence where
+no Euler product can vanish. The zero is certified by the kernel alone, with no
+compiled evaluation trusted: a Newton contraction on a disc of radius `0.03`, fed by
+a pure-`ℕ` interval engine at `U = 2⁶⁴` whose sweep of the `14 000`-odd
+lattice points with `Q ≤ 10⁴` the kernel evaluates (`decide +kernel`,
+about three and a half minutes), with explicit shell bounds on the tail.
+
+| Result | Statement |
+| :--- | :--- |
+| `exists_zero_of_newton` | **The Newton certificate**: a `q`-contraction `z ↦ z − f(z)/c` of a closed disc, from `‖f′ − c‖ ≤ q‖c‖` and `‖f(z₀)‖ ≤ (1 − q)ρ‖c‖`, has a zero of `f` (`Meno/ZetaZero.lean`) |
+| `Epstein.Coercive.exists_zero` | The zero criterion for an Epstein zeta `Z(s) = ∑ Q(k)^{−s}`: three numbers — `‖Z(z₀)‖`, `‖Z′(z₀) − c‖` and a bound on `∑ (log Q)²·Q^{−(Re z₀ − ρ)}` |
+| `Epstein.Coercive.tsum_split`, `Epstein.Coercive.ltail_le` | The cutoff split into a finite square and a tail, and the log-weighted shell bound on the tail through `log x ≤ x^τ/(eτ)` |
+| `Engine.boxAcc_holds` | **Engine soundness**: the fixed-point sweep of `[−B, B]²` encloses `Re`, `Im` of `∑ q^{−z₀}` and `∑ −log q·q^{−z₀}` and bounds `∑ (log q)²·q^{−σ}`, with outward-rounded `exp`, `log`, `cos`, `sin` (`Meno/ZetaZeroEngine.lean`) |
+| `Engine.exists_zero_of_acc` | **The certificate bridge**: an `ok` sweep, three tail bounds and two scalar inequalities place a zero within `ρ` of the engine's centre (`Meno/ZetaZeroCert.lean`) |
+| `DH.sweep` | The sweep itself, run by the kernel (`Meno/ZetaZeroSweep.lean`) |
+| `DH.exists_zero` | **A Davenport–Heilbronn zero**: `Z_F` vanishes within `0.03` of `1.993941 + 23.019605i` |
+| `theta112_completedZeta_eq` | **The graph zeta is an Epstein zeta**: `Λ_{θ(1,1,2)}(s) = Γ(s)·5^s·Z_F(s)` for `Re s > 1` (`Meno/GraphZetaZero.lean`) |
+| `theta112_completedZeta_zero` | **The graph zeta vanishes past the line of absolute convergence**: at some `s` with `Re s > 1.96`, `\|Im s − 23.0196\| < 0.031` |
+
 ### Topology, intrinsically
 
 Every finite multigraph (`IncidenceGraph`) carries an intrinsic
@@ -605,6 +630,11 @@ Meno/
 ├── Duality.lean               The scalar quadratic family and Gibbs wrappers (identified with the spine)
 ├── Zeta.lean                  Riemann functional equation through the spine's theta identification
 ├── LatticeZeta.lean           The lattice zeta: scaled Siegel–Poisson as an FE pair, the completed zeta, its Dirichlet expansion, the graph zeta's H¹ ↔ H₁ functional equation
+├── ZetaZero.lean              The Newton certificate; Epstein zetas of binary forms: coercivity, derivatives, shell tails, the cutoff split, the zero criterion
+├── ZetaZeroEngine.lean        Pure-ℕ interval arithmetic at a parametric unit: exp, log, cos/sin with quadrant reduction; the sweep and its soundness
+├── ZetaZeroSweep.lean         The kernel-checked sweep for 3x² − 2xy + 2y² at U = 2⁶⁴
+├── ZetaZeroCert.lean          The certificate bridge; the Davenport–Heilbronn zero of Z_F
+├── GraphZetaZero.lean         θ(1,1,2): its zeta is Γ(s)·5^s·Z_F(s); a zero past the line of absolute convergence
 └── Completion.lean            The completion object (G7): the six-way equivalence — cycles, matter, spectrum, fluctuation, deficit, arrow — with the dichotomy as its conjunction chart
 ```
 
@@ -636,7 +666,7 @@ ______________________________________________________________________
 
 ## Build
 
-Requires Lean 4.26.0 and the pinned Mathlib.
+Requires the Lean toolchain in `lean-toolchain` and the pinned Mathlib.
 
 ```bash
 lake build

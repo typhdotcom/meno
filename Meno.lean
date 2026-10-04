@@ -61,5 +61,12 @@ import Meno.Zeta
 -- The lattice zeta: functional equation from the scaled duality
 import Meno.LatticeZeta
 
+-- A certified zero: Newton criterion, interval engine, kernel sweep, graph zeta
+import Meno.ZetaZero
+import Meno.ZetaZeroEngine
+import Meno.ZetaZeroSweep
+import Meno.ZetaZeroCert
+import Meno.GraphZetaZero
+
 -- The completion object: the six-way equivalence
 import Meno.Completion
