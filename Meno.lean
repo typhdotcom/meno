@@ -44,6 +44,7 @@ import Meno.Closure
 import Meno.Decoding
 import Meno.DecodingCost
 import Meno.DecodingGibbs
+import Meno.Record
 
 -- Arithmetic gravity on the resolution tower
 import Meno.TowerGravity

@@ -458,6 +458,23 @@ curves cross at `p ≈ 0.104–0.109`. Below the crossing they fall with
 `L`; above it they rise. ML failure has the same crossing between
 sizes of equal parity (`p ≈ 0.104–0.116`).
 
+#### Correction that does not erase
+
+A corrector that erases nothing reads the noisy state and writes a
+fine state together with a record into blank memory `K`, by an
+injective map (`recordStep`). Injectivity sends the noisy states
+reachable from one fiber into the one fiber a closed step lands in, so
+the observation's fiber size is the capacity, and only memory inside
+the fiber counts (`Meno/Record.lean`).
+
+| Result | Statement |
+| :--- | :--- |
+| `card_reach_le_card_fiber` | **The record bound**: a non-erasing step closed over `π`, `π'` injects the noisy states reachable from the fiber over `o` into the fiber over `g o` |
+| `TwoComplex.record_hidden_bound` | **The hidden bound**: with the record unobserved, a closed non-erasing step writes at least as many records as `S` meets gauge classes (`TwoComplex.card_mul_le_card_reach`, `TwoComplex.card_classFiber`) |
+| `TwoComplex.record_visible_closed` | **The visible collapse**: with the record observed, a closed non-erasing step tolerates only pure-gauge errors — the errorless law of `noisyStep_closed_iff`, the memory adding nothing |
+| `TwoComplex.Decoder.recorder_injective`, `TwoComplex.Decoder.recorder_closed`, `TwoComplex.Decoder.card_records` | **Attainment**: recording the syndrome and correcting by a decoder closing `S` is injective, closed, and writes exactly as many records as `S` meets gauge classes |
+| `TwoComplex.Decoder.eraser_closed`, `TwoComplex.Decoder.eraser_not_injective` | **The erasing alternative**: the same correction with a one-point record is closed, and erases once `S` meets two gauge classes |
+
 ### Gravity
 
 There is **one gravity law** (G2): the four-term defect of coupling
@@ -726,6 +743,7 @@ Meno/
 ├── Decoding.lean              Correction (G10) — syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
 ├── DecodingCost.lean          Correction (G10) — the price: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
 ├── DecodingGibbs.lean         Correction (G10) — fully supported noise: the error-entropy split, the gauge bound, ML optimality, the closed-support boundary
+├── Record.lean                Correction (G10) — non-erasing correction: the record bound, hidden versus visible memory, the syndrome recorder attains it
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine
