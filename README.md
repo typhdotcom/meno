@@ -85,6 +85,12 @@ is rotation-invariant (`cycleRot_h1Map_int`), yet off coprimality no
 rotation-invariant cochain represents it. The choice of bit is
 physical.
 
+**Correction (persistence).** A coarse observation keeps a one-valued
+successor under noise only when the noise is pure gauge. Attached faces
+supply a syndrome a decoder can answer, and answering it is priced: the
+syndrome is erased at a fixed average rate, or stored where the
+observation cannot see it, until the memory runs out.
+
 **Self-reference (the open boundary).** No description system
 enumerates its own binary predicates, and on a nonempty finite
 carrier the shortfall is priced: the enumerable budget never pays for
@@ -112,7 +118,7 @@ linked sections; the anchors are the theorems themselves.
 | **G7 — the dichotomy** ([The dichotomy](#the-dichotomy)) | Cycles, matter, spectrum, fluctuation, deficit, arrow — pairwise equivalent | `meno_tfae`; conjunction chart `meno_dichotomy` |
 | **G8 — self-reference** ([Self-reference](#self-reference)) | No self-enumeration, and the shortfall is priced | impossibility `no_self_enumeration`; law `descriptionCost_split`; strictness `log_card_lt_descriptionCost`; boundary `log_card_eq_descriptionCost_iff` |
 | **G9 — the currency** ([The currency](#the-currency-g9)) | The Jensen gap is a relative entropy against the tilted Gibbs law; gravity's, time's, temperature's, and the tower's corrections are its recognitions | law `cgf_sub_gibbsExpect_eq_relativeEntropy`; boundary `cgf_sub_gibbsExpect_eq_zero_iff`, `cgf_bilinear_eq_zero_iff`; strictness `twoSector_cgf_gap_pos`, `twoSector_cgf_bilinear_pos`; impossibility `cgf_not_additive` |
-| **G10 — correction** ([Correction](#correction-g10)) | Some decoder keeps the class step one-valued under every error of weight `≤ t` iff every non-exact cocycle weighs more than `2t`; the closed step's price is at most syndrome plus gauge | law `TwoComplex.decodable_iff`, price `TwoComplex.Decoder.recoveryCost_le_resolution`; boundary `TwoComplex.card_eq_iff_saturated`, `cylinder_not_decodable_two`; strictness `cylinder_decodable_one`, `cylinder_recoveryCost_lt`; impossibility `cycle_not_decodable` |
+| **G10 — correction** ([Correction](#correction-g10)) | Some decoder keeps the class step one-valued under every error of weight `≤ t` iff every non-exact cocycle weighs more than `2t`; returning to zero syndrome erases, on average per tick, at least the syndrome entropy | law `TwoComplex.decodable_iff`, rate `TwoComplex.sum_condEntropy_ge` attained by `TwoComplex.Decoder.condEntropy_reset_le`, price `TwoComplex.Decoder.recoveryCost_le_resolution`; boundary `TwoComplex.card_eq_iff_saturated`, `cylinder_not_decodable_two`; strictness `cylinder_decodable_one`, `cylinder_recoveryCost_lt`, `cylinder_gibbs_strict`; impossibility `cycle_not_decodable` |
 
 ______________________________________________________________________
 
@@ -360,13 +366,36 @@ breaks the symmetry — the choice of bit is physical.
 
 ### Correction (G10)
 
-When does a coarse observation have a one-valued successor, which
-noise preserves that, and what does preserving it cost? On a graph,
-nothing survives a single error; on a 2-complex the faces supply a
-syndrome, a decoder answers it, and the error weights some decoder
-absorbs are fixed exactly by the lightest non-exact cocycle. The
-corrected step's price is bounded by the syndrome plus K2's gauge
-term; the class itself is never paid for.
+When does a coarse observation keep a one-valued successor under
+noise, and what does keeping it cost? The face answers in six steps.
+
+1. **Closure.** A noisy linear step descends to classes iff every
+   error is pure gauge. On a graph a single edge error already breaks
+   it.
+2. **Decoding.** Attached faces supply a syndrome. Some decoder
+   restores closure under every error of weight `≤ t` iff every
+   non-exact cocycle weighs more than `2t`.
+3. **The price.** A closed corrected step costs at most the syndrome
+   count plus the gauge; the class is never paid for.
+4. **Under a noise law.** A fully supported error law is never
+   closable. Its entropy splits into a syndrome term, a logical term
+   and a gauge term; maximum-likelihood decoding is optimal; and the
+   logical term is positive exactly when some cocycle is not exact.
+5. **Records.** A corrector that erases nothing must write the
+   syndrome into memory the observation cannot see. Visible memory adds
+   nothing, and a finite memory runs out.
+6. **The erasure rate.** Returning to zero syndrome erases, on average
+   per tick, at least the syndrome's log-count, or its entropy under a
+   noise law. A decoder's reset attains the rate.
+
+Together these give each term of the error-entropy split
+(`TwoComplex.entropy_split`) its fate:
+
+| Term | Fate | Anchors |
+| :--- | :--- | :--- |
+| Syndrome, `H(σ_*P)` | Erased at that average rate, or written to hidden memory, which a finite system exhausts | `TwoComplex.sum_condEntropy_ge`, `TwoComplex.Decoder.condEntropy_reset_le`, `TwoComplex.record_hidden_bound`, `TwoComplex.ticks_mul_log_le` |
+| Logical, `H(π_*P \| σ̄)` | The class left undetermined by the syndrome: positive, with every decoding rule failing with positive probability, iff some cocycle is not exact | `TwoComplex.logicalEntropy_pos_iff`, `TwoComplex.successProb_lt_one` |
+| Gauge, `H(P \| π)` | Not charged to the reset: an error's log-count is at most the reset's erasure plus `log \|gauge\|` | `TwoComplex.Decoder.log_card_le_erasure_add_gauge`, `TwoComplex.condEntropy_gauge_le` |
 
 #### Closure
 
@@ -430,7 +459,7 @@ plus the gauge; the class term `b₁ · log q` of K2 never enters
 | `cylinder_recoveryCost_lt` | **The strictness witness**: single errors on the cylinder are corrected, but a vertex gradient of weight `3` leaves the error set — the price falls strictly below the bound |
 | `gaugeErrors_card_eq` | **The boundary witness**: pure-gauge errors attain the capacity law — one syndrome, a full gauge coset |
 
-#### Correction under fully supported noise
+#### Under a noise law
 
 The capacity law needs a closable error set, and a fully supported
 error law never is: an error with the distance's weight has positive
@@ -458,7 +487,7 @@ curves cross at `p ≈ 0.104–0.109`. Below the crossing they fall with
 `L`; above it they rise. ML failure has the same crossing between
 sizes of equal parity (`p ≈ 0.104–0.116`).
 
-#### Correction that does not erase
+#### Records
 
 A corrector that erases nothing reads the noisy state and writes a
 fine state together with a record into blank memory `K`, by an
@@ -779,13 +808,13 @@ Meno/
 ├── InfoRatchet.lean           Fiber information; the coding theorem; the gravity theorem and its counting corollary; finite distributions; the currency's KL identity (G9)
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
-├── Closure.lean               Correction (G10) — closed steps: the descent law for noisy linear steps; automorphisms descend; single-edge error on C_n does not
+├── Closure.lean               Correction (G10) — closed steps: the descent law for noisy linear steps, the induced class map, composition; automorphisms descend; single-edge error on C_n does not
 ├── Decoding.lean              Correction (G10) — syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
 ├── DecodingCost.lean          Correction (G10) — the price: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
-├── DecodingGibbs.lean         Correction (G10) — fully supported noise: the error-entropy split, the gauge bound, ML optimality, the closed-support boundary
+├── DecodingGibbs.lean         Correction (G10) — fully supported noise: the error-entropy split, the gauge bound, ML optimality, the closed-support boundary, the logical dichotomy
+├── Record.lean                Correction (G10) — non-erasing correction: the record bound, hidden versus visible memory, the syndrome recorder attains it; reused memory grows per tick and runs out
 ├── Erasure.lean               Correction (G10) — the rate a reset pays: the tick law, the rate law, attainment by a decoder, the price split into erasure and gauge
 ├── ErasureGibbs.lean          Correction (G10) — the erasure rate under a noise law: the input bound, the tick law, the rate law at the syndrome entropy, attainment by a decoder
-├── Record.lean                Correction (G10) — non-erasing correction: the record bound, hidden versus visible memory, the syndrome recorder attains it; reused memory grows per tick and runs out
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine
@@ -818,7 +847,10 @@ analogues inside a finite, discrete model: gravity is the covariance
 law of coupling over a shared base, matter is nontrivial cohomology
 with variational mass, time's arrow is the counted cost of reversing
 compression, and uncertainty is Gibbs fluctuation with its response
-identity. The stake's denials are internal in the same way: the
+identity. The correction face's "memory", "record" and "erasure" are
+likewise counts and entropies of finite maps: erasure is the log-count
+a map does not carry to its image, or its conditional entropy under a
+law, not heat. The stake's denials are internal in the same way: the
 unrepresentable bit, the non-enumerable predicate space, and the
 unprivileged basis are theorems of the model, not claims about
 physical law. The project's claim is that these analogues are *theorems of
