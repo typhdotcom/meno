@@ -357,6 +357,26 @@ breaks the symmetry — the choice of bit is physical.
 | `cycle_four_two_no_invariant_representative`, `cycle_four_two_no_equivariant_section` | **The strictness witness** at `(n, q) = (4, 2)`: no invariant representative, no equivariant section |
 | `cycle_three_two_equivariant_section` | **The boundary witness** at `(n, q) = (3, 2)`: the equivariant section, exhibited |
 
+### Closure
+
+A step `r` on fine states is closed over observations `π`, `π'`
+(`StepClosed`) when the observation of every successor is a function
+of the current observation: the step descends to a one-valued map on
+observations. On the carrier the fine states are cochains and the
+observation is the class map. The step's descent requires gauge
+covariance, and the cost of descending is priced: what the class map
+forgets is the gauge fiber, recovered at `log |gauge|`
+(`recoveryCost_compression`).
+
+| Result | Statement |
+| :--- | :--- |
+| `stepClosed_iff`, `StepClosed.unique` | The fiberwise form: any two successors of any two states in one fiber share a fiber; on a surjective observation of a total step the descended map is unique |
+| `noisyStep_closed_iff` | **The exact law**: linear dynamics `f` followed by additive error from `S ∋ 0` has a one-valued step on quotients iff `f` carries gauge into gauge and every error is pure gauge |
+| `linearStep_closed_iff`, `IncidenceGraph.Auto.stepClosed` | The errorless law, and its symmetry instance: every automorphism's pullback descends to classes at every coefficient ring |
+| `IncidenceGraph.cochainNoise_closed_iff`, `IncidenceGraph.edgeNoise_closed_iff` | On the carrier: additive cochain error is closed on classes iff every error is exact; single-edge error at `e` is closed iff the indicator of `e` is exact |
+| `cycle_single_not_exact`, `cycle_edgeNoise_not_closed` | **The strictness witness**: on `C_n` at any resolution `q > 1`, no edge indicator is exact, so single-edge error at any edge has no one-valued class step — on a graph the class has error distance one |
+| `bridge_edgeNoise_closed` | **The boundary witness**: on the one-edge graph `bridgeGraph`, single-edge error is closed at every coefficient ring |
+
 ### Gravity
 
 There is **one gravity law** (G2): the four-term defect of coupling
@@ -621,6 +641,7 @@ Meno/
 ├── InfoRatchet.lean           Fiber information; the coding theorem; the gravity theorem and its counting corollary; finite distributions; the currency's KL identity (G9)
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
+├── Closure.lean               Closed steps: the descent law for noisy linear steps; automorphisms descend; single-edge error on C_n does not
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine
