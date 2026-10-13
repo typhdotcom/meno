@@ -377,6 +377,28 @@ forgets is the gauge fiber, recovered at `log |gauge|`
 | `cycle_single_not_exact`, `cycle_edgeNoise_not_closed` | **The strictness witness**: on `C_n` at any resolution `q > 1`, no edge indicator is exact, so single-edge error at any edge has no one-valued class step — on a graph the class has error distance one |
 | `bridge_edgeNoise_closed` | **The boundary witness**: on the one-edge graph `bridgeGraph`, single-edge error is closed at every coefficient ring |
 
+### Decoding
+
+On a graph every cochain is a cocycle, so single-edge error changes
+the class. A `TwoComplex` adds the constraint: its **syndrome** is
+the vector of periods around the attached faces, and its cocycles
+are the cochains of zero syndrome. A `Decoder` answers each syndrome
+with a cochain carrying it; the corrected step adds an error `s` and
+subtracts the answer, leaving the residual `s − D(σ s)`, a cocycle.
+Which error weights some decoder can absorb is fixed exactly by the
+lightest non-exact cocycle.
+
+| Result | Statement |
+| :--- | :--- |
+| `TwoComplex.syndrome`, `TwoComplex.cocyclesR`, `TwoComplex.range_grad_le_cocyclesR` | The face periods at any coefficient ring; cocycles are their kernel and contain the gradients (`grad_dotProduct_castCycle`) |
+| `TwoComplex.Decoder.corrected_closed_iff` | **The closure law**: the corrected step on cocycles is closed on classes iff every residual is exact |
+| `TwoComplex.decodable_iff` | **The distance law**: some decoder makes the corrected step closed under every error of Hamming weight `≤ t` iff every non-exact cocycle has weight `> 2t` |
+| `TwoComplex.minWeightDecoder`, `TwoComplex.minWeightDecoder_residual_exact` | Achievability: the minimum-weight decoder's residual weighs at most `2t` (`hammingNorm_sub_le`) |
+| `TwoComplex.Decoder.exists_residual_not_exact` | The converse: a non-exact cocycle of weight `≤ 2t` splits into two errors of weight `≤ t` with one syndrome, whose residuals differ by it |
+| `cycle_not_decodable` | **The impossibility**: on `C_n` with no faces (`bareComplex`), at resolution `q > 1`, no decoder corrects a single error |
+| `cylinder_decodable_one` | **The strictness witness**: on the cylinder `C₃ × P₃` with its six squares filled (`cylinderComplex`), over `ZMod 2`, every nonzero cocycle weighs at least `3` (`cylinder_cocycle_weight`, kernel-checked by `cylinder_pair_cocycle`), so single errors are corrected |
+| `cylinder_not_decodable_two` | **The boundary witness**: the radial cut `cylCut` is a non-exact cocycle of weight `3`, detected by the inner ring `cylRing` — no decoder corrects every pair, and the distance is exactly three |
+
 ### Gravity
 
 There is **one gravity law** (G2): the four-term defect of coupling
@@ -642,6 +664,7 @@ Meno/
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
 ├── Closure.lean               Closed steps: the descent law for noisy linear steps; automorphisms descend; single-edge error on C_n does not
+├── Decoding.lean              Syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine

@@ -39,8 +39,9 @@ import Meno.ResolutionCount
 -- Symmetry: automorphisms, the no-go for symmetric descriptions
 import Meno.Symmetry
 
--- Closure: one-valued class steps, and which noise preserves them
+-- Closure: one-valued class steps, which noise preserves them, and decoding
 import Meno.Closure
+import Meno.Decoding
 
 -- Arithmetic gravity on the resolution tower
 import Meno.TowerGravity
