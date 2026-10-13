@@ -484,6 +484,22 @@ states a step starts from and A' for those it lands in.
 | `TwoComplex.reusedMemory_closed` | **The reuse collapse**: a step closed from every memory state tolerates only pure-gauge errors (`TwoComplex.subset_range_of_card_le_one`) |
 | `TwoComplex.card_pow_mul_le_card_memory`, `TwoComplex.ticks_mul_log_le` | **The tick law and bound**: over `T` ticks the occupied memory grows by that factor per tick, so a finite memory `M` supports at most `log \|M\| / log (gauge classes of S)` closed non-erasing ticks — once `S` meets two gauge classes, no finite memory sustains closure without erasing |
 
+#### The erasure rate
+
+The **erasure** of a map on a finite set is the log-count it does not
+carry to its image (`erasure`, zero on injective maps by
+`erasure_eq_zero_of_injOn`). A **reset** reads a cocycle plus an error
+from `S`, with a memory state, and writes a cocycle and a memory state
+(`TwoComplex.noisyInputs`). No closure is assumed: the floor is the
+price of returning to zero syndrome (`Meno/Erasure.lean`).
+
+| Result | Statement |
+| :--- | :--- |
+| `TwoComplex.log_card_syndrome_add_le` | **The tick law**: `log \|σ S\| + log \|A\| ≤ log \|A'\| + erasure` — each tick grows the occupied memory or erases, by `log \|σ S\|` together (`TwoComplex.card_le_card_noisyInputs`, `TwoComplex.card_image_le`) |
+| `TwoComplex.sum_erasure_ge` | **The rate law**: over `T` ticks on a memory `M`, `Σ erasure ≥ T · log \|σ S\| + log \|A₀\| − log \|M\|` — at least `log \|σ S\|` per tick on average |
+| `TwoComplex.Decoder.erasure_reset` | **Attainment**: correcting by a decoder and leaving memory untouched erases exactly `log \|σ S\|`; for a decoder closing `S` that is the number of gauge classes `S` meets (`TwoComplex.Decoder.card_records`) |
+| `TwoComplex.Decoder.log_card_le_erasure_add_gauge` | **The price, split**: for a closable `S`, `log \|S\| ≤ erasure + log \|gauge\|` — the syndrome part of an error is erased, the rest fits the gauge |
+
 ### Gravity
 
 There is **one gravity law** (G2): the four-term defect of coupling
@@ -752,6 +768,7 @@ Meno/
 ├── Decoding.lean              Correction (G10) — syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
 ├── DecodingCost.lean          Correction (G10) — the price: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
 ├── DecodingGibbs.lean         Correction (G10) — fully supported noise: the error-entropy split, the gauge bound, ML optimality, the closed-support boundary
+├── Erasure.lean               Correction (G10) — the rate a reset pays: the tick law, the rate law, attainment by a decoder, the price split into erasure and gauge
 ├── Record.lean                Correction (G10) — non-erasing correction: the record bound, hidden versus visible memory, the syndrome recorder attains it; reused memory grows per tick and runs out
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
