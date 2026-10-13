@@ -500,6 +500,21 @@ price of returning to zero syndrome (`Meno/Erasure.lean`).
 | `TwoComplex.Decoder.erasure_reset` | **Attainment**: correcting by a decoder and leaving memory untouched erases exactly `log \|σ S\|`; for a decoder closing `S` that is the number of gauge classes `S` meets (`TwoComplex.Decoder.card_records`) |
 | `TwoComplex.Decoder.log_card_le_erasure_add_gauge` | **The price, split**: for a closable `S`, `log \|S\| ≤ erasure + log \|gauge\|` — the syndrome part of an error is erased, the rest fits the gauge |
 
+Under a noise law the counts become entropies. A memory law `P` on
+cocycles and memory, an independent error law `Q`, and a reset `Φ`
+give the input law `I = (P ⊗ Q)` pushed along `((x, m), s) ↦ (x + s, m)`
+(`TwoComplex.noisyIn`). The tick's erasure is the conditional entropy
+`H(I | Φ)`, which by the chain rule is exactly what `Φ` removes
+(`Meno/ErasureGibbs.lean`).
+
+| Result | Statement |
+| :--- | :--- |
+| `TwoComplex.entropy_input_ge` | **The input bound**: `H(I) ≥ H(P) + H(σ_*Q)` — noise adds at least the syndrome entropy (`TwoComplex.map_syndrome_input`) |
+| `TwoComplex.entropy_tick` | **The tick law**: `H(P) + H(σ_*Q) ≤ H(Φ_*I) + H(I \| Φ)` |
+| `TwoComplex.sum_condEntropy_ge` | **The rate law**: over `T` ticks, `Σ H(Iₜ \| Φₜ) ≥ T · H(σ_*Q) + H(P₀) − log \|cocycles × M\|` — the average erasure per tick is at least the syndrome entropy, the first term of `TwoComplex.entropy_split` |
+| `TwoComplex.Decoder.condEntropy_reset_le` | **Attainment**: a decoder's reset erases at most `H(σ_*Q)` per tick |
+| `FinDist.entropy_le_crossEntropy`, `FinDist.condEntropy_nonneg`, `FinDist.entropy_prod`, `FinDist.map_snd_prod`, `FinDist.entropy_le_map_add_map`, `FinDist.sum_mass_comp` | **The library beneath**: the cross-entropy bound against any support-dominating subprobability (from `log t ≤ t − 1`), nonnegative conditional entropy, additivity on products, subadditivity along a separating pair of maps |
+
 ### Gravity
 
 There is **one gravity law** (G2): the four-term defect of coupling
@@ -769,6 +784,7 @@ Meno/
 ├── DecodingCost.lean          Correction (G10) — the price: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
 ├── DecodingGibbs.lean         Correction (G10) — fully supported noise: the error-entropy split, the gauge bound, ML optimality, the closed-support boundary
 ├── Erasure.lean               Correction (G10) — the rate a reset pays: the tick law, the rate law, attainment by a decoder, the price split into erasure and gauge
+├── ErasureGibbs.lean          Correction (G10) — the erasure rate under a noise law: the input bound, the tick law, the rate law at the syndrome entropy, attainment by a decoder
 ├── Record.lean                Correction (G10) — non-erasing correction: the record bound, hidden versus visible memory, the syndrome recorder attains it; reused memory grows per tick and runs out
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
