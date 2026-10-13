@@ -29,8 +29,8 @@ Riemann's functional equation ([Duality](#duality)).
 
 Everything below is a checked theorem — zero sorry, zero axiom
 declarations, `lake build` green against Lean 4.33.0-rc2 and the pinned
-Mathlib. The tree is organized into nine faces, indexed below
-([The nine faces](#the-nine-faces)).
+Mathlib. The tree is organized into ten faces, indexed below
+([The ten faces](#the-ten-faces)).
 
 ______________________________________________________________________
 
@@ -92,12 +92,12 @@ the predicate space.
 
 ______________________________________________________________________
 
-## The nine faces
+## The ten faces
 
 Each face has four anchors: an impossibility, an exact law that
 carries its own correction term, a strictness witness where the
 correction is genuinely nonzero, and a boundary where it exactly
-vanishes. Eight faces have that shape; G7 assembles five strict
+vanishes. Nine faces have that shape; G7 assembles five strict
 phenomena into the completion object. The full tables live in the
 linked sections; the anchors are the theorems themselves.
 
@@ -112,6 +112,7 @@ linked sections; the anchors are the theorems themselves.
 | **G7 — the dichotomy** ([The dichotomy](#the-dichotomy)) | Cycles, matter, spectrum, fluctuation, deficit, arrow — pairwise equivalent | `meno_tfae`; conjunction chart `meno_dichotomy` |
 | **G8 — self-reference** ([Self-reference](#self-reference)) | No self-enumeration, and the shortfall is priced | impossibility `no_self_enumeration`; law `descriptionCost_split`; strictness `log_card_lt_descriptionCost`; boundary `log_card_eq_descriptionCost_iff` |
 | **G9 — the currency** ([The currency](#the-currency-g9)) | The Jensen gap is a relative entropy against the tilted Gibbs law; gravity's, time's, temperature's, and the tower's corrections are its recognitions | law `cgf_sub_gibbsExpect_eq_relativeEntropy`; boundary `cgf_sub_gibbsExpect_eq_zero_iff`, `cgf_bilinear_eq_zero_iff`; strictness `twoSector_cgf_gap_pos`, `twoSector_cgf_bilinear_pos`; impossibility `cgf_not_additive` |
+| **G10 — correction** ([Correction](#correction-g10)) | Some decoder keeps the class step one-valued under every error of weight `≤ t` iff every non-exact cocycle weighs more than `2t`; the closed step's price is at most syndrome plus gauge | law `TwoComplex.decodable_iff`, price `TwoComplex.Decoder.recoveryCost_le_resolution`; boundary `TwoComplex.card_eq_iff_saturated`, `cylinder_not_decodable_two`; strictness `cylinder_decodable_one`, `cylinder_recoveryCost_lt`; impossibility `cycle_not_decodable` |
 
 ______________________________________________________________________
 
@@ -357,7 +358,17 @@ breaks the symmetry — the choice of bit is physical.
 | `cycle_four_two_no_invariant_representative`, `cycle_four_two_no_equivariant_section` | **The strictness witness** at `(n, q) = (4, 2)`: no invariant representative, no equivariant section |
 | `cycle_three_two_equivariant_section` | **The boundary witness** at `(n, q) = (3, 2)`: the equivariant section, exhibited |
 
-### Closure
+### Correction (G10)
+
+When does a coarse observation have a one-valued successor, which
+noise preserves that, and what does preserving it cost? On a graph,
+nothing survives a single error; on a 2-complex the faces supply a
+syndrome, a decoder answers it, and the error weights some decoder
+absorbs are fixed exactly by the lightest non-exact cocycle. The
+corrected step's price is bounded by the syndrome plus K2's gauge
+term; the class itself is never paid for.
+
+#### Closure
 
 A step `r` on fine states is closed over observations `π`, `π'`
 (`StepClosed`) when the observation of every successor is a function
@@ -377,7 +388,7 @@ forgets is the gauge fiber, recovered at `log |gauge|`
 | `cycle_single_not_exact`, `cycle_edgeNoise_not_closed` | **The strictness witness**: on `C_n` at any resolution `q > 1`, no edge indicator is exact, so single-edge error at any edge has no one-valued class step — on a graph the class has error distance one |
 | `bridge_edgeNoise_closed` | **The boundary witness**: on the one-edge graph `bridgeGraph`, single-edge error is closed at every coefficient ring |
 
-### Decoding
+#### Decoding
 
 On a graph every cochain is a cocycle, so single-edge error changes
 the class. A `TwoComplex` adds the constraint: its **syndrome** is
@@ -682,9 +693,9 @@ Meno/
 ├── InfoRatchet.lean           Fiber information; the coding theorem; the gravity theorem and its counting corollary; finite distributions; the currency's KL identity (G9)
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
-├── Closure.lean               Closed steps: the descent law for noisy linear steps; automorphisms descend; single-edge error on C_n does not
-├── Decoding.lean              Syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
-├── DecodingCost.lean          The price of correction: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
+├── Closure.lean               Correction (G10) — closed steps: the descent law for noisy linear steps; automorphisms descend; single-edge error on C_n does not
+├── Decoding.lean              Correction (G10) — syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
+├── DecodingCost.lean          Correction (G10) — the price: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine

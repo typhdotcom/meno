@@ -2,6 +2,8 @@ import Meno.Symmetry
 
 /-! # Closure: when a coarse observation has a one-valued successor
 
+The first layer of the correction face (G10).
+
 A step `r : W → W' → Prop` (deterministic or not) is **closed** over
 observations `π : W → O`, `π' : W' → O'` when the successor's
 observation is a function of the current observation
