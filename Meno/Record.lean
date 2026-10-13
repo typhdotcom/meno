@@ -28,7 +28,19 @@ modulo exact cocycles, and errors come from `S`. The face's anchors:
 * **The erasing alternative** (`Decoder.eraser_closed`,
   `Decoder.eraser_not_injective`): the same correction with a
   one-point record is closed, and is not injective once `S` meets two
-  gauge classes. -/
+  gauge classes.
+
+When the memory `M` is reused rather than blank, write `A` for the
+memory states a step starts from and `A'` for those it lands in:
+
+* **The growth law** (`card_mul_card_le_card_memory`):
+  `|A'| ≥ (gauge classes of S) · |A|`.
+* **The reuse collapse** (`reusedMemory_closed`): a step closed from
+  every memory state tolerates only pure-gauge errors.
+* **The tick law and bound** (`card_pow_mul_le_card_memory`,
+  `ticks_mul_log_le`): over `T` ticks the occupied memory grows by that
+  factor per tick, so a finite memory supports at most
+  `log |M| / log (gauge classes of S)` closed non-erasing ticks. -/
 
 namespace Meno
 
@@ -85,6 +97,37 @@ theorem card_classFiber [Finite R]
   exact h
 
 open Classical in
+omit [Fintype R] in
+/-- A gauge element plus a chosen representative of a gauge class `S`
+meets determines both. -/
+theorem addRep_injective (S : Set (G.E → R)) :
+    Function.Injective (fun p : LinearMap.range (G.gradLin R) × (gaugeMk R '' S) =>
+      (p.1 : G.E → R) + p.2.2.choose) := by
+  rintro ⟨b₁, ξ₁⟩ ⟨b₂, ξ₂⟩ hv
+  have hv : (b₁ : G.E → R) + ξ₁.2.choose = b₂ + ξ₂.2.choose := hv
+  have hξ : ξ₁ = ξ₂ := by
+    refine Subtype.ext (ξ₁.2.choose_spec.2.symm.trans (Eq.trans ?_ ξ₂.2.choose_spec.2))
+    refine (Submodule.Quotient.eq _).mpr ?_
+    have : ξ₁.2.choose - ξ₂.2.choose = (b₂ : G.E → R) - b₁ := by
+      rw [sub_eq_sub_iff_add_eq_add, add_comm]
+      exact hv
+    rw [this]
+    exact sub_mem b₂.2 b₁.2
+  subst hξ
+  rw [Subtype.ext (add_right_cancel hv)]
+
+omit [Fintype R] in
+/-- An error set meeting at most one gauge class, containing `0`, is
+pure gauge. -/
+theorem subset_range_of_card_le_one [Finite R] (S : Set (G.E → R)) (h0 : (0 : G.E → R) ∈ S)
+    (h1 : Nat.card (gaugeMk R '' S) ≤ 1) : S ⊆ LinearMap.range (G.gradLin R) := by
+  have hsub := Finite.card_le_one_iff_subsingleton.mp h1
+  intro s hs
+  have := congrArg Subtype.val
+    (hsub.elim ⟨gaugeMk R s, s, hs, rfl⟩ ⟨gaugeMk R 0, 0, h0, rfl⟩)
+  simpa using (Submodule.Quotient.eq _).mp this
+
+open Classical in
 /-- **The reach of the zero class**: the gauge times the gauge classes
 `S` meets, injected by `(b, ξ) ↦ b + rep ξ`. -/
 theorem card_mul_le_card_reach (S : Set (G.E → R)) :
@@ -92,22 +135,11 @@ theorem card_mul_le_card_reach (S : Set (G.E → R)) :
       ≤ Nat.card {y // ∃ x, (X.exactR R).mkQ x = 0 ∧ X.cocycleNoise R S x y} := by
   rw [← Nat.card_prod]
   refine Nat.card_le_card_of_injective
-    (fun p => ⟨(p.1 : G.E → R) + p.2.2.choose, ?_⟩) ?_
-  · refine ⟨⟨p.1, X.range_grad_le_cocyclesR R p.1.2⟩, ?_,
-      p.2.2.choose, p.2.2.choose_spec.1, rfl⟩
-    exact (Submodule.Quotient.mk_eq_zero _).mpr (Submodule.mem_comap.mpr p.1.2)
-  · rintro ⟨b₁, ξ₁⟩ ⟨b₂, ξ₂⟩ h
-    have hv : (b₁ : G.E → R) + ξ₁.2.choose = b₂ + ξ₂.2.choose := congrArg Subtype.val h
-    have hξ : ξ₁ = ξ₂ := by
-      refine Subtype.ext (ξ₁.2.choose_spec.2.symm.trans (Eq.trans ?_ ξ₂.2.choose_spec.2))
-      refine (Submodule.Quotient.eq _).mpr ?_
-      have : ξ₁.2.choose - ξ₂.2.choose = (b₂ : G.E → R) - b₁ := by
-        rw [sub_eq_sub_iff_add_eq_add, add_comm]
-        exact hv
-      rw [this]
-      exact sub_mem b₂.2 b₁.2
-    subst hξ
-    rw [Subtype.ext (add_right_cancel hv)]
+    (fun p => ⟨(p.1 : G.E → R) + p.2.2.choose, ?_⟩)
+    fun a b h => addRep_injective R S (congrArg Subtype.val h)
+  refine ⟨⟨p.1, X.range_grad_le_cocyclesR R p.1.2⟩, ?_,
+    p.2.2.choose, p.2.2.choose_spec.1, rfl⟩
+  exact (Submodule.Quotient.mk_eq_zero _).mpr (Submodule.mem_comap.mpr p.1.2)
 
 /-- **THE HIDDEN BOUND**: a non-erasing step, closed on classes with the
 record unobserved, writes at least as many records as `S` meets gauge
@@ -148,11 +180,106 @@ theorem record_visible_closed {K : Type*} [Finite K] (S : Set (G.E → R))
   have h1 : Nat.card (gaugeMk R '' S) ≤ 1 :=
     Nat.le_of_mul_le_mul_left ((X.card_mul_le_card_reach R S).trans (h2.trans h3))
       Nat.card_pos
-  have hsub := (Finite.card_le_one_iff_subsingleton.mp h1)
-  intro s hs
-  have := congrArg Subtype.val
-    (hsub.elim ⟨gaugeMk R s, s, hs, rfl⟩ ⟨gaugeMk R 0, 0, h0, rfl⟩)
-  simpa using (Submodule.Quotient.eq _).mp this
+  exact subset_range_of_card_le_one R S h0 h1
+
+/-! ## Reused memory -/
+
+open Classical in
+/-- **THE GROWTH LAW**: a non-erasing step on cocycles and a reused
+memory `M`, closed on classes from memory states in `A` and landing in
+`A'`, has `|A'| ≥ (gauge classes of S) · |A|`. -/
+theorem card_mul_card_le_card_memory {M : Type*} [Finite M] (S : Set (G.E → R))
+    {Φ : (G.E → R) × M → X.cocyclesR R × M} (hΦ : Function.Injective Φ)
+    (A A' : Set M) {g : X.cocyclesR R ⧸ X.exactR R → X.cocyclesR R ⧸ X.exactR R}
+    (hcl : ∀ (x : X.cocyclesR R) (m : M) (s : G.E → R), m ∈ A → s ∈ S →
+      (X.exactR R).mkQ (Φ ((x : G.E → R) + s, m)).1 = g ((X.exactR R).mkQ x))
+    (hland : ∀ (x : X.cocyclesR R) (m : M) (s : G.E → R), m ∈ A → s ∈ S →
+      (Φ ((x : G.E → R) + s, m)).2 ∈ A') :
+    Nat.card (gaugeMk R '' S) * Nat.card A ≤ Nat.card A' := by
+  have hx0 : ∀ b : LinearMap.range (G.gradLin R),
+      (X.exactR R).mkQ (⟨b, X.range_grad_le_cocyclesR R b.2⟩ : X.cocyclesR R) = 0 :=
+    fun b => (Submodule.Quotient.mk_eq_zero _).mpr (Submodule.mem_comap.mpr b.2)
+  have hL : Nat.card ((LinearMap.range (G.gradLin R) × (gaugeMk R '' S)) × A)
+      = Nat.card (LinearMap.range (G.gradLin R)) * (Nat.card (gaugeMk R '' S) * Nat.card A) := by
+    rw [Nat.card_prod, Nat.card_prod, mul_assoc]
+  have hR : Nat.card ({x : X.cocyclesR R // (X.exactR R).mkQ x = g 0} × A')
+      = Nat.card (LinearMap.range (G.gradLin R)) * Nat.card A' := by
+    rw [Nat.card_prod, card_classFiber]
+  refine Nat.le_of_mul_le_mul_left ?_ (Nat.card_pos (α := LinearMap.range (G.gradLin R)))
+  rw [← hL, ← hR]
+  refine Nat.card_le_card_of_injective
+    (fun p => (⟨(Φ ((p.1.1 : G.E → R) + p.1.2.2.choose, p.2)).1,
+        (hcl ⟨p.1.1, X.range_grad_le_cocyclesR R p.1.1.2⟩ p.2 _ p.2.2
+          p.1.2.2.choose_spec.1).trans (congrArg g (hx0 p.1.1))⟩,
+      ⟨(Φ ((p.1.1 : G.E → R) + p.1.2.2.choose, p.2)).2,
+        hland ⟨p.1.1, X.range_grad_le_cocyclesR R p.1.1.2⟩ p.2 _ p.2.2
+          p.1.2.2.choose_spec.1⟩)) ?_
+  rintro ⟨p, a⟩ ⟨p', a'⟩ h
+  have h1 := congrArg (fun q => (q.1 : X.cocyclesR R)) h
+  have h2 := congrArg (fun q => (q.2 : M)) h
+  have hΦ' := hΦ (Prod.ext h1 h2)
+  simp only [Prod.mk.injEq] at hΦ'
+  rw [addRep_injective R S hΦ'.1, Subtype.ext hΦ'.2]
+
+/-- **THE REUSE COLLAPSE**: a non-erasing step on cocycles and a reused
+nonempty memory, closed on classes from every memory state, tolerates
+only pure-gauge errors. -/
+theorem reusedMemory_closed {M : Type*} [Finite M] [Nonempty M] (S : Set (G.E → R))
+    (h0 : (0 : G.E → R) ∈ S) {Φ : (G.E → R) × M → X.cocyclesR R × M}
+    (hΦ : Function.Injective Φ)
+    {g : X.cocyclesR R ⧸ X.exactR R → X.cocyclesR R ⧸ X.exactR R}
+    (hcl : ∀ (x : X.cocyclesR R) (m : M) (s : G.E → R), s ∈ S →
+      (X.exactR R).mkQ (Φ ((x : G.E → R) + s, m)).1 = g ((X.exactR R).mkQ x)) :
+    S ⊆ LinearMap.range (G.gradLin R) := by
+  have h := X.card_mul_card_le_card_memory R S hΦ Set.univ Set.univ
+    (fun x m s _ hs => hcl x m s hs) (fun _ _ _ _ _ => Set.mem_univ _)
+  have hpos : 0 < Nat.card (Set.univ : Set M) := Nat.card_pos
+  exact subset_range_of_card_le_one R S h0
+    (Nat.le_of_mul_le_mul_right (by rwa [one_mul]) hpos)
+
+/-- **THE TICK LAW**: over `T` closed non-erasing ticks on a reused
+memory, the occupied memory grows by the number of gauge classes `S`
+meets at every tick. -/
+theorem card_pow_mul_le_card_memory {M : Type*} [Finite M] (S : Set (G.E → R))
+    (A : ℕ → Set M) (Φ : ℕ → (G.E → R) × M → X.cocyclesR R × M)
+    (hΦ : ∀ t, Function.Injective (Φ t))
+    (g : ℕ → X.cocyclesR R ⧸ X.exactR R → X.cocyclesR R ⧸ X.exactR R)
+    (hcl : ∀ t (x : X.cocyclesR R) (m : M) (s : G.E → R), m ∈ A t → s ∈ S →
+      (X.exactR R).mkQ (Φ t ((x : G.E → R) + s, m)).1 = g t ((X.exactR R).mkQ x))
+    (hland : ∀ t (x : X.cocyclesR R) (m : M) (s : G.E → R), m ∈ A t → s ∈ S →
+      (Φ t ((x : G.E → R) + s, m)).2 ∈ A (t + 1)) (T : ℕ) :
+    Nat.card (gaugeMk R '' S) ^ T * Nat.card (A 0) ≤ Nat.card (A T) := by
+  induction T with
+  | zero => simp
+  | succ T ih =>
+    rw [pow_succ, mul_comm _ (Nat.card (gaugeMk R '' S)), mul_assoc]
+    exact (Nat.mul_le_mul_left _ ih).trans
+      (X.card_mul_card_le_card_memory R S (hΦ T) (A T) (A (T + 1)) (hcl T) (hland T))
+
+/-- **THE TICK BOUND**: a finite memory supports at most
+`log |M| / log (gauge classes of S)` closed non-erasing ticks. -/
+theorem ticks_mul_log_le {M : Type*} [Finite M] (S : Set (G.E → R))
+    (h0 : (0 : G.E → R) ∈ S)
+    (A : ℕ → Set M) (hA : (A 0).Nonempty) (Φ : ℕ → (G.E → R) × M → X.cocyclesR R × M)
+    (hΦ : ∀ t, Function.Injective (Φ t))
+    (g : ℕ → X.cocyclesR R ⧸ X.exactR R → X.cocyclesR R ⧸ X.exactR R)
+    (hcl : ∀ t (x : X.cocyclesR R) (m : M) (s : G.E → R), m ∈ A t → s ∈ S →
+      (X.exactR R).mkQ (Φ t ((x : G.E → R) + s, m)).1 = g t ((X.exactR R).mkQ x))
+    (hland : ∀ t (x : X.cocyclesR R) (m : M) (s : G.E → R), m ∈ A t → s ∈ S →
+      (Φ t ((x : G.E → R) + s, m)).2 ∈ A (t + 1)) (T : ℕ) :
+    (T : ℝ) * Real.log (Nat.card (gaugeMk R '' S)) ≤ Real.log (Nat.card M) := by
+  have h := X.card_pow_mul_le_card_memory R S A Φ hΦ g hcl hland T
+  have hA0 : 0 < Nat.card (A 0) := by
+    have := hA.to_subtype
+    exact Nat.card_pos
+  have hAT : Nat.card (A T) ≤ Nat.card M := Nat.card_le_card_of_injective _ Subtype.val_injective
+  have hc : 0 < Nat.card (gaugeMk R '' S) := by
+    have : Nonempty (gaugeMk R '' S) := ⟨⟨gaugeMk R 0, 0, h0, rfl⟩⟩
+    exact Nat.card_pos
+  have hpow : Nat.card (gaugeMk R '' S) ^ T ≤ Nat.card M :=
+    (Nat.le_mul_of_pos_right _ hA0).trans (h.trans hAT)
+  rw [← Real.log_pow]
+  exact Real.log_le_log (by positivity) (by exact_mod_cast hpow)
 
 variable {X R}
 

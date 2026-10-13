@@ -475,6 +475,15 @@ the fiber counts (`Meno/Record.lean`).
 | `TwoComplex.Decoder.recorder_injective`, `TwoComplex.Decoder.recorder_closed`, `TwoComplex.Decoder.card_records` | **Attainment**: recording the syndrome and correcting by a decoder closing `S` is injective, closed, and writes exactly as many records as `S` meets gauge classes |
 | `TwoComplex.Decoder.eraser_closed`, `TwoComplex.Decoder.eraser_not_injective` | **The erasing alternative**: the same correction with a one-point record is closed, and erases once `S` meets two gauge classes |
 
+When the memory is reused rather than blank, write A for the memory
+states a step starts from and A' for those it lands in.
+
+| Result | Statement |
+| :--- | :--- |
+| `TwoComplex.card_mul_card_le_card_memory` | **The growth law**: a closed non-erasing step has `\|A'\| ≥ (gauge classes of S) · \|A\|` (`TwoComplex.addRep_injective`) |
+| `TwoComplex.reusedMemory_closed` | **The reuse collapse**: a step closed from every memory state tolerates only pure-gauge errors (`TwoComplex.subset_range_of_card_le_one`) |
+| `TwoComplex.card_pow_mul_le_card_memory`, `TwoComplex.ticks_mul_log_le` | **The tick law and bound**: over `T` ticks the occupied memory grows by that factor per tick, so a finite memory `M` supports at most `log \|M\| / log (gauge classes of S)` closed non-erasing ticks — once `S` meets two gauge classes, no finite memory sustains closure without erasing |
+
 ### Gravity
 
 There is **one gravity law** (G2): the four-term defect of coupling
@@ -743,7 +752,7 @@ Meno/
 ├── Decoding.lean              Correction (G10) — syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
 ├── DecodingCost.lean          Correction (G10) — the price: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
 ├── DecodingGibbs.lean         Correction (G10) — fully supported noise: the error-entropy split, the gauge bound, ML optimality, the closed-support boundary
-├── Record.lean                Correction (G10) — non-erasing correction: the record bound, hidden versus visible memory, the syndrome recorder attains it
+├── Record.lean                Correction (G10) — non-erasing correction: the record bound, hidden versus visible memory, the syndrome recorder attains it; reused memory grows per tick and runs out
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine
