@@ -399,6 +399,25 @@ lightest non-exact cocycle.
 | `cylinder_decodable_one` | **The strictness witness**: on the cylinder `C₃ × P₃` with its six squares filled (`cylinderComplex`), over `ZMod 2`, every nonzero cocycle weighs at least `3` (`cylinder_cocycle_weight`, kernel-checked by `cylinder_pair_cocycle`), so single errors are corrected |
 | `cylinder_not_decodable_two` | **The boundary witness**: the radial cut `cylCut` is a non-exact cocycle of weight `3`, detected by the inner ring `cylRing` — no decoder corrects every pair, and the distance is exactly three |
 
+#### The price of correction
+
+The corrected step `(ω, s) ↦ ω + (s − D(σ s))` forgets the error:
+every fiber is a copy of the error set, so recovering an input costs
+`log |S|`. Closure bounds that price by what the syndrome reports
+plus the gauge; the class term `b₁ · log q` of K2 never enters
+(`Meno/DecodingCost.lean`).
+
+| Result | Statement |
+| :--- | :--- |
+| `TwoComplex.exists_closing_decoder_iff` | **The decoder-free closure law**: some decoder leaves every residual exact iff errors of equal syndrome differ by gauge |
+| `TwoComplex.Decoder.correctedMap`, `TwoComplex.Decoder.recoveryCost_correctedMap` | The corrected step as a map on cocycle–error pairs; its recovery cost is `log \|S\|` at every output |
+| `TwoComplex.card_fiber_le_gauge`, `TwoComplex.card_le_card_syndrome_mul_gauge` | **The capacity law**: each syndrome fiber of a closable error set injects into the gauge, so `\|S\| ≤ \|σ S\| · \|gauge\|` |
+| `TwoComplex.card_eq_iff_saturated` | **The boundary**: equality iff `S` is gauge-saturated — closed under adding any gradient |
+| `TwoComplex.Decoder.recoveryCost_le`, `TwoComplex.Decoder.recoveryCost_eq_iff` | **The price**: a closed corrected step costs at most `log \|σ S\| + log \|gauge\|`, exactly at saturation |
+| `TwoComplex.Decoder.recoveryCost_le_resolution` | At resolution `q` the gauge term is K2's: `log \|σ S\| + (\|E\| − b₁) · log q` (`card_gauge`) |
+| `cylinder_recoveryCost_lt` | **The strictness witness**: single errors on the cylinder are corrected, but a vertex gradient of weight `3` leaves the error set — the price falls strictly below the bound |
+| `gaugeErrors_card_eq` | **The boundary witness**: pure-gauge errors attain the capacity law — one syndrome, a full gauge coset |
+
 ### Gravity
 
 There is **one gravity law** (G2): the four-term defect of coupling
@@ -665,6 +684,7 @@ Meno/
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
 ├── Closure.lean               Closed steps: the descent law for noisy linear steps; automorphisms descend; single-edge error on C_n does not
 ├── Decoding.lean              Syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
+├── DecodingCost.lean          The price of correction: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine

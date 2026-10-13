@@ -42,6 +42,7 @@ import Meno.Symmetry
 -- Closure: one-valued class steps, which noise preserves them, and decoding
 import Meno.Closure
 import Meno.Decoding
+import Meno.DecodingCost
 
 -- Arithmetic gravity on the resolution tower
 import Meno.TowerGravity
