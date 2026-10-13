@@ -26,7 +26,11 @@ Factor the syndrome through the gauge quotient `π`:
 * **The boundary** (`Decoder.successProb_eq_one`,
   `logicalEntropy_eq_zero`): when a decoder closes the support, it
   succeeds with probability one and the logical entropy vanishes —
-  the counting face is the zero-logical-entropy chart. -/
+  the counting face is the zero-logical-entropy chart.
+* **The logical dichotomy** (`logicalEntropy_pos_iff`,
+  `successProb_lt_one`): on a fully supported law the logical entropy
+  is positive iff a cocycle is not exact, and then no rule is certain;
+  the cylinder's radial cut witnesses both (`cylinder_gibbs_strict`). -/
 
 namespace Meno
 
@@ -231,6 +235,65 @@ theorem logicalEntropy_eq_zero (D : X.Decoder R) (P : FinDist (G.E → R))
   have := sub_mem (hD s hs) (hD s' hs')
   rwa [Decoder.residual, Decoder.residual, hσ, sub_sub_sub_cancel_right] at this
 
+/-- **THE LOGICAL DICHOTOMY**: on a fully supported law the logical
+entropy is positive iff some cocycle is not exact; otherwise it is
+zero. -/
+theorem logicalEntropy_pos_iff (P : FinDist (G.E → R)) (hP : P.FullSupport) :
+    0 < X.logicalEntropy R P ↔
+      ∃ c ∈ X.cocyclesR R, c ∉ LinearMap.range (G.gradLin R) := by
+  constructor
+  · intro hpos
+    by_contra hnone
+    push Not at hnone
+    refine hpos.ne' (FinDist.condEntropy_eq_zero_of_injOn _ _ fun ξ ξ' _ _ hσ => ?_)
+    obtain ⟨s, rfl⟩ := Submodule.Quotient.mk_surjective _ ξ
+    obtain ⟨s', rfl⟩ := Submodule.Quotient.mk_surjective _ ξ'
+    have hσ' : X.syndrome R s = X.syndrome R s' := hσ
+    refine (Submodule.Quotient.eq _).mpr (hnone _ ?_)
+    exact LinearMap.mem_ker.mpr (by rw [map_sub, hσ', sub_self])
+  · rintro ⟨c, hc, hne⟩
+    refine FinDist.condEntropy_pos _ _ (hP.map _ (Submodule.Quotient.mk_surjective _))
+      (x := gaugeMk R c) (y := gaugeMk R 0) ?_ ?_
+    · intro h
+      exact hne (by simpa using (Submodule.Quotient.eq _).mp h)
+    · rw [classSyndrome_mk, classSyndrome_mk, map_zero]
+      exact LinearMap.mem_ker.mp hc
+
+omit [Fintype X.Faces] in
+/-- **No certain rule**: on a fully supported law with a non-exact
+cocycle, every decoding rule — the maximum-likelihood rule included —
+fails with positive probability. -/
+theorem successProb_lt_one (P : FinDist (G.E → R)) (hP : P.FullSupport)
+    {c : G.E → R} (hc : c ∈ X.cocyclesR R)
+    (hne : c ∉ LinearMap.range (G.gradLin R))
+    (g : (X.Faces → R) → (G.E → R) ⧸ LinearMap.range (G.gradLin R)) :
+    X.successProb R P g < 1 := by
+  have hσc : X.syndrome R c = X.syndrome R 0 := by
+    rw [map_zero]
+    exact LinearMap.mem_ker.mp hc
+  obtain ⟨s, hs⟩ : ∃ s, gaugeMk R s ≠ g (X.syndrome R s) := by
+    by_contra hall
+    push Not at hall
+    have h1 := hall c
+    rw [hσc, ← hall 0] at h1
+    exact hne (by simpa using (Submodule.Quotient.eq _).mp h1)
+  refine lt_of_lt_of_eq (Finset.sum_lt_sum (fun t _ => ?_)
+    ⟨s, Finset.mem_univ _, ?_⟩) P.sum_one
+  · split_ifs <;> simp [P.nonneg t]
+  · rw [if_neg hs, mul_zero]
+    exact hP s
+
 end TwoComplex
+
+/-- **THE STRICTNESS WITNESS**: on the cylinder over `ZMod 2`, every
+fully supported error law leaves positive logical entropy, and every
+decoding rule fails with positive probability — the radial cut is a
+non-exact cocycle. -/
+theorem cylinder_gibbs_strict (P : FinDist (Fin 15 → ZMod 2)) (hP : P.FullSupport) :
+    0 < cylinderComplex.logicalEntropy (ZMod 2) P ∧
+      ∀ g, cylinderComplex.successProb (ZMod 2) P g < 1 :=
+  ⟨(cylinderComplex.logicalEntropy_pos_iff (ZMod 2) P hP).mpr
+      ⟨cylCut, cylCut_mem_cocycles, cylCut_not_exact⟩,
+    cylinderComplex.successProb_lt_one (ZMod 2) P hP cylCut_mem_cocycles cylCut_not_exact⟩
 
 end Meno

@@ -445,6 +445,8 @@ ways (`Meno/DecodingGibbs.lean`).
 | `TwoComplex.successProb`, `TwoComplex.successProb_eq_sum` | **The success law**: a decoding rule guesses a class per syndrome and succeeds with the mass of each guessed class carrying its syndrome |
 | `TwoComplex.mlRule`, `TwoComplex.successProb_le_ml` | **ML optimality**: the rule choosing a heaviest class in each syndrome fiber beats every rule — every decoder is a rule (`TwoComplex.Decoder.successProb_eq`) |
 | `TwoComplex.Decoder.successProb_eq_one`, `TwoComplex.logicalEntropy_eq_zero` | **The boundary**: a decoder closing the support succeeds with probability one and leaves no logical entropy — the counting law is the zero-logical-entropy chart (`FinDist.condEntropy_eq_zero_of_injOn`) |
+| `TwoComplex.logicalEntropy_pos_iff`, `TwoComplex.successProb_lt_one` | **The logical dichotomy**: on a fully supported law, logical entropy is positive iff some cocycle is not exact, and then every rule fails with positive probability |
+| `cylinder_gibbs_strict` | **The strictness witness**: on the cylinder over `ZMod 2` the radial cut forces both, for every fully supported law |
 
 ### Gravity
 

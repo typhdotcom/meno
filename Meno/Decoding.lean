@@ -326,6 +326,8 @@ def cylinderComplex : TwoComplex cylinderGraph :=
       revert i
       decide) }
 
+instance : Fintype cylinderComplex.Faces := inferInstanceAs (Fintype (Fin 6))
+
 /-- **No light cocycle on the cylinder**: over `ZMod 2`, an error
 supported on two edges with zero syndrome is zero. -/
 theorem cylinder_pair_cocycle : ∀ a b : Fin 15, ∀ x y : ZMod 2,
@@ -364,6 +366,23 @@ def cylCut : Fin 15 → ZMod 2 := fun e => if e.val % 3 = 0 ∧ e.val < 9 then 1
 /-- The inner ring, an integral cycle. -/
 def cylRing : Fin 15 → ℤ := fun e => if e.val < 3 then 1 else 0
 
+/-- The radial cut is a `ZMod 2`-cocycle of the cylinder. -/
+theorem cylCut_mem_cocycles : cylCut ∈ cylinderComplex.cocyclesR (ZMod 2) := by
+  have hcut : ∀ i : Fin 6, cylCut ⬝ᵥ (fun e => (cylFace i e : ZMod 2)) = 0 := by
+    decide
+  exact LinearMap.mem_ker.mpr (funext fun i => hcut i)
+
+/-- The radial cut is not exact: it pairs to `1` with the inner ring. -/
+theorem cylCut_not_exact :
+    cylCut ∉ LinearMap.range (cylinderGraph.gradLin (ZMod 2)) := by
+  have hring : cylRing ∈ cylinderGraph.cycleLattice :=
+    cylinderGraph.mem_cycleLattice.mpr (by decide)
+  rintro ⟨f, hf⟩
+  have h0 := grad_dotProduct_castCycle f hring
+  rw [← IncidenceGraph.gradLin_apply, hf] at h0
+  revert h0
+  decide
+
 /-- **The boundary witness**: the radial cut is a non-exact cocycle of
 weight `3`, so no decoder on the cylinder corrects every pair of
 errors — the distance is exactly three. -/
@@ -375,20 +394,8 @@ theorem cylinder_not_decodable_two :
         (cylinderComplex.exactR (ZMod 2)).mkQ := by
   rw [TwoComplex.decodable_iff]
   intro h
-  have hcut : ∀ i : Fin 6, cylCut ⬝ᵥ (fun e => (cylFace i e : ZMod 2)) = 0 := by
-    decide
-  have hcoc : cylCut ∈ cylinderComplex.cocyclesR (ZMod 2) :=
-    LinearMap.mem_ker.mpr (funext fun i => hcut i)
-  have hring : cylRing ∈ cylinderGraph.cycleLattice :=
-    cylinderGraph.mem_cycleLattice.mpr (by decide)
-  have hne : cylCut ∉ LinearMap.range (cylinderGraph.gradLin (ZMod 2)) := by
-    rintro ⟨f, hf⟩
-    have h0 := grad_dotProduct_castCycle f hring
-    rw [← IncidenceGraph.gradLin_apply, hf] at h0
-    revert h0
-    decide
   have hw : hammingNorm cylCut = 3 := by decide
-  have := h cylCut hcoc hne
+  have := h cylCut cylCut_mem_cocycles cylCut_not_exact
   omega
 
 end Meno
