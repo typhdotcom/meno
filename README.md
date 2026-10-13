@@ -429,6 +429,23 @@ plus the gauge; the class term `b₁ · log q` of K2 never enters
 | `cylinder_recoveryCost_lt` | **The strictness witness**: single errors on the cylinder are corrected, but a vertex gradient of weight `3` leaves the error set — the price falls strictly below the bound |
 | `gaugeErrors_card_eq` | **The boundary witness**: pure-gauge errors attain the capacity law — one syndrome, a full gauge coset |
 
+#### Correction under fully supported noise
+
+The capacity law needs a closable error set, and a fully supported
+error law never is: an error with the distance's weight has positive
+mass. Under such noise the class step is one-valued only with some
+probability. Factoring the syndrome through the gauge quotient,
+`σ = σ̄ ∘ π` (`TwoComplex.classSyndrome`), the price splits three
+ways (`Meno/DecodingGibbs.lean`).
+
+| Result | Statement |
+| :--- | :--- |
+| `TwoComplex.entropy_split` | **The error-entropy split**: `H(P) = H(σ_*P) + H(π_*P \| σ̄) + H(P \| π)` — syndrome information, the **logical entropy** (`TwoComplex.logicalEntropy`: which class, given the syndrome), and the gauge term |
+| `TwoComplex.condEntropy_gauge_le`, `TwoComplex.condEntropy_gauge_lt` | **The gauge bound**: on a fully supported law the gauge term is at most `log \|gauge\|`, strictly unless the law is uniform on gauge cosets (`TwoComplex.card_gaugeFiber`) |
+| `TwoComplex.successProb`, `TwoComplex.successProb_eq_sum` | **The success law**: a decoding rule guesses a class per syndrome and succeeds with the mass of each guessed class carrying its syndrome |
+| `TwoComplex.mlRule`, `TwoComplex.successProb_le_ml` | **ML optimality**: the rule choosing a heaviest class in each syndrome fiber beats every rule — every decoder is a rule (`TwoComplex.Decoder.successProb_eq`) |
+| `TwoComplex.Decoder.successProb_eq_one`, `TwoComplex.logicalEntropy_eq_zero` | **The boundary**: a decoder closing the support succeeds with probability one and leaves no logical entropy — the counting law is the zero-logical-entropy chart (`FinDist.condEntropy_eq_zero_of_injOn`) |
+
 ### Gravity
 
 There is **one gravity law** (G2): the four-term defect of coupling
@@ -696,6 +713,7 @@ Meno/
 ├── Closure.lean               Correction (G10) — closed steps: the descent law for noisy linear steps; automorphisms descend; single-edge error on C_n does not
 ├── Decoding.lean              Correction (G10) — syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
 ├── DecodingCost.lean          Correction (G10) — the price: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
+├── DecodingGibbs.lean         Correction (G10) — fully supported noise: the error-entropy split, the gauge bound, ML optimality, the closed-support boundary
 ├── Diagonal.lean              Self-reference (G8): the diagonal no-self-enumeration; the priced shortfall, its split law, its empty-carrier boundary
 ├── Simplicial.lean            Walk/homotopy/Hodge model (independent corroborating route)
 ├── Groupoid.lean              Fundamental groupoid; geodesic instance; the cycle bridge to the spine
