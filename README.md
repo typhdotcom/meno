@@ -448,6 +448,15 @@ ways (`Meno/DecodingGibbs.lean`).
 | `TwoComplex.logicalEntropy_pos_iff`, `TwoComplex.successProb_lt_one` | **The logical dichotomy**: on a fully supported law, logical entropy is positive iff some cocycle is not exact, and then every rule fails with positive probability |
 | `cylinder_gibbs_strict` | **The strictness witness**: on the cylinder over `ZMod 2` the radial cut forces both, for every fully supported law |
 
+The dichotomy settles every fixed size; how the two quantities scale is
+numerical. scripts/threshold.py estimates them on the `L × L` torus
+(`H¹ = (ℤ/2)²`) under i.i.d. edge flips at rate `p`, computing each
+class's gauge-summed mass exactly by row transfer matrix and checking
+against full enumeration at `L = 3`. For `L = 4…8`, the logical-entropy
+curves cross at `p ≈ 0.104–0.109`. Below the crossing they fall with
+`L`; above it they rise. ML failure has the same crossing between
+sizes of equal parity (`p ≈ 0.104–0.116`).
+
 ### Gravity
 
 There is **one gravity law** (G2): the four-term defect of coupling
