@@ -383,6 +383,7 @@ forgets is the gauge fiber, recovered at `log |gauge|`
 | :--- | :--- |
 | `stepClosed_iff`, `StepClosed.unique` | The fiberwise form: any two successors of any two states in one fiber share a fiber; on a surjective observation of a total step the descended map is unique |
 | `noisyStep_closed_iff` | **The exact law**: linear dynamics `f` followed by additive error from `S ∋ 0` has a one-valued step on quotients iff `f` carries gauge into gauge and every error is pure gauge |
+| `noisyStep_closed_eq_mapQ`, `StepClosed.comp` | **The induced map**: a closed noisy step moves classes by `mapQ f` whatever the errors, and closed steps compose — the class trajectory of a closed history is the quotient module's structure maps, so every invariant of those maps is error-blind |
 | `linearStep_closed_iff`, `IncidenceGraph.Auto.stepClosed` | The errorless law, and its symmetry instance: every automorphism's pullback descends to classes at every coefficient ring |
 | `IncidenceGraph.cochainNoise_closed_iff`, `IncidenceGraph.edgeNoise_closed_iff` | On the carrier: additive cochain error is closed on classes iff every error is exact; single-edge error at `e` is closed iff the indicator of `e` is exact |
 | `cycle_single_not_exact`, `cycle_edgeNoise_not_closed` | **The strictness witness**: on `C_n` at any resolution `q > 1`, no edge indicator is exact, so single-edge error at any edge has no one-valued class step — on a graph the class has error distance one |

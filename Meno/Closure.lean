@@ -18,6 +18,10 @@ class map. The face's anchors:
 * **The exact law** (`noisyStep_closed_iff`): linear dynamics `f`
   followed by additive error from `S ∋ 0` has a one-valued class step
   **iff** `f` carries gauge into gauge and every error is pure gauge.
+* **The induced map** (`noisyStep_closed_eq_mapQ`, `StepClosed.comp`):
+  a closed noisy step moves classes by `mapQ f`, whatever the errors,
+  and closed steps compose — the class trajectory of a closed history
+  is the quotient module's structure maps.
 * **The symmetry instance** (`Auto.stepClosed`): an automorphism's
   pullback is closed on classes at every coefficient ring.
 * **The edge law** (`edgeNoise_closed_iff`): single-edge error at `e`
@@ -77,6 +81,16 @@ theorem StepClosed.unique {r : W → W' → Prop} {π : W → O} {π' : W' → O
   obtain ⟨a', ha'⟩ := htot a
   rw [← h₁ _ _ ha', h₂ _ _ ha']
 
+/-- **Closed steps compose**: the successor map of a two-step history is
+the composite of the successor maps. -/
+theorem StepClosed.comp {W'' : Type*} {O'' : Type*} {r : W → W' → Prop}
+    {r' : W' → W'' → Prop} {π : W → O} {π' : W' → O'} {π'' : W'' → O''}
+    {g : O → O'} {g' : O' → O''} (h : ∀ a a', r a a' → π' a' = g (π a))
+    (h' : ∀ a a', r' a a' → π'' a' = g' (π' a)) :
+    ∀ a a'', Relation.Comp r r' a a'' → π'' a'' = (g' ∘ g) (π a) := by
+  rintro a a'' ⟨a', ha, ha'⟩
+  rw [h' _ _ ha', h _ _ ha, Function.comp_apply]
+
 end Step
 
 /-! ## The exact law for noisy linear steps -/
@@ -118,6 +132,20 @@ theorem noisyStep_closed_iff (f : M →ₗ[R] M') (N : Submodule R M)
     refine ⟨N.mapQ N' f hN, ?_⟩
     rintro a _ ⟨s, hs, rfl⟩
     simp [(Submodule.Quotient.mk_eq_zero N').mpr (hS hs)]
+
+/-- **The closed class step is the induced map**: when a noisy linear
+step is closed, its successor map on quotients is `mapQ f` — the same
+map the errorless dynamics induces. The class trajectory of every
+error realization is the trajectory of the quotient dynamics. -/
+theorem noisyStep_closed_eq_mapQ (f : M →ₗ[R] M') (N : Submodule R M)
+    (N' : Submodule R M') (S : Set M') (h0 : (0 : M') ∈ S) (hN : N ≤ N'.comap f)
+    {g : M ⧸ N → M' ⧸ N'} (hg : ∀ a a', noisyStep f S a a' → N'.mkQ a' = g (N.mkQ a)) :
+    g = N.mapQ N' f hN := by
+  have hS := ((noisyStep_closed_iff f N N' S h0).mp ⟨g, hg⟩).2
+  refine StepClosed.unique (Submodule.mkQ_surjective N) (fun a => ⟨f a + 0, 0, h0, rfl⟩)
+    hg ?_
+  rintro a _ ⟨s, hs, rfl⟩
+  simp [(Submodule.Quotient.mk_eq_zero N').mpr (hS hs)]
 
 /-- **The errorless law**: linear dynamics has a one-valued step on
 quotients iff it carries `N` into `N'`. -/
