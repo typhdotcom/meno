@@ -25,7 +25,13 @@ observations `Y`, and let `p : S → Y` be equivariant.
 * **The strictness witness** (`cycle_symmetricChoicePrice_pos`): on
   `C_n` at resolution `q` with `1 < gcd n q`, under the rotation's
   `ℤ`-action, the winding-one class has positive price — G4 read as a
-  price. -/
+  price.
+* **The cycle's price, exactly** (`cycle_symmetricChoicePrice_eq`): it is
+  `log (n / coprimePart n q)`, where `coprimePart n q` is the largest
+  divisor of `n` coprime to `q`. A winding-one cochain of minimal period
+  `P` winds `n / P` times a block sum, so `n / P` must be a unit mod `q`;
+  `c⁻¹` on every `(n / c)`-th edge attains the bound. At `(4, 2)` the
+  price is `log 4` (`cycle_four_two_symmetricChoicePrice`). -/
 
 namespace Meno
 
@@ -346,6 +352,250 @@ theorem cycle_symmetricChoicePrice_pos (h : 1 < Nat.gcd n q) :
     simpa [MulAction.compHom_smul_def, zpowersHom_apply, Equiv.Perm.smul_def]
       using hrot
   · exact ((cycleGraph n hn).h1ResQuotEquivZMod q).symm.injective hx
+
+/-! ## The cycle's price, exactly -/
+
+open Fin.NatCast
+
+/-- **The coprime part** of `n` against `q`: its largest divisor coprime to
+`q`. -/
+def coprimePart (n q : ℕ) : ℕ :=
+  ((Nat.divisors n).filter fun d => Nat.Coprime d q).sup id
+
+omit [NeZero q] in
+include hn in
+theorem coprimePart_spec :
+    coprimePart n q ∣ n ∧ Nat.Coprime (coprimePart n q) q ∧
+      ∀ d, d ∣ n → Nat.Coprime d q → d ≤ coprimePart n q := by
+  have hne : ((Nat.divisors n).filter fun d => Nat.Coprime d q).Nonempty :=
+    ⟨1, Finset.mem_filter.mpr ⟨Nat.one_mem_divisors.mpr hn.ne', Nat.coprime_one_left q⟩⟩
+  obtain ⟨c, hc, hsup⟩ := Finset.exists_mem_eq_sup _ hne id
+  rw [Finset.mem_filter, Nat.mem_divisors] at hc
+  refine ⟨?_, ?_, fun d hd hcop => ?_⟩
+  · rw [coprimePart, hsup]; exact hc.1.1
+  · rw [coprimePart, hsup]; exact hc.2
+  · exact Finset.le_sup (f := id)
+      (Finset.mem_filter.mpr ⟨Nat.mem_divisors.mpr ⟨hd, hn.ne'⟩, hcop⟩)
+
+omit [NeZero q] in
+theorem cycleRotPerm_iterate_apply [NeZero n] (m : ℕ) (x : Fin n → ZMod q) (e : Fin n) :
+    ((cycleRotPerm n q hn)^[m] x) e = x (e + (m : Fin n)) := by
+  induction m generalizing x with
+  | zero => simp
+  | succ m ih =>
+    rw [Function.iterate_succ_apply, ih]
+    show x (e + (m : Fin n) + 1) = x (e + ((m + 1 : ℕ) : Fin n))
+    rw [Nat.cast_succ, add_assoc]
+
+omit [NeZero q] in
+theorem cycle_smul_apply (g : Multiplicative ℤ) (x : Fin n → ZMod q) :
+    letI := cycleRotAction n q hn
+    g • x = (cycleRotPerm n q hn ^ Multiplicative.toAdd g) x := rfl
+
+theorem cycle_mem_stabilizer (g : Multiplicative ℤ)
+    (y : IncidenceGraph.H1Reduction (cycleGraph n hn) q) :
+    letI := cycleClassAction n q hn
+    g ∈ stabilizer (Multiplicative ℤ) y := by
+  simp [mem_stabilizer_iff, MulAction.compHom_smul_def]
+
+/-- The fiber over the winding-one class is the cochains of winding sum `1`. -/
+theorem cycle_fiber_iff (x : Fin n → ZMod q) :
+    (cycleGraph n hn).carrierCompression q x
+        = (cycleGraph n hn).carrierCompression q (Pi.single ⟨0, hn⟩ 1)
+      ↔ ∑ e, x e = 1 := by
+  have : NeZero n := ⟨hn.ne'⟩
+  have key : ∀ z, (cycleGraph n hn).carrierCompression q z
+      = ((cycleGraph n hn).h1ResQuotEquivZMod q).symm (Submodule.Quotient.mk z) :=
+    fun _ => rfl
+  rw [key, key, ((cycleGraph n hn).h1ResQuotEquivZMod q).symm.injective.eq_iff]
+  constructor
+  · intro h
+    have h0 := congrArg
+      (fun κ => (cycleGraph n hn).latticeQuotEquivQ (cycleLatticeBasis n hn) q κ 0) h
+    rw [cycle_latticeQuotEquivQ_mk, cycle_latticeQuotEquivQ_mk] at h0
+    rw [h0]
+    exact Fintype.sum_pi_single' _ 1
+  · intro h
+    apply ((cycleGraph n hn).latticeQuotEquivQ (cycleLatticeBasis n hn) q).injective
+    funext j
+    rw [cycle_latticeQuotEquivQ_mk, cycle_latticeQuotEquivQ_mk, h, Fintype.sum_pi_single']
+
+omit [NeZero q] in
+theorem sum_range_mul_of_periodic {M : Type*} [AddCommMonoid M] (f : ℕ → M) (P : ℕ)
+    (hf : ∀ k, f (k + P) = f k) (a : ℕ) :
+    ∑ k ∈ Finset.range (a * P), f k = a • ∑ i ∈ Finset.range P, f i := by
+  have hshift : ∀ a i, f (a * P + i) = f i := fun a i => by
+    induction a with
+    | zero => simp
+    | succ a ih => rw [Nat.succ_mul, add_right_comm, hf, ih]
+  induction a with
+  | zero => simp
+  | succ a ih =>
+    rw [Nat.succ_mul, Finset.sum_range_add, ih, succ_nsmul]
+    congr 1
+    exact Finset.sum_congr rfl fun i _ => hshift a i
+
+omit [NeZero q] in
+/-- A cochain of period `P ∣ n` winds `n / P` times its first `P` values. -/
+theorem sum_of_periodic [NeZero n] (x : Fin n → ZMod q) (P : ℕ) (hP : P ∣ n)
+    (hx : ∀ e : Fin n, x (e + (P : Fin n)) = x e) :
+    ∑ e, x e = ((n / P : ℕ) : ZMod q) * ∑ i ∈ Finset.range P, x (i : Fin n) := by
+  let f : ℕ → ZMod q := fun k => x (k : Fin n)
+  have hf : ∀ k, f (k + P) = f k := fun k => by simp only [f, Nat.cast_add]; exact hx _
+  have h1 : ∑ e, x e = ∑ k ∈ Finset.range n, f k := by
+    rw [← Fin.sum_univ_eq_sum_range]; simp [f]
+  have h2 : Finset.range n = Finset.range (n / P * P) := by rw [Nat.div_mul_cancel hP]
+  rw [h1, h2, sum_range_mul_of_periodic f P hf, nsmul_eq_mul]
+
+/-- **The lower bound**: every cochain of winding one has a rotation orbit of
+at least `n / coprimePart n q` elements. Its minimal period `P` divides `n`,
+so it winds `n / P` times a block sum; winding one makes `n / P` a unit mod
+`q`, hence a divisor of `n` coprime to `q`. -/
+theorem cycle_le_card_stabOrbit (x : Fin n → ZMod q) (hx : ∑ e, x e = 1)
+    (y : IncidenceGraph.H1Reduction (cycleGraph n hn) q) :
+    letI := cycleRotAction n q hn
+    letI := cycleClassAction n q hn
+    n / coprimePart n q ≤ (stabOrbit (Multiplicative ℤ) y x).card := by
+  let := cycleRotAction n q hn
+  let := cycleClassAction n q hn
+  have : NeZero n := ⟨hn.ne'⟩
+  set σ := cycleRotPerm n q hn
+  have hper : Function.IsPeriodicPt σ n x := by
+    show σ^[n] x = x
+    funext e
+    rw [cycleRotPerm_iterate_apply, Fin.natCast_self, add_zero]
+  set P := Function.minimalPeriod σ x
+  have hPpos : 0 < P := hper.minimalPeriod_pos hn
+  have hPdvd : P ∣ n := hper.minimalPeriod_dvd
+  have hPx : ∀ e : Fin n, x (e + (P : Fin n)) = x e := fun e => by
+    rw [← cycleRotPerm_iterate_apply n q hn P x e, Function.iterate_minimalPeriod]
+  have hsum := sum_of_periodic n q x P hPdvd hPx
+  rw [hx] at hsum
+  have hcop : Nat.Coprime (n / P) q :=
+    (ZMod.isUnit_iff_coprime _ q).mp (IsUnit.of_mul_eq_one _ hsum.symm)
+  obtain ⟨_, _, hmax⟩ := coprimePart_spec n q hn
+  have hle : n / P ≤ coprimePart n q := hmax _ (Nat.div_dvd_of_dvd hPdvd) hcop
+  have hnP : 0 < n / P := Nat.div_pos (Nat.le_of_dvd hn hPdvd) hPpos
+  have hge : n / coprimePart n q ≤ P :=
+    calc n / coprimePart n q ≤ n / (n / P) := Nat.div_le_div_left hle hnP
+      _ = P := Nat.div_div_self hPdvd hn.ne'
+  have hsub : (Finset.range P).image (fun i => σ^[i] x) ⊆ stabOrbit (Multiplicative ℤ) y x := by
+    intro z hz
+    obtain ⟨i, _, rfl⟩ := Finset.mem_image.mp hz
+    refine (mem_stabOrbit _).mpr
+      ⟨Multiplicative.ofAdd (i : ℤ), cycle_mem_stabilizer n q hn _ y, ?_⟩
+    rw [cycle_smul_apply]
+    simp [σ, zpow_natCast, Equiv.Perm.coe_pow]
+  have hcard : ((Finset.range P).image (fun i => σ^[i] x)).card = P := by
+    rw [Finset.card_image_of_injOn, Finset.card_range]
+    intro i hi j hj h
+    exact Function.iterate_injOn_Iio_minimalPeriod (by simpa using hi) (by simpa using hj) h
+  calc n / coprimePart n q ≤ P := hge
+    _ = _ := hcard.symm
+    _ ≤ _ := Finset.card_le_card hsub
+
+/-- **The upper bound**: a cochain of winding one with a rotation orbit of
+exactly `n / coprimePart n q` elements — `c⁻¹` on every `(n / c)`-th edge,
+`c = coprimePart n q`. -/
+theorem cycle_exists_small_orbit (y : IncidenceGraph.H1Reduction (cycleGraph n hn) q) :
+    letI := cycleRotAction n q hn
+    letI := cycleClassAction n q hn
+    ∃ x : Fin n → ZMod q, ∑ e, x e = 1 ∧
+      (stabOrbit (Multiplicative ℤ) y x).card ≤ n / coprimePart n q := by
+  let := cycleRotAction n q hn
+  let := cycleClassAction n q hn
+  have : NeZero n := ⟨hn.ne'⟩
+  obtain ⟨hcdvd, hccop, hmax⟩ := coprimePart_spec n q hn
+  set c := coprimePart n q
+  set d := n / c
+  have hcpos : 0 < c := Nat.pos_of_ne_zero fun h0 => by
+    have := hmax 1 (one_dvd n) (Nat.coprime_one_left q); omega
+  have hdpos : 0 < d := Nat.div_pos (Nat.le_of_dvd hn hcdvd) hcpos
+  have hddvd : d ∣ n := Nat.div_dvd_of_dvd hcdvd
+  have hdle : d ≤ n := Nat.le_of_dvd hn hddvd
+  set σ := cycleRotPerm n q hn
+  let x0 : Fin n → ZMod q := fun e => if d ∣ e.val then (c : ZMod q)⁻¹ else 0
+  have hper : ∀ e : Fin n, x0 (e + (d : Fin n)) = x0 e := fun e => by
+    have hdd : d ∣ d % n := (Nat.dvd_mod_iff hddvd).mpr dvd_rfl
+    have : d ∣ (e + (d : Fin n)).val ↔ d ∣ e.val := by
+      rw [Fin.val_add, Fin.val_natCast, Nat.dvd_mod_iff hddvd]
+      exact (Nat.dvd_add_left hdd)
+    simp only [x0, this]
+  refine ⟨x0, ?_, ?_⟩
+  · rw [sum_of_periodic n q x0 d hddvd hper, Nat.div_div_self hcdvd hn.ne']
+    rw [Finset.sum_eq_single 0]
+    · simp only [x0, Nat.cast_zero, Fin.val_zero, dvd_zero, if_true]
+      exact ZMod.coe_mul_inv_eq_one c hccop
+    · intro i hi hi0
+      have hi' : i < d := Finset.mem_range.mp hi
+      have hval : ((i : Fin n)).val = i := by
+        rw [Fin.val_natCast]; exact Nat.mod_eq_of_lt (by omega)
+      simp only [x0, hval]
+      rw [if_neg]
+      intro hdi
+      exact hi0 (Nat.eq_zero_of_dvd_of_lt hdi hi')
+    · intro h; exact absurd (Finset.mem_range.mpr hdpos) h
+  · have hfix : (σ ^ d) x0 = x0 := by
+      rw [Equiv.Perm.coe_pow]
+      funext e
+      rw [cycleRotPerm_iterate_apply, hper]
+    have hsub : stabOrbit (Multiplicative ℤ) y x0 ⊆ (Finset.range d).image (fun i => σ^[i] x0) := by
+      intro z hz
+      obtain ⟨g, _, rfl⟩ := (mem_stabOrbit _).mp hz
+      rw [cycle_smul_apply]
+      set k := Multiplicative.toAdd g
+      have hdz : (d : ℤ) ≠ 0 := by exact_mod_cast hdpos.ne'
+      have hk : σ ^ k = σ ^ (k % (d : ℤ)) * (σ ^ d) ^ (k / (d : ℤ)) := by
+        rw [← zpow_natCast, ← zpow_mul, ← zpow_add, mul_comm (d : ℤ), Int.emod_add_ediv_mul]
+      have hnn : 0 ≤ k % (d : ℤ) := Int.emod_nonneg k hdz
+      have hlt : k % (d : ℤ) < d := Int.emod_lt_of_pos k (by exact_mod_cast hdpos)
+      refine Finset.mem_image.mpr ⟨(k % (d : ℤ)).toNat, Finset.mem_range.mpr (by omega), ?_⟩
+      rw [hk, Equiv.Perm.mul_apply, Equiv.Perm.zpow_apply_eq_self_of_apply_eq_self hfix,
+        ← Int.toNat_of_nonneg hnn, zpow_natCast, Equiv.Perm.coe_pow, Int.toNat_natCast]
+    calc (stabOrbit (Multiplicative ℤ) y x0).card
+        ≤ ((Finset.range d).image (fun i => σ^[i] x0)).card := Finset.card_le_card hsub
+      _ ≤ (Finset.range d).card := Finset.card_image_le
+      _ = d := Finset.card_range d
+
+/-- **THE CYCLE'S PRICE** (the exact law): under the rotation's `ℤ`-action,
+the price of symmetric choice of the winding-one class of `C_n` at
+resolution `q` is `log (n / coprimePart n q)` — the log of the part of `n`
+that shares its primes with `q`. It vanishes exactly at coprimality. -/
+theorem cycle_symmetricChoicePrice_eq :
+    letI := cycleRotAction n q hn
+    letI := cycleClassAction n q hn
+    symmetricChoicePrice (Multiplicative ℤ)
+        ((cycleGraph n hn).carrierCompression q)
+        ((cycleGraph n hn).carrierCompression q (Pi.single ⟨0, hn⟩ 1))
+      = Real.log (n / coprimePart n q : ℕ) := by
+  let := cycleRotAction n q hn
+  let := cycleClassAction n q hn
+  set y : IncidenceGraph.H1Reduction (cycleGraph n hn) q :=
+    (cycleGraph n hn).carrierCompression q (Pi.single ⟨0, hn⟩ 1)
+  unfold symmetricChoicePrice
+  congr 2
+  apply le_antisymm
+  · obtain ⟨x0, hx0, hcard⟩ := cycle_exists_small_orbit n q hn y
+    exact (orbitFloor_le ((cycle_fiber_iff n q hn x0).mpr hx0)).trans hcard
+  · obtain ⟨x, hx, hc⟩ := orbitFloor_spec (Γ := Multiplicative ℤ)
+      (p := (cycleGraph n hn).carrierCompression q) (y := y) ⟨Pi.single ⟨0, hn⟩ 1, rfl⟩
+    rw [← hc]
+    exact cycle_le_card_stabOrbit n q hn x ((cycle_fiber_iff n q hn x).mp hx) y
+
+omit [NeZero q] in
+theorem coprimePart_four_two : coprimePart 4 2 = 1 := by decide
+
+/-- **The witness, priced**: at `(n, q) = (4, 2)` the price is `log 4` —
+the whole ring, since `4` shares every prime with `2`. -/
+theorem cycle_four_two_symmetricChoicePrice :
+    letI := cycleRotAction 4 2 (Nat.succ_pos 3)
+    letI := cycleClassAction 4 2 (Nat.succ_pos 3)
+    symmetricChoicePrice (Multiplicative ℤ)
+        ((cycleGraph 4 (Nat.succ_pos 3)).carrierCompression 2)
+        ((cycleGraph 4 (Nat.succ_pos 3)).carrierCompression 2 (Pi.single ⟨0, Nat.succ_pos 3⟩ 1))
+      = Real.log 4 := by
+  rw [cycle_symmetricChoicePrice_eq, coprimePart_four_two]
+  norm_num
 
 end Cycle
 
