@@ -38,6 +38,7 @@ import Meno.ResolutionCount
 
 -- Symmetry: automorphisms, the no-go for symmetric descriptions
 import Meno.Symmetry
+import Meno.SymmetricChoice
 
 -- Closure: one-valued class steps, which noise preserves them, and decoding
 import Meno.Closure

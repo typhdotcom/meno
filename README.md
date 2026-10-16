@@ -112,7 +112,7 @@ linked sections; the anchors are the theorems themselves.
 | **G1 — geometry** ([Geometry](#geometry)) | Pairing squared is bounded by harmonic energy times chain norm; mass bounds the systole | law `pairing_sq_le_energy_mul_normSq`, `MatterSector.mass_systole`; boundary `dualNorm_combination_eq_iff`, equality `cycle_systole_equality`; strictness `theta_mass_gt_systole`; impossibility `MatterSector.not_gradient` |
 | **G2 — gravity** ([Gravity](#gravity)) | The coupling defect is the log-correlation of the two redundancy profiles | law `gravity_defect`; boundary `gravity_defect_eq_zero_iff`; sign law `gravityDefect_pos_iff`, `gravityDefect_neg_iff`; direction `gravityDefect_nonneg_of_comonotone` with repulsion witness `exists_gravity_defect_neg`; strictness `twoSector_gravityDefect_pos`; impossibility `exists_gravity_defect_ne_zero` |
 | **G3 — the tower** ([The resolution tower](#the-resolution-tower)) | The four-resolution defect is a cross-ratio of scaled partition functions | law `residue_gravity_crossRatio`, CRT `h1ReductionCRT`; boundary `residue_gravity_dvd`; strictness `cycle3_crossRatio_neg`; impossibility `exists_incomparable_residue_gravity_neg` |
-| **G4 — symmetry** ([Symmetry](#symmetry)) | A symmetry-respecting description exists iff coprimality | law `cycle_equivariant_section_iff`; impossibility `cycle_no_invariant_representative`; strictness `cycle_four_two_no_equivariant_section`; boundary `cycle_three_two_equivariant_section` |
+| **G4 — symmetry** ([Symmetry](#symmetry)) | A symmetry-respecting description exists iff coprimality | law `cycle_equivariant_section_iff`; impossibility `cycle_no_invariant_representative`; strictness `cycle_four_two_no_equivariant_section`; boundary `cycle_three_two_equivariant_section`; in general `exists_equivariant_section_iff`, priced by `symmetricChoicePrice_le_shannonEntropy` |
 | **G5 — time** ([Time and information](#time-and-information)) | The ratchet's priced increment dominates the Gibbs-mean log-redundancy | law `lift_complexity_ge_gibbs_log_rate`, `sectionCost_eq_sum_log_fiberCount`; boundary `lift_complexity_sub_eq_iff_fiberCount_const`; strictness `twoSector_jensen_gap_pos`; impossibility `sectionCostE_eq_zero_iff` |
 | **G6 — binding** ([Binding](#binding)) | At `b₁ = 2`, the two basis sectors attract exactly when their cycles overlap with consistent orientation | law `binding_attractive_iff` on the intrinsic `bindingEnergyClass`; closed form `ofCycles_bindingEnergy_fin_two`; strictness `theta_binding_attractive_class`; boundary `wedge_binding_zero`; impossibility `exists_overlap_pos_binding_neg` |
 | **G7 — the dichotomy** ([The dichotomy](#the-dichotomy)) | Cycles, matter, spectrum, fluctuation, deficit, arrow — pairwise equivalent | `meno_tfae`; conjunction chart `meno_dichotomy` |
@@ -363,6 +363,24 @@ breaks the symmetry — the choice of bit is physical.
 | `cycleRot_h1Map_int`, `cycleRot_h1ReductionMap` | The rotation is trivial on integral classes and on the carrier's finite reduction — the *content* is symmetric even where every *description* of it is not |
 | `cycle_four_two_no_invariant_representative`, `cycle_four_two_no_equivariant_section` | **The strictness witness** at `(n, q) = (4, 2)`: no invariant representative, no equivariant section |
 | `cycle_three_two_equivariant_section` | **The boundary witness** at `(n, q) = (3, 2)`: the equivariant section, exhibited |
+
+#### Symmetric choice
+
+G4 holds for any group (`Meno/SymmetricChoice.lean`). Let `Γ` act on
+fine states and observations, with `p` equivariant. Sections always
+exist; one commuting with `Γ` exists iff every observation has a lift
+fixed by its stabilizer. Where none exists, symmetric choice is still
+possible as a distribution, and its least entropy is the log of the
+smallest stabilizer orbit in the fiber.
+
+| Result | Statement |
+| :--- | :--- |
+| `exists_equivariant_section_iff` | **The law**: an equivariant section exists iff every `y` has a lift fixed by `stabilizer Γ y` — any group, any types; the backward direction chooses one lift per orbit |
+| `symmetricChoicePrice_le_shannonEntropy` | **The price**: every stabilizer-invariant distribution on the fiber has entropy at least `log` of the smallest stabilizer orbit (`symmetricChoicePrice`) |
+| `exists_symmetricChoice_entropy_eq` | **Attainment**: the uniform distribution on a smallest orbit is symmetric and costs exactly the price |
+| `symmetricChoicePrice_eq_zero_iff`, `exists_equivariant_section_iff_price` | **The boundary**: the price vanishes iff a fixed lift exists; an equivariant section exists iff it vanishes everywhere |
+| `symmetricChoicePrice_le_recoveryCost` | **The ceiling**: the price never exceeds the fiber's recovery cost `log \|p⁻¹{y}\|` |
+| `cycle_symmetricChoicePrice_pos` | **The strictness**: on `C_n` at `1 < gcd n q`, under the rotation's `ℤ`-action, the winding-one class has positive price |
 
 ### Correction (G10)
 
@@ -808,6 +826,7 @@ Meno/
 ├── InfoRatchet.lean           Fiber information; the coding theorem; the gravity theorem and its counting corollary; finite distributions; the currency's KL identity (G9)
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
+├── SymmetricChoice.lean       G4 in general: the equivariant-section law for any group, the entropy price of symmetric choice, its boundary and ceiling, the cycle as strictness
 ├── Closure.lean               Correction (G10) — closed steps: the descent law for noisy linear steps, the induced class map, composition; automorphisms descend; single-edge error on C_n does not
 ├── Decoding.lean              Correction (G10) — syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
 ├── DecodingCost.lean          Correction (G10) — the price: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term
