@@ -379,6 +379,8 @@ smallest stabilizer orbit in the fiber.
 | `symmetricChoicePrice_le_shannonEntropy` | **The price**: every stabilizer-invariant distribution on the fiber has entropy at least `log` of the smallest stabilizer orbit (`symmetricChoicePrice`) |
 | `exists_symmetricChoice_entropy_eq` | **Attainment**: the uniform distribution on a smallest orbit is symmetric and costs exactly the price |
 | `symmetricChoicePrice_eq_zero_iff`, `exists_equivariant_section_iff_price` | **The boundary**: the price vanishes iff a fixed lift exists; an equivariant section exists iff it vanishes everywhere |
+| `symmetricChoicePrice_le_entropy_add_asymmetry` | **The ledger**: every distribution on the fiber pays the price as entropy plus asymmetry — the entropy that averaging over stabilizer orbits adds (`symmetrize`, `asymmetry_nonneg`, its relative entropy against the average). Classically a representative is paid for by mixing or by choosing |
+| `asymmetry_dirac` | **The choosing corner**: a point mass pays `log` of its stabilizer orbit, all in asymmetry; the uniform orbit of `exists_symmetricChoice_entropy_eq` is the mixing corner, all in entropy |
 | `symmetricChoicePrice_le_recoveryCost` | **The ceiling**: the price never exceeds the fiber's recovery cost `log \|p⁻¹{y}\|` |
 | `cycle_symmetricChoicePrice_pos` | **The strictness**: on `C_n` at `1 < gcd n q`, under the rotation's `ℤ`-action, the winding-one class has positive price |
 | `cycle_symmetricChoicePrice_eq` | **The cycle's price, exactly**: `log (n / coprimePart n q)`, with `coprimePart n q` the largest divisor of `n` coprime to `q` — the log of the part of `n` that shares its primes with `q`; `log 4` at `(4, 2)` (`cycle_four_two_symmetricChoicePrice`) |
@@ -827,7 +829,7 @@ Meno/
 ├── InfoRatchet.lean           Fiber information; the coding theorem; the gravity theorem and its counting corollary; finite distributions; the currency's KL identity (G9)
 ├── ResolutionCount.lean       K1–K3 at every resolution; gauge count; section cost; the Gibbs residue distribution
 ├── Symmetry.lean              Graph automorphisms; the rotation; the symmetry no-go and the equivariant-section law (G4)
-├── SymmetricChoice.lean       G4 in general: the equivariant-section law for any group, the entropy price of symmetric choice, its boundary and ceiling; the cycle's price exactly
+├── SymmetricChoice.lean       G4 in general: the equivariant-section law for any group, the entropy price of symmetric choice, the mix-or-choose ledger, its boundary and ceiling; the cycle's price exactly
 ├── Closure.lean               Correction (G10) — closed steps: the descent law for noisy linear steps, the induced class map, composition; automorphisms descend; single-edge error on C_n does not
 ├── Decoding.lean              Correction (G10) — syndromes and decoders on 2-complexes; the exact distance law; the bare cycle corrects nothing; the C₃ × P₃ cylinder has distance three
 ├── DecodingCost.lean          Correction (G10) — the price: decoder-free closure, the capacity law and its saturation boundary, the K2 gauge term

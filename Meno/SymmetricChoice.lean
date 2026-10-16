@@ -20,6 +20,12 @@ observations `Y`, and let `p : S → Y` be equivariant.
   `exists_equivariant_section_iff_price`): the price vanishes iff a
   fixed lift exists, so an equivariant section exists iff every price
   vanishes.
+* **The ledger** (`symmetricChoicePrice_le_entropy_add_asymmetry`): any
+  distribution on the fiber pays the price in entropy plus asymmetry, the
+  entropy that averaging over stabilizer orbits adds (`asymmetry_nonneg`).
+  A point mass pays its whole orbit in asymmetry (`asymmetry_dirac`).
+  Classically there are two currencies, mixing and choosing; the quantum
+  ledger adds superposition, paid in non-locality.
 * **The ceiling** (`symmetricChoicePrice_le_recoveryCost`): the price
   never exceeds the recovery cost `log |p⁻¹{y}|` of the coding theorem.
 * **The strictness witness** (`cycle_symmetricChoicePrice_pos`): on
@@ -302,6 +308,171 @@ theorem symmetricChoicePrice_le_recoveryCost {p : S → Y} {y : Y}
   apply Real.log_le_log (by exact_mod_cast orbitFloor_pos (Γ := Γ) hy)
   rw [← hc]
   exact_mod_cast hcard
+
+/-! ### The classical ledger: mix or choose
+
+Averaging a distribution over stabilizer orbits makes it symmetric. What
+the averaging adds to its entropy is its asymmetry, so entropy plus
+asymmetry is the entropy of a symmetric choice, which is at least the
+price. Classically a representative is paid for in two currencies only:
+mixing (entropy) or choosing (asymmetry). -/
+
+variable (Γ)
+
+theorem mem_stabOrbit_comm {y : Y} {x z : S} :
+    z ∈ stabOrbit Γ y x ↔ x ∈ stabOrbit Γ y z := by
+  simp only [mem_stabOrbit]
+  constructor <;> rintro ⟨g, hg, rfl⟩ <;>
+    exact ⟨g⁻¹, inv_mem hg, inv_smul_smul g _⟩
+
+theorem stabOrbit_eq_of_mem {y : Y} {x z : S} (h : z ∈ stabOrbit Γ y x) :
+    stabOrbit Γ y z = stabOrbit Γ y x := by
+  obtain ⟨g, hg, rfl⟩ := (mem_stabOrbit Γ).mp h
+  ext w
+  simp only [mem_stabOrbit]
+  constructor
+  · rintro ⟨h', hh', rfl⟩
+    exact ⟨h' * g, mul_mem hh' hg, mul_smul _ _ _⟩
+  · rintro ⟨h', hh', rfl⟩
+    exact ⟨h' * g⁻¹, mul_mem hh' (inv_mem hg), by rw [mul_smul, inv_smul_smul]⟩
+
+/-- **The symmetrization** of `μ`: its average over each stabilizer orbit. -/
+noncomputable def symmetrize (y : Y) (μ : S → ℝ) (x : S) : ℝ :=
+  (∑ z ∈ stabOrbit Γ y x, μ z) / (stabOrbit Γ y x).card
+
+theorem symmetrize_eq_of_mem {y : Y} {μ : S → ℝ} {x z : S} (h : z ∈ stabOrbit Γ y x) :
+    symmetrize Γ y μ z = symmetrize Γ y μ x := by
+  rw [symmetrize, symmetrize, stabOrbit_eq_of_mem Γ h]
+
+/-- Against an orbit-constant weight, a distribution and its symmetrization
+agree. -/
+theorem sum_symmetrize_mul {y : Y} (μ f : S → ℝ)
+    (hf : ∀ x z, z ∈ stabOrbit Γ y x → f z = f x) :
+    ∑ x, symmetrize Γ y μ x * f x = ∑ x, μ x * f x := by
+  classical
+  calc ∑ x, symmetrize Γ y μ x * f x
+      = ∑ x, ∑ z, if z ∈ stabOrbit Γ y x then μ z * f x / (stabOrbit Γ y x).card else 0 := by
+        refine Finset.sum_congr rfl fun x _ => ?_
+        rw [Finset.sum_ite_mem, Finset.univ_inter, symmetrize, div_mul_eq_mul_div,
+          Finset.sum_mul, Finset.sum_div]
+    _ = ∑ z, ∑ x, if z ∈ stabOrbit Γ y x then μ z * f x / (stabOrbit Γ y x).card else 0 :=
+        Finset.sum_comm
+    _ = ∑ z, μ z * f z := by
+        refine Finset.sum_congr rfl fun z _ => ?_
+        have hpos : (0 : ℝ) < (stabOrbit Γ y z).card := by
+          exact_mod_cast card_stabOrbit_pos Γ y z
+        calc (∑ x, if z ∈ stabOrbit Γ y x then μ z * f x / (stabOrbit Γ y x).card else 0)
+            = ∑ x, if x ∈ stabOrbit Γ y z then μ z * f z / (stabOrbit Γ y z).card else 0 := by
+              refine Finset.sum_congr rfl fun x _ => ?_
+              by_cases hx : x ∈ stabOrbit Γ y z
+              · have hz : z ∈ stabOrbit Γ y x := (mem_stabOrbit_comm Γ).mpr hx
+                rw [if_pos hz, if_pos hx, hf x z hz, stabOrbit_eq_of_mem Γ hx]
+              · rw [if_neg (fun hz => hx ((mem_stabOrbit_comm Γ).mp hz)), if_neg hx]
+          _ = μ z * f z := by
+              rw [Finset.sum_ite_mem, Finset.univ_inter, Finset.sum_const, nsmul_eq_mul,
+                mul_div_cancel₀ _ hpos.ne']
+
+theorem sum_symmetrize {y : Y} (μ : S → ℝ) : ∑ x, symmetrize Γ y μ x = ∑ x, μ x := by
+  simpa using sum_symmetrize_mul Γ μ (fun _ => (1 : ℝ)) (fun _ _ _ => rfl)
+
+theorem symmetrize_nonneg {y : Y} {μ : S → ℝ} (hμ : ∀ x, 0 ≤ μ x) (x : S) :
+    0 ≤ symmetrize Γ y μ x :=
+  div_nonneg (Finset.sum_nonneg fun z _ => hμ z) (Nat.cast_nonneg _)
+
+/-- **Symmetrizing is a symmetric choice**: a distribution on the fiber,
+averaged over stabilizer orbits, is stabilizer-invariant and stays on the
+fiber. -/
+theorem symmetrize_symmetricChoice {p : S → Y} (hp : ∀ (g : Γ) x, p (g • x) = g • p x)
+    {y : Y} {μ : S → ℝ} (hμ0 : ∀ x, 0 ≤ μ x) (hμ1 : ∑ x, μ x = 1)
+    (hsupp : ∀ x, μ x ≠ 0 → p x = y) :
+    SymmetricChoice Γ p y (symmetrize Γ y μ) where
+  nonneg := symmetrize_nonneg Γ hμ0
+  sum_one := by rw [sum_symmetrize, hμ1]
+  supp x hx := by
+    have : ∃ z ∈ stabOrbit Γ y x, μ z ≠ 0 := by
+      by_contra hne
+      simp only [not_exists, not_and, not_not] at hne
+      exact hx (by rw [symmetrize, Finset.sum_eq_zero hne, zero_div])
+    obtain ⟨z, hz, hμz⟩ := this
+    obtain ⟨g, hg, rfl⟩ := (mem_stabOrbit Γ).mp hz
+    have h1 := hsupp _ hμz
+    rw [hp] at h1
+    calc p x = g⁻¹ • g • p x := (inv_smul_smul g _).symm
+      _ = y := by rw [h1]; exact mem_stabilizer_iff.mp (inv_mem hg)
+  inv g hg x := symmetrize_eq_of_mem Γ ((mem_stabOrbit Γ).mpr ⟨g, hg, rfl⟩)
+
+/-- **The asymmetry** of `μ`: the entropy its symmetrization adds. -/
+noncomputable def asymmetry (y : Y) (μ : S → ℝ) : ℝ :=
+  shannonEntropy (symmetrize Γ y μ) - shannonEntropy μ
+
+theorem shannonEntropy_add_asymmetry (y : Y) (μ : S → ℝ) :
+    shannonEntropy μ + asymmetry Γ y μ = shannonEntropy (symmetrize Γ y μ) := by
+  unfold asymmetry; ring
+
+/-- **The asymmetry is nonnegative**: it is the relative entropy of `μ`
+against its symmetrization. -/
+theorem asymmetry_nonneg {y : Y} {μ : S → ℝ} (hμ : ∀ x, 0 ≤ μ x) :
+    0 ≤ asymmetry Γ y μ := by
+  set ν := symmetrize Γ y μ
+  have hlog : ∑ x, ν x * Real.log (ν x) = ∑ x, μ x * Real.log (ν x) :=
+    sum_symmetrize_mul Γ μ (fun x => Real.log (ν x))
+      (fun x z h => by simp only [ν]; rw [symmetrize_eq_of_mem Γ h])
+  have hterm : ∀ x, μ x - ν x ≤ μ x * Real.log (μ x) - μ x * Real.log (ν x) := fun x => by
+    rcases (hμ x).eq_or_lt with h0 | hpos
+    · rw [← h0]; simp only [zero_mul, sub_zero, zero_sub, neg_nonpos]
+      exact symmetrize_nonneg Γ hμ x
+    · have hν : 0 < ν x := by
+        have hle : μ x ≤ ∑ z ∈ stabOrbit Γ y x, μ z :=
+          Finset.single_le_sum (fun z _ => hμ z) (self_mem_stabOrbit Γ y x)
+        exact div_pos (lt_of_lt_of_le hpos hle) (by exact_mod_cast card_stabOrbit_pos Γ y x)
+      have key := Real.one_sub_inv_le_log_of_pos (div_pos hpos hν)
+      rw [inv_div, Real.log_div hpos.ne' hν.ne'] at key
+      have : μ x * (1 - ν x / μ x) = μ x - ν x := by field_simp
+      nlinarith [mul_le_mul_of_nonneg_left key hpos.le]
+  unfold asymmetry shannonEntropy
+  have hsum : ∑ x, (μ x - ν x) = 0 := by
+    rw [Finset.sum_sub_distrib, sum_symmetrize, sub_self]
+  have := Finset.sum_le_sum fun x (_ : x ∈ Finset.univ) => hterm x
+  rw [hsum, Finset.sum_sub_distrib] at this
+  linarith
+
+/-- **THE CLASSICAL LEDGER**: entropy plus asymmetry is at least the price
+of symmetric choice. A representative is paid for by mixing or by choosing. -/
+theorem symmetricChoicePrice_le_entropy_add_asymmetry {p : S → Y}
+    (hp : ∀ (g : Γ) x, p (g • x) = g • p x) {y : Y} {μ : S → ℝ}
+    (hμ0 : ∀ x, 0 ≤ μ x) (hμ1 : ∑ x, μ x = 1) (hsupp : ∀ x, μ x ≠ 0 → p x = y) :
+    symmetricChoicePrice Γ p y ≤ shannonEntropy μ + asymmetry Γ y μ := by
+  rw [shannonEntropy_add_asymmetry]
+  exact symmetricChoicePrice_le_shannonEntropy (symmetrize_symmetricChoice Γ hp hμ0 hμ1 hsupp)
+
+theorem shannonEntropy_uniform [DecidableEq S] (O : Finset S) (hO : O.Nonempty) :
+    shannonEntropy (fun z => if z ∈ O then (O.card : ℝ)⁻¹ else 0) = Real.log O.card := by
+  have hc : (0 : ℝ) < O.card := by exact_mod_cast hO.card_pos
+  unfold shannonEntropy
+  have : ∀ z, (if z ∈ O then (O.card : ℝ)⁻¹ else 0) * Real.log (if z ∈ O then (O.card : ℝ)⁻¹ else 0)
+      = if z ∈ O then (O.card : ℝ)⁻¹ * Real.log (O.card : ℝ)⁻¹ else 0 := fun z => by
+    split_ifs <;> simp
+  simp only [this]
+  rw [Finset.sum_ite_mem, Finset.univ_inter, Finset.sum_const, nsmul_eq_mul, ← mul_assoc,
+    mul_inv_cancel₀ hc.ne', one_mul, Real.log_inv, neg_neg]
+
+/-- **The choosing corner**: a point mass is pure and pays its whole orbit
+in asymmetry, `log |stabOrbit x|`. -/
+theorem asymmetry_dirac [DecidableEq S] (y : Y) (x : S) :
+    asymmetry Γ y (fun z => if z = x then 1 else 0) = Real.log (stabOrbit Γ y x).card := by
+  have hsym : symmetrize Γ y (fun z => if z = x then 1 else 0)
+      = fun z => if z ∈ stabOrbit Γ y x then ((stabOrbit Γ y x).card : ℝ)⁻¹ else 0 := by
+    funext z
+    rw [symmetrize, Finset.sum_ite_eq']
+    by_cases hz : z ∈ stabOrbit Γ y x
+    · rw [if_pos ((mem_stabOrbit_comm Γ).mp hz), if_pos hz, stabOrbit_eq_of_mem Γ hz, one_div]
+    · rw [if_neg (fun h => hz ((mem_stabOrbit_comm Γ).mpr h)), if_neg hz, zero_div]
+  have hpure : shannonEntropy (fun z => if z = x then (1 : ℝ) else 0) = 0 := by
+    unfold shannonEntropy
+    rw [neg_eq_zero]
+    exact Finset.sum_eq_zero fun z _ => by dsimp only; split_ifs <;> simp
+  rw [asymmetry, hsym, hpure, sub_zero,
+    shannonEntropy_uniform _ ⟨x, self_mem_stabOrbit Γ y x⟩]
 
 end General
 
