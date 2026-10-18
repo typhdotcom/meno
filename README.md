@@ -890,3 +890,23 @@ Requires the Lean toolchain in `lean-toolchain` and the pinned Mathlib.
 ```bash
 lake build
 ```
+
+## Stored analysis
+
+`tasks.nu` pins droste independently of the Lean library. The snapshot and
+project commands install that pin, build both projects, and use the shared
+Perkeep math service at `localhost:3180`.
+
+```nu
+nu tasks.nu snapshot
+nu tasks.nu project edges
+nu tasks.nu project idioms
+nu tasks.nu project generality
+```
+
+`snapshot` exports `Meno` and its dependency closure, uploads the blobs, and
+updates `~/.local/state/perkeep-math/anchors/meno` (under `$XDG_STATE_HOME`
+when set). `project` returns a stored run reference, reusing the result for
+that snapshot and projector when available. To analyse a changed build,
+run `snapshot` first. Temporary export streams are removed after use;
+snapshots and analysis results live in the global store.
