@@ -217,9 +217,9 @@ theorem meno_dichotomy (G : IncidenceGraph.{u}) :
   have h := meno_tfae G
   constructor
   · intro hb
-    exact ⟨(h.out 0 1).mp hb, (h.out 0 2).mp hb, (h.out 0 3).mp hb,
-      (h.out 0 4).mp hb, (h.out 0 5).mp hb⟩
+    exact ⟨(h.out 1 2).mp hb, (h.out 1 3).mp hb, (h.out 1 4).mp hb,
+      (h.out 1 5).mp hb, (h.out 1 6).mp hb⟩
   · rintro ⟨hm, -, -, -, -⟩
-    exact (h.out 0 1).mpr hm
+    exact (h.out 1 2).mpr hm
 
 end Meno

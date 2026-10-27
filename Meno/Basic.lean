@@ -1,7 +1,7 @@
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Algebra.Order.Monoid.Defs
 import Mathlib.Logic.Equiv.Basic
-import Mathlib.Logic.Unique
+import Mathlib.Basic.Unique
 import Mathlib.Data.Set.Image
 import Mathlib.Tactic
 

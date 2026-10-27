@@ -1,7 +1,7 @@
 # Sources read at a fixed commit of their repo.
 const deps = [
     [name repo rev];
-    [droste ~/dev/droste 4808b50b68598bc2deed9d22660a17bc70f2fe86]
+    [droste ~/dev/droste 9c33f5740ad54b3cef5a30f6f48a0766f41024ff]
 ]
 
 def main [] {

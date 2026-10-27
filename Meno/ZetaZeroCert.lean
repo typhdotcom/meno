@@ -343,7 +343,7 @@ theorem exists_zero : ∃ z ∈ closedBall (centre P) (((P.Dm : ℝ) - P.D0) / U
       (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
       (by norm_num) (by norm_num) (by norm_num))
     (c := c) (cn := 2677 / 10000) (q := 1 / 2) (by norm_num) norm_c (by norm_num) (by norm_num)
-    hok ?_ ?_
+    (by rw [← ha]; exact hok) ?_ ?_
   · rw [← ha]
     norm_num [P, U]
     linarith
