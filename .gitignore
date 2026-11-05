@@ -9,7 +9,6 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ruff_cache/
-<<<<<<< before updating
 
 # other agents' local state
 .mcp.json
@@ -17,20 +16,5 @@ __pycache__/
 /.gemini
 /.repair/
 
-# claude code runtime state
-/.claude/settings.local.json
-/.claude/scheduled_tasks.json
-/.claude/scheduled_tasks.lock
-/.claude/routines/.state/
-/.claude/worktrees/
-/.claude/checkpoints/
-/.claude/mailbox/
-/.claude/agent-registry.json
-/.claude/agent-memory-local/
-/.claude/first-run
-/.claude/assistant-daemon-state.json
-
 # Pinned tool sources installed by tasks.nu
 /deps/
-=======
->>>>>>> after updating
