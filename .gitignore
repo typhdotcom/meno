@@ -9,6 +9,7 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ruff_cache/
+<<<<<<< before updating
 
 # other agents' local state
 .mcp.json
@@ -31,3 +32,5 @@ __pycache__/
 
 # Pinned tool sources installed by tasks.nu
 /deps/
+=======
+>>>>>>> after updating

@@ -46,10 +46,13 @@ this project.
 
 ## Flake layout
 
-`flake.nix` imports every `*.nix` file in `nix/` as a flake-parts module.
-Extend the flake by adding a file there, or by editing `nix/devshell.nix`,
-which belongs to the project. The other modules come from the project
-template; edits to them are legal but merge three-way on `copier update`.
+`flake.nix` declares flake inputs and imports every `*.nix` file in `nix/` as a
+flake-parts module. Declare project-specific inputs there. Add project outputs
+in a new module under `nix/`, and assemble the working environment in
+`nix/devshell.nix`.
+
+`nix/checks.nix` and `nix/formatter.nix` come from the project template; edits
+to them are legal but merge three-way on `copier update`.
 
 `nix/formatter.nix` provides treefmt. Run with `nix fmt`.
 
