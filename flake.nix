@@ -8,7 +8,7 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
     typh-perkeep = {
-      url = "git+https://git.typh.com/typh/perkeep.git";
+      url = "git+https://git.typh.com/typh/perkeep.git?ref=local/dev";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     treefmt-nix = {

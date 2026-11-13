@@ -20,6 +20,27 @@
         "type": "github"
       }
     },
+    "flake-parts_2": {
+      "inputs": {
+        "nixpkgs-lib": [
+          "typh-perkeep",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788450739,
+        "narHash": "sha256-glZLQlzIn1fXH6PazR2iUmTo7kzzyYSshrWhLS9TqCU=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "31729ca8cbdb4fa927b34e5f4353e6a83f39e993",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1776329215,
@@ -64,49 +85,6 @@
         "type": "github"
       }
     },
-    "typh-perkeep": {
-      "inputs": {
-        "flake-parts": "flake-parts_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "treefmt-nix": "treefmt-nix_2"
-      },
-      "locked": {
-        "lastModified": 1792270392,
-        "narHash": "sha256-6ljttGADngUNlo1uum+/9bgs7WbHXF1PG/o43xSP4NY=",
-        "ref": "refs/heads/main",
-        "rev": "f78f02a30471550d2b3a08a32e53bb84a13bb886",
-        "revCount": 7574,
-        "type": "git",
-        "url": "https://git.typh.com/typh/perkeep.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://git.typh.com/typh/perkeep.git"
-      }
-    },
-    "flake-parts_2": {
-      "inputs": {
-        "nixpkgs-lib": [
-          "typh-perkeep",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1788450739,
-        "narHash": "sha256-glZLQlzIn1fXH6PazR2iUmTo7kzzyYSshrWhLS9TqCU=",
-        "owner": "hercules-ci",
-        "repo": "flake-parts",
-        "rev": "31729ca8cbdb4fa927b34e5f4353e6a83f39e993",
-        "type": "github"
-      },
-      "original": {
-        "owner": "hercules-ci",
-        "repo": "flake-parts",
-        "type": "github"
-      }
-    },
     "treefmt-nix_2": {
       "inputs": {
         "nixpkgs": [
@@ -126,6 +104,29 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "type": "github"
+      }
+    },
+    "typh-perkeep": {
+      "inputs": {
+        "flake-parts": "flake-parts_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix_2"
+      },
+      "locked": {
+        "lastModified": 1794549884,
+        "narHash": "sha256-No5Na34w458V9bMw8qCE6uq1dgmBa8XJRbAYwlNVdo4=",
+        "ref": "local/dev",
+        "rev": "a3244cbfa400ade403389c5fc3946e07b826c33a",
+        "revCount": 7568,
+        "type": "git",
+        "url": "https://git.typh.com/typh/perkeep.git"
+      },
+      "original": {
+        "ref": "local/dev",
+        "type": "git",
+        "url": "https://git.typh.com/typh/perkeep.git"
       }
     }
   },
