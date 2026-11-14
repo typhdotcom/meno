@@ -115,11 +115,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1794549884,
-        "narHash": "sha256-No5Na34w458V9bMw8qCE6uq1dgmBa8XJRbAYwlNVdo4=",
+        "lastModified": 1794685431,
+        "narHash": "sha256-tJ+gDWjIcbQPXohrVk2netuYQ8hCogFqfOELNLpGV4o=",
         "ref": "local/dev",
-        "rev": "a3244cbfa400ade403389c5fc3946e07b826c33a",
-        "revCount": 7568,
+        "rev": "45187efa95df1844ec6c399219eb2d4c2237a1c4",
+        "revCount": 7570,
         "type": "git",
         "url": "https://git.typh.com/typh/perkeep.git"
       },
