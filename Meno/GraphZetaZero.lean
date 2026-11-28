@@ -169,7 +169,7 @@ theorem theta112_completedZeta_eq (hb : 0 < theta112.b1) {s : ℂ} (hs : 1 < s.r
         = (DH.F.q k : ℝ) / 5 := by
       have := theta112_form (theta112Chart.symm k)
       rwa [Equiv.apply_symm_apply] at this
-    rw [if_neg hk', hf, term, if_neg hq0]
+    rw [ite_eq_right hk', hf, term, ite_eq_right hq0]
     have hqR : (0 : ℝ) < DH.F.q k := by exact_mod_cast Nat.pos_of_ne_zero hq0
     have h5 : ((DH.F.q k : ℕ) : ℂ) ^ s = (5 : ℂ) ^ s * ((((DH.F.q k : ℝ) / 5 : ℝ)) : ℂ) ^ s := by
       rw [← show (((5 : ℝ) : ℂ)) = 5 by norm_num,

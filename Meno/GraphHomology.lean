@@ -124,8 +124,8 @@ theorem linearIndependent_ratCast {k : ℕ} {ι : Type*} [Fintype ι]
         = fun i' => if i' = i then v i' e else 0 from funext fun i' => by
       rcases eq_or_ne i' i with h | h
       · subst h
-        rw [if_pos rfl, Pi.single_eq_same, one_mul]
-      · rw [if_neg h, Pi.single_eq_of_ne h, zero_mul]]
+        rw [ite_eq_left rfl, Pi.single_eq_same, one_mul]
+      · rw [ite_eq_right h, Pi.single_eq_of_ne h, zero_mul]]
     rw [Finset.sum_ite_eq' Finset.univ i fun i' => v i' e]
     simp
   have hdecomp : ∀ i, v i = ∑ e, v i e • Pi.single e (1 : ℚ) := by
@@ -137,9 +137,9 @@ theorem linearIndependent_ratCast {k : ℕ} {ι : Type*} [Fintype ι]
       intro e
       rcases eq_or_ne e w with h | h
       · subst h
-        rw [Pi.smul_apply, Pi.single_eq_same, smul_eq_mul, mul_one, if_pos rfl]
+        rw [Pi.smul_apply, Pi.single_eq_same, smul_eq_mul, mul_one, ite_eq_left rfl]
       · rw [Pi.smul_apply, Pi.single_eq_of_ne (Ne.symm h), smul_eq_mul,
-          mul_zero, if_neg h]
+          mul_zero, ite_eq_right h]
     rw [Finset.sum_congr rfl fun e _ => hterm e,
       Finset.sum_ite_eq' Finset.univ w fun e => v i e]
     simp
@@ -162,8 +162,8 @@ theorem linearIndependent_ratCast {k : ℕ} {ι : Type*} [Fintype ι]
       _ = if i = j then (1 : ℚ) else 0 := by
           rcases eq_or_ne i j with h | h
           · subst h
-            rw [Pi.single_eq_same, if_pos rfl]
-          · rw [Pi.single_eq_of_ne (Ne.symm h), if_neg h]
+            rw [Pi.single_eq_same, ite_eq_left rfl]
+          · rw [Pi.single_eq_of_ne (Ne.symm h), ite_eq_right h]
   rw [Fintype.linearIndependent_iff]
   intro g hg j
   have hgz : ∀ e, (∑ i, g i * ((v i e : ℚ) : ℝ)) = 0 := by
@@ -179,10 +179,10 @@ theorem linearIndependent_ratCast {k : ℕ} {ι : Type*} [Fintype ι]
       rw [hkey i j]
     rcases eq_or_ne i j with hij | hij
     · subst hij
-      rw [if_pos rfl] at hc ⊢
+      rw [ite_eq_left rfl] at hc ⊢
       push_cast at hc
       exact hc
-    · rw [if_neg hij] at hc ⊢
+    · rw [ite_eq_right hij] at hc ⊢
       push_cast at hc
       exact hc
   calc g j
@@ -191,8 +191,8 @@ theorem linearIndependent_ratCast {k : ℕ} {ι : Type*} [Fintype ι]
             = fun i => if i = j then g i else 0 from funext fun i => by
           rcases eq_or_ne i j with h | h
           · subst h
-            rw [if_pos rfl, if_pos rfl, mul_one]
-          · rw [if_neg h, if_neg h, mul_zero]]
+            rw [ite_eq_left rfl, ite_eq_left rfl, mul_one]
+          · rw [ite_eq_right h, ite_eq_right h, mul_zero]]
         rw [Finset.sum_ite_eq' Finset.univ j g]
         simp
     _ = ∑ i, g i * ∑ e, ((v i e : ℚ) : ℝ) * ((L (Pi.single e 1) j : ℚ) : ℝ) := by
@@ -401,8 +401,8 @@ theorem cast_independent (x : Fin n → ℝ)
               = fun i => if j = i then x i else 0 from funext fun i => by
             rcases eq_or_ne j i with h | h
             · subst h
-              rw [if_pos rfl, Pi.single_eq_same, mul_one]
-            · rw [if_neg h, Pi.single_eq_of_ne h, mul_zero]]
+              rw [ite_eq_left rfl, Pi.single_eq_same, mul_one]
+            · rw [ite_eq_right h, Pi.single_eq_of_ne h, mul_zero]]
           rw [Finset.sum_ite_eq Finset.univ j x]
           simp
   rw [hx, Matrix.mulVec_zero] at hlin
@@ -504,8 +504,8 @@ theorem periods_onto (k : Fin n → ℤ) :
             = fun i => if i = j then k i else 0 from funext fun i => by
           rcases eq_or_ne i j with h | h
           · subst h
-            rw [if_pos rfl, Pi.single_eq_same, mul_one]
-          · rw [if_neg h, Pi.single_eq_of_ne h, mul_zero]]
+            rw [ite_eq_left rfl, Pi.single_eq_same, mul_one]
+          · rw [ite_eq_right h, Pi.single_eq_of_ne h, mul_zero]]
         rw [Finset.sum_ite_eq' Finset.univ j k]
         simp
 
@@ -545,8 +545,8 @@ theorem periodsR_onto (k : Fin n → ℝ) :
             = fun i => if i = j then k i else 0 from funext fun i => by
           rcases eq_or_ne i j with h | h
           · subst h
-            rw [if_pos rfl, Pi.single_eq_same, mul_one]
-          · rw [if_neg h, Pi.single_eq_of_ne h, mul_zero]]
+            rw [ite_eq_left rfl, Pi.single_eq_same, mul_one]
+          · rw [ite_eq_right h, Pi.single_eq_of_ne h, mul_zero]]
         rw [Finset.sum_ite_eq' Finset.univ j k]
         simp
 
@@ -1129,8 +1129,8 @@ theorem exists_int_coords {r : ℕ} (c : Fin r → G.E → ℤ)
                 = fun j => if j = i then aR j else 0 from funext fun j => by
               rcases eq_or_ne j i with h | h
               · subst h
-                rw [if_pos rfl, Pi.single_eq_same, mul_one]
-              · rw [if_neg h, Pi.single_eq_of_ne h, mul_zero]]
+                rw [ite_eq_left rfl, Pi.single_eq_same, mul_one]
+              · rw [ite_eq_right h, Pi.single_eq_of_ne h, mul_zero]]
             rw [Finset.sum_ite_eq' Finset.univ i aR]
             simp
     rw [cast_dotProduct, show (fun e => ((x e : ℤ) : ℝ))

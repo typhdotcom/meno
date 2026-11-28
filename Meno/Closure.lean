@@ -67,7 +67,7 @@ theorem stepClosed_iff [Nonempty O'] (r : W → W' → Prop) (π : W → O)
     intro a a' hr
     have hex : ∃ p : W × W', π p.1 = π a ∧ r p.1 p.2 := ⟨(a, a'), rfl, hr⟩
     dsimp only
-    rw [dif_pos hex]
+    rw [dite_eq_left hex]
     exact h _ _ _ _ hex.choose_spec.1.symm hr hex.choose_spec.2
 
 /-- **The successor is unique**: on a surjective observation of a step

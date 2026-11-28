@@ -286,7 +286,7 @@ theorem Coercive.tail_le (hF : Coercive F lN lD hi) {σ : ℝ} (hσ : 1 < σ) {N
                 ring
         · refine (sum_eq_zero fun k hk => ?_).le
           have hsk : supNorm k = m := Int.mem_box.mp hk
-          rw [if_neg]
+          rw [ite_eq_right]
           intro hq
           have hup := hF.upper k
           rw [hsk] at hup
@@ -566,7 +566,7 @@ theorem Coercive.tsum_split (hF : Coercive F lN lD hi) {N B : ℕ}
     fun k => by split_ifs <;> first | omega | simp
   rw [tsum_congr hsplit, Summable.tsum_add (hs _) (hs _),
     tsum_eq_sum (s := Icc (-(B : ℤ × ℤ)) B) fun k hk =>
-      if_neg fun hq => hk (hF.mem_Icc_of_q_le hB hq)]
+      ite_eq_right fun hq => hk (hF.mem_Icc_of_q_le hB hq)]
 
 /-- The tail of a dominated sum is dominated by the tail of the majorant. -/
 theorem norm_tsum_ite_le {E : Type*} [NormedAddCommGroup E] {f : ℤ × ℤ → E} {g : ℤ × ℤ → ℝ}

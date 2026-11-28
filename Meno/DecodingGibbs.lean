@@ -178,14 +178,14 @@ theorem successProb_le_ml (P : FinDist (G.E → R))
       ⟨g τ, by simpa using hg⟩
     have hspec := (Finset.exists_max_image _ (P.map (gaugeMk R)).mass hne).choose_spec
     have hmlv : X.mlRule R P τ
-        = (Finset.exists_max_image _ (P.map (gaugeMk R)).mass hne).choose := dif_pos hne
+        = (Finset.exists_max_image _ (P.map (gaugeMk R)).mass hne).choose := dite_eq_left hne
     rw [hmlv]
     exact hspec.2 _ (by simpa using hg)
   · have hne : (Finset.univ.filter fun ξ => X.classSyndrome R ξ = τ).Nonempty :=
       ⟨g τ, by simpa using hg⟩
     have hspec := (Finset.exists_max_image _ (P.map (gaugeMk R)).mass hne).choose_spec
     have hmlv : X.mlRule R P τ
-        = (Finset.exists_max_image _ (P.map (gaugeMk R)).mass hne).choose := dif_pos hne
+        = (Finset.exists_max_image _ (P.map (gaugeMk R)).mass hne).choose := dite_eq_left hne
     exact absurd (by rw [hmlv]; simpa using hspec.1) hml
   · exact (P.map (gaugeMk R)).nonneg _
   · exact le_rfl
@@ -213,7 +213,7 @@ theorem Decoder.successProb_eq_one (D : X.Decoder R) (P : FinDist (G.E → R))
   refine (Finset.sum_congr rfl fun s _ => ?_).trans P.sum_one
   rcases eq_or_lt_of_le (P.nonneg s) with h0 | hp
   · rw [← h0, zero_mul]
-  · rw [if_pos (hD s hp), mul_one]
+  · rw [ite_eq_left (hD s hp), mul_one]
 
 /-- **The boundary, in entropy**: a decoder closing the support leaves
 no logical entropy — the counting face is this chart. -/
@@ -280,7 +280,7 @@ theorem successProb_lt_one (P : FinDist (G.E → R)) (hP : P.FullSupport)
   refine lt_of_lt_of_eq (Finset.sum_lt_sum (fun t _ => ?_)
     ⟨s, Finset.mem_univ _, ?_⟩) P.sum_one
   · split_ifs <;> simp [P.nonneg t]
-  · rw [if_neg hs, mul_zero]
+  · rw [ite_eq_right hs, mul_zero]
     exact hP s
 
 end TwoComplex

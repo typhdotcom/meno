@@ -261,8 +261,8 @@ lemma edgeDir_cancel (n : ℕ) (hn : n ≥ 3) (i j : Fin n)
     edgeDir n hn i j hij + edgeDir n hn j i hji = 0 := by
   simp only [edgeDir]
   rcases hij with hf | hb
-  · simp only [if_pos hf, if_neg (cycleNext_not_both n hn i j hf)]; norm_num
-  · simp only [if_neg (cycleNext_not_both n hn j i hb), if_pos hb]; norm_num
+  · simp only [ite_eq_left hf, ite_eq_right (cycleNext_not_both n hn i j hf)]; norm_num
+  · simp only [ite_eq_right (cycleNext_not_both n hn j i hb), ite_eq_left hb]; norm_num
 
 /-- Winding count: algebraic sum of edge directions along a walk. -/
 def Walk.windingCount {n : ℕ} {hn : n ≥ 3} {s t : Fin n} :
@@ -847,12 +847,12 @@ noncomputable def cycleHarmonicForm (n : ℕ) (hn : n ≥ 3) : C1 (Fin n) where
     intro i j
     by_cases hf : j = cycleNext n hn i
     · have hb : ¬(i = cycleNext n hn j) := cycleNext_not_both n hn i j hf
-      simp only [if_pos hf, if_neg hb]
+      simp only [ite_eq_left hf, ite_eq_right hb]
       ring
     · by_cases hb : i = cycleNext n hn j
-      · simp only [if_neg hf, if_pos hb]
+      · simp only [ite_eq_right hf, ite_eq_left hb]
         ring
-      · simp only [if_neg hf, if_neg hb]
+      · simp only [ite_eq_right hf, ite_eq_right hb]
         ring
 
 /-- For each vertex i, the inner sum ∑ⱼ σᵢⱼ² has exactly two nonzero terms
@@ -875,9 +875,9 @@ private lemma energy_inner_sum (n : ℕ) (hn : n ≥ 3) (i : Fin n) :
     · exfalso
       have := cycleNext_not_both n hn i (cycleNext n hn i) rfl
       rw [← h1, h2, cycleNext_cyclePrev] at this; exact this rfl
-    · simp only [if_pos h1, if_neg h2]; ring
-    · simp only [if_neg h1, if_pos h2]; ring
-    · simp only [if_neg h1, if_neg h2, mul_zero, zero_add]
+    · simp only [ite_eq_left h1, ite_eq_right h2]; ring
+    · simp only [ite_eq_right h1, ite_eq_left h2]; ring
+    · simp only [ite_eq_right h1, ite_eq_right h2, mul_zero, zero_add]
   simp_rw [this, Finset.sum_add_distrib,
     Finset.sum_ite_eq' Finset.univ _ (fun _ => 1 / (n : ℝ) ^ 2),
     Finset.mem_univ, ite_true]
@@ -908,7 +908,7 @@ theorem winding_smul (n : ℕ) (hn : n ≥ 3) (c : ℝ) (σ : C1 (Fin n)) :
 theorem cycleHarmonicForm_winding (n : ℕ) (hn : n ≥ 3) :
     winding n hn (cycleHarmonicForm n hn) = 1 := by
   simp only [winding, cycleHarmonicForm]
-  simp only [if_true, Finset.sum_const, Finset.card_fin, nsmul_eq_mul]
+  simp only [ite_true, Finset.sum_const, Finset.card_fin, nsmul_eq_mul]
   have : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
   field_simp
 
@@ -930,9 +930,9 @@ private lemma cross_inner_sum (n : ℕ) (hn : n ≥ 3) (σ : C1 (Fin n)) (i : Fi
     by_cases h1 : j = cycleNext n hn i <;> by_cases h2 : j = cyclePrev n hn i
     · exfalso; have := cycleNext_not_both n hn i (cycleNext n hn i) rfl
       rw [← h1, h2, cycleNext_cyclePrev] at this; exact this rfl
-    · simp only [if_pos h1, if_neg h2]; ring
-    · simp only [if_neg h1, if_pos h2]; ring
-    · simp only [if_neg h1, if_neg h2, zero_mul, zero_add]
+    · simp only [ite_eq_left h1, ite_eq_right h2]; ring
+    · simp only [ite_eq_right h1, ite_eq_left h2]; ring
+    · simp only [ite_eq_right h1, ite_eq_right h2, zero_mul, zero_add]
   simp_rw [this, Finset.sum_add_distrib,
     Finset.sum_ite_eq' Finset.univ _ (fun j => σ.val i j * (1 / ↑n)),
     Finset.sum_ite_eq' Finset.univ _ (fun j => σ.val i j * (-(1 : ℝ) / ↑n)),

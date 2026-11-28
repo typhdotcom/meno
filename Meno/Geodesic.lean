@@ -1,6 +1,6 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Endomorphism
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Tactic.Linarith
 
 /-! # Geodesic: Lawvere-subadditive length on a category

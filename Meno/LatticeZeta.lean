@@ -331,7 +331,7 @@ theorem hasSum_completedZeta (hr : 0 < Q.rank) {s : ℂ} (hs : (Q.rank : ℝ) / 
     Countable.of_equiv _ (Module.finBasis ℤ Q.Λ).equivFun.toEquiv.symm
   refine hasSum_mellin (a := fun a : Q.Λ => if a = 0 then (0 : ℂ) else 1)
     (p := fun a => Q.form a a)
-    (fun a => if ha : a = 0 then Or.inl (if_pos ha) else Or.inr (Q.form_posDef a ha))
+    (fun a => if ha : a = 0 then Or.inl (ite_eq_left ha) else Or.inr (Q.form_posDef a ha))
     hs0 (fun t ht => ?_) ?_
   · have hreal := (Q.summable_scaled t ht).hasSum
     have hite := hasSum_ite_sub_hasSum hreal 0

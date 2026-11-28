@@ -642,12 +642,12 @@ theorem mem_quadCS {P2 φ : Iv U} {φr : ℝ} (hP2 : P2.Mem (Real.pi / 2)) (hφ 
     c.Mem (Real.cos φr) ∧ s.Mem (Real.sin φr) := by
   unfold quadCS at h
   by_cases hb1 : φ.hi ≤ U
-  · rw [if_pos hb1] at h
+  · rw [ite_eq_left hb1] at h
     obtain ⟨rfl, rfl⟩ := Prod.mk.inj (Option.some.inj h)
     exact Iv.mem_cisE hφ (le_one_of_mem hφ hb1) hnC
-  · rw [if_neg hb1] at h
+  · rw [ite_eq_right hb1] at h
     by_cases hb2 : φ.hi ≤ P2.lo ∧ P2.hi - φ.lo ≤ U
-    · rw [if_pos hb2] at h
+    · rw [ite_eq_left hb2] at h
       obtain ⟨rfl, rfl⟩ := Prod.mk.inj (Option.some.inj h)
       have hφle := lo_le_hi hφ
       have hP2le := lo_le_hi hP2
@@ -663,7 +663,7 @@ theorem mem_quadCS {P2 φ : Iv U} {φr : ℝ} (hP2 : P2.Mem (Real.pi / 2)) (hφ 
       rw [Real.cos_pi_div_two_sub] at hc
       rw [Real.sin_pi_div_two_sub] at hs
       exact ⟨hs, hc⟩
-    · rw [if_neg hb2] at h
+    · rw [ite_eq_right hb2] at h
       exact absurd h (by simp)
 
 theorem mem_assemble {r : ℕ} {mag c s L : Iv U} {m φr l : ℝ} (hmag : mag.Mem m)
@@ -677,7 +677,7 @@ theorem mem_assemble {r : ℕ} {mag c s L : Iv U} {m φr l : ℝ} (hmag : mag.Me
   have hm : r % 4 = 0 ∨ r % 4 = 1 ∨ r % 4 = 2 ∨ r % 4 = 3 := by omega
   unfold assemble
   rcases hm with h4 | h4 | h4 | h4 <;> simp only [h4] <;> refine ⟨?_, ?_, hL⟩ <;>
-    simp only [SIv.Mem, if_true, if_false, Bool.false_eq_true, mul_neg, neg_neg] <;> assumption
+    simp only [SIv.Mem, ite_true, ite_false, Bool.false_eq_true, mul_neg, neg_neg] <;> assumption
 
 /-- **Soundness of one Dirichlet term**. -/
 theorem mem_termE {L2 P2 : Iv U} (hL2 : L2.Mem (Real.log 2)) (hP2 : P2.Mem (Real.pi / 2))
@@ -692,8 +692,8 @@ theorem mem_termE {L2 P2 : Iv U} (hL2 : L2.Mem (Real.log 2)) (hP2 : P2.Mem (Real
   have hx := mem_pt_mul hL D0
   unfold termE at h
   by_cases hbig : U < ((Iv.pt D0).mul (Iv.logE L2 q J)).hi
-  · rw [if_pos hbig] at h; exact absurd h (by simp)
-  rw [if_neg hbig] at h
+  · rw [ite_eq_left hbig] at h; exact absurd h (by simp)
+  rw [ite_eq_right hbig] at h
   dsimp only at h
   have hx1 := le_one_of_mem hx (not_lt.mp hbig)
   have hmag := Iv.mem_divN (Iv.mem_expE hx hx1 hnE) (Nat.mul_pos hq hq)
@@ -834,7 +834,7 @@ theorem pairMem_sadd {p n : Iv U} {x : ℝ} (h : PairMem p n x) {a : SIv U} {y :
 theorem mem_dS {L : Iv U} {l : ℝ} (hL : L.Mem l) {a : SIv U} {y : ℝ} (ha : a.Mem y) :
     (dS L a).Mem (-(l * y)) := by
   unfold dS SIv.Mem at *
-  cases hneg : a.neg <;> simp only [hneg, Bool.not_false, Bool.not_true, if_true, if_false,
+  cases hneg : a.neg <;> simp only [hneg, Bool.not_false, Bool.not_true, ite_true, ite_false,
     Bool.false_eq_true] at ha ⊢
   · simpa [neg_neg] using Iv.mem_mul hL ha
   · simpa [mul_neg] using Iv.mem_mul hL ha
@@ -862,8 +862,8 @@ theorem Acc.holds_step {P : Params U} (hL2 : P.L2.Mem (Real.log 2)) (hP2 : P.P2.
     rw [Acc.step_of_some ht]
     unfold Acc.stepSome
     by_cases hbig : U < ((Iv.pt P.Dm).mul L).hi
-    · rw [if_pos hbig]; intro h; exact absurd h (by simp)
-    rw [if_neg hbig]
+    · rw [ite_eq_left hbig]; intro h; exact absurd h (by simp)
+    rw [ite_eq_right hbig]
     intro hok
     obtain ⟨hre, him, hL⟩ := mem_termE hL2 hP2 hq hnE hnC ht
     obtain ⟨h1, h2, h3, h4, h5⟩ := ha hok

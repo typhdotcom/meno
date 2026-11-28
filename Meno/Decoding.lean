@@ -156,7 +156,7 @@ theorem exists_residual_not_exact (t : ℕ) {c : G.E → R}
       rw [Finset.mem_sdiff]
       by_cases h : e ∈ A₁
       · simp [h] at he
-      · simp only [h, if_false, zero_sub, ne_eq, neg_eq_zero] at he
+      · simp only [h, ite_false, zero_sub, ne_eq, neg_eq_zero] at he
         exact ⟨by simp [hA, he], h⟩
     have := Finset.card_sdiff_add_card_eq_card hA₁
     omega
@@ -184,10 +184,10 @@ noncomputable def minWeightDecoder : X.Decoder R where
       (InvImage.wf hammingNorm wellFounded_lt).min {c | X.syndrome R c = τ} h
     else 0
   syndrome_decode c := by
-    rw [dif_pos ⟨c, rfl⟩]
+    rw [dite_eq_left ⟨c, rfl⟩]
     exact WellFounded.min_mem _ {c' | X.syndrome R c' = X.syndrome R c} _
   decode_zero := by
-    rw [dif_pos ⟨0, map_zero _⟩]
+    rw [dite_eq_left ⟨0, map_zero _⟩]
     have h := WellFounded.not_lt_min (InvImage.wf hammingNorm wellFounded_lt)
       {c | X.syndrome R c = 0} (x := 0) (map_zero _)
     simp only [InvImage, hammingNorm_zero, not_lt, Nat.le_zero,
@@ -200,7 +200,7 @@ theorem minWeightDecoder_le (s : G.E → R) :
     hammingNorm ((X.minWeightDecoder R).decode (X.syndrome R s))
       ≤ hammingNorm s := by
   simp only [minWeightDecoder]
-  rw [dif_pos ⟨s, rfl⟩]
+  rw [dite_eq_left ⟨s, rfl⟩]
   exact not_lt.mp (WellFounded.not_lt_min (InvImage.wf hammingNorm wellFounded_lt)
     {c | X.syndrome R c = X.syndrome R s} (x := s) rfl)
 

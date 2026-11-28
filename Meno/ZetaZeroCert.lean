@@ -74,7 +74,7 @@ theorem boxTerm_eq (P : Params U) (F : BinForm) (N : ℕ) (k : ℤ × ℤ) :
   · have hc : (F.q k != 0 && F.q k ≤ N) = true := by simp [h0, hN]
     obtain ⟨hre, him⟩ := cpow_neg_re_im (Nat.pos_of_ne_zero h0) (2 - (P.D0 : ℝ) / U)
       ((P.T0 : ℝ) / U)
-    simp only [if_pos hN, if_pos hc, term, dterm, lmaj, if_neg h0, termVal, centre]
+    simp only [ite_eq_left hN, ite_eq_left hc, term, dterm, lmaj, ite_eq_right h0, termVal, centre]
     refine ⟨hre, him, ?_, ?_, trivial⟩
     · rw [neg_mul, Complex.neg_re, Complex.re_ofReal_mul, hre]
     · rw [neg_mul, Complex.neg_im, Complex.im_ofReal_mul, him]

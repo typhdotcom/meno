@@ -366,8 +366,8 @@ theorem sum_symmetrize_mul {y : Y} (μ f : S → ℝ)
               refine Finset.sum_congr rfl fun x _ => ?_
               by_cases hx : x ∈ stabOrbit Γ y z
               · have hz : z ∈ stabOrbit Γ y x := (mem_stabOrbit_comm Γ).mpr hx
-                rw [if_pos hz, if_pos hx, hf x z hz, stabOrbit_eq_of_mem Γ hx]
-              · rw [if_neg (fun hz => hx ((mem_stabOrbit_comm Γ).mp hz)), if_neg hx]
+                rw [ite_eq_left hz, ite_eq_left hx, hf x z hz, stabOrbit_eq_of_mem Γ hx]
+              · rw [ite_eq_right (fun hz => hx ((mem_stabOrbit_comm Γ).mp hz)), ite_eq_right hx]
           _ = μ z * f z := by
               rw [Finset.sum_ite_mem, Finset.univ_inter, Finset.sum_const, nsmul_eq_mul,
                 mul_div_cancel₀ _ hpos.ne']
@@ -465,8 +465,8 @@ theorem asymmetry_dirac [DecidableEq S] (y : Y) (x : S) :
     funext z
     rw [symmetrize, Finset.sum_ite_eq']
     by_cases hz : z ∈ stabOrbit Γ y x
-    · rw [if_pos ((mem_stabOrbit_comm Γ).mp hz), if_pos hz, stabOrbit_eq_of_mem Γ hz, one_div]
-    · rw [if_neg (fun h => hz ((mem_stabOrbit_comm Γ).mpr h)), if_neg hz, zero_div]
+    · rw [ite_eq_left ((mem_stabOrbit_comm Γ).mp hz), ite_eq_left hz, stabOrbit_eq_of_mem Γ hz, one_div]
+    · rw [ite_eq_right (fun h => hz ((mem_stabOrbit_comm Γ).mpr h)), ite_eq_right hz, zero_div]
   have hpure : shannonEntropy (fun z => if z = x then (1 : ℝ) else 0) = 0 := by
     unfold shannonEntropy
     rw [neg_eq_zero]
@@ -695,14 +695,14 @@ theorem cycle_exists_small_orbit (y : IncidenceGraph.H1Reduction (cycleGraph n h
   refine ⟨x0, ?_, ?_⟩
   · rw [sum_of_periodic n q x0 d hddvd hper, Nat.div_div_self hcdvd hn.ne']
     rw [Finset.sum_eq_single 0]
-    · simp only [x0, Nat.cast_zero, Fin.val_zero, dvd_zero, if_true]
+    · simp only [x0, Nat.cast_zero, Fin.val_zero, dvd_zero, ite_true]
       exact ZMod.coe_mul_inv_eq_one c hccop
     · intro i hi hi0
       have hi' : i < d := Finset.mem_range.mp hi
       have hval : ((i : Fin n)).val = i := by
         rw [Fin.val_natCast]; exact Nat.mod_eq_of_lt (by omega)
       simp only [x0, hval]
-      rw [if_neg]
+      rw [ite_eq_right]
       intro hdi
       exact hi0 (Nat.eq_zero_of_dvd_of_lt hdi hi')
     · intro h; exact absurd (Finset.mem_range.mpr hdpos) h

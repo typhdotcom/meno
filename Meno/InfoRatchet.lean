@@ -4,7 +4,7 @@ import Meno.UniformAction
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Set.Card
-import Mathlib.Data.ENNReal.Real
+import Mathlib.Basic.ENNReal.Real
 
 /-! # Fiber Information Cost and the Entropic Ratchet
 
@@ -283,7 +283,7 @@ theorem sectionCostE_eq_fiberInfoCost [Fintype A] [Fintype B] [DecidableEq B]
     sectionCostE f = ENNReal.ofReal (fiberInfoCost f) := by
   classical
   unfold sectionCostE
-  rw [if_pos hf, log_card_sections hf]
+  rw [ite_eq_left hf, log_card_sections hf]
 
 /-- **Zero reverse cost characterizes bijections** — not arbitrary
 injections. The only maps that are free to reverse are the ones that
@@ -307,7 +307,7 @@ theorem sectionCostE_eq_zero_iff [Fintype A] [Fintype B] [DecidableEq B]
   · intro hbij
     classical
     unfold sectionCostE
-    rw [if_pos hbij.surjective, log_card_sections hbij.surjective,
+    rw [ite_eq_left hbij.surjective, log_card_sections hbij.surjective,
       fiberInfoCost_of_injective hbij.injective]
     simp
 
@@ -341,7 +341,7 @@ theorem sectionCostE_eq_sum_recoveryCostE [Fintype A] [Fintype B]
     have hterm : ∀ b : B, recoveryCostE f b
         = ENNReal.ofReal (recoveryCost f b) := fun b => by
       unfold recoveryCostE
-      rw [if_pos (hall b)]
+      rw [ite_eq_left (hall b)]
     rw [sectionCostE_eq_fiberInfoCost hf,
       Finset.sum_congr rfl (fun b _ => hterm b),
       ← ENNReal.ofReal_sum_of_nonneg (fun b _ => recoveryCost_nonneg f b),
@@ -609,7 +609,7 @@ theorem map_id [DecidableEq X] (P : FinDist X) : P.map id = P := by
   funext x
   show ∑ y ∈ Finset.univ.filter (fun y => id y = x), P.mass y = P.mass x
   simp only [id_eq]
-  rw [Finset.filter_eq', if_pos (Finset.mem_univ x), Finset.sum_singleton]
+  rw [Finset.filter_eq', ite_eq_left (Finset.mem_univ x), Finset.sum_singleton]
 
 /-- **Pushforward composes**: the two-step pushforward is
 the pushforward along the composite. -/
@@ -625,15 +625,15 @@ theorem map_comp {E : Type u} [Fintype E] [DecidableEq D] [DecidableEq E]
       = ∑ x, P.mass x * (if g (f x) = e then (1 : ℝ) else 0) := by
         refine Finset.sum_congr rfl fun x _ => ?_
         by_cases hx : g (f x) = e
-        · rw [if_pos hx, if_pos hx, mul_one]
-        · rw [if_neg hx, if_neg hx, mul_zero]
+        · rw [ite_eq_left hx, ite_eq_left hx, mul_one]
+        · rw [ite_eq_right hx, ite_eq_right hx, mul_zero]
     _ = ∑ d, (P.map f).mass d * (if g d = e then (1 : ℝ) else 0) :=
         sum_mass_mul_comp f P (fun d => if g d = e then (1 : ℝ) else 0)
     _ = ∑ d, if g d = e then (P.map f).mass d else 0 := by
         refine Finset.sum_congr rfl fun d _ => ?_
         by_cases hd : g d = e
-        · rw [if_pos hd, if_pos hd, mul_one]
-        · rw [if_neg hd, if_neg hd, mul_zero]
+        · rw [ite_eq_left hd, ite_eq_left hd, mul_one]
+        · rw [ite_eq_right hd, ite_eq_right hd, mul_zero]
 
 /-- **The uniform fiber lift**: pull a base distribution back along a
 constant-fiber map, dividing each mass evenly across the fiber. -/

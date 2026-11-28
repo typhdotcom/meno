@@ -54,21 +54,21 @@ theorem exists_closing_decoder_iff (S : Set (G.E → R)) (h0 : (0 : G.E → R) �
     refine ⟨⟨fun τ => if τ = 0 then 0 else
         if hs : ∃ s ∈ S, X.syndrome R s = τ then hs.choose
         else if hc : ∃ c, X.syndrome R c = τ then hc.choose else 0,
-      fun c => ?_, if_pos rfl⟩, fun s hs => ?_⟩
+      fun c => ?_, ite_eq_left rfl⟩, fun s hs => ?_⟩
     · by_cases hz : X.syndrome R c = 0
-      · rw [if_pos hz, map_zero, hz]
-      · rw [if_neg hz]
+      · rw [ite_eq_left hz, map_zero, hz]
+      · rw [ite_eq_right hz]
         split_ifs with hs hc'
         · exact hs.choose_spec.2
         · exact hc'.choose_spec
         · exact absurd ⟨c, rfl⟩ hc'
     · show s - (if X.syndrome R s = 0 then 0 else _) ∈ _
       by_cases hz : X.syndrome R s = 0
-      · rw [if_pos hz, sub_zero]
+      · rw [ite_eq_left hz, sub_zero]
         have := h s hs 0 h0 (by rw [hz, map_zero])
         rwa [sub_zero] at this
       · have hs' : ∃ s' ∈ S, X.syndrome R s' = X.syndrome R s := ⟨s, hs, rfl⟩
-        rw [if_neg hz, dif_pos hs']
+        rw [ite_eq_right hz, dite_eq_left hs']
         exact h s hs _ hs'.choose_spec.1 hs'.choose_spec.2.symm
 
 variable {X R}
